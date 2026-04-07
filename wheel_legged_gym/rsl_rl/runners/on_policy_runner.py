@@ -89,26 +89,37 @@ class OnPolicyRunner:
         _, _ = self.env.reset()
 
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
-        # initialize writer
+        # 初始化 TensorBoard writer
         if self.log_dir is not None and self.writer is None:
             self.writer = SummaryWriter(log_dir=self.log_dir, flush_secs=10)
+
+        # 如果需要，从随机 episode 步数开始，增加训练随机性
         if init_at_random_ep_len:
             self.env.episode_length_buf = torch.randint_like(
                 self.env.episode_length_buf, high=int(self.env.max_episode_length)
             )
+
+        # 获取初始观测、历史观测和 critic 观测
         obs, obs_history = self.env.get_observations()
         privileged_obs = self.env.get_privileged_observations()
         critic_obs = privileged_obs if privileged_obs is not None else obs
+
+        # 将数据移动到指定设备
         obs, obs_history, critic_obs = (
             obs.to(self.device),
             obs_history.to(self.device),
             critic_obs.to(self.device),
         )
+
+        # 切换到训练模式
         self.alg.actor_critic.train()  # switch to train mode (for dropout for example)
 
+        # 用于记录 episode 信息
         ep_infos = []
         rewbuffer = deque(maxlen=100)
         lenbuffer = deque(maxlen=100)
+
+        # 当前 episode 的累计奖励和长度
         cur_reward_sum = torch.zeros(
             self.env.num_envs, dtype=torch.float, device=self.device
         )
@@ -116,17 +127,24 @@ class OnPolicyRunner:
             self.env.num_envs, dtype=torch.float, device=self.device
         )
 
+        # 总迭代次数
         tot_iter = self.current_learning_iteration + num_learning_iterations
         for it in range(self.current_learning_iteration, tot_iter):
             start = time.time()
-            # Rollout
+
+            # Rollout 阶段：与环境交互收集样本
             with torch.inference_mode():
                 for i in range(self.num_steps_per_env):
+                    # 根据当前策略生成动作
                     actions = self.alg.act(obs, obs_history, critic_obs)
+
+                    # 与环境交互，获取下一步数据
                     obs, privileged_obs, rewards, dones, infos, obs_history = (
                         self.env.step(actions)
                     )
                     critic_obs = privileged_obs if privileged_obs is not None else obs
+
+                    # 将新数据移动到指定设备
                     obs, obs_history, critic_obs, rewards, dones = (
                         obs.to(self.device),
                         obs_history.to(self.device),
@@ -134,48 +152,73 @@ class OnPolicyRunner:
                         rewards.to(self.device),
                         dones.to(self.device),
                     )
+
+                    # 将环境返回的数据写入存储
                     self.alg.process_env_step(rewards, dones, infos, obs)
 
+                    # 记录日志相关信息
                     if self.log_dir is not None:
-                        # Book keeping
+                        # 记录 episode 指标
                         if "episode" in infos:
                             ep_infos.append(infos["episode"])
+
+                        # 累计奖励和步数
                         cur_reward_sum += rewards
                         cur_episode_length += 1
+
+                        # 找出结束的环境 id
                         new_ids = (dones > 0).nonzero(as_tuple=False)
+
+                        # 保存最近 100 个 episode 的奖励和长度
                         rewbuffer.extend(
                             cur_reward_sum[new_ids][:, 0].cpu().numpy().tolist()
                         )
                         lenbuffer.extend(
                             cur_episode_length[new_ids][:, 0].cpu().numpy().tolist()
                         )
+
+                        # 重置已经结束的 episode 统计量
                         cur_reward_sum[new_ids] = 0
                         cur_episode_length[new_ids] = 0
 
                 stop = time.time()
                 collection_time = stop - start
 
-                # Learning step
+                # 学习阶段：计算返回值
                 start = stop
                 if self.cfg["policy_class_name"] == "ActorCriticSequence":
+                    # 序列策略需要将编码后的历史信息拼接到 critic 观测中
                     critic_obs__ = torch.cat(
                         (critic_obs, self.alg.actor_critic.encode(obs_history)), dim=-1
                     )
                 else:
                     critic_obs__ = critic_obs
+
+                # 计算回报和优势等训练目标
                 self.alg.compute_returns(critic_obs__)
 
+            # 更新策略网络
             mean_value_loss, mean_surrogate_loss, mean_kl, mean_extra_loss = (
                 self.alg.update()
             )
             stop = time.time()
             learn_time = stop - start
+
+            # 输出日志
             if self.log_dir is not None:
                 self.log(locals())
+
+            # 定期保存模型
             if it % self.save_interval == 0:
                 self.save(os.path.join(self.log_dir, "model_{}.pt".format(it)))
+
+            # 清空 episode 信息缓存
             ep_infos.clear()
+
+        # 更新当前学习轮次
         self.current_learning_iteration = num_learning_iterations
+
+        # 保存最终模型
         self.save(
             os.path.join(self.log_dir, "model_{}.pt".format(num_learning_iterations))
         )

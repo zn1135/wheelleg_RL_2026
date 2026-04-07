@@ -58,3 +58,12 @@ task_registry.register(
     WheelLeggedVMCFlatCfg(),
     WheelLeggedVMCFlatCfgPPO(),
 )
+
+task_registry.register(
+    "mini_wheel_legged",
+    LeggedRobot,
+    WheelLeggedCfg(),
+    WheelLeggedCfgPPO(),
+)
+
+

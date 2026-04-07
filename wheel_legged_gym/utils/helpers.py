@@ -40,20 +40,34 @@ from wheel_legged_gym import WHEEL_LEGGED_GYM_ROOT_DIR, WHEEL_LEGGED_GYM_ENVS_DI
 
 
 def class_to_dict(obj) -> dict:
+    # 如果对象没有 __dict__ 属性，说明它可能是基础类型，直接返回
     if not hasattr(obj, "__dict__"):
         return obj
+
+    # 用于保存转换后的结果
     result = {}
+
+    # 遍历对象的公开属性
     for key in dir(obj):
+        # 跳过私有属性和内置属性
         if key.startswith("_"):
             continue
+
+        # 取出当前属性值
         element = []
         val = getattr(obj, key)
+
+        # 如果属性是列表，则递归转换列表中的每个元素
         if isinstance(val, list):
             for item in val:
                 element.append(class_to_dict(item))
         else:
+            # 非列表类型则直接递归转换
             element = class_to_dict(val)
+
+        # 将属性写入结果字典
         result[key] = element
+
     return result
 
 
@@ -160,6 +174,7 @@ def update_cfg_from_args(env_cfg, cfg_train, args):
 
 
 def get_args():
+    # 自定义命令行参数
     custom_parameters = [
         {
             "name": "--task",
@@ -228,12 +243,13 @@ def get_args():
         },
         {"name": "--exptid", "type": str, "default": "", "help": "exptid"},
     ]
-    # parse arguments
+
+    # 解析命令行参数
     args = gymutil.parse_arguments(
         description="RL Policy", custom_parameters=custom_parameters
     )
 
-    # name allignment
+    # 对齐仿真设备相关参数
     args.sim_device_id = args.compute_device_id
     args.sim_device = args.sim_device_type
     if args.sim_device == "cuda":
