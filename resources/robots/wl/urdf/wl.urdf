@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
-     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
-     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<!-- 该 URDF 由 SolidWorks 自动导出 -->
+<!-- 机器人名称：wl -->
 <robot name="wl">
+
+    <!-- ===================== 基座 ===================== -->
     <link name="base_link">
+        <!-- 基座惯性参数 -->
         <inertial>
             <origin xyz="-0.0076 0.0067 0.123056" rpy="0 0 0" />
             <mass value="8.8" />
             <inertia ixx="0.326092" ixy="3.6E-05" ixz="-0.00115" iyy="0.229526" iyz="0.006798" izz="0.220537" />
         </inertial>
+        <!-- 基座外观模型 -->
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
@@ -18,6 +21,7 @@
                 <color rgba="0.79216 0.81961 0.93333 1" />
             </material>
         </visual>
+        <!-- 基座碰撞模型 -->
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
@@ -25,6 +29,8 @@
             </geometry>
         </collision>
     </link>
+
+    <!-- ===================== 左前腿第一段 ===================== -->
     <link name="lf0_Link">
         <inertial>
             <origin xyz="0.05976637 -0.00048182 0.01198236" rpy="0 0 0" />
@@ -47,6 +53,8 @@
             </geometry>
         </collision>
     </link>
+
+    <!-- 左前髋关节：连接基座与 lf0_Link -->
     <joint name="lf0_Joint" type="revolute">
         <origin xyz="0.054 0.1705 0.131" rpy="-1.5708 0 0" />
         <parent link="base_link" />
@@ -55,6 +63,8 @@
         <dynamics damping="0" friction="0"/>
         <limit lower="-0.3363" upper="1.3479" effort="30" velocity="1000" />
     </joint>
+
+    <!-- ===================== 左前腿第二段 ===================== -->
     <link name="lf1_Link">
         <inertial>
             <origin xyz="-0.00032544 0.15899848 0.00798168" rpy="0 0 0" />
@@ -77,6 +87,8 @@
             </geometry>
         </collision>
     </link>
+
+    <!-- 左前膝关节：连接 lf0_Link 与 lf1_Link -->
     <joint name="lf1_Joint" type="revolute">
         <origin xyz="0.15 -0.00010199 0.0205" rpy="0 0 0" />
         <parent link="lf0_Link" />
@@ -85,6 +97,8 @@
         <dynamics damping="0" friction="0"/>
         <limit lower="-1.0" upper="1.25" effort="30" velocity="1000" />
     </joint>
+
+    <!-- ===================== 左轮 ===================== -->
     <link name="l_wheel_Link">
         <inertial>
             <origin xyz="-0.00004507 -0.00038447 0.02376028" rpy="0 0 0" />
@@ -100,6 +114,7 @@
                 <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
             </material>
         </visual>
+        <!-- 轮子碰撞体使用圆柱近似 -->
         <collision>
             <origin xyz="0 0 0.03" rpy="0 0 0" />
             <geometry>
@@ -107,6 +122,8 @@
             </geometry>
         </collision>
     </link>
+
+    <!-- 左轮关节：连接左前腿第二段与左轮 -->
     <joint name="l_wheel_Joint" type="revolute">
         <origin xyz="1.857E-05 0.25 0.0275" rpy="0 0 0" />
         <parent link="lf1_Link" />
@@ -115,6 +132,8 @@
         <dynamics damping="0" friction="0"/>
         <limit effort="5" velocity="1000" />
     </joint>
+
+    <!-- ===================== 右前腿第一段 ===================== -->
     <link name="rf0_Link">
         <inertial>
             <origin xyz="0.05976637 -0.00048182 0.01198236" rpy="0 0 0" />
@@ -137,6 +156,8 @@
             </geometry>
         </collision>
     </link>
+
+    <!-- 右前髋关节：连接基座与 rf0_Link -->
     <joint name="rf0_Joint" type="revolute">
         <origin xyz="0.054 -0.1705 0.131" rpy="1.5708 0 0" />
         <parent link="base_link" />
@@ -145,6 +166,8 @@
         <dynamics damping="0" friction="0"/>
         <limit lower="-1.3479" upper="0.3363" effort="30" velocity="1000" />
     </joint>
+
+    <!-- ===================== 右前腿第二段 ===================== -->
     <link name="rf1_Link">
         <inertial>
             <origin xyz="0.00032544 -0.15899848 0.00798168" rpy="0 0 0" />
@@ -167,6 +190,8 @@
             </geometry>
         </collision>
     </link>
+
+    <!-- 右前膝关节：连接 rf0_Link 与 rf1_Link -->
     <joint name="rf1_Joint" type="revolute">
         <origin xyz="0.15 9.5536E-05 0.0205" rpy="0 0 0" />
         <parent link="rf0_Link" />
@@ -175,6 +200,8 @@
         <dynamics damping="0" friction="0"/>
         <limit lower="-1.25" upper="1.0" effort="30" velocity="1000" />
     </joint>
+
+    <!-- ===================== 右轮 ===================== -->
     <link name="r_wheel_Link">
         <inertial>
             <origin xyz="0.00038403 0.00004865 0.02376028" rpy="0 0 0" />
@@ -190,6 +217,7 @@
                 <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
             </material>
         </visual>
+        <!-- 轮子碰撞体使用圆柱近似 -->
         <collision>
             <origin xyz="0 0 0.03" rpy="0 0 0" />
             <geometry>
@@ -197,6 +225,8 @@
             </geometry>
         </collision>
     </link>
+
+    <!-- 右轮关节：连接右前腿第二段与右轮 -->
     <joint name="r_wheel_Joint" type="revolute">
         <origin xyz="1.5909E-05 -0.25 0.0275" rpy="0 0 0" />
         <parent link="rf1_Link" />
@@ -205,4 +235,5 @@
         <dynamics damping="0" friction="0"/>
         <limit effort="5" velocity="1000" />
     </joint>
+
 </robot>

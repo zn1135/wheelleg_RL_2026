@@ -26,7 +26,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://xwl/meshes/base_link.STL" />
+          filename="../meshes/base_link.STL" />
       </geometry>
       <material
         name="">
@@ -40,7 +40,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://xwl/meshes/base_link.STL" />
+          filename="../meshes/base_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -66,7 +66,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://xwl/meshes/rl_0.STL" />
+          filename="../meshes/rl_0.STL" />
       </geometry>
       <material
         name="">
@@ -80,7 +80,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://xwl/meshes/rl_0.STL" />
+          filename="../meshes/rl_0.STL" />
       </geometry>
     </collision>
   </link>
@@ -95,12 +95,12 @@
     <child
       link="rl_0" />
     <axis
-      xyz="0 0 -1" />
+      xyz="0 0 1" />
     <limit
-      lower="0"
-      upper="0"
-      effort="0"
-      velocity="0" />
+      lower="-0.9"
+      upper="0.57"
+      effort="10"
+      velocity="1000" />
   </joint>
   <link
     name="rl_1">
@@ -124,7 +124,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://xwl/meshes/rl_1.STL" />
+          filename="../meshes/rl_1.STL" />
       </geometry>
       <material
         name="">
@@ -138,7 +138,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://xwl/meshes/rl_1.STL" />
+          filename="../meshes/rl_1.STL" />
       </geometry>
     </collision>
   </link>
@@ -155,10 +155,10 @@
     <axis
       xyz="0 0 -1" />
     <limit
-      lower="0"
-      upper="0"
-      effort="0"
-      velocity="0" />
+      lower="-1.1"
+      upper="0.94"
+      effort="10"
+      velocity="1000" />
   </joint>
   <link
     name="rw">
@@ -182,7 +182,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://xwl/meshes/rw.STL" />
+          filename="../meshes/rw.STL" />
       </geometry>
       <material
         name="">
@@ -196,13 +196,13 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://xwl/meshes/rw.STL" />
+          filename="../meshes/rw.STL" />
       </geometry>
     </collision>
   </link>
   <joint
     name="rw_Joint"
-    type="continuous">
+    type="revolute">
     <origin
       xyz="-5.63207599916932E-05 0.149999989426573 -0.0308999999999994"
       rpy="0 0 -1.57079632679489" />
@@ -215,8 +215,8 @@
     <limit
       lower="0"
       upper="0"
-      effort="0"
-      velocity="0" />
+      effort="3"
+      velocity="1000" />
   </joint>
   <link
     name="ll_0">
@@ -240,7 +240,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://xwl/meshes/ll_0.STL" />
+          filename="../meshes/ll_0.STL" />
       </geometry>
       <material
         name="">
@@ -254,7 +254,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://xwl/meshes/ll_0.STL" />
+          filename="../meshes/ll_0.STL" />
       </geometry>
     </collision>
   </link>
@@ -269,12 +269,12 @@
     <child
       link="ll_0" />
     <axis
-      xyz="0 0 -1" />
+      xyz="0 0 1" />
     <limit
-      lower="0"
-      upper="0"
-      effort="0"
-      velocity="0" />
+      lower="-0.57"
+      upper="0.9"
+      effort="10"
+      velocity="1000" />
   </joint>
   <link
     name="ll1">
@@ -298,7 +298,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://xwl/meshes/ll1.STL" />
+          filename="../meshes/ll1.STL" />
       </geometry>
       <material
         name="">
@@ -312,7 +312,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://xwl/meshes/ll1.STL" />
+          filename="../meshes/ll1.STL" />
       </geometry>
     </collision>
   </link>
@@ -329,10 +329,10 @@
     <axis
       xyz="0 0 1" />
     <limit
-      lower="0"
-      upper="0"
-      effort="0"
-      velocity="0" />
+      lower="-0.94"
+      upper="1.1"
+      effort="10"
+      velocity="1000" />
   </joint>
   <link
     name="lw">
@@ -356,7 +356,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://xwl/meshes/lw.STL" />
+          filename="../meshes/lw.STL" />
       </geometry>
       <material
         name="">
@@ -370,13 +370,13 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://xwl/meshes/lw.STL" />
+          filename="../meshes/lw.STL" />
       </geometry>
     </collision>
   </link>
   <joint
     name="lw_Joint"
-    type="continuous">
+    type="revolute">
     <origin
       xyz="0.107391680571114 0.104723573965523 0.0308999999999994"
       rpy="0 0 -0.798351541940511" />
@@ -389,7 +389,7 @@
     <limit
       lower="0"
       upper="0"
-      effort="0"
-      velocity="0" />
+      effort="3"
+      velocity="1000" />
   </joint>
 </robot>
