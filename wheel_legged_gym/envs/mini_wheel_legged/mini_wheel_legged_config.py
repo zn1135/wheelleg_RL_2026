@@ -21,8 +21,8 @@ class Mini_WheelLeggedCfg(LeggedRobotCfg):
 
     class control(LeggedRobotCfg.control):
         # 位置/速度动作缩放系数，用于将策略输出映射到控制目标
-        pos_action_scale = 0.25  # 关节位置动作缩放
-        vel_action_scale = 5.0   # 轮速动作缩放
+        pos_action_scale = 0.5  # 关节位置动作缩放
+        vel_action_scale = 10.0   # 轮速动作缩放
         # PD 驱动参数：刚度决定“拉回目标位置”的强度
         stiffness = {"Joint0": 2.0, "Joint1": 2.0, "w_Joint": 0}  # [N*m/rad]
         # PD 驱动参数：阻尼抑制振荡，提升控制稳定性
