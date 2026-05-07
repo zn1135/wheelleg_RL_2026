@@ -336,13 +336,19 @@ class LeggedRobot(BaseTask):
 
     def compute_proprioception_observations(self):
         # note that observation noise need to modified accordingly !!!
+        # 轮关节是 continuous 类型，dof_pos 会无限累积；从观测里屏蔽（用 0 占位保持维度不变）
+        # 轮子的"位置"对策略无意义，只用轮速 dof_vel 即可
+        dof_pos_obs = (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos
+        dof_pos_obs = dof_pos_obs.clone()
+        dof_pos_obs[:, 2] = 0.0  # 右轮位置屏蔽
+        dof_pos_obs[:, 5] = 0.0  # 左轮位置屏蔽
         obs_buf = torch.cat(
             (
                 # self.base_lin_vel * self.obs_scales.lin_vel,
                 self.base_ang_vel * self.obs_scales.ang_vel,
                 self.projected_gravity,
                 self.commands[:, :3] * self.commands_scale,
-                (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
+                dof_pos_obs,
                 self.dof_vel * self.obs_scales.dof_vel,
                 self.actions,
             ),
@@ -716,9 +722,9 @@ class LeggedRobot(BaseTask):
             self.root_states[env_ids] = self.base_init_state
             self.root_states[env_ids, :3] += self.env_origins[env_ids]
         # base velocities
-        self.root_states[env_ids, 7:13] = torch_rand_float(
-            -0.5, 0.5, (len(env_ids), 6), device=self.device
-        )  # [7:10]: lin vel, [10:13]: ang vel
+        # 学习平衡阶段：reset 时基座速度归零，让机器人从静态启动；
+        # 待学会平衡后再恢复 ±0.5 的随机化做 robustness（参考 legged_gym 通用做法）
+        self.root_states[env_ids, 7:13] = 0.0
         env_ids_int32 = env_ids.to(dtype=torch.int32)
         self.gym.set_actor_root_state_tensor_indexed(
             self.sim,
@@ -1707,6 +1713,11 @@ class LeggedRobot(BaseTask):
     def _reward_termination(self):
         # 终止奖励/惩罚（超时不计）
         return self.reset_buf * ~self.time_out_buf
+
+    def _reward_alive(self):
+        # 存活奖励：每个未终止的步给 +1，鼓励 policy 学会"撑住不倒"
+        # 配合负向 reward 总和，提供"活着就赚"的基础正激励，避免奖励全负陷入死亡螺旋
+        return torch.ones(self.num_envs, device=self.device)
 
     def _reward_dof_pos_limits(self):
         # 惩罚关节位置接近或超过限位
