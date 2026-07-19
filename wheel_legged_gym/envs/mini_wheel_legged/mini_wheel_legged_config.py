@@ -7,15 +7,21 @@ from wheel_legged_gym.envs.base.legged_robot_config import (
 
 class Mini_WheelLeggedCfg(LeggedRobotCfg):
 #todo: 需要调整初始位置和关节角度以适应迷你轮足机器人
+    class commands(LeggedRobotCfg.commands):
+        class ranges(LeggedRobotCfg.commands.ranges):
+            # 放宽膝限位(±2.4)后腿长可收到约0.17m，站高可行范围约0.15~0.44m
+            height = [0.20, 0.40]
+
     class init_state(LeggedRobotCfg.init_state):
-        pos = [0.0, 0.0, 0.10]  # 机器人初始基座位置 x,y,z [m]
+        pos = [0.0, 0.0, 0.32]  # 机器人初始基座位置 x,y,z [m]
         default_joint_angles = {  # 动作为 0.0 时各关节的目标角度
-            "lf0_Joint": 0.5,
-            "lf1_Joint": 0.35,
-            "l_wheel_Joint": 0.0,
-            "rf0_Joint": -0.5,
-            "rf1_Joint": -0.35,
-            "r_wheel_Joint": 0.0,
+            # 零位=腿垂直伸直；髋后摆+膝反折使轮心位于髋正下方，站高约 0.30m
+            "lf0_joint": 0.9,
+            "lf1_joint": -1.62,
+            "l_wheel_joint": 0.0,
+            "rf0_joint": -0.9,
+            "rf1_joint": 1.62,
+            "r_wheel_joint": 0.0,
         }
 
     class control(LeggedRobotCfg.control):
@@ -23,18 +29,17 @@ class Mini_WheelLeggedCfg(LeggedRobotCfg):
         pos_action_scale = 0.5
         vel_action_scale = 10.0
         # PD 驱动参数：刚度决定“拉回目标位置”的强度
-        stiffness = {"f0": 40.0, "f1": 40.0, "wheel": 0}  # [N*m/rad]
+        stiffness = {"f0": 60.0, "f1": 60.0, "wheel": 0}  # [N*m/rad]
         # PD 驱动参数：阻尼抑制振荡，提升控制稳定性
-        damping = {"f0": 1.0, "f1": 1.0, "wheel": 0.5}  # [N*m*s/rad]
+        damping = {"f0": 2.0, "f1": 2.0, "wheel": 0.5}  # [N*m*s/rad]
 
 
-    class asset(LeggedRobotCfg.asset):
-        # 机器人模型与基础几何参数
-        file = "{WHEEL_LEGGED_GYM_ROOT_DIR}/resources/robots/wl/urdf/xwl.urdf"
+    class asset(LeggedRobotCfg.asset):        # 机器人模型与基础几何参数
+        file = "{WHEEL_LEGGED_GYM_ROOT_DIR}/resources/robots/imcawl/urdf/imcawl.urdf"
         name = "Mini_WheelLegged"
         offset = 0.00  # 机体几何偏置参数
-        l1 = 0.15  # 连杆长度参数 1
-        l2 = 0.25  # 连杆长度参数 2
+        l1 = 0.21  # 大腿连杆长度：lf0->lf1 关节距离 [m]
+        l2 = 0.25  # 小腿连杆长度：lf1->轮心距离 [m]
         penalize_contacts_on = ["lf", "rf", "base"]  # 这些部位接触会被加入惩罚
         terminate_after_contacts_on = ["base"]  # 这些部位发生接触后终止回合
         self_collisions = 1  # 自碰撞开关：1 关闭，0 开启（位掩码过滤）
@@ -44,4 +49,5 @@ class Mini_WheelLeggedCfg(LeggedRobotCfg):
 class Mini_WheelLeggedCfgPPO(LeggedRobotCfgPPO):
     class runner(LeggedRobotCfgPPO.runner):
         # 日志实验名
-        experiment_name = "mini_wheel_legged"        
+        experiment_name = "mini_wheel_legged"
+        max_iterations = 1000  # 策略更新总迭代数        
