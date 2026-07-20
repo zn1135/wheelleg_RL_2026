@@ -83,8 +83,8 @@ class LeggedRobotCfg(BaseConfig):
         terrain_width = 8.0  # 地形宽度
         num_rows = 10  # 地形行数（等级数）
         num_cols = 20  # 地形列数（类型数）
-        # 地形类型：[平缓坡面、粗糙坡面、台阶上、台阶下、离散地形]
-        terrain_proportions = [0.2, 0.2, 0.2, 0.1, 0.2, 0.1]
+        # 地形类型：[平地、平缓坡面、粗糙坡面、台阶下、台阶上、离散地形]
+        terrain_proportions = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         # 仅适用于 trimesh：
         slope_treshold = (
             0.75  # 超过该阈值的斜坡会被修正为垂直表面

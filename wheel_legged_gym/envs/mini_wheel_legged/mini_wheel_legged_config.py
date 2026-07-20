@@ -34,6 +34,16 @@ class Mini_WheelLeggedCfg(LeggedRobotCfg):
         damping = {"f0": 2.0, "f1": 2.0, "wheel": 0.5}  # [N*m*s/rad]
 
 
+    class rewards(LeggedRobotCfg.rewards):
+        # 放宽跟踪评分宽容度：误差0.5m/s时得分从0.37提高到0.49，梯度更平缓利于课程解锁
+        tracking_sigma = 0.35
+        # 单项奖励每步裁剪上限须高于 0.7*tracking_lin_vel 权重，否则速度课程永远无法解锁
+        clip_single_reward = 2
+
+        class scales(LeggedRobotCfg.rewards.scales):
+            # 提高线速度跟踪权重，压过 dof_acc 等正则项的对抗
+            tracking_lin_vel = 1.5
+
     class asset(LeggedRobotCfg.asset):        # 机器人模型与基础几何参数
         file = "{WHEEL_LEGGED_GYM_ROOT_DIR}/resources/robots/imcawl/urdf/imcawl.urdf"
         name = "Mini_WheelLegged"

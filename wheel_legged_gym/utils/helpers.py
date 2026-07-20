@@ -122,21 +122,22 @@ def parse_sim_params(args, cfg):
 def get_load_path(root, load_run=-1, checkpoint=-1):
     try:
         runs = os.listdir(root)
-        # TODO sort by date to handle change of month
-        runs.sort()
         if "exported" in runs:
             runs.remove("exported")
+        # 按目录修改时间排序，避免跨月时按名称排序出错（如 May 排在 Jul 之后）
+        runs.sort(key=lambda r: os.path.getmtime(os.path.join(root, r)))
         last_run = os.path.join(root, runs[-1])
     except:
         raise ValueError("No runs in this directory: " + root)
-    if load_run == -1:
+    if load_run == -1 or load_run == "-1":
         load_run = last_run
     else:
         load_run = os.path.join(root, load_run)
 
-    if checkpoint == -1:
+    if checkpoint == -1 or checkpoint == "-1":
         models = [file for file in os.listdir(load_run) if "model" in file]
-        models.sort(key=lambda m: "{0:0>15}".format(m))
+        # 按 checkpoint 数字排序，而非文件名字符串排序
+        models.sort(key=lambda m: int("".join(filter(str.isdigit, m)) or 0))
         model = models[-1]
     else:
         model = "model_{}.pt".format(checkpoint)

@@ -210,17 +210,19 @@ class OnPolicyRunner:
 
             # 定期保存模型
             if it % self.save_interval == 0:
+                # 先同步当前学习轮次，确保 checkpoint 内记录的 iter 是最新值（否则 resume 会从旧计数重新开始）
+                self.current_learning_iteration = it
                 self.save(os.path.join(self.log_dir, "model_{}.pt".format(it)))
 
             # 清空 episode 信息缓存
             ep_infos.clear()
 
-        # 更新当前学习轮次
-        self.current_learning_iteration = num_learning_iterations
+        # 更新当前学习轮次（累计值，而非本次增量）
+        self.current_learning_iteration = tot_iter
 
-        # 保存最终模型
+        # 保存最终模型（以累计轮次命名，避免续训后编号倒退）
         self.save(
-            os.path.join(self.log_dir, "model_{}.pt".format(num_learning_iterations))
+            os.path.join(self.log_dir, "model_{}.pt".format(tot_iter))
         )
 
     def log(self, locs, width=80, pad=35):
