@@ -265,6 +265,40 @@ def run(args):
 
     commands = commands_at(0.0)
 
+    # ---- 键盘遥操作（--teleop）----
+    # viewer 线程回调里改、主循环里读；纯 float 赋值受 GIL 保护，无需加锁。
+    kb = {"vx": 0.0, "heading": args.cmd_yaw, "height": args.cmd_height, "reset": False}
+
+    def key_callback(keycode):
+        # 注意：viewer 内置大量单字母快捷键（W线框/S阴影/R反射/数字键组显隐...）且无法拦截，
+        # 故遥操作只用方向键/PgUp/PgDn/空格等不冲突的键。
+        if not args.teleop:
+            return
+        if keycode == 265:            # ↑ 加速
+            # 上限 1.5 = 当前策略安全包线（encoder 高速估计偏置，1.8 会瞬态发散翻车，
+            # 详见 2026-07-21 排查：Isaac cmd 1.8 真实速度也只到 ~1.5）
+            kb["vx"] = min(kb["vx"] + 0.1, 1.5)
+        elif keycode == 264:          # ↓ 减速（可到倒车）
+            kb["vx"] = max(kb["vx"] - 0.1, -1.5)
+        elif keycode == 263:          # ← 左转（航向目标 +）
+            kb["heading"] = float(wrap_to_pi(np.array(kb["heading"] + 0.2)))
+        elif keycode == 262:          # → 右转
+            kb["heading"] = float(wrap_to_pi(np.array(kb["heading"] - 0.2)))
+        elif keycode == 266:          # PgUp 升高
+            kb["height"] = min(kb["height"] + 0.02, 0.40)
+        elif keycode == 267:          # PgDn 降低
+            kb["height"] = max(kb["height"] - 0.02, 0.20)
+        elif keycode in (32, 257):    # 空格 / 回车 急停
+            kb["vx"] = 0.0
+        elif keycode == 268:          # Home 复位（viewer 无此绑定，干净无副作用）
+            kb["reset"] = True
+            print("[遥操作] 复位请求...")
+            return
+        else:
+            return
+        print(f"[遥操作] vx={kb['vx']:+.1f} m/s  航向={math.degrees(kb['heading']):+.0f}°  "
+              f"高度={kb['height']:.2f} m")
+
     # 状态缓冲
     last_action = np.zeros(NUM_ACTIONS, dtype=np.float64)
     last_dof_pos = np.array([data.qpos[qpos_adr[i]] for i in range(NUM_ACTIONS)], dtype=np.float64)
@@ -298,12 +332,20 @@ def run(args):
     if args.render:
         try:
             import mujoco.viewer
-            viewer = mujoco.viewer.launch_passive(model, data)
+            viewer = mujoco.viewer.launch_passive(model, data, key_callback=key_callback)
         except Exception as e:  # noqa: BLE001
             print(f"警告：无法启动 viewer（{e}）；改为无渲染运行。")
             viewer = None
+    if args.teleop:
+        if viewer is None:
+            raise RuntimeError("遥操作模式需要 --render（viewer 启动失败或未开启）")
+        print("遥操作模式：点击 MuJoCo 窗口获得焦点后按键控制 —— "
+              "↑ 加速 0.1 | ↓ 减速 | ← 左转 | → 右转 | PgUp/PgDn 升降高度 | 空格/回车 急停 | "
+              "Home 复位。（字母键是 viewer 内置渲染快捷键，勿用）关闭窗口退出。")
 
     n_policy_steps = int(args.sim_time / (SIM_DT * DECIMATION))
+    if args.teleop:
+        n_policy_steps = 2 ** 31  # 遥操作不限时长，关窗退出
     print(f"开始仿真：{args.sim_time}s -> {n_policy_steps} 个策略步 "
           f"(vx={args.cmd_vx}, yaw={args.cmd_yaw}, height={args.cmd_height})")
     print("日志字段说明：")
@@ -322,8 +364,35 @@ def run(args):
     wall_start = time.perf_counter()
 
     for step in range(n_policy_steps):
+        # ---- 遥操作复位（Home 键）：回物理初始状态并清空控制器/历史缓冲 ----
+        if args.teleop and kb["reset"]:
+            kb["reset"] = False
+            mujoco.mj_resetData(model, data)
+            data.qpos[base_qadr + 2] = args.init_height
+            data.qpos[base_qadr + 3:base_qadr + 7] = np.array([1.0, 0.0, 0.0, 0.0])
+            for i in range(NUM_ACTIONS):
+                data.qpos[qpos_adr[i]] = DEFAULT_DOF_POS[i]
+            mujoco.mj_forward(model, data)
+            last_action = np.zeros(NUM_ACTIONS, dtype=np.float64)
+            last_dof_pos = read_dof_pos()
+            dof_pos = last_dof_pos.copy()
+            dof_vel = np.zeros(NUM_ACTIONS, dtype=np.float64)
+            kb["vx"] = 0.0
+            kb["heading"] = 0.0
+            base_quat_xyzw, base_ang_vel_body, base_lin_vel_body = read_base_state()
+            obs_history = np.tile(
+                build_obs(base_quat_xyzw, base_ang_vel_body, dof_pos, dof_vel,
+                          np.array([0.0, 0.0, kb["height"]]), last_action),
+                OBS_HISTORY_LENGTH).astype(np.float64)
+            print("[遥操作] 已复位（速度/航向清零，obs 历史按上电逻辑重填）")
+
         # ---- 策略推理（100Hz）----
-        commands = commands_at(step * policy_dt)
+        if args.teleop:
+            commands = np.array([kb["vx"], 0.0, kb["height"]], dtype=np.float64)
+            heading_target = kb["heading"]
+        else:
+            commands = commands_at(step * policy_dt)
+            heading_target = args.cmd_yaw
         # 关键：mj_step 只积分不刷新派生量，cvel 停留在上一子步（5ms 前）。
         # 不刷新的话 mj_objectVelocity 读到的角速度（策略的陀螺仪观测）滞后 5ms，
         # 静态站立无感，加速瞬态的快俯仰动力学会因此欠阻尼而向后掀翻。
@@ -339,7 +408,7 @@ def run(args):
             qx, qy, qz, qw = base_quat_xyzw
             heading = math.atan2(2.0 * (qx * qy + qw * qz), 1.0 - 2.0 * (qy * qy + qz * qz))
             commands[1] = float(np.clip(
-                1.5 * wrap_to_pi(np.array(args.cmd_yaw - heading)), -5.0, 5.0))
+                1.5 * wrap_to_pi(np.array(heading_target - heading)), -5.0, 5.0))
         obs = build_obs(base_quat_xyzw, base_ang_vel_body, dof_pos, dof_vel, commands, last_action)
 
         # 历史 FIFO：丢最旧、末尾追加最新（对齐 legged_robot.py:395-398）
@@ -348,8 +417,11 @@ def run(args):
         with torch.no_grad():
             obs_t = torch.from_numpy(obs).float().unsqueeze(0)
             hist_t = torch.from_numpy(obs_history).float().unsqueeze(0)
-            action_t, _latent = policy.act_inference(obs_t, hist_t)
+            action_t, latent_t = policy.act_inference(obs_t, hist_t)
         action = action_t.squeeze(0).cpu().numpy().astype(np.float64)
+        # latent 前 3 维被训练监督为 base_lin_vel*2.0（ppo.py:265，lin_vel scale=2），
+        # latent[1]/2 = 策略内部估计的前向速度，用于诊断"策略以为的速度"是否失真
+        latent = latent_t.squeeze(0).cpu().numpy().astype(np.float64)
 
         # ---- PD 内环（200Hz），顺序严格对齐训练：算力矩 -> 步进 -> 刷新 pos/vel ----
         # 训练每子步是 simulate 后 compute_dof_vel（legged_robot.py:111-115），最后一个
@@ -390,7 +462,8 @@ def run(args):
             wl = dof_vel[2] * 0.0625
             wr = dof_vel[5] * 0.0625
             print(f"[{step:5d}] y={base_y:+.3f} z={base_z:.3f} v_fwd={v_fwd:+.3f} "
-                  f"vy_w={vy_world:+.3f} 轮速l/r={wl:+.2f}/{wr:+.2f}m/s "
+                  f"v̂={latent[1]/2.0:+.3f} vy_w={vy_world:+.3f} "
+                  f"轮速l/r={wl:+.2f}/{wr:+.2f}m/s "
                   f"pg_yz=[{pg[1]:+.2f},{pg[2]:+.2f}] yaw令={commands[1]:+.2f} "
                   f"|a|max={np.abs(action).max():.3f}")
 
@@ -443,6 +516,9 @@ def main():
     p.add_argument("--no_heading_hold", dest="heading_hold", action="store_false",
                    help="关闭航向保持外环（训练是 heading 模式、yaw 通道=航向误差反馈；"
                         "关闭后 cmd_yaw 恒值直喂，偏航漂移将无人纠正，仅调试用）")
+    p.add_argument("--teleop", action="store_true",
+                   help="键盘遥操作（需 --render）：↑ 加速 ↓ 减速 ← 左转 → 右转 "
+                        "PgUp/PgDn 升降高度 空格/回车急停 Home 复位；关窗退出")
     p.set_defaults(realtime=True, hold=True, heading_hold=True)
     args = p.parse_args()
 

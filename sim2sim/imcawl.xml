@@ -16,7 +16,10 @@
 -->
 <mujoco model="imcawl">
   <compiler angle="radian" meshdir="../resources/robots/imcawl/meshes" autolimits="true"/>
-  <option timestep="0.005" gravity="0 0 -9.81" integrator="implicitfast"/>
+  <!-- cone=elliptic + impratio=10：轮式机器人标准配置。默认 pyramidal 摩擦锥对滚动接触有
+       切向力伪影——低速表现为无故缓慢爬行（后拉），高速放大成速度调节环振荡发散（1.8m/s 翻车）。 -->
+  <option timestep="0.005" gravity="0 0 -9.81" integrator="implicitfast"
+          cone="elliptic" impratio="10"/>
 
   <default>
     <joint damping="0" armature="0" frictionloss="0"/>

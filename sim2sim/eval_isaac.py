@@ -103,16 +103,18 @@ def main():
         with torch.no_grad():
             if stochastic:
                 actions = ac.act(obs, obs_history)
+                latent = ac.latent
             else:
-                actions, _ = policy(obs, obs_history)
+                actions, latent = policy(obs, obs_history)
         obs, _, _, dones, infos, obs_history = env.step(actions.detach())
         n_dones += int(dones[0].item())
         if step % 100 == 0 or dones[0].item():
             z = env.root_states[0, 2].item()
             pg = env.projected_gravity[0].cpu().numpy()
             v_fwd = env.base_lin_vel[0, 1].item()
+            v_hat = latent[0, 1].item() / 2.0  # latent 前3维=base_lin_vel*2（ppo.py:265）
             cmd = env.commands[0, :3].cpu().numpy()
-            print(f"[{step:5d}] z={z:.3f} v_fwd={v_fwd:+.3f} "
+            print(f"[{step:5d}] z={z:.3f} v_fwd={v_fwd:+.3f} v̂={v_hat:+.3f} "
                   f"pg_yz=[{pg[1]:+.2f},{pg[2]:+.2f}] "
                   f"cmd=[{cmd[0]:+.2f},{cmd[1]:+.2f},{cmd[2]:.2f}] done={int(dones[0].item())}")
             if dones[0].item():
