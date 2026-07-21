@@ -40,6 +40,7 @@ from .wheel_legged_vmc_flat.wheel_legged_vmc_flat_config import (
     WheelLeggedVMCFlatCfg,
     WheelLeggedVMCFlatCfgPPO,
 )
+from .mini_wheel_legged.mini_wheel_legged import MiniWheelLegged
 from .mini_wheel_legged.mini_wheel_legged_config import (
     Mini_WheelLeggedCfg,
     Mini_WheelLeggedCfgPPO,
@@ -65,7 +66,7 @@ task_registry.register(
 
 task_registry.register(
     "mini_wheel_legged",
-    LeggedRobot,
+    MiniWheelLegged,
     Mini_WheelLeggedCfg(),
     Mini_WheelLeggedCfgPPO(),
 )

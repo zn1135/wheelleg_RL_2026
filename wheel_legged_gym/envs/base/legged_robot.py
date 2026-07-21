@@ -474,6 +474,24 @@ class LeggedRobot(BaseTask):
                 )
             for s in range(len(props)):
                 props[s].restitution = self.restitution_coef[env_id]
+        # 逐环境接触柔度随机化（sim2sim：向 MuJoCo 软接触靠拢）。
+        # 用 getattr 守卫：仅当任务 config 定义了 randomize_compliance 才生效，
+        # 其他任务/旧 config 无此字段则自动跳过，完全向后兼容。
+        if getattr(self.cfg.domain_rand, "randomize_compliance", False):
+            if env_id == 0:
+                min_compliance, max_compliance = self.cfg.domain_rand.compliance_range
+                self.compliance_coef = (
+                    torch.rand(
+                        self.num_envs,
+                        dtype=torch.float,
+                        device=self.device,
+                        requires_grad=False,
+                    )
+                    * (max_compliance - min_compliance)
+                    + min_compliance
+                )
+            for s in range(len(props)):
+                props[s].compliance = self.compliance_coef[env_id].item()
         return props
 
     def _process_dof_props(self, props, env_id):

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  imcawl 轮足机器人 MuJoCo 模型（sim2sim 用）
+  由 resources/robots/imcawl/urdf/imcawl.urdf 手工转换而来，并做了部署验证所需的改动：
+    1. base_link 上挂 <freejoint>，使基座浮动（URDF 是固定基座，无法直接用于 sim2sim）。
+    2. 6 个 <motor> 力矩执行器，ctrlrange 对应 URDF effort（腿 ±30，轮 ±5）。
+       执行器声明顺序 = 策略 DOF 顺序 [lf0, lf1, l_wheel, rf0, rf1, r_wheel]。
+    3. base 碰撞用近似 box（URDF 的 base_link.STL 达 61MB，超 MuJoCo 面数上限无法加载）；
+       base 的 STL 仅作可视化。box 尺寸为估计值，因基座在正常站立时几乎不触地，影响可忽略。
+    4. 腿连杆（lf0/lf1/rf0/rf1）用 STL 网格碰撞（MuJoCo 自动取凸包，与 Isaac/PhysX 一致）；
+       轮子用解析圆柱碰撞（贴合真实胶面位置），避免 STL 凸包接触不稳。
+    5. 连杆惯性张量直接照抄 URDF（fullinertia 顺序：ixx iyy izz ixy ixz iyz）。
+    6. 左右腿关节 axis 符号与 URDF 一致（左 -1 0 0，右 1 0 0），务必勿改，否则动作方向相反。
+    7. 机器人碰撞体 conaffinity=0：自碰撞关闭（对齐训练 self_collisions=1），仅与地面碰撞。
+  时间步 0.005s 与训练一致（sim 200Hz，策略每 2 步推理一次 → 100Hz）。
+-->
+<mujoco model="imcawl">
+  <compiler angle="radian" meshdir="../resources/robots/imcawl/meshes" autolimits="true"/>
+  <option timestep="0.005" gravity="0 0 -9.81" integrator="implicitfast"/>
+
+  <default>
+    <joint damping="0" armature="0" frictionloss="0"/>
+    <!-- 摩擦滑动分量对齐 Isaac Gym 的 static/dynamic_friction=0.5（legged_robot_config.py:60-61）-->
+    <geom contype="1" conaffinity="1" condim="3" friction="0.5 0.005 0.0001"/>
+    <default class="visual">
+      <geom type="mesh" contype="0" conaffinity="0" group="2" density="0"/>
+    </default>
+    <default class="collision">
+      <!-- conaffinity=0：机器人碰撞体之间互不碰撞（base box vs 轮子等），只与地面(contype/conaffinity=1)碰撞。
+           对齐 Isaac Gym 训练配置 self_collisions=1（自碰撞关闭），否则低蹲时轮子撞基座盒会产生训练时没见过的接触力。 -->
+      <geom group="3" contype="1" conaffinity="0"/>
+    </default>
+    <motor ctrllimited="true"/>
+  </default>
+
+  <asset>
+    <!-- base_link.STL 达 61MB、面数超 MuJoCo 上限(20万)，故不加载；基座可视化用 box 近似 -->
+    <mesh name="lf0_link"     file="lf0_link.STL"/>
+    <mesh name="lf1_link"     file="lf1_link.STL"/>
+    <mesh name="l_wheel_link" file="l_wheel_link.STL"/>
+    <mesh name="rf0_link"     file="rf0_link.STL"/>
+    <mesh name="rf1_link"     file="rf1_link.STL"/>
+    <mesh name="r_wheel_link" file="r_wheel_link.STL"/>
+
+    <material name="metal" rgba="0.75 0.75 0.75 1"/>
+    <texture name="grid" type="2d" builtin="checker" rgb1="0.2 0.3 0.4" rgb2="0.1 0.15 0.2"
+             width="512" height="512"/>
+    <material name="grid" texture="grid" texrepeat="4 4" reflectance="0.1"/>
+  </asset>
+
+  <worldbody>
+    <light directional="true" pos="0 0 4" dir="0 0 -1" diffuse="0.8 0.8 0.8"/>
+    <geom name="floor" type="plane" size="20 20 0.1" material="grid" condim="3"
+          friction="0.5 0.005 0.0001"/>
+
+    <body name="base_link" pos="0 0 0.35">
+      <freejoint name="floating_base"/>
+      <inertial pos="-0.00320329590275952 -0.00232153751605896 0.0582726245201776"
+                mass="9.11531220901422"
+                fullinertia="0.0274455503544563 0.0138876649959725 0.0291645123153101
+                             -3.8368445769211e-05 -3.9546470233678e-07 1.15247625253083e-05"/>
+      <geom class="visual" type="box" size="0.18 0.08 0.06" pos="0 0 0.06" material="metal"/>
+      <geom class="collision" type="box" size="0.18 0.08 0.06" pos="0 0 0.06"/>
+      <site name="imu" pos="0 0 0" size="0.01" rgba="1 0 0 1"/>
+
+      <!-- 左腿 -->
+      <body name="lf0_link" pos="-0.17865 0 0.09">
+        <joint name="lf0_joint" type="hinge" axis="-1 0 0" range="-0.8 1.9"/>
+        <inertial pos="0.00270651110954748 0.000637033380984982 -0.145506188241601"
+                  mass="0.351283706943026"
+                  fullinertia="0.00145377762173734 0.00136091715210196 0.000144677169106704
+                               7.38647050342215e-07 4.92627488200562e-06 2.46862332961779e-05"/>
+        <geom class="visual" mesh="lf0_link" material="metal"/>
+        <geom class="collision" type="mesh" mesh="lf0_link"/>
+        <body name="lf1_link" pos="-0.026 0 -0.21">
+          <joint name="lf1_joint" type="hinge" axis="-1 0 0" range="-2.4 2.4"/>
+          <inertial pos="-0.000850510164682433 0.00107666092275464 -0.166656941936174"
+                    mass="0.624467028060214"
+                    fullinertia="0.00457903877279553 0.00432606076800462 0.000325813470593527
+                                 1.73606207520501e-08 -2.80029011009679e-08 0.000103495585582633"/>
+          <geom class="visual" mesh="lf1_link" material="metal"/>
+          <geom class="collision" type="mesh" mesh="lf1_link"/>
+          <body name="l_wheel_link" pos="-0.0432 0 -0.25">
+            <joint name="l_wheel_joint" type="hinge" axis="-1 0 0" limited="false"/>
+            <inertial pos="0.0108250604590236 0 0"
+                      mass="0.257421598889876"
+                      fullinertia="0.000659923797581141 0.000343928011379725 0.000343928011379725
+                                   0 0 0"/>
+            <geom class="visual" mesh="l_wheel_link" material="metal"/>
+            <!-- 轮胶面实测（STL 顶点范围）在 x∈[0, 0.025]，单侧偏置，圆柱须与之对齐 -->
+            <geom class="collision" type="cylinder" fromto="0 0 0  0.025 0 0" size="0.0625"/>
+          </body>
+        </body>
+      </body>
+
+      <!-- 右腿 -->
+      <body name="rf0_link" pos="0.17865 0 0.09">
+        <joint name="rf0_joint" type="hinge" axis="1 0 0" range="-1.9 0.8"/>
+        <inertial pos="-0.00270651044534218 0.000634856613628561 -0.145506481490274"
+                  mass="0.351283712720675"
+                  fullinertia="0.00145377762218643 0.00136091713941202 0.000144677182302666
+                               -7.3699551841945e-07 -4.92605378444753e-06 2.46861862696675e-05"/>
+        <geom class="visual" mesh="rf0_link" material="metal"/>
+        <geom class="collision" type="mesh" mesh="rf0_link"/>
+        <body name="rf1_link" pos="0.026 0 -0.21">
+          <joint name="rf1_joint" type="hinge" axis="1 0 0" range="-2.4 2.4"/>
+          <inertial pos="0.000850510164682683 0.00108704174866658 -0.166656941936173"
+                    mass="0.624467028060215"
+                    fullinertia="0.00457903877279553 0.00432606076800462 0.000325813470593528
+                                 1.73606207583112e-08 2.80029010963341e-08 0.000103482290449355"/>
+          <geom class="visual" mesh="rf1_link" material="metal"/>
+          <geom class="collision" type="mesh" mesh="rf1_link"/>
+          <body name="r_wheel_link" pos="0.0432 0 -0.25">
+            <joint name="r_wheel_joint" type="hinge" axis="1 0 0" limited="false"/>
+            <inertial pos="-0.0108250604590236 0 0"
+                      mass="0.257421598889876"
+                      fullinertia="0.000659923797581141 0.000343928011379725 0.000343928011379725
+                                   0 0 0"/>
+            <geom class="visual" mesh="r_wheel_link" material="metal"/>
+            <!-- 轮胶面实测（STL 顶点范围）在 x∈[-0.025, 0]，单侧偏置，圆柱须与之对齐 -->
+            <geom class="collision" type="cylinder" fromto="-0.025 0 0  0 0 0" size="0.0625"/>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <!-- 顺序必须与策略 DOF 顺序一致：[lf0, lf1, l_wheel, rf0, rf1, r_wheel] -->
+    <motor name="lf0_joint"     joint="lf0_joint"     gear="1" ctrlrange="-30 30"/>
+    <motor name="lf1_joint"     joint="lf1_joint"     gear="1" ctrlrange="-30 30"/>
+    <motor name="l_wheel_joint" joint="l_wheel_joint" gear="1" ctrlrange="-5 5"/>
+    <motor name="rf0_joint"     joint="rf0_joint"     gear="1" ctrlrange="-30 30"/>
+    <motor name="rf1_joint"     joint="rf1_joint"     gear="1" ctrlrange="-30 30"/>
+    <motor name="r_wheel_joint" joint="r_wheel_joint" gear="1" ctrlrange="-5 5"/>
+  </actuator>
+
+  <sensor>
+    <!-- 备用：脚本主要直接从 qpos/qvel + mj_objectVelocity 读取状态，这些传感器仅供调试 -->
+    <framequat   name="base_quat"    objtype="site" objname="imu"/>
+    <gyro        name="base_gyro"    site="imu"/>
+    <accelerometer name="base_acc"   site="imu"/>
+  </sensor>
+</mujoco>
