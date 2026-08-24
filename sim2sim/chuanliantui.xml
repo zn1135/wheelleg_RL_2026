@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  chuanliantui 串联腿轮足机器人 MuJoCo 模型(sim2sim 用)
+  由 resources/robots/chuanliantui/urdf/chuanliantui.urdf(git a43140d 重排版)手工转换:
+    1. base_link 挂 <freejoint> 浮动基座。
+    2. 6 个 <motor> 力矩执行器,ctrlrange 对应 URDF effort(腿 DM8009P ±40,
+       轮改装 M3508 ±3.9)。声明顺序 = 策略 DOF 顺序(URDF 字母序)
+       [lf0, lf1, lfwheel, rf0, rf1, rfwheel]。
+    3. base_link.STL 原 73 万面超 MuJoCo 上限,改用降面版 base_link_simple.STL
+       (trimesh quadric 降面至 146,993 面,几何边界不变);碰撞取其凸包,
+       正常站立时 base 不触地,仅摔倒时参与接触,精度足够。
+    4. 腿连杆(lf0/lf1/rf0/rf1)STL 网格碰撞(MuJoCo 自动取凸包,与 Isaac 一致);
+       轮子用解析圆柱:胎面半径 0.0505 实测自 STL(r>0.05 顶点带 0.0501~0.051),
+       轴向胶面带偏置 lf +z / rf −z(STL y_old 镜像换算),宽 16mm 覆盖实测胶面。
+    5. 连杆惯性张量照抄重排 URDF(fullinertia 顺序:ixx iyy izz ixy ixz iyz;
+       六分量在坐标系重排中数学不变)。
+    6. **mesh 方向补偿**:STL 顶点仍是原始 SolidWorks link 坐标系,而 URDF 已重排
+       (各 link 系绕原点转 K_L),故每个引用 mesh 的 geom 带 euler 补偿:
+       K 为对合阵(A: euler "1.5708 0 3.14159";B: euler "-1.5708 0 3.14159"),
+       base/rf0/lf1 属 A 组,rf1/rfwheel/lf0/lfwheel 属 B 组。勿删,否则外观/碰撞全错。
+    7. 关节 axis 统一 "0 0 1"(重排后约定),限位照抄 URDF(髋 ±100 等效不限,
+       膝 ±0.77/0.12 机械限位,轮不限转角)。
+    8. 机器人碰撞体 conaffinity=0:自碰撞关闭(对齐训练 self_collisions=1),仅与地面碰。
+  时间步 0.005s 与训练一致(sim 200Hz,策略每 2 步推理一次 → 100Hz)。
+-->
+<mujoco model="chuanliantui">
+  <compiler angle="radian" meshdir="../resources/robots/chuanliantui/meshes" autolimits="true"/>
+  <!-- cone=elliptic + impratio=10:轮式机器人标准配置(见 imcawl.xml 注释,防低速爬行/高速发散) -->
+  <option timestep="0.005" gravity="0 0 -9.81" integrator="implicitfast"
+          cone="elliptic" impratio="10"/>
+
+  <default>
+    <joint damping="0" armature="0" frictionloss="0"/>
+    <!-- 摩擦滑动分量对齐 Isaac Gym static/dynamic_friction=0.5 -->
+    <geom contype="1" conaffinity="1" condim="3" friction="0.5 0.005 0.0001"/>
+    <default class="visual">
+      <geom type="mesh" contype="0" conaffinity="0" group="2" density="0"/>
+    </default>
+    <default class="collision">
+      <!-- conaffinity=0:机器人碰撞体互不碰撞,只与地面碰(对齐 self_collisions=1) -->
+      <geom group="3" contype="1" conaffinity="0"/>
+    </default>
+    <motor ctrllimited="true"/>
+  </default>
+
+  <asset>
+    <mesh name="base_simple" file="base_link_simple.STL"/>
+    <mesh name="lf0"     file="lf0.STL"/>
+    <mesh name="lf1"     file="lf1.STL"/>
+    <mesh name="lfwheel" file="lfwheel.STL"/>
+    <mesh name="rf0"     file="rf0.STL"/>
+    <mesh name="rf1"     file="rf1.STL"/>
+    <mesh name="rfwheel" file="rfwheel.STL"/>
+
+    <material name="metal" rgba="0.75 0.75 0.75 1"/>
+    <texture name="grid" type="2d" builtin="checker" rgb1="0.2 0.3 0.4" rgb2="0.1 0.15 0.2"
+             width="512" height="512"/>
+    <material name="grid" texture="grid" texrepeat="4 4" reflectance="0.1"/>
+  </asset>
+
+  <worldbody>
+    <light directional="true" pos="0 0 4" dir="0 0 -1" diffuse="0.8 0.8 0.8"/>
+    <geom name="floor" type="plane" size="20 20 0.1" material="grid" condim="3"
+          friction="0.5 0.005 0.0001"/>
+
+    <body name="base_link" pos="0 0 0.35">
+      <freejoint name="floating_base"/>
+      <inertial pos="0.00602877749963024 -0.000229808244297233 -0.00910941306810902"
+                mass="9.25503219542145"
+                fullinertia="0.0180319947417155 0.0417155474811024 0.0362971613813686
+                             3.87836365794507e-05 0.000148435003779885 3.81310517235457e-06"/>
+      <geom class="visual" mesh="base_simple" euler="1.5708 0 3.14159" material="metal"/>
+      <geom class="collision" mesh="base_simple" euler="1.5708 0 3.14159"/>
+      <site name="imu" pos="0 0 0" size="0.01" rgba="1 0 0 1"/>
+
+      <!-- 左腿(lf,y+) -->
+      <body name="lf0" pos="0.0114 0.17857 0.02352" euler="-1.5707926535897934 0 0">
+        <joint name="lf0" type="hinge" axis="0 0 1" range="-100 100"/>
+        <inertial pos="0.051984 0.052954 -0.00069153"
+                  mass="1.0986"
+                  fullinertia="0.0011158 0.002379 0.001383
+                               -3.132e-06 -0.00038066 -2.1688e-06"/>
+        <geom class="visual" mesh="lf0" euler="-1.5708 0 3.14159" material="metal"/>
+        <geom class="collision" mesh="lf0" euler="-1.5708 0 3.14159"/>
+        <body name="lf1" pos="0.1651 0.12977 0.0115" euler="3.141592653589793 0 0">
+          <joint name="lf1" type="hinge" axis="0 0 1" range="-0.77 0.12"/>
+          <inertial pos="-0.0781422112156441 -0.0861551316847654 -0.0103199473609227"
+                    mass="0.41485841896248"
+                    fullinertia="0.00263502302954763 0.00449643859324459 0.00188836978664283
+                                 2.36139743274429e-06 0.0020692013423577 -3.24221462326285e-06"/>
+          <geom class="visual" mesh="lf1" euler="1.5708 0 3.14159" material="metal"/>
+          <geom class="collision" mesh="lf1" euler="1.5708 0 3.14159"/>
+          <body name="lfwheel" pos="-0.1651 -0.18773 -0.028" euler="3.141592653589793 0 0">
+            <joint name="lfwheel" type="hinge" axis="0 0 1" limited="false"/>
+            <inertial pos="-0.000400666391112275 0.000274095029669408 0.00475914549166856"
+                      mass="0.344781890909486"
+                      fullinertia="0.000322682127933985 0.000620367874493372 0.000322626449503125
+                                   7.93831293033382e-08 -2.3488987779169e-06 -3.39973516878495e-08"/>
+            <geom class="visual" mesh="lfwheel" euler="-1.5708 0 3.14159" material="metal"/>
+            <!-- 胶面带实测 z∈[-0.0045,+0.0205](STL y_old 镜像),圆柱覆盖其中心带 -->
+            <geom class="collision" type="cylinder" fromto="0 0 0  0 0 0.016" size="0.0505"/>
+          </body>
+        </body>
+      </body>
+
+      <!-- 右腿(rf,y−) -->
+      <body name="rf0" pos="0.0114 -0.17693 0.02352" euler="1.5708 0 0">
+        <joint name="rf0" type="hinge" axis="0 0 1" range="-100 100"/>
+        <inertial pos="0.051984 -0.052954 -0.00069153"
+                  mass="1.0986"
+                  fullinertia="0.0011158 0.002379 0.001383
+                               3.132e-06 -0.00038066 2.1688e-06"/>
+        <geom class="visual" mesh="rf0" euler="1.5708 0 3.14159" material="metal"/>
+        <geom class="collision" mesh="rf0" euler="1.5708 0 3.14159"/>
+        <body name="rf1" pos="0.1651 -0.12977 0.0115" euler="3.141592653589793 0 0">
+          <joint name="rf1" type="hinge" axis="0 0 1" range="-0.12 0.77"/>
+          <inertial pos="-0.0781468381163299 0.0861497864597888 -0.0103199473600937"
+                    mass="0.414858419056494"
+                    fullinertia="0.00263411828738831 0.00449630400849374 0.00188913994404996
+                                 -2.34873576369948e-06 0.00206928433761022 3.25463260232106e-06"/>
+          <geom class="visual" mesh="rf1" euler="-1.5708 0 3.14159" material="metal"/>
+          <geom class="collision" mesh="rf1" euler="-1.5708 0 3.14159"/>
+          <body name="rfwheel" pos="-0.1651 0.18773 -0.028">
+            <joint name="rfwheel" type="hinge" axis="0 0 1" limited="false"/>
+            <inertial pos="-0.000265947124488963 0.000406120388831283 -0.00475914549240664"
+                      mass="0.344781890891785"
+                      fullinertia="0.000322531613191001 0.000620367874493321 0.000322776964245954
+                                   -3.23871644327316e-08 -2.34585830896994e-06 8.00535601875778e-08"/>
+            <geom class="visual" mesh="rfwheel" euler="-1.5708 0 3.14159" material="metal"/>
+            <!-- 胶面带实测 z∈[-0.0205,+0.0045],与左轮镜像 -->
+            <geom class="collision" type="cylinder" fromto="0 0 0  0 0 -0.016" size="0.0505"/>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <!-- 顺序必须与策略 DOF 顺序一致:[lf0, lf1, lfwheel, rf0, rf1, rfwheel] -->
+    <motor name="lf0"     joint="lf0"     gear="1" ctrlrange="-40 40"/>
+    <motor name="lf1"     joint="lf1"     gear="1" ctrlrange="-40 40"/>
+    <motor name="lfwheel" joint="lfwheel" gear="1" ctrlrange="-3.9 3.9"/>
+    <motor name="rf0"     joint="rf0"     gear="1" ctrlrange="-40 40"/>
+    <motor name="rf1"     joint="rf1"     gear="1" ctrlrange="-40 40"/>
+    <motor name="rfwheel" joint="rfwheel" gear="1" ctrlrange="-3.9 3.9"/>
+  </actuator>
+
+  <sensor>
+    <!-- 备用:脚本主要直接从 qpos/qvel + mj_objectVelocity 读取状态 -->
+    <framequat   name="base_quat" objtype="site" objname="imu"/>
+    <gyro        name="base_gyro" site="imu"/>
+    <accelerometer name="base_acc" site="imu"/>
+  </sensor>
+</mujoco>

@@ -45,6 +45,11 @@ from .mini_wheel_legged.mini_wheel_legged_config import (
     Mini_WheelLeggedCfg,
     Mini_WheelLeggedCfgPPO,
 )
+from .chuanliantui.chuanliantui import Chuanliantui
+from .chuanliantui.chuanliantui_config import (
+    ChuanliantuiCfg,
+    ChuanliantuiCfgPPO,
+)
 
 
 import os
@@ -69,6 +74,13 @@ task_registry.register(
     MiniWheelLegged,
     Mini_WheelLeggedCfg(),
     Mini_WheelLeggedCfgPPO(),
+)
+
+task_registry.register(
+    "chuanliantui",
+    Chuanliantui,
+    ChuanliantuiCfg(),
+    ChuanliantuiCfgPPO(),
 )
 
 

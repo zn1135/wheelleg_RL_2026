@@ -14,7 +14,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="1.5707963267948966 0 3.141592653589793" />
             <geometry>
-                <mesh filename="package://chuanliantui/meshes/base_link.STL" />
+                <mesh filename="../meshes/base_link.STL" />
             </geometry>
             <material name="">
                 <color rgba="0.866666666666667 0.909803921568627 1 1" />
@@ -23,7 +23,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="1.5707963267948966 0 3.141592653589793" />
             <geometry>
-                <mesh filename="package://chuanliantui/meshes/base_link.STL" />
+                <mesh filename="../meshes/base_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -36,7 +36,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="1.5707963267948966 0 3.141592653589793" />
             <geometry>
-                <mesh filename="package://chuanliantui/meshes/rf0.STL" />
+                <mesh filename="../meshes/rf0.STL" />
             </geometry>
             <material name="">
                 <color rgba="1 1 1 1" />
@@ -45,7 +45,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="1.5707963267948966 0 3.141592653589793" />
             <geometry>
-                <mesh filename="package://chuanliantui/meshes/rf0.STL" />
+                <mesh filename="../meshes/rf0.STL" />
             </geometry>
         </collision>
     </link>
@@ -66,7 +66,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="-1.5707963267948966 0 3.141592653589793" />
             <geometry>
-                <mesh filename="package://chuanliantui/meshes/rf1.STL" />
+                <mesh filename="../meshes/rf1.STL" />
             </geometry>
             <material name="">
                 <color rgba="1 1 1 1" />
@@ -75,7 +75,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="-1.5707963267948966 0 3.141592653589793" />
             <geometry>
-                <mesh filename="package://chuanliantui/meshes/rf1.STL" />
+                <mesh filename="../meshes/rf1.STL" />
             </geometry>
         </collision>
     </link>
@@ -96,7 +96,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="-1.5707963267948966 0 3.141592653589793" />
             <geometry>
-                <mesh filename="package://chuanliantui/meshes/rfwheel.STL" />
+                <mesh filename="../meshes/rfwheel.STL" />
             </geometry>
             <material name="">
                 <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
@@ -105,7 +105,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="-1.5707963267948966 0 3.141592653589793" />
             <geometry>
-                <mesh filename="package://chuanliantui/meshes/rfwheel.STL" />
+                <mesh filename="../meshes/rfwheel.STL" />
             </geometry>
         </collision>
     </link>
@@ -127,7 +127,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="-1.5707963267948966 0 3.141592653589793" />
             <geometry>
-                <mesh filename="package://chuanliantui/meshes/lf0.STL" />
+                <mesh filename="../meshes/lf0.STL" />
             </geometry>
             <material name="">
                 <color rgba="1 1 1 1" />
@@ -136,7 +136,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="-1.5707963267948966 0 3.141592653589793" />
             <geometry>
-                <mesh filename="package://chuanliantui/meshes/lf0.STL" />
+                <mesh filename="../meshes/lf0.STL" />
             </geometry>
         </collision>
     </link>
@@ -157,7 +157,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="1.5707963267948966 0 3.141592653589793" />
             <geometry>
-                <mesh filename="package://chuanliantui/meshes/lf1.STL" />
+                <mesh filename="../meshes/lf1.STL" />
             </geometry>
             <material name="">
                 <color rgba="1 1 1 1" />
@@ -166,7 +166,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="1.5707963267948966 0 3.141592653589793" />
             <geometry>
-                <mesh filename="package://chuanliantui/meshes/lf1.STL" />
+                <mesh filename="../meshes/lf1.STL" />
             </geometry>
         </collision>
     </link>
@@ -187,7 +187,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="-1.5707963267948966 0 3.141592653589793" />
             <geometry>
-                <mesh filename="package://chuanliantui/meshes/lfwheel.STL" />
+                <mesh filename="../meshes/lfwheel.STL" />
             </geometry>
             <material name="">
                 <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
@@ -196,7 +196,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="-1.5707963267948966 0 3.141592653589793" />
             <geometry>
-                <mesh filename="package://chuanliantui/meshes/lfwheel.STL" />
+                <mesh filename="../meshes/lfwheel.STL" />
             </geometry>
         </collision>
     </link>
