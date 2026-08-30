@@ -16,7 +16,8 @@
        六分量在坐标系重排中数学不变)。
     6. **mesh 方向补偿**:STL 顶点仍是原始 SolidWorks link 坐标系,而 URDF 已重排
        (各 link 系绕原点转 K_L),故每个引用 mesh 的 geom 带 euler 补偿:
-       K 为对合阵(A: euler "1.5708 0 3.14159";B: euler "-1.5708 0 3.14159"),
+       K 为对合阵(A: quat "0 0 0.7071067812 0.7071067812";
+       B: quat "0 0 -0.7071067812 0.7071067812"),
        base/rf0/lf1 属 A 组,rf1/rfwheel/lf0/lfwheel 属 B 组。勿删,否则外观/碰撞全错。
     7. 关节 axis 统一 "0 0 1"(重排后约定),限位照抄 URDF(髋 ±100 等效不限,
        膝 ±0.77/0.12 机械限位,轮不限转角)。
@@ -38,7 +39,7 @@
     </default>
     <default class="collision">
       <!-- conaffinity=0:机器人碰撞体互不碰撞,只与地面碰(对齐 self_collisions=1) -->
-      <geom group="3" contype="1" conaffinity="0"/>
+      <geom type="mesh" group="3" contype="1" conaffinity="0"/>
     </default>
     <motor ctrllimited="true"/>
   </default>
@@ -69,8 +70,8 @@
                 mass="9.25503219542145"
                 fullinertia="0.0180319947417155 0.0417155474811024 0.0362971613813686
                              3.87836365794507e-05 0.000148435003779885 3.81310517235457e-06"/>
-      <geom class="visual" mesh="base_simple" euler="1.5708 0 3.14159" material="metal"/>
-      <geom class="collision" mesh="base_simple" euler="1.5708 0 3.14159"/>
+      <geom class="visual" mesh="base_simple" quat="0 0 0.7071067812 0.7071067812" material="metal"/>
+      <geom class="collision" mesh="base_simple" quat="0 0 0.7071067812 0.7071067812"/>
       <site name="imu" pos="0 0 0" size="0.01" rgba="1 0 0 1"/>
 
       <!-- 左腿(lf,y+) -->
@@ -80,23 +81,23 @@
                   mass="1.0986"
                   fullinertia="0.0011158 0.002379 0.001383
                                -3.132e-06 -0.00038066 -2.1688e-06"/>
-        <geom class="visual" mesh="lf0" euler="-1.5708 0 3.14159" material="metal"/>
-        <geom class="collision" mesh="lf0" euler="-1.5708 0 3.14159"/>
+        <geom class="visual" mesh="lf0" quat="0 0 -0.7071067812 0.7071067812" material="metal"/>
+        <geom class="collision" mesh="lf0" quat="0 0 -0.7071067812 0.7071067812"/>
         <body name="lf1" pos="0.1651 0.12977 0.0115" euler="3.141592653589793 0 0">
           <joint name="lf1" type="hinge" axis="0 0 1" range="-0.77 0.12"/>
           <inertial pos="-0.0781422112156441 -0.0861551316847654 -0.0103199473609227"
                     mass="0.41485841896248"
                     fullinertia="0.00263502302954763 0.00449643859324459 0.00188836978664283
                                  2.36139743274429e-06 0.0020692013423577 -3.24221462326285e-06"/>
-          <geom class="visual" mesh="lf1" euler="1.5708 0 3.14159" material="metal"/>
-          <geom class="collision" mesh="lf1" euler="1.5708 0 3.14159"/>
+          <geom class="visual" mesh="lf1" quat="0 0 0.7071067812 0.7071067812" material="metal"/>
+          <geom class="collision" mesh="lf1" quat="0 0 0.7071067812 0.7071067812"/>
           <body name="lfwheel" pos="-0.1651 -0.18773 -0.028" euler="3.141592653589793 0 0">
             <joint name="lfwheel" type="hinge" axis="0 0 1" limited="false"/>
             <inertial pos="-0.000400666391112275 0.000274095029669408 0.00475914549166856"
                       mass="0.344781890909486"
                       fullinertia="0.000322682127933985 0.000620367874493372 0.000322626449503125
                                    7.93831293033382e-08 -2.3488987779169e-06 -3.39973516878495e-08"/>
-            <geom class="visual" mesh="lfwheel" euler="-1.5708 0 3.14159" material="metal"/>
+            <geom class="visual" mesh="lfwheel" quat="0 0 -0.7071067812 0.7071067812" material="metal"/>
             <!-- 胶面带实测 z∈[-0.0045,+0.0205](STL y_old 镜像),圆柱覆盖其中心带 -->
             <geom class="collision" type="cylinder" fromto="0 0 0  0 0 0.016" size="0.0505"/>
           </body>
@@ -110,23 +111,23 @@
                   mass="1.0986"
                   fullinertia="0.0011158 0.002379 0.001383
                                3.132e-06 -0.00038066 2.1688e-06"/>
-        <geom class="visual" mesh="rf0" euler="1.5708 0 3.14159" material="metal"/>
-        <geom class="collision" mesh="rf0" euler="1.5708 0 3.14159"/>
+        <geom class="visual" mesh="rf0" quat="0 0 0.7071067812 0.7071067812" material="metal"/>
+        <geom class="collision" mesh="rf0" quat="0 0 0.7071067812 0.7071067812"/>
         <body name="rf1" pos="0.1651 -0.12977 0.0115" euler="3.141592653589793 0 0">
           <joint name="rf1" type="hinge" axis="0 0 1" range="-0.12 0.77"/>
           <inertial pos="-0.0781468381163299 0.0861497864597888 -0.0103199473600937"
                     mass="0.414858419056494"
                     fullinertia="0.00263411828738831 0.00449630400849374 0.00188913994404996
                                  -2.34873576369948e-06 0.00206928433761022 3.25463260232106e-06"/>
-          <geom class="visual" mesh="rf1" euler="-1.5708 0 3.14159" material="metal"/>
-          <geom class="collision" mesh="rf1" euler="-1.5708 0 3.14159"/>
+          <geom class="visual" mesh="rf1" quat="0 0 -0.7071067812 0.7071067812" material="metal"/>
+          <geom class="collision" mesh="rf1" quat="0 0 -0.7071067812 0.7071067812"/>
           <body name="rfwheel" pos="-0.1651 0.18773 -0.028">
             <joint name="rfwheel" type="hinge" axis="0 0 1" limited="false"/>
             <inertial pos="-0.000265947124488963 0.000406120388831283 -0.00475914549240664"
                       mass="0.344781890891785"
                       fullinertia="0.000322531613191001 0.000620367874493321 0.000322776964245954
                                    -3.23871644327316e-08 -2.34585830896994e-06 8.00535601875778e-08"/>
-            <geom class="visual" mesh="rfwheel" euler="-1.5708 0 3.14159" material="metal"/>
+            <geom class="visual" mesh="rfwheel" quat="0 0 -0.7071067812 0.7071067812" material="metal"/>
             <!-- 胶面带实测 z∈[-0.0205,+0.0045],与左轮镜像 -->
             <geom class="collision" type="cylinder" fromto="0 0 0  0 0 -0.016" size="0.0505"/>
           </body>

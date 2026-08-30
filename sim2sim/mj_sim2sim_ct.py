@@ -69,6 +69,9 @@ NUM_ENCODER_OBS = NUM_OBS * OBS_HISTORY_LENGTH  # 135
 LATENT_DIM = 3
 
 DEFAULT_DOF_POS = np.array([-0.06, 0.10, 0.0, 0.06, -0.10, 0.0], dtype=np.float64)
+# PhysX 在第一次步进时会把 ±11 rad 回绕到 [-π, π]，MuJoCo 复位时需显式对齐。
+STANDUP_DOF_POS = np.array([11.0, 0.0, 0.0, -11.0, 0.0, 0.0], dtype=np.float64)
+STANDUP_BASE_HEIGHT = 0.156
 P_GAINS = np.array([10.0, 10.0, 0.0, 10.0, 10.0, 0.0], dtype=np.float64)
 D_GAINS = np.array([1.0, 1.0, 0.1, 1.0, 1.0, 0.1], dtype=np.float64)
 TORQUE_LIMITS = np.array([40.0, 40.0, 3.9, 40.0, 40.0, 3.9], dtype=np.float64)
@@ -246,13 +249,21 @@ def run(args):
     base_qadr = model.jnt_qposadr[base_jid]
     base_vadr = model.jnt_dofadr[base_jid]
 
-    # 初始姿态：基座高度 + 默认关节角
-    mujoco.mj_resetData(model, data)
-    data.qpos[base_qadr + 2] = args.init_height
-    data.qpos[base_qadr + 3:base_qadr + 7] = np.array([1.0, 0.0, 0.0, 0.0])  # wxyz 单位四元数
-    for i in range(NUM_ACTIONS):
-        data.qpos[qpos_adr[i]] = DEFAULT_DOF_POS[i]
-    mujoco.mj_forward(model, data)
+    def reset_sim_state(prone):
+        mujoco.mj_resetData(model, data)
+        if prone:
+            data.qpos[base_qadr + 2] = STANDUP_BASE_HEIGHT
+            data.qpos[base_qadr + 3:base_qadr + 7] = np.array([1.0, 0.0, 0.0, 0.0])
+            initial_dof_pos = wrap_to_pi(STANDUP_DOF_POS)
+        else:
+            data.qpos[base_qadr + 2] = args.init_height
+            data.qpos[base_qadr + 3:base_qadr + 7] = np.array([1.0, 0.0, 0.0, 0.0])
+            initial_dof_pos = DEFAULT_DOF_POS
+        for i in range(NUM_ACTIONS):
+            data.qpos[qpos_adr[i]] = initial_dof_pos[i]
+        mujoco.mj_forward(model, data)
+
+    reset_sim_state(args.standup)
 
     # 命令 [vx, yaw_rate, height]；vx/yaw 经 cmd_delay 后在 cmd_ramp 秒内线性爬升到目标
     commands_target = np.array([args.cmd_vx, args.cmd_yaw, args.cmd_height], dtype=np.float64)
@@ -267,7 +278,7 @@ def run(args):
 
     # ---- 键盘遥操作（--teleop）----
     # viewer 线程回调里改、主循环里读；纯 float 赋值受 GIL 保护，无需加锁。
-    kb = {"vx": 0.0, "heading": args.cmd_yaw, "height": args.cmd_height, "reset": False}
+    kb = {"vx": 0.0, "heading": args.cmd_yaw, "height": args.cmd_height, "reset_prone": None}
 
     def key_callback(keycode):
         # 注意：viewer 内置大量单字母快捷键（W线框/S阴影/R反射/数字键组显隐...）且无法拦截，
@@ -291,8 +302,12 @@ def run(args):
         elif keycode in (32, 257):    # 空格 / 回车 急停
             kb["vx"] = 0.0
         elif keycode == 268:          # Home 复位（viewer 无此绑定，干净无副作用）
-            kb["reset"] = True
+            kb["reset_prone"] = args.standup
             print("[遥操作] 复位请求...")
+            return
+        elif keycode == 269:          # End 固定恢复趴姿
+            kb["reset_prone"] = True
+            print("[遥操作] 恢复趴姿请求...")
             return
         else:
             return
@@ -341,7 +356,7 @@ def run(args):
             raise RuntimeError("遥操作模式需要 --render（viewer 启动失败或未开启）")
         print("遥操作模式：点击 MuJoCo 窗口获得焦点后按键控制 —— "
               "↑ 加速 0.1 | ↓ 减速 | ← 左转 | → 右转 | PgUp/PgDn 升降高度 | 空格/回车 急停 | "
-              "Home 复位。（字母键是 viewer 内置渲染快捷键，勿用）关闭窗口退出。")
+              "Home 复位 | End 恢复趴姿。（字母键是 viewer 内置渲染快捷键，勿用）关闭窗口退出。")
 
     n_policy_steps = int(args.sim_time / (SIM_DT * DECIMATION))
     if args.teleop:
@@ -350,7 +365,7 @@ def run(args):
           f"(vx={args.cmd_vx}, yaw={args.cmd_yaw}, height={args.cmd_height})")
     print("日志字段说明：")
     print("  [步号]   策略步序号（100Hz，100 步 = 1 秒）")
-    print("  y        基座世界系 x 坐标 [m](前进方向,位置在涨=在前移)")
+    print("  x        基座世界系 x 坐标 [m]（前进方向，位置在涨=向前移动）")
     print("  z        基座离地高度 [m]（应贴住 cmd_height；跌到 ~0.12 = 翻倒扣在基座盒上）")
     print("  v_fwd    机体系前向速度 [m/s]（mj_objectVelocity 读取，应跟住 cmd_vx）")
     print("  vx_w     世界系 x 向速度 [m/s]（qvel 直读；与 v_fwd 应接近，差得远=速度读取有问题）")
@@ -364,15 +379,11 @@ def run(args):
     wall_start = time.perf_counter()
 
     for step in range(n_policy_steps):
-        # ---- 遥操作复位（Home 键）：回物理初始状态并清空控制器/历史缓冲 ----
-        if args.teleop and kb["reset"]:
-            kb["reset"] = False
-            mujoco.mj_resetData(model, data)
-            data.qpos[base_qadr + 2] = args.init_height
-            data.qpos[base_qadr + 3:base_qadr + 7] = np.array([1.0, 0.0, 0.0, 0.0])
-            for i in range(NUM_ACTIONS):
-                data.qpos[qpos_adr[i]] = DEFAULT_DOF_POS[i]
-            mujoco.mj_forward(model, data)
+        # ---- 遥操作复位：回目标姿态并清空控制器/历史缓冲 ----
+        if args.teleop and kb["reset_prone"] is not None:
+            reset_prone = kb["reset_prone"]
+            kb["reset_prone"] = None
+            reset_sim_state(reset_prone)
             last_action = np.zeros(NUM_ACTIONS, dtype=np.float64)
             last_dof_pos = read_dof_pos()
             dof_pos = last_dof_pos.copy()
@@ -384,7 +395,8 @@ def run(args):
                 build_obs(base_quat_xyzw, base_ang_vel_body, dof_pos, dof_vel,
                           np.array([0.0, 0.0, kb["height"]]), last_action),
                 OBS_HISTORY_LENGTH).astype(np.float64)
-            print("[遥操作] 已复位（速度/航向清零，obs 历史按上电逻辑重填）")
+            pose_name = "趴姿" if reset_prone else "初始站姿"
+            print(f"[遥操作] 已恢复{pose_name}（速度/航向清零，obs 历史按上电逻辑重填）")
 
         # ---- 策略推理（100Hz）----
         if args.teleop:
@@ -420,7 +432,7 @@ def run(args):
             action_t, latent_t = policy.act_inference(obs_t, hist_t)
         action = action_t.squeeze(0).cpu().numpy().astype(np.float64)
         # latent 前 3 维被训练监督为 base_lin_vel*2.0（ppo.py:265，lin_vel scale=2），
-        # latent[1]/2 = 策略内部估计的前向速度，用于诊断"策略以为的速度"是否失真
+        # chuanliantui 前向为 +x，因此 latent[0]/2 是策略内部估计的前向速度。
         latent = latent_t.squeeze(0).cpu().numpy().astype(np.float64)
 
         # ---- PD 内环（200Hz），顺序严格对齐训练：算力矩 -> 步进 -> 刷新 pos/vel ----
@@ -452,17 +464,17 @@ def run(args):
 
         if step % args.log_every == 0:
             base_z = data.qpos[base_qadr + 2]
-            base_y = data.qpos[base_qadr + 1]
+            base_x = data.qpos[base_qadr]
             # 双源速度交叉验证：机体系(objectVelocity) vs 世界系(qvel)；yaw≈0 时两者应接近
             v_fwd = base_lin_vel_body[0]
-            vy_world = data.qvel[base_vadr + 1]
+            vx_world = data.qvel[base_vadr]
             # 姿态（重力投影）与轮速：判断是否在前倾、轮子是否打滑（轮速*0.0625 应≈车速）
             gravity_world = np.array([0.0, 0.0, -1.0])
             pg = quat_rotate_inverse(base_quat_xyzw, gravity_world)
             wl = dof_vel[2] * 0.0625
             wr = dof_vel[5] * 0.0625
-            print(f"[{step:5d}] y={base_y:+.3f} z={base_z:.3f} v_fwd={v_fwd:+.3f} "
-                  f"v̂={latent[1]/2.0:+.3f} vy_w={vy_world:+.3f} "
+            print(f"[{step:5d}] x={base_x:+.3f} z={base_z:.3f} v_fwd={v_fwd:+.3f} "
+                  f"v̂={latent[0]/2.0:+.3f} vx_w={vx_world:+.3f} "
                   f"轮速l/r={wl:+.2f}/{wr:+.2f}m/s "
                   f"pg_yz=[{pg[1]:+.2f},{pg[2]:+.2f}] yaw令={commands[1]:+.2f} "
                   f"|a|max={np.abs(action).max():.3f}")
@@ -506,6 +518,8 @@ def main():
     p.add_argument("--friction", type=float, default=None,
                    help="覆盖所有 geom 的滑动摩擦系数（默认用 XML 里的 0.5；训练等效均值约 0.75）")
     p.add_argument("--init_height", type=float, default=0.33, help="初始基座高度 [m]（与训练 init_state.pos z=0.32 一致）")
+    p.add_argument("--standup", action="store_true",
+                   help="使用起立任务的趴姿初始化：base z=0.156、髋关节按 PhysX 规则回绕")
     p.add_argument("--sim_time", type=float, default=20.0, help="仿真时长 [s]")
     p.add_argument("--log_every", type=int, default=100, help="每多少策略步打印一次")
     p.add_argument("--selfcheck", action="store_true", help="仅做策略形状自检，不跑仿真")
@@ -518,7 +532,7 @@ def main():
                         "关闭后 cmd_yaw 恒值直喂，偏航漂移将无人纠正，仅调试用）")
     p.add_argument("--teleop", action="store_true",
                    help="键盘遥操作（需 --render）：↑ 加速 ↓ 减速 ← 左转 → 右转 "
-                        "PgUp/PgDn 升降高度 空格/回车急停 Home 复位；关窗退出")
+                        "PgUp/PgDn 升降高度 空格/回车急停 Home 复位 End 恢复趴姿；关窗退出")
     # chuanliantui 训练为 heading_command=False:yaw 通道=偏航角速度命令直喂,
     # 无航向保持外环(与 imcawl 不同),故默认关闭。
     p.set_defaults(realtime=True, hold=True, heading_hold=False)

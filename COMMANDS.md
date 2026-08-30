@@ -69,6 +69,33 @@ python sim2sim/mj_sim2sim.py --render --teleop \
     --checkpoint logs/mini_wheel_legged/Jul21_14-09-24_/model_4000.pt --init_height 0.30
 ```
 
+### chuanliantui
+
+修改 `sim2sim/chuanliantui.xml` 后先关闭旧 MuJoCo 窗口；已经打开的 viewer 不会自动重新加载 XML。
+
+```bash
+# 策略形状自检
+python sim2sim/mj_sim2sim_ct.py --selfcheck \
+    --checkpoint logs/chuanliantui_standup/Aug29_22-36-46_tracking_positive_from3000_v1/model_6000.pt
+
+# Isaac Gym 内回放最终起立策略
+python wheel_legged_gym/scripts/play.py --task=chuanliantui_standup \
+    --load_run Aug29_22-36-46_tracking_positive_from3000_v1 --checkpoint 6000
+
+# 原始 chuanliantui：正常站姿装配和稳站验证
+python sim2sim/mj_sim2sim_ct.py --render --teleop \
+    --checkpoint logs/chuanliantui/Aug24_02-45-51_plane_v1/model_5000.pt \
+    --cmd_vx 0 --cmd_yaw 0 --cmd_height 0.32 \
+    --init_height 0.32 --sim_time 20
+
+# chuanliantui_standup：趴姿起立验证
+python sim2sim/mj_sim2sim_ct.py --standup --render --teleop \
+    --checkpoint logs/chuanliantui_standup/Aug29_22-36-46_tracking_positive_from3000_v1/model_6000.pt \
+    --cmd_vx 0 --cmd_yaw 0 --cmd_height 0.32
+
+# 键盘：End 固定恢复趴姿，可反复测试起立；Home 恢复启动时选择的姿态
+```
+
 终端每 100 策略步打印一行 `x/z/vx/|a|max`：z 应稳定在 cmd_height 附近，vx 应跟上 cmd_vx，|a|max 持续饱和（接近 100）说明策略在发疯。
 
 ## 典型工作流

@@ -66,6 +66,11 @@ def play(args):
 
     # prepare environment
     env, _ = task_registry.make_env(name=args.task, args=args, env_cfg=env_cfg)
+    is_standup = args.task == "chuanliantui_standup"
+    if is_standup:
+        env.commands[:, 0] = 0.0
+        env.commands[:, 1] = 0.0
+        env.commands[:, 2] = 0.32
     obs, obs_history = env.get_observations()
     # load policy
     train_cfg.runner.resume = True
@@ -109,22 +114,27 @@ def play(args):
         else:
             actions = policy(obs.detach())
 
-        env.commands[:, 0] = 2.5
-        env.commands[:, 2] = 0.30  # + 0.07 * np.sin(i * 0.01)
-        env.commands[:, 3] = 0
+        if is_standup:
+            env.commands[:, 0] = 0.0
+            env.commands[:, 1] = 0.0
+            env.commands[:, 2] = 0.32
+        else:
+            env.commands[:, 0] = 2.5
+            env.commands[:, 2] = 0.30  # + 0.07 * np.sin(i * 0.01)
+            env.commands[:, 3] = 0
 
-        if CoM_offset_compensate:
-            if i > 200 and i < 600:
-                vel_cmd[:] = 2.5 * np.clip((i - 200) * 0.05, 0, 1)
-            else:
-                vel_cmd[:] = 0
-            vel_err_intergral += (
-                (vel_cmd - env.base_lin_vel[:, 0])
-                * env.dt
-                * ((vel_cmd - env.base_lin_vel[:, 0]).abs() < 0.5)
-            )
-            vel_err_intergral = torch.clip(vel_err_intergral, -0.5, 0.5)
-            env.commands[:, 0] = vel_cmd + vel_err_intergral
+            if CoM_offset_compensate:
+                if i > 200 and i < 600:
+                    vel_cmd[:] = 2.5 * np.clip((i - 200) * 0.05, 0, 1)
+                else:
+                    vel_cmd[:] = 0
+                vel_err_intergral += (
+                    (vel_cmd - env.base_lin_vel[:, 0])
+                    * env.dt
+                    * ((vel_cmd - env.base_lin_vel[:, 0]).abs() < 0.5)
+                )
+                vel_err_intergral = torch.clip(vel_err_intergral, -0.5, 0.5)
+                env.commands[:, 0] = vel_cmd + vel_err_intergral
 
         obs, _, rews, dones, infos, obs_history = env.step(actions)
         if RECORD_FRAMES:
