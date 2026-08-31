@@ -301,13 +301,10 @@ def run(args):
             kb["height"] = max(kb["height"] - 0.02, 0.20)
         elif keycode in (32, 257):    # 空格 / 回车 急停
             kb["vx"] = 0.0
-        elif keycode == 268:          # Home 复位（viewer 无此绑定，干净无副作用）
+        elif keycode == 268:          # Home 恢复启动姿态（--standup 时为趴姿）
             kb["reset_prone"] = args.standup
-            print("[遥操作] 复位请求...")
-            return
-        elif keycode == 269:          # End 固定恢复趴姿
-            kb["reset_prone"] = True
-            print("[遥操作] 恢复趴姿请求...")
+            target = "趴姿" if args.standup else "启动站姿"
+            print(f"[遥操作] Home：恢复{target}请求...")
             return
         else:
             return
@@ -356,7 +353,7 @@ def run(args):
             raise RuntimeError("遥操作模式需要 --render（viewer 启动失败或未开启）")
         print("遥操作模式：点击 MuJoCo 窗口获得焦点后按键控制 —— "
               "↑ 加速 0.1 | ↓ 减速 | ← 左转 | → 右转 | PgUp/PgDn 升降高度 | 空格/回车 急停 | "
-              "Home 复位 | End 恢复趴姿。（字母键是 viewer 内置渲染快捷键，勿用）关闭窗口退出。")
+              "Home 恢复启动姿态（--standup 时为趴姿）。（字母键是 viewer 内置渲染快捷键，勿用）关闭窗口退出。")
 
     n_policy_steps = int(args.sim_time / (SIM_DT * DECIMATION))
     if args.teleop:
@@ -532,7 +529,7 @@ def main():
                         "关闭后 cmd_yaw 恒值直喂，偏航漂移将无人纠正，仅调试用）")
     p.add_argument("--teleop", action="store_true",
                    help="键盘遥操作（需 --render）：↑ 加速 ↓ 减速 ← 左转 → 右转 "
-                        "PgUp/PgDn 升降高度 空格/回车急停 Home 复位 End 恢复趴姿；关窗退出")
+                        "PgUp/PgDn 升降高度 空格/回车急停 Home 恢复启动姿态；关窗退出")
     # chuanliantui 训练为 heading_command=False:yaw 通道=偏航角速度命令直喂,
     # 无航向保持外环(与 imcawl 不同),故默认关闭。
     p.set_defaults(realtime=True, hold=True, heading_hold=False)

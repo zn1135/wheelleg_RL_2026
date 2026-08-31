@@ -57,3 +57,5 @@ runs
 # other
 *.egg-info
 __pycache__
+# 外部参考资料(论坛帖存档等,非本仓库产出)
+docs/reference/

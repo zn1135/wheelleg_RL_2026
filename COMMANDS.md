@@ -93,7 +93,7 @@ python sim2sim/mj_sim2sim_ct.py --standup --render --teleop \
     --checkpoint logs/chuanliantui_standup/Aug29_22-36-46_tracking_positive_from3000_v1/model_6000.pt \
     --cmd_vx 0 --cmd_yaw 0 --cmd_height 0.32
 
-# 键盘：End 固定恢复趴姿，可反复测试起立；Home 恢复启动时选择的姿态
+# 键盘：Home 恢复启动姿态；使用 --standup 启动时可反复恢复趴姿并测试起立
 ```
 
 终端每 100 策略步打印一行 `x/z/vx/|a|max`：z 应稳定在 cmd_height 附近，vx 应跟上 cmd_vx，|a|max 持续饱和（接近 100）说明策略在发疯。

@@ -120,4 +120,4 @@ class ChuanliantuiCfg(LeggedRobotCfg):
 class ChuanliantuiCfgPPO(LeggedRobotCfgPPO):
     class runner(LeggedRobotCfgPPO.runner):
         experiment_name = "chuanliantui"
-        max_iterations = 5000  # 首轮训练;效果评估后再拉长
+        max_iterations = 3000  # 首轮训练;效果评估后再拉长
