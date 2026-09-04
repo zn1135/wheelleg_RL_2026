@@ -20,6 +20,9 @@ from wheel_legged_gym.envs.base.legged_robot_config import (
 class ChuanliantuiCfg(LeggedRobotCfg):
     class env(LeggedRobotCfg.env):
         num_envs = 4096
+        num_observations = 27
+        obs_history_length = 5
+        num_actions = 6
         # 平地版 measure_heights=False 时地形采样项塌缩成 1 维,
         # 特权观测实际拼接 = 3+27+12+6+1+6+1+3+6+1+1 = 67;
         # 切多地形(measure_heights=True)时改回基类公式 143
@@ -37,13 +40,13 @@ class ChuanliantuiCfg(LeggedRobotCfg):
         resampling_time = 5.0
 
         class ranges(LeggedRobotCfg.commands.ranges):
+            lin_vel_x = [-1.0, 1.0]
             # yaw 采样域收窄到 ±2(复旦 ±15 依赖地形+课程夹持,平地起步先保守)
             ang_vel_yaw = [-2.0, 2.0]
-            # 站高 0.324m 的上下约 ±10%
             height = [0.28, 0.36]
 
     class init_state(LeggedRobotCfg.init_state):
-        pos = [0.0, 0.0, 0.33]  # 站高 0.324,留少量下落余量
+        pos = [0.0, 0.0, 0.3376]  # 默认站高 0.3276m，留 1cm 下落余量
         default_joint_angles = {  # action=0 时的目标角;微蹲、轮心位于髋正下方(theta0≈0)
             "lf0": -0.06,
             "lf1": 0.10,
@@ -60,13 +63,11 @@ class ChuanliantuiCfg(LeggedRobotCfg):
         damping = {"f0": 1.0, "f1": 1.0, "wheel": 0.1}
 
     class asset(LeggedRobotCfg.asset):
-        file = "{WHEEL_LEGGED_GYM_ROOT_DIR}/resources/robots/chuanliantui/urdf/chuanliantui.urdf"
+        file = "{WHEEL_LEGGED_GYM_ROOT_DIR}/resources/robots/chuanliantui_new/urdf/chuanliantui_train.urdf"
         name = "chuanliantui"
         foot_name = "wheel"
-        offset = 0.0
-        l1 = 0.21  # 髋→膝连杆长 [m]
-        l2 = 0.25  # 膝→轮心连杆长 [m]
-        # 二连杆 FK 零位偏置(chuanliantui.py post_physics_step 使用)
+        l1 = 0.21
+        l2 = 0.25
         fk_offset_hip = 0.666151
         fk_offset_knee = 1.625993
         penalize_contacts_on = ["base_link"]
@@ -91,7 +92,7 @@ class ChuanliantuiCfg(LeggedRobotCfg):
         tracking_sigma = 0.25
         clip_single_reward = 1.0
         only_positive_rewards = False
-        base_height_target = 0.32  # 语义参考;height 奖励实际跟踪 commands[:,2]
+
 
         class scales(LeggedRobotCfg.rewards.scales):
             # 照复旦 plane;基类默认不同的项显式覆盖

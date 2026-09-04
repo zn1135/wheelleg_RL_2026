@@ -87,13 +87,17 @@ class ChuanliantuiStandup(Chuanliantui):
         )
 
     def _reward_base_height(self):
+        initial_height = self.cfg.standup.initial_base_height
         return (
-            (self.base_height - 0.08) / (self.commands[:, 2] - 0.08)
+            (self.base_height - initial_height)
+            / (self.commands[:, 2] - initial_height)
         ).clip(0.0, 1.0)
 
     def _reward_orientation(self):
+        initial_height = self.cfg.standup.initial_base_height
         height_progress = (
-            (self.base_height - 0.08) / (self.commands[:, 2] - 0.08)
+            (self.base_height - initial_height)
+            / (self.commands[:, 2] - initial_height)
         ).clip(0.0, 1.0)
         return height_progress * super()._reward_orientation()
 

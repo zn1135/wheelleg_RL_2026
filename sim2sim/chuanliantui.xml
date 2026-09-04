@@ -6,8 +6,8 @@
     2. 6 个 <motor> 力矩执行器,ctrlrange 对应 URDF effort(腿 DM8009P ±40,
        轮改装 M3508 ±3.9)。声明顺序 = 策略 DOF 顺序(URDF 字母序)
        [lf0, lf1, lfwheel, rf0, rf1, rfwheel]。
-    3. base_link.STL 原 73 万面超 MuJoCo 上限,改用降面版 base_link_simple.STL
-       (trimesh quadric 降面至 146,993 面,几何边界不变);碰撞取其凸包,
+    3. base_link.STL 已由 73 万面降至 146,993 面（trimesh quadric，几何边界不变）；
+       碰撞取其凸包，
        正常站立时 base 不触地,仅摔倒时参与接触,精度足够。
     4. 腿连杆(lf0/lf1/rf0/rf1)STL 网格碰撞(MuJoCo 自动取凸包,与 Isaac 一致);
        轮子用解析圆柱:胎面半径 0.0505 实测自 STL(r>0.05 顶点带 0.0501~0.051),
@@ -45,7 +45,7 @@
   </default>
 
   <asset>
-    <mesh name="base_simple" file="base_link_simple.STL"/>
+    <mesh name="base_link" file="base_link.STL"/>
     <mesh name="lf0"     file="lf0.STL"/>
     <mesh name="lf1"     file="lf1.STL"/>
     <mesh name="lfwheel" file="lfwheel.STL"/>
@@ -70,8 +70,8 @@
                 mass="9.25503219542145"
                 fullinertia="0.0180319947417155 0.0417155474811024 0.0362971613813686
                              3.87836365794507e-05 0.000148435003779885 3.81310517235457e-06"/>
-      <geom class="visual" mesh="base_simple" quat="0 0 0.7071067812 0.7071067812" material="metal"/>
-      <geom class="collision" mesh="base_simple" quat="0 0 0.7071067812 0.7071067812"/>
+      <geom class="visual" mesh="base_link" quat="0 0 0.7071067812 0.7071067812" material="metal"/>
+      <geom class="collision" mesh="base_link" quat="0 0 0.7071067812 0.7071067812"/>
       <site name="imu" pos="0 0 0" size="0.01" rgba="1 0 0 1"/>
 
       <!-- 左腿(lf,y+) -->

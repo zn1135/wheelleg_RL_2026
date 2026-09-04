@@ -11,7 +11,7 @@ class ChuanliantuiStandupCfg(ChuanliantuiCfg):
         class ranges(ChuanliantuiCfg.commands.ranges):
             lin_vel_x = [0.0, 0.0]
             ang_vel_yaw = [0.0, 0.0]
-            height = [0.32, 0.32]
+            height = [0.3276, 0.3276]
 
     class init_state(ChuanliantuiCfg.init_state):
         pos = [0.0, 0.0, 0.08]
@@ -20,8 +20,10 @@ class ChuanliantuiStandupCfg(ChuanliantuiCfg):
         ang_vel = [0.0, 0.0, 0.0]
 
     class standup:
+        initial_base_height = 0.08
+        target_base_height = 0.3276
         initial_dof_pos = [11.0, 0.0, 0.0, -11.0, 0.0, 0.0]
-        success_height = 0.28
+        success_height = 0.2876
         success_projected_gravity_z = -0.85
         success_duration_s = 0.5
 

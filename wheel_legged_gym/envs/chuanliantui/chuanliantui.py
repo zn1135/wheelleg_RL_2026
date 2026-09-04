@@ -25,6 +25,18 @@ from wheel_legged_gym.envs.base.legged_robot import LeggedRobot
 
 class Chuanliantui(LeggedRobot):
 
+    _expected_dof_names = ("lf0", "lf1", "lfwheel", "rf0", "rf1", "rfwheel")
+
+    def __init__(self, cfg, sim_params, physics_engine, sim_device, headless):
+        super().__init__(cfg, sim_params, physics_engine, sim_device, headless)
+        if (
+            self.num_dofs != len(self._expected_dof_names)
+            or tuple(self.dof_names) != self._expected_dof_names
+        ):
+            raise RuntimeError(
+                "chuanliantui_train.urdf DOF contract changed: "
+                f"expected {self._expected_dof_names}, got {tuple(self.dof_names)}"
+            )
     def post_physics_step(self):
         """与基类 legged_robot.post_physics_step 逐行一致,仅 FK 段换成带零位偏置的版本。"""
         self.gym.refresh_actor_root_state_tensor(self.sim)
@@ -46,7 +58,7 @@ class Chuanliantui(LeggedRobot):
         )
         self.dof_acc = (self.last_dof_vel - self.dof_vel) / self.dt
 
-        # ---- chuanliantui 二连杆 FK(唯一改动段)----
+        # 虚拟腿量由两侧髋/膝关节角的正运动学得到。
         off_hip = self.cfg.asset.fk_offset_hip
         off_knee = self.cfg.asset.fk_offset_knee
         theta1 = torch.cat(
@@ -63,17 +75,14 @@ class Chuanliantui(LeggedRobot):
             ),
             dim=1,
         )
-        end_x = (
-            self.cfg.asset.offset
-            + self.cfg.asset.l1 * torch.cos(theta1)
-            + self.cfg.asset.l2 * torch.cos(theta1 + theta2)
-        )
-        end_y = self.cfg.asset.l1 * torch.sin(theta1) + self.cfg.asset.l2 * torch.sin(
+        end_x = self.cfg.asset.l1 * torch.cos(theta1) + self.cfg.asset.l2 * torch.cos(
             theta1 + theta2
         )
-        self.L0 = torch.sqrt(end_x**2 + end_y**2)
-        self.theta0 = torch.arctan2(end_y, end_x) - self.pi / 2
-        # ---- FK 段结束 ----
+        end_z = self.cfg.asset.l1 * torch.sin(theta1) + self.cfg.asset.l2 * torch.sin(
+            theta1 + theta2
+        )
+        self.L0 = torch.sqrt(end_x**2 + end_z**2)
+        self.theta0 = torch.arctan2(end_z, end_x) - self.pi / 2
 
         self._post_physics_step_callback()
 
