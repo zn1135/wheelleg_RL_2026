@@ -1,0 +1,446 @@
+<!--
+  ============================================================================
+  mjmodel.xml —— 步兵轮腿机器人 infantry_V2（并联 / 五杆闭链版）MJCF 模型
+  ============================================================================
+
+  与训练侧的关系：
+    训练（IsaacGym，jump/plane）用的是"串联"两连杆腿（髋+膝+轮），真机/本
+    模型则是"并联（闭链）"腿。部署时代码 mujoco/python_tools/onnx_mj_binglian.py
+    负责把两者互相换算：
+      * solve_leg_geometry(φ1, φ4)   —— 解闭链几何，得 φ2/φ3/φ0/L0
+      * read_virtual_leg_state        —— 并联真实关节角 -> 虚拟"串联膝角"
+      * compute_control               —— 虚拟关节力矩 -> 真实电机力矩（雅可比）
+
+  闭链是怎么搭出来的（每条腿）：
+    一条腿 = 两棵从机架出发的"开链子树"，再用 <equality> 的 connect 焊成闭环：
+      ① 前腿系：base → rf0(rf0_Joint，电机 φ1) → rf1(rf1_Joint，被动"膝") → 轮
+      ② 后腿系：base → r20(r20_Joint，电机 φ4) → r21 → r22 → r23
+    子树①上装有两个 site（铰点 A1、A2），子树②的 r22/r23 上也各有一个 site，
+    4 个 <connect> 约束强制它们两两坐标重合，于是形成平面五杆闭链。
+    结果：独立驱动自由度只剩 φ1 和 φ4（两个电机），"膝关节" rf1_Joint 变被动。
+
+  ============================================================================
+-->
+<mujoco model="infantry_V2">
+  <!--
+    <compiler>：MJCF 编译全局选项
+      angle="radian"：所有角度一律用弧度（关节 range、euler 等都要写弧度）
+  -->
+  <compiler angle="radian"/>
+
+  <!--
+    <option>：仿真求解器设置
+      solver="Newton"、iterations=100、tolerance=1e-10：
+        用牛顿法并给出很高的迭代次数/收敛精度。闭链靠等式约束解算，
+        约束收敛得越硬，connect 焊点越接近理想球铰，这是五杆机构能稳定
+        跑起来的前提（默认 CG 求解器在这种强约束下会发飘）。
+  -->
+  <option solver="Newton" iterations="100" tolerance="1e-10"/>
+
+  <!--
+    <default>：默认组
+      所有没单独写碰撞属性的 geom 默认 contype=1 / conaffinity=2；
+      地面与台阶用 contype=2 / conaffinity=1，正好与机器人互补配对碰撞。
+  -->
+  <default>
+    <geom contype="1" conaffinity="2"/>
+  </default>
+
+  <!-- ===================== 资源：几何 mesh 与材质 ===================== -->
+  <asset>
+    <!-- 底盘 mesh（去掉装饰几何的简化外形） -->
+    <mesh name="base_Link_del" file="base_link_del.STL"/>
+
+    <!--
+      右腿 ① 前腿系两段（注意 rf1_Link / 轮 mesh 直接复用 plane 仓库里
+      串联 URDF 的网格文件，保证两套模型外形一致，sim2sim 视觉可比）
+    -->
+    <mesh name="rf0_Link" file="rf0_Link.STL"/>
+    <mesh name="rf1_Link" file="../../../../../plane/resources/robots/infantry_V4/meshes/rf1_Link.STL"/>
+    <mesh name="r_wheel_Link" file="../../../../../plane/resources/robots/infantry_V4/meshes/r_wheel_Link.STL"/>
+
+    <!-- 左腿 ① 前腿系两段（与右腿镜像） -->
+    <mesh name="lf0_Link" file="lf0_Link.STL"/>
+    <mesh name="lf1_Link" file="../../../../../plane/resources/robots/infantry_V4/meshes/lf1_Link.STL"/>
+    <mesh name="l_wheel_Link" file="../../../../../plane/resources/robots/infantry_V4/meshes/l_wheel_Link.STL"/>
+
+    <!--
+      右腿 ② 后臂系四段 r20→r21→r22→r23：这是闭链的"第二条腿树"，
+      电机在 r20 上，r21~r23 负责把运动与支撑力送回到前腿系的两个铰点
+    -->
+    <mesh name="r20_Link" file="r20_Link.STL"/>
+    <mesh name="r21_Link" file="r21_Link.STL"/>
+    <mesh name="r22_Link" file="r22_Link.STL"/>
+    <mesh name="r23_Link" file="r23_Link.STL"/>
+
+    <!-- 左腿 ② 后臂系（与右腿镜像） -->
+    <mesh name="l20_Link" file="l20_Link.STL"/>
+    <mesh name="l21_Link" file="l21_Link.STL"/>
+    <mesh name="l22_Link" file="l22_Link.STL"/>
+    <mesh name="l23_Link" file="l23_Link.STL"/>
+
+    <!-- 灰色材质：机器人与台阶可用 -->
+    <material name="floor_gray"
+          rgba="0.65 0.65 0.65 1"
+          specular="0.15"
+          shininess="0.6"/>
+
+    <!-- 蓝色方格纹理（地面 + 观察用） -->
+    <texture name="blue_checker_tex"
+           type="2d"
+           builtin="checker"
+           width="512"
+           height="512"
+           rgb1="0.2 0.4 0.9"
+           rgb2="0.8 0.9 1.0"/>
+
+    <!-- 地面材质 -->
+    <material name="blue_checker_mat"
+            texture="blue_checker_tex"
+            texrepeat="20 20"
+            reflectance="0.1"/>
+
+    <!--
+      高度场地形（由图片生成）。注意：这里只声明了 hfield 资源，
+      当前模型里没有任何 geom 引用它，实际地面用的是下面 worldbody 里
+      的 plane + 台阶块。
+    -->
+    <hfield name="terrain_hf"
+            file="terrain_hfield.png"
+            size="3.2 2.4 0.45 0.06"/>
+  </asset>
+
+<!-- ========================= 场景与机器人本体 ========================= -->
+<worldbody>
+  <!-- 大平地（contype/conaffinity 与机器人互补，保证能碰撞） -->
+  <geom name="floor" type="plane" size="40 40 0.1"
+    material="blue_checker_mat"
+    contype="2" conaffinity="1"/>
+
+  <!--
+    以下一排台阶/坡道是"上台阶 + 跳跃"测试场景，沿 -x 方向布置：
+    两级矮台阶 -> 高平台 -> 飞坡 -> 落地台，机器人从 x=-2.8 起跑。
+  -->
+  <!-- 20cm 台阶（本体，中间一段） -->
+  <geom name="step_20cm"
+      type="box"
+      pos="-10.0 0.0 0.10"
+      size="0.30 4.0 0.10"
+      rgba="0.9 0.6 0.2 1"
+      contype="2" conaffinity="1"/>
+
+  <!-- 20cm 台阶（右侧延展段，方便偏航后的兜底路径） -->
+  <geom name="step_20rightcm"
+      type="box"
+      pos="-10.0 6.0 0.10"
+      size="6.0 4.0 0.10"
+      rgba="0.9 0.6 0.2 1"
+      contype="2" conaffinity="1"/>
+
+  <!-- 35cm 高台阶的窄顶块（立在 20cm 台阶上面，形成两级阶） -->
+  <geom name="step_35cm"
+      type="box"
+      pos="-9.625 0.0 0.175"
+      size="0.075 4.0 0.175"
+      rgba="0.92 0.28 0.18 1"
+      contype="2" conaffinity="1"/>
+
+  <!-- 30cm 高平台（宽顶面，供上台阶后行走） -->
+  <geom name="platform_30cm"
+      type="box"
+      pos="-8.05 0.0 0.15"
+      size="1.5 4.0 0.15"
+      rgba="0.16 0.62 0.78 1"
+      contype="2" conaffinity="1"/>
+
+  <!-- 飞坡（带俯仰角 euler≈-0.297rad，衔接 30cm 平台与落地台，供跳跃测试） -->
+  <geom name="fly_ramp_1"
+      type="box"
+      pos="-6.11 0.0 0.46"
+      euler="0 -0.296706 0"
+      size="0.5986 10 0.01"
+      rgba="0.6 0.6 0.6 1"
+      contype="2" conaffinity="1"/>
+
+  <!-- 落地平台 -->
+  <geom name="landing_box"
+      type="box"
+      pos="-3.38 0.0 0.15"
+      size="1.5 10.0 0.15"
+      rgba="0.16 0.62 0.78 1"
+      contype="2" conaffinity="1"/>
+
+  <!-- ==================================================================== -->
+  <!-- 机器人 root：base_Link_del（机身底盘）                                -->
+  <!--   freejoint：6 自由度浮动基座（位置 xyz + 姿态四元数），机器人靠它      -->
+  <!--   在世界中移动；想固定底盘观察机构，删掉这行即可                       -->
+  <!-- ==================================================================== -->
+    <body name="base_Link_del" pos="-2.8 0 0.5" quat="1 0 0 0">
+    <!-- 备选初始位姿：若要把机器人放到原点附近矮一点，可换这一行
+         （下方一行是被注释掉的旧初始位置，保留备查） -->
+    <!-- <body name="base_Link_del" pos="0 0 0.2" quat="0 0 0 1"> -->
+    <freejoint/>
+    <!-- 底盘质心/质量（CAD 导出）：质量约 16.88 kg，含 fullinertia 惯量张量 -->
+    <inertial
+    pos="-0.00406060 0.0008523 0.09714204"
+    mass="16.8775740"
+    fullinertia="0.3595155 0.35249 0.45655 -0.00174358 -0.00825907 -0.00214156"/>
+    <!-- IMU 安装点（真机惯性测量单元的位置基准），gyro/加速度计传感器都挂这 -->
+    <site name="imu_site" pos="0 0 0" size="0.005"/>
+    <!-- <camera name="follow_cam" .../>：备选的跟随相机（未启用） -->
+    <!-- 底盘碰撞体：只用 mesh 外形；condim=1 + 摩擦 0 = 只保留法向接触，
+         避免底盘意外触地时产生横向摩擦力把机器人别住 -->
+    <geom name="base_Link_del_geom" type="mesh" rgba="1 1 1 1" mesh="base_Link_del"
+            condim="1" friction="0 0 0"/>
+
+    <!-- ================================================================ -->
+    <!-- 右腿 ① 前腿系 第 1 段：rf0_Link（"大腿"，含电机 φ1）                -->
+    <!--   挂在机身右侧（-y 方向偏置 0.1877m，z 抬高 0.08725m）              -->
+    <!--   quat 把 STL 坐标系转到装配姿态；joint axis z 经该 quat 后变为      -->
+    <!--   机器人横向（轮轴方向），所以整条腿在纵向平面内摆动                 -->
+    <!-- ================================================================ -->
+    <body name="rf0_Link" pos="0 -0.1877 0.08725" quat="0.707105 0.707108 0 0">
+      <!-- 惯量/质量（CAD 导出），1.11kg -->
+      <inertial pos="0.0552763 -0.0165544 -0.00927161" quat="-0.005176 0.693173 0.0544357 0.718694" mass="1.1132" diaginertia="0.00641833 0.00468513 0.00204569"/>
+      <!--
+        rf0_Joint：髋部驱动关节（真实电机 1，闭链输入角 φ1）
+        range 放宽到 ±100（限位实际由闭链决定）；armature=0、damping 0.03
+        frictionloss 0.015 模拟电机/减速器摩擦，actuatorfrcrange 是关节
+        力限幅（motor actuator 的力上限；MuJoCo 3.1+ 才支持这个属性，
+        这也是本模型必须用 3.2.x 打开的原因）
+      -->
+      <joint name="rf0_Joint" pos="0 0 0" axis="0 0 1" armature="0" damping="0.03" frictionloss="0.015" range="-100 100" actuatorfrcrange="-100 100"/>
+      <geom type="mesh" rgba="1 1 1 1" mesh="rf0_Link"/>
+      <!-- 闭链前铰点 A1：<equality> connect 会把它和后腿系上的 site 焊在一起 -->
+      <site name="Right_front_site1" pos="0.09435 0 0" size="0.005" rgba="1 0 0 1"/>
+      <!-- 气弹簧下端点（tendon 的一头，见 <tendon> 段） -->
+      <site name="right_lf0_qitanhuang" pos ="0.0155 -0.0445 -0.008" size="0.005" rgba="1 0 0 1"/>
+      <body name="rf1_Link" pos="0.17472 0 0">
+        <!-- 惯量/质量（CAD 导出），0.31kg；注意质心带 -y 偏置（大腿形状） -->
+        <inertial pos="-0.00283459 -0.0710676 0.0068255" quat="0.483182 0.50274 -0.490133 0.523027" mass="0.306873" diaginertia="0.0025405 0.00248016 8.5602e-05"/>
+        <!--
+          rf1_Joint：名义上的"膝关节"。串联模型里它是电机；在闭链模型里
+          它是被动关节——真实角度由闭链约束解算出来，部署代码再用
+          solve_phi3_left/right 从 φ1、φ4 反算一个"等效串联膝角"喂给策略。
+          limited=true + range 保留真机机械限位范围作安全兜底。
+        -->
+        <joint name="rf1_Joint" pos="0 0 0" axis="0 0 1" armature="0.00" damping="0.03" frictionloss="0.015" limited="true" range="-1.1 0.63" actuatorfrcrange="-100 100"/>
+        <geom type="mesh" rgba="1 1 1 1" mesh="rf1_Link"/>
+        <!-- 闭链后铰点 A2（第二个焊点，见 <equality>） -->
+        <site name="Right_front_site2" pos="-0.0160931 0.0609099 0" size="0.005" rgba="1 0 0 1"/>
+        <!-- 气弹簧上端点（tendon 的另一头） -->
+        <site name="right_lf1_qitanhuang" pos ="0.005 -0.046 -0.005" size="0.01" rgba="1 0 0 1"/>
+        <!-- 右轮：装在 rf1_Link 末端（-y 方向 0.208m ≈ 杆长 l2 的视觉位置） -->
+        <body name="r_wheel_Link" pos="0 -0.208 0.016">
+          <!-- 轮体惯量（CAD），0.49kg，含绕轮轴的主惯量 0.00058 -->
+          <inertial pos="4.1184e-06 -0.00019289 0.019562" mass="0.4904" fullinertia="0.00033958 0.00034133 0.0005817 0 0 0"/>
+          <!-- 轮自转关节（轮电机，只转不管位置）；阻尼小 + 摩擦小 = 低损耗轮 -->
+          <joint name="r_wheel_Joint" pos="0 0 0" axis="0 0 1" damping="0.002" frictionloss="0.001" actuatorfrcrange="-100 100"/>
+          <!-- 轮子碰撞体：实心圆柱，半径 0.06m，宽 0.0615m（与地面接触就靠它） -->
+          <geom type="cylinder" size="0.06 0.03075" rgba="0.18 0.18 0.18 1"/>
+        </body>
+      </body>
+    </body>
+
+    <!-- ================================================================ -->
+    <!-- 左腿 ① 前腿系（与右腿完全镜像：y 取正，四元数绕 x 反向转）           -->
+    <!-- ================================================================ -->
+    <body name="lf0_Link" pos="0 0.1877 0.08725" quat="0.707105 -0.707108 0 0">
+      <inertial pos="0.055403 0.016584 -0.0092702" quat="0.00463484 0.693099 -0.0538381 0.718814" mass="1.1128" diaginertia="0.00641157 0.0046755 0.00204815"/>
+      <!-- 左髋驱动关节（电机，输入角 φ1 左） -->
+      <joint name="lf0_Joint" pos="0 0 0" axis="0 0 1" armature="0" damping="0.03" frictionloss="0.015" range="-100 100" actuatorfrcrange="-100 100"/>
+      <geom type="mesh" rgba="1 1 1 1" mesh="lf0_Link"/>
+      <!-- 闭链前铰点 A1（左） -->
+      <site name="Left_front_site1" pos="0.09435 0 0" size="0.005" rgba="1 0 0 1"/>
+      <!-- 气弹簧下端点（左） -->
+      <site name="left_lf0_qitanhuang" pos ="0.0155 0.0445 -0.008" size="0.005" rgba="1 0 0 1"/>
+      <body name="lf1_Link" pos="0.17472 0 0">
+        <inertial pos="-0.0028358 0.071068 0.0068255" quat="0.50274 0.483182 -0.523027 0.490133" mass="0.30687" diaginertia="0.0025405 0.00248016 8.5602e-05"/>
+        <!-- 左被动"膝"（限位镜像对称于右腿） -->
+        <joint name="lf1_Joint" pos="0 0 0" axis="0 0 1" armature="0.00" damping="0.03" frictionloss="0.015" limited="true" range="-0.63 1.1" actuatorfrcrange="-100 100"/>
+        <geom type="mesh" rgba="1 1 1 1" mesh="lf1_Link"/>
+        <!-- 闭链后铰点 A2（左） -->
+        <site name="Left_front_site2" pos="-0.0160931 -0.0609099 0" size="0.01" rgba="1 0 0 1"/>
+        <!-- 气弹簧上端点（左） -->
+        <site name="left_lf1_qitanhuang" pos ="0.005 0.046 -0.005" size="0.01" rgba="1 0 0 1"/>
+        <body name="l_wheel_Link" pos="0 0.208 0.016">
+          <inertial pos="-4.1184e-06 0.00019289 0.019562" mass="0.4904" fullinertia="0.00033958 0.00034133 0.0005817 0 0 0"/>
+          <!-- 左轮自转关节 -->
+          <joint name="l_wheel_Joint" pos="0 0 0" axis="0 0 1" damping="0.002" frictionloss="0.001" actuatorfrcrange="-100 100"/>
+          <geom type="cylinder" size="0.06 0.03075" rgba="0.18 0.18 0.18 1"/>
+        </body>
+      </body>
+    </body>
+
+    <!-- ================================================================ -->
+    <!-- 右腿 ② 后臂系 第 1 段：r20_Link（闭链"后输入臂"，含电机 φ4）        -->
+    <!--   从机身右侧同一位置出发（与 rf0 共用机架铰点间距），它是闭链的     -->
+    <!--   第二个主动输入；只有 φ1 与 φ4 两个电机，整个腿就完全确定          -->
+    <!-- ================================================================ -->
+    <body name="r20_Link" pos="0 -0.1877 0.08725" quat="0.707105 0.707108 0 0">
+      <inertial pos="-0.0077129 -0.044014 0.0053168" quat="0.54287 0.453598 -0.539995 0.456012" mass="0.058433" diaginertia="0.000101653 9.09634e-05 1.15321e-05"/>
+      <!--
+        r20_Joint：后输入驱动关节（真实电机 2，闭链输入角 φ4）。
+        真机上它的编码器读数与机构几何角之间有固定装配偏移 1.6614 rad，
+        部署代码里用 DEFAULT_OFFSET 补偿后才送进 solve_leg_geometry。
+      -->
+      <joint name="r20_Joint" pos="0 0 0" axis="0 0 1" armature="0.00" damping="0.03" frictionloss="0.015" actuatorfrcrange="-100 100"/>
+      <geom type="mesh" rgba="1 1 1 1" mesh="r20_Link"/>
+      <body name="r21_Link" pos="-0.016285 -0.092933 0.01">
+        <inertial pos="0.05374 -0.013258 -0.01451" quat="0.0690441 0.704772 -0.0560118 0.70384" mass="0.042999" diaginertia="7.83158e-05 7.61359e-05 2.77956e-06"/>
+        <!-- r21_Joint：中间铰（被动，纯几何连接） -->
+        <joint name="r21_Link" pos="0 0 0" axis="0 0 1" actuatorfrcrange="-100 100"/>
+        <geom type="mesh" rgba="1 1 1 1" mesh="r21_Link"/>
+        <body name="r22_Link" pos="0.11063 -0.019387 0">
+          <inertial pos="-0.006381 0.08888 -0.0045" quat="0.475753 0.523125 -0.475753 0.523125" mass="0.065877" diaginertia="0.00021104 0.000205523 6.41108e-06"/>
+          <joint name="r22_Joint" pos="0 0 0" axis="0 0 1" actuatorfrcrange="-100 100"/>
+          <geom type="mesh" rgba="1 1 1 1" mesh="r22_Link"/>
+          <!-- 闭链铰点 A1（右）：与 rf0 上 Right_front_site1 焊合（connect1） -->
+          <site name="Right_rear_site1" pos="0 0.11232 0" size="0.005" rgba="1 1 0 1"/>
+          <body name="r23_Link" pos="-0.018032 0.17268 0">
+            <inertial pos="0.040186 0 -0.014509" quat="0 0.707107 0 0.707107" mass="0.010945" diaginertia="1.0337e-05 9.8695e-06 6.2034e-07"/>
+            <joint name="r23_Joint" pos="0 0 0" axis="0 0 1" actuatorfrcrange="-100 100"/>
+            <geom type="mesh" rgba="1 1 1 1" mesh="r23_Link"/>
+            <!-- 闭链铰点 A2（右）：与 rf1 上 Right_front_site2 焊合（connect2） -->
+            <site name="Right_rear_site2" pos="0.08037 0 0" size="0.005" rgba="1 1 0 1"/>
+          </body>
+        </body>
+      </body>
+    </body>
+
+    <!-- ================================================================ -->
+    <!-- 左腿 ② 后臂系（与右腿镜像，y 取正）                                -->
+    <!-- ================================================================ -->
+    <body name="l20_Link" pos="0 0.1877 0.08725" quat="0.707105 -0.707108 0 0">
+      <inertial pos="-0.0077129 -0.044014 0.0053168" quat="-0.066476 0.705194 0.0534809 0.703863" mass="0.058433" diaginertia="7.83158e-05 7.61355e-05 2.77958e-06"/>
+      <!-- 左后输入关节（电机 φ4 左） -->
+      <joint name="l20_Joint" pos="0 0 0" axis="0 0 1" armature="0.00" damping="0.03" frictionloss="0.015" actuatorfrcrange="-100 100"/>
+      <geom type="mesh" rgba="1 1 1 1" mesh="l20_Link"/>
+      <body name="l21_Link" pos="-0.016285 0.092933 0.01">
+        <inertial pos="0.055588 0.013582 -0.01451" quat="-0.066476 0.705194 0.0534809 0.703863" mass="0.042999" diaginertia="7.83158e-05 7.61355e-05 2.77958e-06"/>
+        <joint name="l21_Joint" pos="0 0 0" axis="0 0 1" actuatorfrcrange="-100 100"/>
+        <geom type="mesh" rgba="1 1 1 1" mesh="l21_Link"/>
+        <body name="l22_Link" pos="0.11063 0.019387 0">
+          <inertial pos="-0.006381 -0.08888 -0.0045" quat="0.523125 0.475753 -0.523125 0.475753" mass="0.065877" diaginertia="0.00021104 0.000205523 6.41108e-06"/>
+          <joint name="l22_Joint" pos="0 0 0" axis="0 0 1" actuatorfrcrange="-100 100"/>
+          <geom type="mesh" rgba="1 1 1 1" mesh="l22_Link"/>
+          <!-- 闭链铰点 A1（左）：与 lf0 上 Left_front_site1 焊合 -->
+          <site name="Left_rear_site1" pos="0 -0.11232 0" size="0.005" rgba="1 1 0 1"/>
+          <body name="l23_Link" pos="-0.018032 -0.17268 0">
+            <inertial pos="0.040186 0 -0.014509" quat="0 0.707107 0 0.707107" mass="0.010945" diaginertia="1.0337e-05 9.8695e-06 6.2034e-07"/>
+            <joint name="l23_Joint" pos="0 0 0" axis="0 0 1" actuatorfrcrange="-100 100"/>
+            <geom type="mesh" rgba="1 1 1 1" mesh="l23_Link"/>
+            <!-- 闭链铰点 A2（左）：与 lf1 上 Left_front_site2 焊合 -->
+            <site name="Left_rear_site2" pos="0.08037 0 0" size="0.005" rgba="1 1 0 1"/>
+          </body>
+        </body>
+      </body>
+    </body>
+  </body>
+</worldbody>
+
+<!--
+  <tendon> 气弹簧建模：
+    空间腱（spatial tendon）把两个 site 用"虚拟绳索"连起来，tendon 的长度
+    随机构运动变化；给它配一个 motor actuator 后就能往腱上加恒定拉力/长度，
+    用来模拟真机并联腿里的气弹簧——弹簧两端分别锚在前臂系与大腿上，
+    恒给一个沿两点连线的伸展力（部署代码里 GAS_SPRING_FORCE 叠加到腿向力 F）。
+-->
+<tendon>
+  <!-- 左腿气弹簧：从大腿(lf1)的锚点拉到前臂(lf0)的锚点 -->
+  <spatial name="Left_loop1_tendon" width="0.001">
+    <site site="left_lf1_qitanhuang"/>
+    <site site="left_lf0_qitanhuang"/>
+  </spatial>
+
+  <!-- 右腿气弹簧（镜像） -->
+  <spatial name="Right_loop1_tendon" width="0.001">
+    <site site="right_lf1_qitanhuang"/>
+    <site site="right_lf0_qitanhuang"/>
+  </spatial>
+</tendon>
+
+<!--
+  <actuator> 电机表
+    两套命名并存：
+      ① 串联残留名 act_lf0/lf1、act_rf0/rf1、act_lw/act_rw：对应用户侧
+         "髋/膝/轮" 6 维动作的关节；其中 lf1/rf1 两个"膝电机"在并联模型里
+         是不驱动的（部署脚本从不写它们的 ctrl），保留只为结构对齐。
+      ② 并联真实驱动 act_lf20/act_rf20：两个后输入电机。
+    部署脚本 onnx_mj_binglian.py 实际驱动 6 路：
+        左/右 rf0(φ1)、左/右 r20(φ4) + 左右轮，外加两个气弹簧腱电机。
+-->
+<actuator>
+  <!-- 左：髋（φ1）电机。注意 6 维动作里 index 0 = 虚拟"髋"，此处是直驱电机 -->
+  <motor name="act_lf0" joint="lf0_Joint" gear="1"/>
+  <!-- 左：名义"膝"电机——闭链中不驱动（保留串联命名结构） -->
+  <motor name="act_lf1" joint="lf1_Joint" gear="1"/>
+  <!-- 左轮电机 -->
+  <motor name="act_lw"  joint="l_wheel_Joint" gear="1"/>
+
+  <!-- 右：髋（φ1）电机 -->
+  <motor name="act_rf0" joint="rf0_Joint" gear="1"/>
+  <!-- 右：名义"膝"电机——闭链中不驱动 -->
+  <motor name="act_rf1" joint="rf1_Joint" gear="1"/>
+  <!-- 右轮电机 -->
+  <motor name="act_rw"  joint="r_wheel_Joint" gear="1"/>
+
+  <!-- 左、右后输入电机（φ4）：闭链真正的第二个驱动器 -->
+  <motor name="act_lf20" joint="l20_Joint" gear="1"/>
+  <motor name="act_rf20" joint="r20_Joint" gear="1"/>
+
+  <!-- 气弹簧腱电机：部署时恒定给 ctrl=300（≈ 代码里的 GAS_SPRING_FORCE≈369N） -->
+  <motor name="Left_loop1_motor" tendon="Left_loop1_tendon" gear="1"/>
+  <motor name="Right_loop1_motor" tendon="Right_loop1_tendon" gear="1"/>
+</actuator>
+
+<!--
+  <sensor> 传感器表
+    关节编码器只给"串联那 6 个"做了 jointpos/jointvel（与训练侧观测对齐）。
+    后输入臂 l20/r20 没有专门 sensor——部署脚本是直接读 qpos/qvel 索引拿的。
+-->
+<sensor>
+  <!-- 机身 IMU 三件套：姿态四元数 / 角速度 / 线加速度 -->
+  <framequat name="orientation" objtype="body" objname="base_Link_del"/>
+  <gyro      name="base_ang_vel" site="imu_site"/>
+  <accelerometer name="base_lin_acc" site="imu_site"/>
+
+  <!-- 左腿：髋 / 被动膝 / 轮 的角度与角速度（模拟编码器） -->
+  <jointpos name="lf0_Joint_p" joint="lf0_Joint"/>
+  <jointvel name="lf0_Joint_v" joint="lf0_Joint"/>
+
+  <jointpos name="lf1_Joint_p" joint="lf1_Joint"/>
+  <jointvel name="lf1_Joint_v" joint="lf1_Joint"/>
+
+  <jointpos name="l_wheel_Joint_p" joint="l_wheel_Joint"/>
+  <jointvel name="l_wheel_Joint_v" joint="l_wheel_Joint"/>
+
+  <!-- 右腿：髋 / 被动膝 / 轮 的角度与角速度 -->
+  <jointpos name="rf0_Joint_p" joint="rf0_Joint"/>
+  <jointvel name="rf0_Joint_v" joint="rf0_Joint"/>
+
+  <jointpos name="rf1_Joint_p" joint="rf1_Joint"/>
+  <jointvel name="rf1_Joint_v" joint="rf1_Joint"/>
+
+  <jointpos name="r_wheel_Joint_p" joint="r_wheel_Joint"/>
+  <jointvel name="r_wheel_Joint_v" joint="r_wheel_Joint"/>
+</sensor>
+
+<!--
+  <equality> 闭链核心：4 个 connect 焊点
+    每个 connect 要求两个 site 的世界坐标永远重合（等价一个球铰）。
+    左右腿各用两个焊点，把两棵开链子树合成一个五杆闭链：
+      connect1：把前臂系大腿中段铰点 A1 焊到后臂系 r22 的铰点
+      connect2：把小腿上铰点 A2 焊到 r23 末端
+    A1/A2 焊死后，φ1、φ4 两个电机角就唯一决定整条腿的位形，
+    "膝角" rf1_Joint 变成被约束解出来的被动量。
+    参数说明：solref(timeconst=0.00005, 阻尼比=1) 决定约束刚度/阻尼，
+    solimp 接近 1 使焊点近似刚性（配合 Newton 求解器 iterations=100）。
+-->
+  <equality>
+      <connect name="Left_loop1" site1="Left_front_site1" site2="Left_rear_site1" solref="0.00005 1.0" solimp="0.99995 0.9999 0.00001 0.5 2"/>
+      <connect name="Left_loop2" site1="Left_front_site2" site2="Left_rear_site2" solref="0.00005 1.0" solimp="0.99995 0.9999 0.00001 0.5 2"/>
+      <connect name="Right_loop1" site1="Right_front_site1" site2="Right_rear_site1" solref="0.00005 1.0" solimp="0.99995 0.9999 0.00001 0.5 2"/>
+      <connect name="Right_loop2" site1="Right_front_site2" site2="Right_rear_site2" solref="0.00005 1.0" solimp="0.99995 0.9999 0.00001 0.5 2"/>
+    </equality>
+</mujoco>

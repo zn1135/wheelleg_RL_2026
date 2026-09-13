@@ -11,31 +11,48 @@ class ChuanliantuiStandupCfg(ChuanliantuiCfg):
         class ranges(ChuanliantuiCfg.commands.ranges):
             lin_vel_x = [0.0, 0.0]
             ang_vel_yaw = [0.0, 0.0]
-            height = [0.3276, 0.3276]
+            height = [0.32, 0.32]
 
     class init_state(ChuanliantuiCfg.init_state):
-        pos = [0.0, 0.0, 0.08]
+        # 每回合从 1 m 高空的已站立零动作姿态自由落下；首次轮接地前由
+        # ChuanliantuiStandup 屏蔽策略/判死，避免把自由落体当成起立样本。
+        pos = [0.0, 0.0, 1.0]
         rot = [0.0, 0.0, 0.0, 1.0]
         lin_vel = [0.0, 0.0, 0.0]
         ang_vel = [0.0, 0.0, 0.0]
 
     class standup:
+        fall_start_height = 1.0
         initial_base_height = 0.08
-        target_base_height = 0.3276
-        initial_dof_pos = [11.0, 0.0, 0.0, -11.0, 0.0, 0.0]
-        success_height = 0.2876
-        success_projected_gravity_z = -0.85
+        target_base_height = 0.32
+        # 与 ChuanliantuiCfg.init_state.default_joint_angles 相同的微蹲站姿。
+        initial_dof_pos = [-0.06, 0.10, 0.0, 0.06, -0.10, 0.0]
+        success_height = 0.30
+        success_projected_gravity_z = -0.90
         success_duration_s = 0.5
+        standup_timeout_s = 2.0  # 全回合连续超过 2 s 未站稳即判死，重新站稳后清零。
+        wheels_airborne_timeout_s = 0.2  # 双轮连续同时无有效支撑达到该时间即判死。
+        wheel_contact_force_threshold = 1.0  # [N] 当前平地任务：世界 z 向接触力 > 1 N 视为接地。
 
     class rewards(ChuanliantuiCfg.rewards):
+        # 恢复放宽前的奖励强度，用于已学会起立策略的续训；不改成功判据或终止课程。
+        tracking_sigma = 0.25  # 由 0.5 收紧，线速度/偏航速度及 enhance 项共用。
+        height_reward_tolerance = 0.0  # [m] 达到命令高度才获得满额高度奖励。
+        recovered_reward_duration_s = 0.5  # [s] 满额稳站奖励与成功持续时间一致。
+
         class scales(ChuanliantuiCfg.rewards.scales):
-            tracking_lin_vel = 1.0
-            tracking_lin_vel_enhance = 1.0
-            tracking_ang_vel = 1.0
-            tracking_ang_vel_enhance = 1.0
+            tracking_lin_vel = 0.2
+            tracking_lin_vel_enhance = 0.2
+            tracking_ang_vel = 0.2
+            tracking_ang_vel_enhance = 0.2
+
             base_height = 1.0
-            orientation = -1.0
+            # 9 项负权重恢复到放宽前的值，原先禁用的惩罚不额外启用。
+            orientation = -10.0
+            nominal_state = -3.0
+            dof_pos_limits = -1.0
             recovered = 1.0
+            wheels_airborne = -1.0  # 双轮同时无有效支撑时每步扣分；接地阈值与离地判死共用。
             stand_still = 0.0
             collision = 0.0
             lin_vel_z = -1.0
@@ -48,6 +65,13 @@ class ChuanliantuiStandupCfg(ChuanliantuiCfg):
 
 
 class ChuanliantuiStandupCfgPPO(ChuanliantuiCfgPPO):
+    class algorithm(ChuanliantuiCfgPPO.algorithm):
+        # 恢复已完成 3000→6000 轮训练的更新强度；不把它视为物理 NaN 修复。
+        learning_rate = 3.0e-4
+        extra_learning_rate = 3.0e-4
+        value_loss_coef = 0.25
+        num_learning_epochs = 3
+
     class runner(ChuanliantuiCfgPPO.runner):
         experiment_name = "chuanliantui_standup"
         max_iterations = 3000

@@ -98,26 +98,66 @@ class PPO:
     def train_mode(self):
         self.actor_critic.train()
 
-    def act(self, obs, obs_history, critic_obs):
+    def act(self, obs, obs_history, critic_obs, policy_mask=None):
+        """只为 policy_mask 为真的环境运行 actor/critic。
+
+        False 行会输出零动作且不会进入 rollout 的训练样本，用于 reset 后的
+        无策略物理预备阶段。
+        """
         if self.actor_critic.is_recurrent:
             self.transition.hidden_states = self.actor_critic.get_hidden_states()
-        # Compute the actions and values
-        if self.actor_critic.is_sequence:
-            self.transition.actions = self.actor_critic.act(obs, obs_history).detach()
-            latent = self.actor_critic.get_latent()
-            critic_obs = torch.cat((critic_obs, latent), dim=-1)
+        if policy_mask is None:
+            policy_mask = torch.ones(obs.shape[0], dtype=torch.bool, device=obs.device)
         else:
-            self.transition.actions = self.actor_critic.act(obs).detach()
-        self.transition.values = self.actor_critic.evaluate(critic_obs).detach()
-        self.transition.actions_log_prob = self.actor_critic.get_actions_log_prob(
-            self.transition.actions
-        ).detach()
-        self.transition.action_mean = self.actor_critic.action_mean.detach()
-        self.transition.action_sigma = self.actor_critic.action_std.detach()
+            policy_mask = policy_mask.to(device=obs.device, dtype=torch.bool)
+        active_ids = policy_mask.nonzero(as_tuple=False).flatten()
+
+        self.transition.actions = torch.zeros(
+            obs.shape[0], self.storage.actions_shape[0], device=obs.device
+        )
+        self.transition.values = torch.zeros(obs.shape[0], 1, device=obs.device)
+        self.transition.actions_log_prob = torch.zeros(obs.shape[0], device=obs.device)
+        self.transition.action_mean = torch.zeros_like(self.transition.actions)
+        self.transition.action_sigma = torch.ones_like(self.transition.actions)
+        self.transition.critic_observations = torch.zeros(
+            obs.shape[0], self.storage.privileged_obs_shape[0], device=obs.device
+        )
+
+        # Compute actions and values for active environments only.
+        if self.actor_critic.is_sequence:
+            if active_ids.numel() > 0:
+                active_actions = self.actor_critic.act(
+                    obs[active_ids], obs_history[active_ids]
+                ).detach()
+                latent = self.actor_critic.get_latent()
+                active_critic_obs = torch.cat((critic_obs[active_ids], latent), dim=-1)
+                self.transition.actions[active_ids] = active_actions
+                self.transition.values[active_ids] = self.actor_critic.evaluate(
+                    active_critic_obs
+                ).detach()
+                self.transition.actions_log_prob[active_ids] = (
+                    self.actor_critic.get_actions_log_prob(active_actions).detach()
+                )
+                self.transition.action_mean[active_ids] = self.actor_critic.action_mean.detach()
+                self.transition.action_sigma[active_ids] = self.actor_critic.action_std.detach()
+                self.transition.critic_observations[active_ids] = active_critic_obs
+        else:
+            if active_ids.numel() > 0:
+                active_actions = self.actor_critic.act(obs[active_ids]).detach()
+                self.transition.actions[active_ids] = active_actions
+                self.transition.values[active_ids] = self.actor_critic.evaluate(
+                    critic_obs[active_ids]
+                ).detach()
+                self.transition.actions_log_prob[active_ids] = (
+                    self.actor_critic.get_actions_log_prob(active_actions).detach()
+                )
+                self.transition.action_mean[active_ids] = self.actor_critic.action_mean.detach()
+                self.transition.action_sigma[active_ids] = self.actor_critic.action_std.detach()
+                self.transition.critic_observations[active_ids] = critic_obs[active_ids]
         # need to record obs and critic_obs before env.step()
         self.transition.observations = obs.clone()
         self.transition.observation_history = obs_history.clone()
-        self.transition.critic_observations = critic_obs.clone()
+        self.transition.valid_mask = policy_mask
         return self.transition.actions
 
     def process_env_step(self, rewards, dones, infos, next_obs=None):
@@ -137,8 +177,28 @@ class PPO:
         self.transition.clear()
         self.actor_critic.reset(dones)
 
-    def compute_returns(self, last_critic_obs):
-        last_values = self.actor_critic.evaluate(last_critic_obs).detach()
+    def compute_returns(self, last_critic_obs, last_obs_history=None, policy_mask=None):
+        if policy_mask is None:
+            policy_mask = torch.ones(
+                last_critic_obs.shape[0], dtype=torch.bool, device=last_critic_obs.device
+            )
+        else:
+            policy_mask = policy_mask.to(device=last_critic_obs.device, dtype=torch.bool)
+        active_ids = policy_mask.nonzero(as_tuple=False).flatten()
+        last_values = torch.zeros(
+            last_critic_obs.shape[0], 1, device=last_critic_obs.device
+        )
+        if active_ids.numel() > 0:
+            if self.actor_critic.is_sequence:
+                if last_obs_history is None:
+                    raise ValueError("Sequence policy requires observation history")
+                latent = self.actor_critic.encode(last_obs_history[active_ids])
+                active_critic_obs = torch.cat(
+                    (last_critic_obs[active_ids], latent), dim=-1
+                )
+            else:
+                active_critic_obs = last_critic_obs[active_ids]
+            last_values[active_ids] = self.actor_critic.evaluate(active_critic_obs).detach()
         self.storage.compute_returns(last_values, self.gamma, self.lam)
 
     def update(self):
@@ -284,6 +344,10 @@ class PPO:
 
                 mean_extra_loss += extra_loss.item()
                 num_updates_extra += 1
+
+        if num_updates == 0:
+            self.storage.clear()
+            return (0.0, 0.0, 0.0, 0.0)
 
         mean_value_loss /= num_updates
         mean_surrogate_loss /= num_updates

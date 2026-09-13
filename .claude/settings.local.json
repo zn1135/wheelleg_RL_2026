@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm \"/home/zn1135/.agent-worktrees/Wheel-Legged-Gym/T-20260823-01/scripts/agent/fix_chuanliantui_urdf_axes.py\" && echo \"废弃脚本已删除\")",
+      "Bash(cat ~/.claude/skills/agent-task-close/scripts/preflight.sh 2>/dev/null | head -60; echo \"===其他skill中的worktree引用===\"; grep -rln \"worktree\" ~/.claude/skills/ 2>/dev/null)",
+      "Read(//home/zn1135/.claude/skills/agent-task-close/scripts/**)",
+      "Read(//home/zn1135/.claude/skills/**)",
+      "Bash(rm -rf \"/home/zn1135/.agent-worktrees/Wheel-Legged-Gym/T-20260823-01/resources\")",
+      "Bash(git worktree *)",
+      "Bash(git branch *)",
+      "Bash(git -C \"/home/zn1135/.agent-worktrees/Wheel-Legged-Gym/T-20260823-01\" status --porcelain)",
+      "Read(//home/zn1135/.agent-worktrees/Wheel-Legged-Gym/**)",
+      "Bash(~/.claude/skills/agent-task/scripts/task-status.sh Wheel-Legged-Gym)",
+      "Bash(python3 -)",
+      "Bash(/home/zn1135/miniconda3/envs/wheellegged_py38/bin/python -)",
+      "Bash(grep -n \"LD_LIBRARY\\\\|libpython\" /home/zn1135/文档/Wheel-Legged-Gym/COMMANDS.md /home/zn1135/文档/Wheel-Legged-Gym/docs/ai/build-test.md 2>/dev/null; ls /home/zn1135/miniconda3/envs/wheellegged_py38/lib/libpython3.8* 2>/dev/null)",
+      "Read(//home/zn1135/miniconda3/envs/wheellegged_py38/lib/**)",
+      "Read(//tmp/**)",
+      "Bash(/home/zn1135/miniconda3/envs/wheellegged_py38/bin/python sim2sim/mj_sim2sim_ct.py --selfcheck)"
+    ],
+    "additionalDirectories": [
+      "/home/zn1135/.agent-worktrees/Wheel-Legged-Gym/T-20260823-01/scripts/agent",
+      "/home/zn1135/.agent-worktrees/Wheel-Legged-Gym/T-20260823-01/resources/robots/chuanliantui/urdf",
+      "/home/zn1135/.agent-projects/Wheel-Legged-Gym/tasks/T-20260823-01"
+    ]
+  }
+}

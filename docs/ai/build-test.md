@@ -6,12 +6,18 @@
 
 本仓库必须用**装了 Isaac Gym 的 Python 3.8 conda 环境**，不能用系统 python。本机该环境的路径见 [COMMANDS.md](../../COMMANDS.md) 开头，下文 `python` 均指它。
 
-已验证可用的版本组合：Python 3.8.20 / torch 2.1.0（CUDA 可用）/ mujoco 2.3.7 / Isaac Gym Preview 4。
+已验证可用的版本组合：Python 3.8.20 / torch 2.1.0（CUDA 可用）/ mujoco 3.2.2 / Isaac Gym Preview 4。
+
+MuJoCo 固定版本安装命令（保留现有满足依赖的 NumPy/Torch）：
+
+```bash
+python -m pip install --upgrade --upgrade-strategy only-if-needed 'mujoco==3.2.2'
+```
 
 自检一句话：
 
 ```bash
-<你的环境>/bin/python -c "import isaacgym, torch, mujoco; print('ok')"
+<你的环境>/bin/python -c "import isaacgym; import torch; import mujoco; print(mujoco.__version__)"
 ```
 
 `import isaacgym` 必须在 `import torch` 之前，否则报错。
@@ -31,6 +37,9 @@ python wheel_legged_gym/scripts/train.py --task=mini_wheel_legged --headless \
 ```
 
 常用参数：`--max_iterations` / `--num_envs`（显存不够调小）/ `--checkpoint` / `--run_name`。
+续训时 `--max_iterations` 表示本次**新增**轮数，例如从 `model_3000.pt` 续训 3000 轮会保存到 `model_6000.pt`，应使用新的 run 名保留原权重。
+runner 恢复 PPO 优化器后会同步自适应学习率；新 checkpoint 也保存 encoder 优化器。旧 checkpoint 不含 encoder 优化器状态时会明确提示，并使用新建的 encoder 优化器，不能视为完整训练状态的逐步重放。
+`scripts/agent/check_training_resume.py` 可在上述 Python 3.8 环境做 CPU 续训状态检查（新旧 checkpoint、仅加载权重和无 encoder 分支），不创建仿真，也不替代可见预检、正式训练或行为验收。
 输出：`logs/mini_wheel_legged/<日期时间_run_name>/model_*.pt`。
 监控：`tensorboard --logdir=./ --port=8080`。
 

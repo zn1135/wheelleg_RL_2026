@@ -1,0 +1,1 @@
+controller_joint_names: ['', 'rf0', 'rf1', 'rfwheel', 'lf0', 'lf1', 'lfwheel', 'rf00', 'rf01', 'rf02', 'rf03', 'lf00', 'lf01', 'lf02', 'lf03', 'rf001', 'rf002', 'lf001', 'lf002', 'rf04', 'rf05', 'lf04', 'lf05', ]

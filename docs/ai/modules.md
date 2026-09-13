@@ -33,7 +33,7 @@
 | `wheel_legged_vmc` | `LeggedRobotVMC` | wl | VMC，可迁移到闭链实机 |
 | `wheel_legged_vmc_flat` | `LeggedRobotVMC` | wl | 平地，显存需求低 |
 | `chuanliantui` | `Chuanliantui` | chuanliantui | 串联腿平地站立/行走 |
-| `chuanliantui_standup` | `ChuanliantuiStandup` | chuanliantui | 固定趴姿起立并稳站 |
+| `chuanliantui_standup` | `ChuanliantuiStandup` | chuanliantui | 高空微蹲自由落地后稳站 |
 
 ## 机器人资产
 

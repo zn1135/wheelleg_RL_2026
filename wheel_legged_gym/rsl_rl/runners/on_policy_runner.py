@@ -135,8 +135,16 @@ class OnPolicyRunner:
             # Rollout 阶段：与环境交互收集样本
             with torch.inference_mode():
                 for i in range(self.num_steps_per_env):
-                    # 根据当前策略生成动作
-                    actions = self.alg.act(obs, obs_history, critic_obs)
+                    # 某些环境会在 reset 后先经历无策略的物理预备阶段（例如
+                    # 高空自由落体）。False 行不会运行 actor/critic，也不会
+                    # 进入 PPO 样本；普通环境没有该接口时全部为 True。
+                    action_mask_fn = getattr(self.env, "get_policy_action_mask", None)
+                    policy_mask = (
+                        action_mask_fn()
+                        if action_mask_fn is not None
+                        else torch.ones(self.env.num_envs, dtype=torch.bool, device=self.device)
+                    )
+                    actions = self.alg.act(obs, obs_history, critic_obs, policy_mask)
 
                     # 与环境交互，获取下一步数据
                     obs, privileged_obs, rewards, dones, infos, obs_history = (
@@ -186,16 +194,14 @@ class OnPolicyRunner:
 
                 # 学习阶段：计算返回值
                 start = stop
-                if self.cfg["policy_class_name"] == "ActorCriticSequence":
-                    # 序列策略需要将编码后的历史信息拼接到 critic 观测中
-                    critic_obs__ = torch.cat(
-                        (critic_obs, self.alg.actor_critic.encode(obs_history)), dim=-1
-                    )
-                else:
-                    critic_obs__ = critic_obs
-
                 # 计算回报和优势等训练目标
-                self.alg.compute_returns(critic_obs__)
+                action_mask_fn = getattr(self.env, "get_policy_action_mask", None)
+                policy_mask = (
+                    action_mask_fn()
+                    if action_mask_fn is not None
+                    else torch.ones(self.env.num_envs, dtype=torch.bool, device=self.device)
+                )
+                self.alg.compute_returns(critic_obs, obs_history, policy_mask)
 
             # 更新策略网络
             mean_value_loss, mean_surrogate_loss, mean_kl, mean_extra_loss = (
@@ -321,6 +327,10 @@ class OnPolicyRunner:
             {
                 "model_state_dict": self.alg.actor_critic.state_dict(),
                 "optimizer_state_dict": self.alg.optimizer.state_dict(),
+                "extra_optimizer_state_dict": (
+                    self.alg.extra_optimizer.state_dict()
+                    if self.alg.extra_optimizer is not None else None
+                ),
                 "iter": self.current_learning_iteration,
                 "infos": infos,
             },
@@ -332,6 +342,19 @@ class OnPolicyRunner:
         self.alg.actor_critic.load_state_dict(loaded_dict["model_state_dict"])
         if load_optimizer:
             self.alg.optimizer.load_state_dict(loaded_dict["optimizer_state_dict"])
+            # adaptive 每个 mini-batch 都会用此变量覆盖 optimizer 的 lr，
+            # 必须同步恢复，否则首步会从新配置的 lr 跳变，而非沿用 checkpoint。
+            self.alg.learning_rate = self.alg.optimizer.param_groups[0]["lr"]
+            print(f"Restored PPO learning rate: {self.alg.learning_rate:.8g}")
+            if self.alg.extra_optimizer is not None:
+                extra_state = loaded_dict.get("extra_optimizer_state_dict")
+                if extra_state is not None:
+                    self.alg.extra_optimizer.load_state_dict(extra_state)
+                else:
+                    print(
+                        "Checkpoint has no encoder optimizer state; "
+                        "using the newly initialized encoder optimizer."
+                    )
         self.current_learning_iteration = loaded_dict["iter"]
         return loaded_dict["infos"]
 
