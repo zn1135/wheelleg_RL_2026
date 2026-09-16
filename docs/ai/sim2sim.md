@@ -62,3 +62,19 @@ XML 已用 `cone=elliptic` + `impratio=10`（轮式标准配置）。
 ## URDF / XML 同步
 
 `resources/robots/imcawl/urdf/imcawl.urdf`（Isaac 侧）与 `sim2sim/imcawl.xml`（MuJoCo 侧）是**两份手工维护的模型**。改一边必须改另一边，然后跑 `python sim2sim/check_model.py`。连杆长度变了还要同步 `mini_wheel_legged_config.py` 的 `asset.l1 / l2`。
+
+## chuanliantui 串联训练代理回放
+
+`sim2sim/mj_sim2sim_ct.py` 默认加载 `chuanliantui_train_proxy.xml`。它由
+`resources/robots/chuanliantui_new_1/urdf/chuanliantui_train.urdf` 生成，保留训练端
+6-DOF 串联拓扑、固定后支链、地面、根 free joint 及六个同名力矩电机；模型必须保持
+`neq=0`。改训练 URDF 后运行
+`scripts/agent/generate_chuanliantui_train_proxy_mjcf.py`，再用
+`scripts/agent/check_chuanliantui_train_proxy.py` 检查该契约。
+
+该模式只消除 Isaac 串联训练资产与 MuJoCo 回放资产的结构差异，**不是**真实闭链或
+真机 sim2sim。默认会拒绝任何含 equality/connect 约束的模型，防止两条链路混用。
+
+仅在闭链差异诊断时，可显式传入 `--closed_chain`。该选项改用旧
+`chuanliantui.xml`（`neq=4`）和 `ClosedChainAdapter` 的闭链姿态求解/力矩映射；它保留
+真实闭链动力学差异，不能作为串联训练策略已完成 sim2sim 或可上真机的证据。

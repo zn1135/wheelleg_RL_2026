@@ -9,10 +9,6 @@ class ChuanliantuiStandup(Chuanliantui):
         super().__init__(cfg, sim_params, physics_engine, sim_device, headless)
         self.has_stood = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
         self.standing_time = torch.zeros(self.num_envs, device=self.device)
-        # 连续未站稳的控制步数；不复用 runner 会随机初始化的 episode_length_buf。
-        self.standup_steps = torch.zeros(
-            self.num_envs, dtype=torch.long, device=self.device
-        )
         if self.feet_indices.numel() != 2:
             raise RuntimeError("Standup wheel-airborne termination requires exactly two wheels")
         self.wheels_airborne_steps = torch.zeros(
@@ -55,20 +51,30 @@ class ChuanliantuiStandup(Chuanliantui):
         # 本步的零动作当作策略样本（runner 在 step 前读取 action mask）。
         newly_landed = ~self.has_landed & self._has_wheel_contact()
         self.has_landed |= newly_landed
-        # 自由落体是策略回合外的物理预备阶段。首次落地才开始计入 2 秒
-        # 课程和 episode timeout，避免 train.py 的随机初始回合长度在触地瞬间
-        # 触发超时重置。
+        # 自由落体是策略回合外的物理预备阶段。首次落地才开始计入 episode
+        # timeout，避免 train.py 的随机初始回合长度在触地瞬间触发超时重置。
         self.episode_length_buf[newly_landed] = 0
 
+        base_contact_force = torch.norm(
+            self.contact_forces[:, self.termination_contact_indices, :], dim=-1
+        )
+        base_contact = torch.any(
+            base_contact_force > self.cfg.standup.success_base_contact_force_threshold,
+            dim=1,
+        )
+        upright = (
+            self.projected_gravity[:, 2]
+            <= self.cfg.standup.success_projected_gravity_z
+        )
+        # 起立首先必须达到目标高度且机身竖直。ground-standup 还要求
+        # base_link 脱离地面，避免低姿态仅由轮子支撑被误判为“已起立”。
         standing = (
             self.has_landed
-            &
-            (self.base_height >= self.cfg.standup.success_height)
-            & (
-                self.projected_gravity[:, 2]
-                <= self.cfg.standup.success_projected_gravity_z
-            )
+            & (self.base_height >= self.cfg.standup.success_height)
+            & upright
         )
+        if self.cfg.standup.success_requires_base_contact_free:
+            standing &= ~base_contact
         self.standing_time = torch.where(
             standing,
             self.standing_time + self.dt,
@@ -78,22 +84,9 @@ class ChuanliantuiStandup(Chuanliantui):
             self.standing_time >= self.cfg.standup.success_duration_s
         )
         self.has_stood |= stable_now
-        # 全回合生效：每次重新站稳才清零；短暂满足高度/姿态不清零。
-        self.standup_steps = torch.where(
-            ~self.has_landed,
-            torch.zeros_like(self.standup_steps),
-            torch.where(
-                stable_now,
-                torch.zeros_like(self.standup_steps),
-                self.standup_steps + 1,
-            ),
-        )
 
         base_contact = torch.any(
-            torch.norm(
-                self.contact_forces[:, self.termination_contact_indices, :], dim=-1
-            )
-            > 10.0,
+            base_contact_force > 10.0,
             dim=1,
         )
         fallen = self.has_landed & self.has_stood & (
@@ -105,10 +98,6 @@ class ChuanliantuiStandup(Chuanliantui):
         # pg_z 严格为正时立即终止，不依赖 has_stood，也不等待失败计时。
         # 在每个控制步的终止检查中生效；pg_z == 0 不触发本条件。
         inverted = self.has_landed & (self.projected_gravity[:, 2] > 0.0)
-        # 连续超过期限未站稳，按失败终止；曾站起过也不豁免。
-        failed_to_stand = (
-            self.standup_steps > self.cfg.standup.standup_timeout_s / self.dt
-        )
         # 当前地形为平地且关闭自碰撞，用世界 z 向轮接触力近似判断地面支撑。
         # 任一轮恢复支撑就清零；不累计多段腾空，也不受历史站起标志限制。
         both_airborne = self.has_landed & self._both_wheels_airborne()
@@ -125,7 +114,7 @@ class ChuanliantuiStandup(Chuanliantui):
         )
         self.reset_buf = (
             self.fail_buf > self.cfg.env.fail_to_terminal_time_s / self.dt
-        ) | inverted | failed_to_stand | airborne_failure | self.time_out_buf
+        ) | inverted | airborne_failure | self.time_out_buf
 
     def reset_idx(self, env_ids):
         if len(env_ids) == 0:
@@ -135,7 +124,6 @@ class ChuanliantuiStandup(Chuanliantui):
         self.extras["episode"]["recovered_rate"] = recovered_rate
         self.has_stood[env_ids] = False
         self.standing_time[env_ids] = 0.0
-        self.standup_steps[env_ids] = 0
         self.wheels_airborne_steps[env_ids] = 0
         self.has_landed[env_ids] = False
 

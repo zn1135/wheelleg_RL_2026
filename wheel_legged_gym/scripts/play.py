@@ -66,7 +66,7 @@ def play(args):
 
     # prepare environment
     env, _ = task_registry.make_env(name=args.task, args=args, env_cfg=env_cfg)
-    is_standup = args.task == "chuanliantui_standup"
+    is_standup = args.task in {"chuanliantui_standup", "chuanliantui_ground_standup"}
     if is_standup:
         env.commands[:, 0] = 0.0
         env.commands[:, 1] = 0.0

@@ -39,7 +39,7 @@ python sim2sim/eval_isaac.py --load_run <run> --checkpoint <n> --cmd_vx 0.5
 
 **本仓库没有单元测试框架，也没有 CI。** 验证 = 上面训练 → 回放 → sim2sim 三步，靠人眼判读终端输出。`--selfcheck` 只检查网络形状、不检查行为，不能单独当作验证通过。不要声称跑过单测，也不要用这些之外的临时命令代替正式流程。
 
-**新任务/新环境首次训练的固定顺序：先开非无头（不带 `--headless`）的 train 窗口、`--num_envs 20`，让用户实时看到训练过程并确认环境行为，再上大规模 headless 训练。**
+**训练命令交付：默认只向用户提供可执行命令，不得自行启动训练或 TensorBoard。每次提供训练命令时，必须同时提供 TensorBoard 命令，用训练输出所在的 `logs/` 目录作为 `--logdir`。仅当改动机器人的初始位置（`init_state.pos` 或等价的根节点初始位置）时，训练命令才应先使用非无头、`--num_envs 20` 的可视预检；其他训练命令可直接大规模 headless。**
 
 ## 代码入口
 
@@ -67,12 +67,6 @@ python sim2sim/eval_isaac.py --load_run <run> --checkpoint <n> --cmd_vx 0.5
 - 不得 import 或修改 `wheel_legged_gym/logs/`——注意这是**另一个目录**，里面只有 `envs/` 的陈旧 `.py` 副本、不含任何训练产物，被 gitignore 的 `logs` 规则连带忽略，已与 `envs/` 分叉。真实环境代码在 `wheel_legged_gym/envs/`。
 - 当前策略安全包线 **±1.5 m/s**，不要在验证脚本里默认超过它（≥1.8 m/s 刹车瞬态会发散翻车，根因见 docs/ai/sim2sim.md）。
 
-## Skill 路由
+## 工作区约定
 
-| 场景 | Skill |
-|---|---|
-| 开始/管理并行任务 | `agent-task` |
-| 代码完成后 Review | `agent-task-review` |
-| 任务收尾沉淀知识 | `agent-knowledge-capture` |
-| 私有知识发布到仓库 | `project-knowledge-publish` |
-| 清理任务环境 | `agent-task-close` |
+默认直接在当前工作区开发。除非用户在当次请求中明确要求，不得创建或使用 Git worktree，也不启用任务注册、资源锁或私有任务目录等 worktree 工作流。

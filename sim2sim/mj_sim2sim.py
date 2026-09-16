@@ -28,7 +28,7 @@ imcawl 轮足机器人 sim2sim 部署验证脚本（Isaac Gym -> MuJoCo）
       喂恒定 yaw 值会导致偏航漂移无人纠正、巡航数秒后摔（本脚本 --heading_hold 默认开）。
 
 运行
-    /home/zn1135/miniconda3/envs/wheellegged_py38/bin/python sim2sim/mj_sim2sim.py \
+    /home/zn/miniforge3/envs/wheellegged_py38/bin/python sim2sim/mj_sim2sim.py \
         --checkpoint logs/mini_wheel_legged/Jul20_12-42-47_/model_6900.pt --render
     先测站立：--cmd_vx 0 --cmd_height 0.30
     再测行走：--cmd_vx 1.0

@@ -6,8 +6,8 @@ chuanliantui 串联腿轮足机器人 sim2sim 部署验证脚本
 
 用途
     在 MuJoCo 里加载训练好的策略(chuanliantui 任务)，复现训练时完全一致的
-    观测构造、历史缓冲、动作->力矩映射与控制时序，验证策略脱离 Isaac Gym 后仍能站立/行走。
-    这是通向真机部署的中间验证步骤，也是硬件端实现的参照蓝本。
+    观测构造、历史缓冲、动作->力矩映射与控制时序，验证策略在 MuJoCo 串联代理
+    中的行为。该路径只用于训练代理一致性回放，不代表真实闭链机构或真机。
 
 关键契约（全部对齐 wheel_legged_gym/envs/base/legged_robot.py，勿改）
     - 策略：ActorCriticSequence。action = actor(cat(obs_27, encoder(history_135)))
@@ -17,10 +17,10 @@ chuanliantui 串联腿轮足机器人 sim2sim 部署验证脚本
                    (dof_pos-default)*1.0(6), dof_vel*0.05(6), last_action(6)]，裁剪 ±100
     - 历史 135=27*5：FIFO，最旧在前、最新在末尾；上电用首帧重复 5 次填充
     - dof_vel 用位置差分：wrap_to_pi(dof_pos-last_dof_pos)/sim_dt，每个 sim 子步更新一次
-    - 动作->虚拟串联腿力矩：腿位置控制(Kp=10,Kd=1)，轮速度控制(Kp=0,Kd=0.1)；
-      闭链 adapter 再将虚拟 f0/f1 力矩映射到实体 f0/f00 电机，见 compute_torques()。
+    - 动作->串联训练代理力矩：腿位置控制(Kp=10,Kd=1)，轮速度控制(Kp=0,Kd=0.1)；
+      六维力矩直接写入同名训练 DOF 的 MuJoCo motor，不做闭链 Jacobian 映射。
     - 时序：sim_dt=0.005，decimation=2 -> 策略 100Hz，PD 内环 200Hz
-    - 虚拟/实体力矩上限：[40,40,3.9,40,40,3.9] N·m
+    - 力矩上限：[40,40,3.9,40,40,3.9] N·m
     - 动作延迟：当前起立配置关闭 action delay；本脚本同样零延迟。真机部署时通信+执行延迟
       必须与训练保持一致。
     - 前进方向:机体 +x(与训练 tracking_lin_vel 的 base_lin_vel[:,0] 一致)。
@@ -29,7 +29,7 @@ chuanliantui 串联腿轮足机器人 sim2sim 部署验证脚本
       不使用航向保持外环。
 
 运行
-    /home/zn1135/miniconda3/envs/wheellegged_py38/bin/python sim2sim/mj_sim2sim_ct.py \
+    /home/zn/miniforge3/envs/wheellegged_py38/bin/python sim2sim/mj_sim2sim_ct.py \
         --checkpoint logs/chuanliantui/Sep08_12-56-46_new1_train_proxy_v1_resume/model_3000.pt --render
     先测站立：--cmd_vx 0 --cmd_height 0.32
     再测行走：--cmd_vx 1.0
@@ -61,6 +61,7 @@ from sim2sim.chuanliantui_closed_adapter import ClosedChainAdapter
 # 契约常量（全部已从 config / legged_robot.py 核实）
 # --------------------------------------------------------------------------------------
 JOINT_NAMES = ["lf0", "lf1", "lfwheel", "rf0", "rf1", "rfwheel"]
+ACTUATOR_NAMES = ["{}_motor".format(name) for name in JOINT_NAMES]
 NUM_ACTIONS = 6
 NUM_OBS = 27
 # 特权观测维度（仅 critic 用，来自 legged_robot_config.py:42-44）：27 + 7*11 + 3 + 6*5 + 3 + 3 = 143
@@ -101,7 +102,8 @@ ENCODER_HIDDEN_DIMS = [128, 64]
 DEFAULT_CHECKPOINT = os.path.join(
     _REPO_ROOT, "logs", "chuanliantui", "Sep08_12-56-46_new1_train_proxy_v1_resume", "model_3000.pt"
 )
-DEFAULT_MODEL_XML = os.path.join(_THIS_DIR, "chuanliantui.xml")
+DEFAULT_MODEL_XML = os.path.join(_THIS_DIR, "chuanliantui_train_proxy.xml")
+DEFAULT_CLOSED_MODEL_XML = os.path.join(_THIS_DIR, "chuanliantui.xml")
 
 
 # --------------------------------------------------------------------------------------
@@ -212,26 +214,42 @@ def compute_torques(action, dof_pos, dof_vel):
 def run(args):
     import mujoco
 
+    model_xml = args.model_xml or (
+        DEFAULT_CLOSED_MODEL_XML if args.closed_chain else DEFAULT_MODEL_XML
+    )
     if not os.path.isfile(args.checkpoint):
         raise FileNotFoundError(f"checkpoint 不存在: {args.checkpoint}")
-    if not os.path.isfile(args.model_xml):
-        raise FileNotFoundError(f"MJCF 不存在: {args.model_xml}")
+    if not os.path.isfile(model_xml):
+        raise FileNotFoundError(f"MJCF 不存在: {model_xml}")
 
     device = "cpu"
     policy = load_policy(args.checkpoint, device=device)
     print(f"已加载策略: {args.checkpoint}")
 
-    model = mujoco.MjModel.from_xml_path(args.model_xml)
+    model = mujoco.MjModel.from_xml_path(model_xml)
     data = mujoco.MjData(model)
+    if args.closed_chain and model.neq != 4:
+        raise ValueError(
+            "--closed_chain 需要含 4 个 connect 的真实闭链 XML；"
+            f"当前 neq={model.neq}: {model_xml}"
+        )
+    if not args.closed_chain and model.neq != 0:
+        raise ValueError(
+            "该脚本已关闭真实闭链路径，只接受 neq=0 的串联训练代理 MJCF；"
+            "如需旧闭链验证，请显式传入 --closed_chain。"
+        )
     model.opt.timestep = SIM_DT
     if args.friction is not None:
         # MuJoCo 接触摩擦取两 geom 的逐元素最大值；统一改滑动摩擦即可控制轮地摩擦。
         # 训练等效摩擦区间约 [0.4, 1.0]（机器人 [0.3,1.5] 与地面 0.5 取 PhysX 平均），均值 0.75。
         model.geom_friction[:, 0] = args.friction
         print(f"已覆盖所有 geom 滑动摩擦 = {args.friction}")
-    print(f"已加载 MuJoCo 模型: {args.model_xml}  (nq={model.nq}, nv={model.nv}, nu={model.nu})")
+    print(
+        f"已加载{'真实闭链验证模型' if args.closed_chain else '串联训练代理'}: {model_xml} "
+        f"(nq={model.nq}, nv={model.nv}, nu={model.nu}, neq={model.neq})"
+    )
 
-    # 解析虚拟训练关节地址；实体电机地址由闭链适配器解析。
+    # 解析与 Isaac 训练 URDF 相同顺序的六个关节和同名力矩电机地址。
     qpos_adr = np.zeros(NUM_ACTIONS, dtype=np.int32)
     dof_adr = np.zeros(NUM_ACTIONS, dtype=np.int32)
     for i, name in enumerate(JOINT_NAMES):
@@ -241,21 +259,76 @@ def run(args):
         qpos_adr[i] = model.jnt_qposadr[jid]
         dof_adr[i] = model.jnt_dofadr[jid]
     mujoco.mj_forward(model, data)
-    adapter = ClosedChainAdapter(mujoco, model, data)
+    adapter = None
+    if args.closed_chain:
+        adapter = ClosedChainAdapter(mujoco, model, data)
+    else:
+        actuator_ids = np.zeros(NUM_ACTIONS, dtype=np.int32)
+        for i, name in enumerate(ACTUATOR_NAMES):
+            actuator_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, name)
+            if actuator_id < 0:
+                raise RuntimeError(f"MJCF 中找不到训练代理电机: {name}")
+            actuator_ids[i] = actuator_id
 
     # 基座 free joint 地址（qpos 前 7 位 = pos(3)+quat wxyz(4)，qvel 前 6 位 = linvel(3)+angvel(3)）
     base_jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "floating_base")
     base_qadr = model.jnt_qposadr[base_jid]
     base_vadr = model.jnt_dofadr[base_jid]
+    floor_gid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, "floor")
+
+    # PhysX 会将连续关节的状态回绕到 [-pi, pi)。例如配置中的 11 rad
+    # 与 -1.566 rad 是同一姿态，但策略观测不是同一个数。MuJoCo 的 hinge
+    # 不会自动回绕；若直接写 11，actor 会持续读到训练中不存在的大角度状态。
+    # 在写入 MuJoCo 前统一规范化，随后观测、历史和 PD 都直接读取该状态。
+    initial_dof_pos = wrap_to_pi(
+        np.asarray(args.initial_dof_pos, dtype=np.float64)
+    )
+    if not np.allclose(initial_dof_pos, args.initial_dof_pos):
+        print(
+            "初始关节已按 PhysX 表示规范到 [-pi, pi)："
+            f" {np.array2string(initial_dof_pos, precision=6)}"
+        )
+
+    def place_collision_meshes_on_ground():
+        """沿世界 z 平移 floating base，使当前碰撞网格的最低顶点刚好离地。"""
+        mujoco.mj_forward(model, data)
+        min_z = np.inf
+        for gid in range(model.ngeom):
+            if gid == floor_gid or model.geom_contype[gid] == 0:
+                continue
+            if model.geom_type[gid] != mujoco.mjtGeom.mjGEOM_MESH:
+                raise RuntimeError("ground_start 目前只支持 mesh 碰撞 geom")
+            mesh_id = model.geom_dataid[gid]
+            start = model.mesh_vertadr[mesh_id]
+            count = model.mesh_vertnum[mesh_id]
+            vertices = model.mesh_vert[start:start + count]
+            rotation = data.geom_xmat[gid].reshape(3, 3)
+            z_values = vertices @ rotation[2, :] + data.geom_xpos[gid, 2]
+            min_z = min(min_z, float(z_values.min()))
+        if not np.isfinite(min_z):
+            raise RuntimeError("ground_start 未找到机器人碰撞网格")
+        data.qpos[base_qadr + 2] += args.ground_clearance - min_z
+        mujoco.mj_forward(model, data)
+        print(f"ground_start：碰撞网格最低点 z={min_z:.6f} m，"
+              f"已平移到 clearance={args.ground_clearance:.4f} m；"
+              f"base_z={data.qpos[base_qadr + 2]:.6f} m")
 
     def reset_sim_state(freefall_standup):
         mujoco.mj_resetData(model, data)
-        adapter.set_virtual_pose(DEFAULT_DOF_POS)
+        if adapter is not None:
+            adapter.set_virtual_pose(initial_dof_pos)
+        else:
+            for i, qpos in enumerate(initial_dof_pos):
+                data.qpos[qpos_adr[i]] = qpos
         data.qpos[base_qadr + 2] = (
             FREEFALL_START_HEIGHT if freefall_standup else args.init_height
         )
         data.qpos[base_qadr + 3:base_qadr + 7] = np.array([1.0, 0.0, 0.0, 0.0])
         mujoco.mj_forward(model, data)
+        if args.ground_start:
+            if freefall_standup:
+                raise ValueError("--ground_start 不能与 --standup 同用")
+            place_collision_meshes_on_ground()
 
     reset_sim_state(args.standup)
 
@@ -314,7 +387,6 @@ def run(args):
         return np.array([data.qpos[qpos_adr[i]] for i in range(NUM_ACTIONS)], dtype=np.float64)
 
     base_bid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "base_link")
-    floor_gid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, "floor")
     wheel_bids = {
         mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "lfwheel"),
         mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "rfwheel"),
@@ -455,7 +527,10 @@ def run(args):
         # dof_vel（含轮速里程计）会滞后一个子步 5ms，与陀螺仪滞后是同款问题。
         for _ in range(DECIMATION):
             torque = compute_torques(action, dof_pos, dof_vel)
-            data.ctrl[adapter.actuator_ids] = adapter.map_virtual_torques(torque)
+            if adapter is not None:
+                data.ctrl[adapter.actuator_ids] = adapter.map_virtual_torques(torque)
+            else:
+                data.ctrl[actuator_ids] = torque
             mujoco.mj_step(model, data)
             dof_pos = read_dof_pos()
             dof_vel = wrap_to_pi(dof_pos - last_dof_pos) / SIM_DT
@@ -518,7 +593,16 @@ def selfcheck(args):
 def main():
     p = argparse.ArgumentParser(description="chuanliantui MuJoCo sim2sim 部署验证")
     p.add_argument("--checkpoint", default=DEFAULT_CHECKPOINT, help="model_*.pt 完整 checkpoint 路径")
-    p.add_argument("--model_xml", default=DEFAULT_MODEL_XML, help="MJCF 模型路径")
+    p.add_argument(
+        "--model_xml",
+        default=None,
+        help="覆盖模型路径；未指定时默认串联训练代理，配合 --closed_chain 时默认旧 chuanliantui.xml",
+    )
+    p.add_argument(
+        "--closed_chain",
+        action="store_true",
+        help="启用旧真实闭链 XML + ClosedChainAdapter 力矩映射；仅用于闭链差异诊断，默认关闭",
+    )
     p.add_argument("--render", action="store_true", help="启动 MuJoCo passive viewer")
     p.add_argument("--cmd_vx", type=float, default=0.0, help="目标前向线速度 [m/s]")
     p.add_argument("--cmd_yaw", type=float, default=0.0,
@@ -530,7 +614,15 @@ def main():
                    help="速度/偏航命令线性爬升时长 [s]（0=阶跃）")
     p.add_argument("--friction", type=float, default=None,
                    help="覆盖所有 geom 的滑动摩擦系数（默认用 XML 里的 0.5；训练等效均值约 0.75）")
-    p.add_argument("--init_height", type=float, default=0.33, help="闭链复位时的初始基座高度 [m]")
+    p.add_argument("--init_height", type=float, default=0.33, help="串联代理复位时的初始基座高度 [m]")
+    p.add_argument("--initial_dof_pos", type=float, nargs=NUM_ACTIONS,
+                   default=DEFAULT_DOF_POS.tolist(), metavar=("LF0", "LF1", "LWHEEL", "RF0", "RF1", "RWHEEL"),
+                   help="复位训练 DOF [lf0, lf1, lfwheel, rf0, rf1, rfwheel] [rad]；"
+                        "不用 --standup 时，策略从第一个控制步开始接管")
+    p.add_argument("--ground_start", action="store_true",
+                   help="按当前 initial_dof_pos 的碰撞网格最低点自动贴地；不能与 --standup 同用")
+    p.add_argument("--ground_clearance", type=float, default=0.002,
+                   help="--ground_start 的碰撞网格最低点离地间隙 [m]")
     p.add_argument("--standup", action="store_true",
                    help="使用当前起立训练的初态：1 m 高空微蹲；首次轮接地后的下一控制步才推理策略")
     p.add_argument("--sim_time", type=float, default=20.0, help="仿真时长 [s]")

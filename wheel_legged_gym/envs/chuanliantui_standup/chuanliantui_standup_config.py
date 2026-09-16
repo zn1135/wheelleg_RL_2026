@@ -14,23 +14,24 @@ class ChuanliantuiStandupCfg(ChuanliantuiCfg):
             height = [0.32, 0.32]
 
     class init_state(ChuanliantuiCfg.init_state):
-        # 每回合从 1 m 高空的已站立零动作姿态自由落下；首次轮接地前由
-        # ChuanliantuiStandup 屏蔽策略/判死，避免把自由落体当成起立样本。
-        pos = [0.0, 0.0, 1.0]
+        # 与 ground-standup 相同：后摆姿态的碰撞网格贴近地面，避免初始穿地。
+        pos = [0.0, 0.0, 0.15]
         rot = [0.0, 0.0, 0.0, 1.0]
         lin_vel = [0.0, 0.0, 0.0]
         ang_vel = [0.0, 0.0, 0.0]
 
     class standup:
-        fall_start_height = 1.0
-        initial_base_height = 0.08
+        fall_start_height = 0.15
+        initial_base_height = 0.15
         target_base_height = 0.32
-        # 与 ChuanliantuiCfg.init_state.default_joint_angles 相同的微蹲站姿。
-        initial_dof_pos = [-0.06, 0.10, 0.0, 0.06, -0.10, 0.0]
+        # 与 ground-standup 相同的后摆初态；顺序为
+        # [lf0, lf1, lfwheel, rf0, rf1, rfwheel]。
+        initial_dof_pos = [11.0, 0.0, 0.0, -11.0, 0.0, 0.0]
         success_height = 0.30
         success_projected_gravity_z = -0.90
+        success_requires_base_contact_free = False
+        success_base_contact_force_threshold = 0.1
         success_duration_s = 0.5
-        standup_timeout_s = 2.0  # 全回合连续超过 2 s 未站稳即判死，重新站稳后清零。
         wheels_airborne_timeout_s = 0.2  # 双轮连续同时无有效支撑达到该时间即判死。
         wheel_contact_force_threshold = 1.0  # [N] 当前平地任务：世界 z 向接触力 > 1 N 视为接地。
 

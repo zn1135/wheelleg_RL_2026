@@ -55,6 +55,10 @@ from .chuanliantui_standup.chuanliantui_standup_config import (
     ChuanliantuiStandupCfg,
     ChuanliantuiStandupCfgPPO,
 )
+from .chuanliantui_ground_standup.chuanliantui_ground_standup_config import (
+    ChuanliantuiGroundStandupCfg,
+    ChuanliantuiGroundStandupCfgPPO,
+)
 
 
 import os
@@ -95,3 +99,9 @@ task_registry.register(
     ChuanliantuiStandupCfgPPO(),
 )
 
+task_registry.register(
+    "chuanliantui_ground_standup",
+    ChuanliantuiStandup,
+    ChuanliantuiGroundStandupCfg(),
+    ChuanliantuiGroundStandupCfgPPO(),
+)
