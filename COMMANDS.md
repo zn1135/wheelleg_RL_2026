@@ -1,6 +1,6 @@
 # 常用命令速查
 
-Python 环境：`/home/zn1135/miniconda3/envs/wheellegged_py38/bin/python`（下面简写为 `python`）
+Python 环境：请先激活安装了 Isaac Gym 的 Python 3.8 conda 环境，下面统一使用环境内的 `python` 命令。运行 Isaac Gym 前可执行 `export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:${LD_LIBRARY_PATH:-}"`。
 
 ## 训练（Isaac Gym）
 
