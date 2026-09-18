@@ -17,17 +17,14 @@ class ChuanliantuiGroundStandupCfg(ChuanliantuiStandupCfg):
         initial_base_height = 0.15
         # 训练 reset 的真实状态；DOF 顺序为 [lf0, lf1, lfwheel, rf0, rf1, rfwheel]。
         initial_dof_pos = [11.0, 0.0, 0.0, -11.0, 0.0, 0.0]
-        # 成功起立不再以根高度为门槛：机身竖直且 base_link 已脱离地面即可。
-        success_requires_base_contact_free = True
-        success_base_contact_force_threshold = 0.1
 
     class rewards(ChuanliantuiStandupCfg.rewards):
         class scales(ChuanliantuiStandupCfg.rewards.scales):
             # 强化从后摆低姿态向目标站高抬升的驱动力。
-            base_height = 3.0
+            base_height = 1.0
             # asset.penalize_contacts_on 只包含 base_link；其与地面的接触会触发此项。
             collision = -1.0
-
+            orientation = -1.0
 
 class ChuanliantuiGroundStandupCfgPPO(ChuanliantuiStandupCfgPPO):
     class runner(ChuanliantuiStandupCfgPPO.runner):

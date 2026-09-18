@@ -7,3 +7,24 @@ WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Ti
 Sun Sep 13 19:42:17 2026
 WARNING: Nan, Inf or huge value in QACC at DOF 4. The simulation is unstable. Time = 1.2050.
 
+Tue Sep 15 2026
+POLICY DESIGNATION: logs/chuanliantui_standup/Sep09_22-09-32_freefall_standing_resume7000_full/model_10000.pt
+is the final policy for the 1 m high-freefall, micro-squat standup scenario (--standup).
+Validated in MuJoCo for 20 s with friction=0.75: stable upright posture after landing.
+Scope limit: it does not stand up from the grounded rear-leg pose [11, 0, 0, -11, 0, 0];
+that test remained near z=0.145 m with large actions and a QACC warning at 0.985 s.
+Tue Sep 15 22:16:02 2026
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.9850.
+
+Tue Sep 15 22:20:59 2026
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 0.9850.
+
+Wed Sep 16 21:48:32 2026
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 1.2600.
+
+Wed Sep 16 21:52:55 2026
+WARNING: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 1.4150.
+
+Wed Sep 16 22:19:04 2026
+WARNING: Nan, Inf or huge value in QACC at DOF 3. The simulation is unstable. Time = 2.6350.
+

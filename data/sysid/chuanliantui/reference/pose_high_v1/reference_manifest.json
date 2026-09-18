@@ -1,0 +1,48 @@
+{
+  "reference_id": "pose_high_v1",
+  "pose": "pose_high",
+  "source_model": "sim2sim/chuanliantui.xml",
+  "generator": "scripts/agent/generate_chuanliantui_closed_chain_references.py",
+  "physical_active_joint_order": [
+    "lf0",
+    "lf00",
+    "rf0",
+    "rf00"
+  ],
+  "virtual_joint_order": [
+    "lf0",
+    "lf1",
+    "lfwheel",
+    "rf0",
+    "rf1",
+    "rfwheel"
+  ],
+  "virtual_pose_seed_rad": {
+    "lf0": -0.02,
+    "lf1": 0.03,
+    "rf0": 0.02,
+    "rf1": -0.03
+  },
+  "sample_hz": 200,
+  "settle_s": 2.0,
+  "motion_s": 6.0,
+  "cycles": 2,
+  "virtual_excitation_amplitude_rad": 0.02,
+  "q_model_min_rad": {
+    "lf0": -0.04,
+    "lf00": 0.011834839741723061,
+    "rf0": 0.0,
+    "rf00": -0.019371979052754888
+  },
+  "q_model_max_rad": {
+    "lf0": 0.0,
+    "lf00": 0.01937197905182963,
+    "rf0": 0.04,
+    "rf00": -0.01183483974258819
+  },
+  "max_connect_residual_m": 1.485062073314225e-13,
+  "model_reference_sha256": "6ca8ebe488364dece2139fef07471779c67a61107e6c35e256d92ab34b33346d",
+  "hardware_reference_sha256": null,
+  "hardware_export": "disabled: requires FK_real/J_real torque mapping, not affine position calibration",
+  "hardware_note": "model_reference.csv 仅为模型闭链位置映射检查，不能下发真机。真实/模型电机安装位置不同，硬件力矩回放必须先建立并验证 FK_real/J_real 与 FK_model/J_model。"
+}

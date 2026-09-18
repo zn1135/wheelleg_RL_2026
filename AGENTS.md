@@ -70,3 +70,8 @@ python sim2sim/eval_isaac.py --load_run <run> --checkpoint <n> --cmd_vx 0.5
 ## 工作区约定
 
 默认直接在当前工作区开发。除非用户在当次请求中明确要求，不得创建或使用 Git worktree，也不启用任务注册、资源锁或私有任务目录等 worktree 工作流。
+
+## Git 提交约定
+
+- Git 提交信息（标题和正文）必须使用中文。
+- 每次实际执行 `git commit` 前，必须先向用户展示暂存文件范围和拟用的中文提交信息，并等待用户明确确认；未确认时不得提交、amend、推送或创建 PR。
