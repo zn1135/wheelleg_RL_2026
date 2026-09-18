@@ -75,6 +75,35 @@ XML 已用 `cone=elliptic` + `impratio=10`（轮式标准配置）。
 该模式只消除 Isaac 串联训练资产与 MuJoCo 回放资产的结构差异，**不是**真实闭链或
 真机 sim2sim。默认会拒绝任何含 equality/connect 约束的模型，防止两条链路混用。
 
-仅在闭链差异诊断时，可显式传入 `--closed_chain`。该选项改用旧
-`chuanliantui.xml`（`neq=4`）和 `ClosedChainAdapter` 的闭链姿态求解/力矩映射；它保留
-真实闭链动力学差异，不能作为串联训练策略已完成 sim2sim 或可上真机的证据。
+仅在闭链差异诊断时，可显式传入 `--closed_chain`。该选项改用
+`chuanliantui.xml`（`neq=4`）和 `ClosedChainAdapter` 的闭链姿态求解/力矩映射；它还以
+两个 spatial tendon 模拟左右气弹簧。端点由 CAD 定位件 `rf001/rf002` 与
+`lf001/lf002` 换算后附着在实际前支路 body 上，默认每侧恒定伸张推力 150 N；可用
+`--gas_spring_force 0` 关闭以做对照。该恒力模型不含真实气弹簧的力—长度曲线、阻尼或
+行程，不能作为串联训练策略已完成 sim2sim 或可上真机的证据。
+
+用 `python sim2sim/mj_sim2sim_ct.py --gas_spring_view` 打开气弹簧专用视图（自动开启
+闭链和渲染）：半透明机构中，左侧青色、右侧橙色，圆点为安装端点，粗线为气弹簧轴线。
+显示加粗仅影响渲染，不改变气弹簧力或碰撞几何；每侧默认仍为 150 N。
+
+如需固定机身、手动拖动腿部观察气弹簧，运行
+`python sim2sim/view_gas_spring_ct.py`。该独立演示在内存中移除基座自由关节，
+将机身固定于 0.8 m，不加载策略，六个实体电机输出始终为零，只保留每侧 150 N
+气弹簧和重力。双击腿部后 Ctrl+右键拖动施力；空格暂停/继续，Home 复位，F5
+开关气弹簧。`--headless --duration 10` 可运行无窗口检查；原始 XML 不被修改。
+机身上方实时显示左右气弹簧对 `lf1/rf1` 的直接关节力矩（N·m）、轴向力（N）和
+有效力臂（mm）。力矩按 `actuator_force * actuator_moment` 计算，符号遵循各自
+关节轴，不包含重力、鼠标外力和闭链约束反力，也不是主动电机轴的等效补偿力矩。
+
+复旦原腿的固定机身对照：`python sim2sim/view_gas_spring_fudan.py`，默认从本机
+`/home/zn/文档/fudan_rl_wheel_leg-main` 加载原 XML（可用 `--xml` 指定路径），
+每侧使用 150 N 便于同力对照；`--gas_spring_force 300` 恢复原脚本的力值。
+该视图无策略、无实体电机驱动，保留原模型的限位、阻尼和闭链锚点；在内存中把
+`connect site1/site2` 转为 MuJoCo 3.2.2 支持的两刚体局部锚点，不修改源 XML。
+复旦模型的 `l20/r20` 不限位；当前闭链 XML 的 `lf00/rf00` 也已改为
+`limited="false"`，允许后输入轴连续旋转，避免原 ±3.14 rad 限位阻挡髋部转过一圈。
+这是 MuJoCo 模型对原始 CAD URDF 限位的显式修正；闭链生成器已同步该规则和气弹簧定义，
+重新生成后运行 `python scripts/agent/check_chuanliantui_closed.py`，检查端点连接、
+每侧 0/150 N 施力、±360° 闭合姿态以及原有的 5 秒无控制仿真。
+前支路膝关节与其余被动关节仍保留原有范围。
+原始四对 site 存在约 10 mm 的横向错位，加载后的演示保留此偏差，不能视为闭合精度验证通过。

@@ -104,6 +104,11 @@ DEFAULT_CHECKPOINT = os.path.join(
 )
 DEFAULT_MODEL_XML = os.path.join(_THIS_DIR, "chuanliantui_train_proxy.xml")
 DEFAULT_CLOSED_MODEL_XML = os.path.join(_THIS_DIR, "chuanliantui.xml")
+GAS_SPRING_ACTUATOR_NAMES = (
+    "left_gas_spring_motor",
+    "right_gas_spring_motor",
+)
+DEFAULT_GAS_SPRING_FORCE = 150.0
 
 
 # --------------------------------------------------------------------------------------
@@ -260,8 +265,23 @@ def run(args):
         dof_adr[i] = model.jnt_dofadr[jid]
     mujoco.mj_forward(model, data)
     adapter = None
+    gas_spring_actuator_ids = None
     if args.closed_chain:
         adapter = ClosedChainAdapter(mujoco, model, data)
+        gas_spring_actuator_ids = np.empty(len(GAS_SPRING_ACTUATOR_NAMES), dtype=np.int32)
+        for i, name in enumerate(GAS_SPRING_ACTUATOR_NAMES):
+            actuator_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, name)
+            if actuator_id < 0:
+                raise ValueError(
+                    "--closed_chain 气弹簧模型缺少执行器: {}；"
+                    "请使用包含 gas_spring_tendon 的 chuanliantui.xml".format(name)
+                )
+            gas_spring_actuator_ids[i] = actuator_id
+        print(
+            "闭链气弹簧已启用：每侧恒定伸张推力 {:.1f} N（--gas_spring_force 可覆盖）".format(
+                args.gas_spring_force
+            )
+        )
     else:
         actuator_ids = np.zeros(NUM_ACTIONS, dtype=np.int32)
         for i, name in enumerate(ACTUATOR_NAMES):
@@ -343,15 +363,13 @@ def run(args):
 
     commands = commands_at(0.0)
 
-    # ---- 键盘遥操作（--teleop）----
+    # ---- 键盘遥操作（渲染时默认启用）----
     # viewer 线程回调里改、主循环里读；纯 float 赋值受 GIL 保护，无需加锁。
-    kb = {"vx": 0.0, "yaw_rate": args.cmd_yaw, "height": args.cmd_height, "reset_standup": None}
+    kb = {"vx": args.cmd_vx, "yaw_rate": args.cmd_yaw, "height": args.cmd_height, "reset_standup": None}
 
     def key_callback(keycode):
         # 注意：viewer 内置大量单字母快捷键（W线框/S阴影/R反射/数字键组显隐...）且无法拦截，
         # 故遥操作只用方向键/PgUp/PgDn/空格等不冲突的键。
-        if not args.teleop:
-            return
         if keycode == 265:            # ↑ 加速
             # 上限 1.5 = 当前策略安全包线（encoder 高速估计偏置，1.8 会瞬态发散翻车，
             # 详见 2026-07-21 排查：Isaac cmd 1.8 真实速度也只到 ~1.5）
@@ -434,20 +452,49 @@ def run(args):
         try:
             import mujoco.viewer
             viewer = mujoco.viewer.launch_passive(model, data, key_callback=key_callback)
+            if args.gas_spring_view:
+                with viewer.lock():
+                    # 只改变渲染：加粗气弹簧，突出端点，并透视显示机构。
+                    for side, color in (("left", [0.0, 0.9, 1.0, 1.0]),
+                                        ("right", [1.0, 0.35, 0.05, 1.0])):
+                        tid = mujoco.mj_name2id(
+                            model, mujoco.mjtObj.mjOBJ_TENDON, side + "_gas_spring_tendon")
+                        if tid < 0:
+                            raise ValueError("气弹簧视图缺少 tendon: " + side)
+                        model.tendon_width[tid] = 0.006
+                        model.tendon_rgba[tid] = color
+                        for end in ("upper", "lower"):
+                            sid = mujoco.mj_name2id(
+                                model, mujoco.mjtObj.mjOBJ_SITE,
+                                side + "_gas_spring_" + end)
+                            if sid < 0:
+                                raise ValueError("气弹簧视图缺少 site: " + side + "_" + end)
+                            model.site_rgba[sid] = color
+                            model.site_size[sid, 0] = 0.009
+                            model.site_group[sid] = 5
+                    viewer.opt.geomgroup[3] = 0  # 隐藏重复的碰撞网格。
+                    viewer.opt.sitegroup[:] = 0
+                    viewer.opt.sitegroup[5] = 1
+                    viewer.opt.flags[mujoco.mjtVisFlag.mjVIS_TENDON] = True
+                    viewer.opt.flags[mujoco.mjtVisFlag.mjVIS_TRANSPARENT] = True
+                    viewer.cam.type = mujoco.mjtCamera.mjCAMERA_TRACKING
+                    viewer.cam.trackbodyid = base_bid
+                    viewer.cam.distance = 1.1
+                    viewer.cam.azimuth = 135
+                    viewer.cam.elevation = -15
+                print("气弹簧视图：左侧青色，右侧橙色；圆点为安装端点，粗线为气弹簧轴线。")
         except Exception as e:  # noqa: BLE001
+            if viewer is not None:
+                viewer.close()
             print(f"警告：无法启动 viewer（{e}）；改为无渲染运行。")
             viewer = None
-    if args.teleop:
-        if viewer is None:
-            raise RuntimeError("遥操作模式需要 --render（viewer 启动失败或未开启）")
+    if viewer is not None:
         print("遥操作模式：点击 MuJoCo 窗口获得焦点后按键控制 —— "
               "↑ 加速 0.1 | ↓ 减速 | ← 左转 | → 右转 | PgUp/PgDn 升降高度 | 空格/回车 急停 | "
               "Home 恢复启动姿态（--standup 时为 1 m 高空微蹲）。（字母键是 viewer 内置渲染快捷键，勿用）关闭窗口退出。")
 
-    n_policy_steps = int(args.sim_time / (SIM_DT * DECIMATION))
-    if args.teleop:
-        n_policy_steps = 2 ** 31  # 遥操作不限时长，关窗退出
-    print(f"开始仿真：{args.sim_time}s -> {n_policy_steps} 个策略步 "
+    run_mode = "渲染遥操作（关闭窗口退出）" if viewer is not None else "无渲染连续运行（Ctrl+C 退出）"
+    print(f"开始仿真：{run_mode} "
           f"(vx={args.cmd_vx}, yaw={args.cmd_yaw}, height={args.cmd_height})")
     print("日志字段说明：")
     print("  [步号]   策略步序号（100Hz，100 步 = 1 秒）")
@@ -464,117 +511,117 @@ def run(args):
     policy_dt = SIM_DT * DECIMATION  # 每个策略步对应的仿真时间（0.01s）
     wall_start = time.perf_counter()
 
-    for step in range(n_policy_steps):
-        # ---- 遥操作复位：回目标姿态并清空控制器/历史缓冲 ----
-        if args.teleop and kb["reset_standup"] is not None:
-            reset_standup = kb["reset_standup"]
-            kb["reset_standup"] = None
-            reset_sim_state(reset_standup)
-            last_action = np.zeros(NUM_ACTIONS, dtype=np.float64)
-            last_dof_pos = read_dof_pos()
-            dof_pos = last_dof_pos.copy()
-            dof_vel = np.zeros(NUM_ACTIONS, dtype=np.float64)
-            kb["vx"] = 0.0
-            kb["yaw_rate"] = 0.0
-            has_landed = not reset_standup
-            base_quat_xyzw, base_ang_vel_body, base_lin_vel_body = read_base_state()
-            obs_history = np.tile(
-                build_obs(base_quat_xyzw, base_ang_vel_body, dof_pos, dof_vel,
-                          np.array([0.0, 0.0, kb["height"]]), last_action),
-                OBS_HISTORY_LENGTH).astype(np.float64)
-            pose_name = "1 m 高空微蹲" if reset_standup else "初始站姿"
-            print(f"[遥操作] 已恢复{pose_name}（速度/航向清零，obs 历史按上电逻辑重填）")
+    step = 0
+    try:
+        while viewer is None or viewer.is_running():
+            # ---- 遥操作复位：回目标姿态并清空控制器/历史缓冲 ----
+            if viewer is not None and kb["reset_standup"] is not None:
+                reset_standup = kb["reset_standup"]
+                kb["reset_standup"] = None
+                reset_sim_state(reset_standup)
+                last_action = np.zeros(NUM_ACTIONS, dtype=np.float64)
+                last_dof_pos = read_dof_pos()
+                dof_pos = last_dof_pos.copy()
+                dof_vel = np.zeros(NUM_ACTIONS, dtype=np.float64)
+                kb["vx"] = 0.0
+                kb["yaw_rate"] = 0.0
+                has_landed = not reset_standup
+                base_quat_xyzw, base_ang_vel_body, base_lin_vel_body = read_base_state()
+                obs_history = np.tile(
+                    build_obs(base_quat_xyzw, base_ang_vel_body, dof_pos, dof_vel,
+                              np.array([0.0, 0.0, kb["height"]]), last_action),
+                    OBS_HISTORY_LENGTH).astype(np.float64)
+                pose_name = "1 m 高空微蹲" if reset_standup else "初始站姿"
+                print(f"[遥操作] 已恢复{pose_name}（速度/航向清零，obs 历史按上电逻辑重填）")
 
-        # ---- 策略推理（100Hz）----
-        if args.teleop:
-            commands = np.array([kb["vx"], kb["yaw_rate"], kb["height"]], dtype=np.float64)
-        else:
-            commands = commands_at(step * policy_dt)
-        # 关键：mj_step 只积分不刷新派生量，cvel 停留在上一子步（5ms 前）。
-        # 不刷新的话 mj_objectVelocity 读到的角速度（策略的陀螺仪观测）滞后 5ms，
-        # 静态站立无感，加速瞬态的快俯仰动力学会因此欠阻尼而向后掀翻。
-        mujoco.mj_forward(model, data)
-        dof_pos = read_dof_pos()
-        base_quat_xyzw, base_ang_vel_body, base_lin_vel_body = read_base_state()
-        obs = build_obs(base_quat_xyzw, base_ang_vel_body, dof_pos, dof_vel, commands, last_action)
-
-        # 历史 FIFO：丢最旧、末尾追加最新（对齐 legged_robot.py:395-398）
-        obs_history = np.concatenate([obs_history[NUM_OBS:], obs])
-
-        # 对齐 ChuanliantuiStandup.get_policy_action_mask()：触地的那个控制步仍是
-        # 零动作；从下一控制步才让 actor/critic 接管。观测历史始终滚动。
-        newly_landed = args.standup and not has_landed and has_wheel_contact()
-        if newly_landed:
-            has_landed = True
-            print(f"[{step:5d}] 首次轮接地；下一控制步开始策略推理。")
-        policy_active = not args.standup or (has_landed and not newly_landed)
-        if policy_active:
-            with torch.no_grad():
-                obs_t = torch.from_numpy(obs).float().unsqueeze(0)
-                hist_t = torch.from_numpy(obs_history).float().unsqueeze(0)
-                action_t, latent_t = policy.act_inference(obs_t, hist_t)
-            action = action_t.squeeze(0).cpu().numpy().astype(np.float64)
-            latent = latent_t.squeeze(0).cpu().numpy().astype(np.float64)
-        else:
-            action = np.zeros(NUM_ACTIONS, dtype=np.float64)
-            latent = np.zeros(LATENT_DIM, dtype=np.float64)
-        # latent 前 3 维被训练监督为 base_lin_vel*2.0（ppo.py:265，lin_vel scale=2），
-        # chuanliantui 前向为 +x，因此 latent[0]/2 是策略内部估计的前向速度。
-
-        # ---- PD 内环（200Hz），顺序严格对齐训练：算力矩 -> 步进 -> 刷新 pos/vel ----
-        # 训练每子步是 simulate 后 compute_dof_vel（legged_robot.py:111-115），最后一个
-        # 子步结束时 dof_vel 是最新后向差分；若在步进前差分（旧写法），obs 里的
-        # dof_vel（含轮速里程计）会滞后一个子步 5ms，与陀螺仪滞后是同款问题。
-        for _ in range(DECIMATION):
-            torque = compute_torques(action, dof_pos, dof_vel)
-            if adapter is not None:
-                data.ctrl[adapter.actuator_ids] = adapter.map_virtual_torques(torque)
+            # ---- 策略推理（100Hz）----
+            if viewer is not None:
+                commands = np.array([kb["vx"], kb["yaw_rate"], kb["height"]], dtype=np.float64)
             else:
-                data.ctrl[actuator_ids] = torque
-            mujoco.mj_step(model, data)
+                commands = commands_at(step * policy_dt)
+            # 关键：mj_step 只积分不刷新派生量，cvel 停留在上一子步（5ms 前）。
+            # 不刷新的话 mj_objectVelocity 读到的角速度（策略的陀螺仪观测）滞后 5ms，
+            # 静态站立无感，加速瞬态的快俯仰动力学会因此欠阻尼而向后掀翻。
+            mujoco.mj_forward(model, data)
             dof_pos = read_dof_pos()
-            dof_vel = wrap_to_pi(dof_pos - last_dof_pos) / SIM_DT
-            last_dof_pos = dof_pos.copy()
+            base_quat_xyzw, base_ang_vel_body, base_lin_vel_body = read_base_state()
+            obs = build_obs(base_quat_xyzw, base_ang_vel_body, dof_pos, dof_vel, commands, last_action)
 
-        last_action = action
+            # 历史 FIFO：丢最旧、末尾追加最新（对齐 legged_robot.py:395-398）
+            obs_history = np.concatenate([obs_history[NUM_OBS:], obs])
 
+            # 对齐 ChuanliantuiStandup.get_policy_action_mask()：触地的那个控制步仍是
+            # 零动作；从下一控制步才让 actor/critic 接管。观测历史始终滚动。
+            newly_landed = args.standup and not has_landed and has_wheel_contact()
+            if newly_landed:
+                has_landed = True
+                print(f"[{step:5d}] 首次轮接地；下一控制步开始策略推理。")
+            policy_active = not args.standup or (has_landed and not newly_landed)
+            if policy_active:
+                with torch.no_grad():
+                    obs_t = torch.from_numpy(obs).float().unsqueeze(0)
+                    hist_t = torch.from_numpy(obs_history).float().unsqueeze(0)
+                    action_t, latent_t = policy.act_inference(obs_t, hist_t)
+                action = action_t.squeeze(0).cpu().numpy().astype(np.float64)
+                latent = latent_t.squeeze(0).cpu().numpy().astype(np.float64)
+            else:
+                action = np.zeros(NUM_ACTIONS, dtype=np.float64)
+                latent = np.zeros(LATENT_DIM, dtype=np.float64)
+            # latent 前 3 维被训练监督为 base_lin_vel*2.0（ppo.py:265，lin_vel scale=2），
+            # chuanliantui 前向为 +x，因此 latent[0]/2 是策略内部估计的前向速度。
+
+            # ---- PD 内环（200Hz），顺序严格对齐训练：算力矩 -> 步进 -> 刷新 pos/vel ----
+            # 训练每子步是 simulate 后 compute_dof_vel（legged_robot.py:111-115），最后一个
+            # 子步结束时 dof_vel 是最新后向差分；若在步进前差分（旧写法），obs 里的
+            # dof_vel（含轮速里程计）会滞后一个子步 5ms，与陀螺仪滞后是同款问题。
+            for _ in range(DECIMATION):
+                torque = compute_torques(action, dof_pos, dof_vel)
+                if adapter is not None:
+                    data.ctrl[adapter.actuator_ids] = adapter.map_virtual_torques(torque)
+                    data.ctrl[gas_spring_actuator_ids] = args.gas_spring_force
+                else:
+                    data.ctrl[actuator_ids] = torque
+                mujoco.mj_step(model, data)
+                dof_pos = read_dof_pos()
+                dof_vel = wrap_to_pi(dof_pos - last_dof_pos) / SIM_DT
+                last_dof_pos = dof_pos.copy()
+
+            last_action = action
+
+            if viewer is not None:
+                viewer.sync()
+                # 实时节流：让仿真按真实时间播放，便于观察（--realtime，默认开）
+                if args.realtime:
+                    target = wall_start + (step + 1) * policy_dt
+                    sleep_t = target - time.perf_counter()
+                    if sleep_t > 0:
+                        time.sleep(sleep_t)
+
+            if step % args.log_every == 0:
+                base_z = data.qpos[base_qadr + 2]
+                base_x = data.qpos[base_qadr]
+                # 双源速度交叉验证：机体系(objectVelocity) vs 世界系(qvel)；yaw≈0 时两者应接近
+                v_fwd = base_lin_vel_body[0]
+                vx_world = data.qvel[base_vadr]
+                # 姿态（重力投影）与轮速：判断是否在前倾、轮子是否打滑（轮速*0.0625 应≈车速）
+                gravity_world = np.array([0.0, 0.0, -1.0])
+                pg = quat_rotate_inverse(base_quat_xyzw, gravity_world)
+                wl = dof_vel[2] * 0.0625
+                wr = dof_vel[5] * 0.0625
+                print(f"[{step:5d}] x={base_x:+.3f} z={base_z:.3f} v_fwd={v_fwd:+.3f} "
+                      f"v̂={latent[0]/2.0:+.3f} vx_w={vx_world:+.3f} "
+                      f"轮速l/r={wl:+.2f}/{wr:+.2f}m/s "
+                      f"pg_yz=[{pg[1]:+.2f},{pg[2]:+.2f}] yaw令={commands[1]:+.2f} "
+                      f"|a|max={np.abs(action).max():.3f}")
+
+            step += 1
+    except KeyboardInterrupt:
+        print("收到 Ctrl+C，退出仿真。")
+    finally:
         if viewer is not None:
-            if not viewer.is_running():
-                print("viewer 已关闭，退出。")
-                break
-            viewer.sync()
-            # 实时节流：让仿真按真实时间播放，便于观察（--realtime，默认开）
-            if args.realtime:
-                target = wall_start + (step + 1) * policy_dt
-                sleep_t = target - time.perf_counter()
-                if sleep_t > 0:
-                    time.sleep(sleep_t)
-
-        if step % args.log_every == 0:
-            base_z = data.qpos[base_qadr + 2]
-            base_x = data.qpos[base_qadr]
-            # 双源速度交叉验证：机体系(objectVelocity) vs 世界系(qvel)；yaw≈0 时两者应接近
-            v_fwd = base_lin_vel_body[0]
-            vx_world = data.qvel[base_vadr]
-            # 姿态（重力投影）与轮速：判断是否在前倾、轮子是否打滑（轮速*0.0625 应≈车速）
-            gravity_world = np.array([0.0, 0.0, -1.0])
-            pg = quat_rotate_inverse(base_quat_xyzw, gravity_world)
-            wl = dof_vel[2] * 0.0625
-            wr = dof_vel[5] * 0.0625
-            print(f"[{step:5d}] x={base_x:+.3f} z={base_z:.3f} v_fwd={v_fwd:+.3f} "
-                  f"v̂={latent[0]/2.0:+.3f} vx_w={vx_world:+.3f} "
-                  f"轮速l/r={wl:+.2f}/{wr:+.2f}m/s "
-                  f"pg_yz=[{pg[1]:+.2f},{pg[2]:+.2f}] yaw令={commands[1]:+.2f} "
-                  f"|a|max={np.abs(action).max():.3f}")
+            viewer.close()
 
     print("仿真结束。")
-    if viewer is not None and viewer.is_running() and args.hold:
-        print("仿真已结束，窗口保持打开（可继续拖动观察）。手动关闭窗口即退出。")
-        while viewer.is_running():
-            viewer.sync()
-            time.sleep(0.02)
-    if viewer is not None:
-        viewer.close()
 
 
 def selfcheck(args):
@@ -601,9 +648,18 @@ def main():
     p.add_argument(
         "--closed_chain",
         action="store_true",
-        help="启用旧真实闭链 XML + ClosedChainAdapter 力矩映射；仅用于闭链差异诊断，默认关闭",
+        help="启用真实闭链 XML、气弹簧及 ClosedChainAdapter 力矩映射；仅用于闭链差异诊断，默认关闭",
     )
-    p.add_argument("--render", action="store_true", help="启动 MuJoCo passive viewer")
+    p.add_argument(
+        "--gas_spring_force",
+        type=float,
+        default=DEFAULT_GAS_SPRING_FORCE,
+        help="--closed_chain 下每侧气弹簧恒定伸张推力 [N]，范围 0~150；默认 150 N，0 可关闭",
+    )
+    p.add_argument("--render", action="store_true",
+                   help="启动 MuJoCo passive viewer 和键盘遥操作；关闭窗口退出")
+    p.add_argument("--gas_spring_view", action="store_true",
+                   help="打开气弹簧特写：半透明机构、彩色端点与轴线；自动启用 --closed_chain --render")
     p.add_argument("--cmd_vx", type=float, default=0.0, help="目标前向线速度 [m/s]")
     p.add_argument("--cmd_yaw", type=float, default=0.0,
                    help="目标偏航角速度 [rad/s]；训练使用 heading_command=False，直接写入命令通道 1")
@@ -625,18 +681,17 @@ def main():
                    help="--ground_start 的碰撞网格最低点离地间隙 [m]")
     p.add_argument("--standup", action="store_true",
                    help="使用当前起立训练的初态：1 m 高空微蹲；首次轮接地后的下一控制步才推理策略")
-    p.add_argument("--sim_time", type=float, default=20.0, help="仿真时长 [s]")
     p.add_argument("--log_every", type=int, default=100, help="每多少策略步打印一次")
     p.add_argument("--selfcheck", action="store_true", help="仅做策略形状自检，不跑仿真")
     p.add_argument("--no_realtime", dest="realtime", action="store_false",
                    help="关闭实时节流（默认按真实时间播放，便于观察）")
-    p.add_argument("--no_hold", dest="hold", action="store_false",
-                   help="仿真结束后不保持窗口（默认保持，直到手动关闭）")
-    p.add_argument("--teleop", action="store_true",
-                   help="键盘遥操作（需 --render）：↑ 加速 ↓ 减速 ← 左转 → 右转 "
-                        "PgUp/PgDn 升降高度 空格/回车急停 Home 恢复启动姿态；关窗退出")
-    p.set_defaults(realtime=True, hold=True)
+    p.set_defaults(realtime=True)
     args = p.parse_args()
+    if args.gas_spring_view:
+        args.closed_chain = True
+        args.render = True
+    if not 0.0 <= args.gas_spring_force <= DEFAULT_GAS_SPRING_FORCE:
+        p.error("--gas_spring_force 必须在 0~150 N 内（受 MJCF actuator ctrlrange 限制）")
 
     if args.selfcheck:
         selfcheck(args)

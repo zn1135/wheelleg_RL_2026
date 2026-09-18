@@ -24,6 +24,13 @@ PHYSICAL_LINKS = {
 }
 ROOT_CHILDREN = ("rf0", "lf0", "rf00", "lf00")
 WHEELS = {"rfwheel", "lfwheel"}
+CONTINUOUS_JOINTS = WHEELS | {"lf00", "rf00"}
+GAS_SPRING_SITES = (
+    ("rf001", "rf0", "right_gas_spring_upper"),
+    ("rf002", "rf1", "right_gas_spring_lower"),
+    ("lf001", "lf0", "left_gas_spring_upper"),
+    ("lf002", "lf1", "left_gas_spring_lower"),
+)
 MOTOR_LIMITS = {
     "rf0": 40.0, "rf00": 40.0, "rfwheel": 3.9,
     "lf0": 40.0, "lf00": 40.0, "lfwheel": 3.9,
@@ -144,10 +151,16 @@ def main():
                       (front, "{}_front_pin{}".format(side, suffix), front_local, "1 1 0 1")))
         connects.append((connect_name, rear, front, rear_local))
 
+    for marker, body_name, site_name in GAS_SPRING_SITES:
+        marker_pos, _ = pose(marker)
+        body_pos, body_rot = pose(body_name)
+        local = mat_vec(mat_transpose(body_rot), subtract(marker_pos, body_pos))
+        sites.append((body_name, site_name, local, "1 0 0 1"))
+
     mj = ET.Element("mujoco", {"model": "chuanliantui_closed"})
     mj.append(ET.Comment(
         "由 chuanliantui_new_1/urdf/chuanliantui.urdf 生成；真实闭链静态模型。"
-        " 不含 IMU、气弹簧或串联策略映射。"
+        " 含气弹簧恒定伸张推力执行器；不含 IMU 或串联策略映射。"
     ))
     ET.SubElement(mj, "compiler", {
         "angle": "radian",
@@ -217,7 +230,7 @@ def main():
         origin = joint.find("origin")
         body = ET.SubElement(parent, "body", {"name": link_name, "pos": origin.attrib["xyz"]})
         joint_attrs = {"name": joint.attrib["name"], "type": "hinge", "axis": joint.find("axis").attrib["xyz"]}
-        if link_name in WHEELS:
+        if link_name in CONTINUOUS_JOINTS:
             joint_attrs["limited"] = "false"
         else:
             limit = joint.find("limit")
@@ -246,12 +259,28 @@ def main():
             "solref": "0.01 1", "solimp": "0.95 0.99 0.001 0.5 2",
         })
 
+    tendons = ET.SubElement(mj, "tendon")
+    tendons.append(ET.Comment("正执行器力沿 site 连线推开两端，使气弹簧伸长。"))
+    for side in ("left", "right"):
+        tendon = ET.SubElement(tendons, "spatial", {
+            "name": side + "_gas_spring_tendon", "width": "0.001",
+        })
+        for end in ("upper", "lower"):
+            ET.SubElement(tendon, "site", {"site": side + "_gas_spring_" + end})
+
     actuators = ET.SubElement(mj, "actuator")
     for joint_name in ("lf0", "lf00", "lfwheel", "rf0", "rf00", "rfwheel"):
         limit = MOTOR_LIMITS[joint_name]
         ET.SubElement(actuators, "motor", {
             "name": "{}_motor".format(joint_name), "joint": joint_name, "gear": "1",
             "ctrlrange": "-{} {}".format(limit, limit),
+        })
+
+    actuators.append(ET.Comment("每侧恒定伸张推力由控制端写入，默认 150 N，0 N 关闭。"))
+    for side in ("left", "right"):
+        ET.SubElement(actuators, "motor", {
+            "name": side + "_gas_spring_motor", "tendon": side + "_gas_spring_tendon",
+            "gear": "1", "ctrlrange": "0 150",
         })
 
     indent(mj)

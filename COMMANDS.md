@@ -95,35 +95,34 @@ python scripts/agent/check_chuanliantui_train_proxy.py
 python sim2sim/mj_sim2sim_ct.py --selfcheck \
     --checkpoint logs/chuanliantui/Sep08_12-56-46_new1_train_proxy_v1_resume/model_3000.pt
 
-# 地面后仰起立一致性回放。成功判据：机身竖直、base 高度 >= 0.30 m、base_link 无接触。
-python sim2sim/mj_sim2sim_ct.py --render --no_hold \
+# 地面后仰起立一致性回放。成功判据：机身竖直、base 高度 >= 0.30 m、base_link 无接触；关闭窗口退出。
+python sim2sim/mj_sim2sim_ct.py --render \
     --checkpoint logs/chuanliantui_standup/<run>/model_<checkpoint>.pt \
     --cmd_vx 0 --cmd_height 0.32 --init_height 0.15 \
-    --initial_dof_pos 11 0 0 -11 0 0 --ground_start --friction 0.75 --sim_time 20
+    --initial_dof_pos 11 0 0 -11 0 0 --ground_start --friction 0.75
 
 # 可选：真实闭链差异诊断。--closed_chain 明确启用旧 chuanliantui.xml 与
 # ClosedChainAdapter；它不是串联训练代理一致性或真机验证通过的依据。
-python sim2sim/mj_sim2sim_ct.py --closed_chain --render --no_hold \
+python sim2sim/mj_sim2sim_ct.py --closed_chain --render \
     --checkpoint logs/chuanliantui_standup/<run>/model_<checkpoint>.pt \
     --cmd_vx 0 --cmd_height 0.32 --init_height 0.15 \
-    --initial_dof_pos 11 0 0 -11 0 0 --ground_start --friction 0.75 --sim_time 20
+    --initial_dof_pos 11 0 0 -11 0 0 --ground_start --friction 0.75
 
 # 串联训练代理站立一致性回放。
-# --render：打开 MuJoCo viewer；--no_hold：仿真结束后自动关闭窗口。
+# --render：打开 MuJoCo viewer 并启用方向键遥操作；命令参数为初始值，关闭窗口退出。
 # --checkpoint：要验证的完整策略权重；--cmd_vx：前向速度命令，0 表示原地站立。
 # --cmd_height：策略观测中的目标机身高度；--init_height：复位时基座初始高度。
-# --sim_time：仿真持续秒数。
-python sim2sim/mj_sim2sim_ct.py --render --no_hold \
+python sim2sim/mj_sim2sim_ct.py --render \
     --checkpoint logs/chuanliantui/Sep08_12-56-46_new1_train_proxy_v1_resume/model_3000.pt \
-    --cmd_vx 0 --cmd_height 0.32 --init_height 0.33 --sim_time 20
+    --cmd_vx 0 --cmd_height 0.32 --init_height 0.33
 
 # 串联训练代理行走一致性回放。
-# --render：打开 viewer；--no_hold：20 秒结束后自动关闭。
+# --render：打开 viewer 并启用方向键遥操作；命令参数为初始值，关闭窗口退出。
 # --checkpoint：完整策略权重；--cmd_vx 1.0：请求 1.0 m/s 前向行走。
-# --cmd_height 0.32：目标高度；--init_height 0.33：初始基座高度；--sim_time 20：持续 20 秒。
-python sim2sim/mj_sim2sim_ct.py --render --no_hold \
+# --cmd_height 0.32：策略观测的目标高度；--init_height 0.33：初始基座高度。
+python sim2sim/mj_sim2sim_ct.py --render \
     --checkpoint logs/chuanliantui/Sep08_12-56-46_new1_train_proxy_v1_resume/model_3000.pt \
-    --cmd_vx 1.0 --cmd_height 0.32 --init_height 0.33 --sim_time 20
+    --cmd_vx 1.0 --cmd_height 0.32 --init_height 0.33
 
 # 重新训练地面起立策略：必须先不带 --headless、--num_envs 20 观察新环境，
 # 用户确认画面后才可去掉 --num_envs 并加 --headless 做正式训练。
@@ -132,15 +131,15 @@ python wheel_legged_gym/scripts/train.py --task=chuanliantui_standup --num_envs 
 
 # 新起立权重的串联训练代理 MuJoCo 回放：将 <run> 和 <checkpoint> 替换为新训练输出。
 # --standup：使用与当前 Isaac 训练一致的 1 m 高空微蹲初态；首次轮接地后下一控制步才推理策略。
-# --render：打开 MuJoCo viewer；--no_hold：仿真结束后自动关闭窗口。
+# --render：打开 MuJoCo viewer 并启用方向键遥操作；命令参数为初始值，关闭窗口退出。
 # --checkpoint：新训练生成的完整 model_*.pt；--cmd_vx 0：起立阶段不请求前进。
-# --cmd_height 0.3276：起立目标高度；--sim_time 20：最多运行 20 秒。
-python sim2sim/mj_sim2sim_ct.py --standup --render --no_hold \
+# --cmd_height 0.3276：起立目标高度。
+python sim2sim/mj_sim2sim_ct.py --standup --render \
     --checkpoint logs/chuanliantui_standup/<run>/model_<checkpoint>.pt \
-    --cmd_vx 0 --cmd_height 0.3276 --sim_time 20
+    --cmd_vx 0 --cmd_height 0.3276
 ```
 
-`--standup` 使用当前 `chuanliantui_standup` 的高空初态：落地前使用零策略动作但仍执行 PD 内环；首次轮接地后的下一控制步才调用策略，观测历史在落地前持续更新。它只能搭配完整 `model_*.pt`。默认仍使用串联训练代理；`--closed_chain` 仅显式启用旧真实闭链 XML 与 `ClosedChainAdapter` 进行差异诊断。
+`--standup` 使用当前 `chuanliantui_standup` 的高空初态：落地前使用零策略动作但仍执行 PD 内环；首次轮接地后的下一控制步才调用策略，观测历史在落地前持续更新。它只能搭配完整 `model_*.pt`。渲染模式默认启用键盘遥操作，关闭窗口退出；无渲染模式持续运行，使用 Ctrl+C 退出。默认仍使用串联训练代理；`--closed_chain` 仅显式启用旧真实闭链 XML 与 `ClosedChainAdapter` 进行差异诊断。
 
 ## 典型工作流
 

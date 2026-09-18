@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <mujoco model="chuanliantui_closed">
-  <!--由 chuanliantui_new_1/urdf/chuanliantui.urdf 生成；真实闭链静态模型。 不含 IMU、气弹簧或串联策略映射。-->
+  <!--由 chuanliantui_new_1/urdf/chuanliantui.urdf 生成；真实闭链静态模型。
+      气弹簧端点由 CAD 定位件 rf001/rf002、lf001/lf002 换算而来；串联策略映射由 Python 完成。-->
   <compiler angle="radian" meshdir="../resources/robots/chuanliantui_new_1/meshes" autolimits="true" />
   <option timestep="0.005" gravity="0 0 -9.81" integrator="implicitfast" solver="Newton" iterations="100" tolerance="1e-10" cone="elliptic" impratio="10" />
   <default>
@@ -48,12 +49,16 @@
         <geom class="visual" mesh="rf0" material="metal" />
         <geom class="collision" mesh="rf0" />
         <site name="right_front_pin1" pos="-0.0892559140126 0.0164970244596 -0.0699495662158" size="0.004" rgba="1 1 0 1" />
+        <!-- CAD rf001 换算到 rf0 局部系：右气弹簧上端。 -->
+        <site name="right_gas_spring_upper" pos="0.0256060577081279 -0.003500000000051 -0.0371052989312678" size="0.004" rgba="1 0 0 1" />
         <body name="rf1" pos="-0.165288729653417 0.0114999999999917 -0.129536233732335">
           <joint name="rf1" type="hinge" axis="0 1 0" range="-0.12 0.77" />
           <inertial pos="0.0780229590622458 0.0103199473600926 -0.0862619955363456" mass="0.414858419057853" fullinertia="0.00264006392006 0.00449630400849 0.00188319431138 -2.34405638911e-06 0.00206820524894 3.25800440586e-06" />
           <geom class="visual" mesh="rf1" material="metal" />
           <geom class="collision" mesh="rf1" />
           <site name="right_front_pin2" pos="-0.0265322349803 -0.00800297554041 0.0615226828645" size="0.004" rgba="1 1 0 1" />
+          <!-- CAD rf002 换算到 rf1 局部系：右气弹簧下端。 -->
+          <site name="right_gas_spring_lower" pos="0.019692562545789 0.010000000000237 -0.044464367480282" size="0.004" rgba="1 0 0 1" />
           <body name="rfwheel" pos="0.164832478009991 0.0199999999999965 -0.187963438447721">
             <joint name="rfwheel" type="hinge" axis="0 1 0" limited="false" />
             <inertial pos="0.000258895715753299 0.0127591454924048 -0.000369429481127753" mass="0.344781890891785" fullinertia="0.000322531613191 0.000620367874493 0.000322776964246 -3.23871644327e-08 -2.34585830897e-06 8.00535601876e-08" />
@@ -68,12 +73,16 @@
         <geom class="visual" mesh="lf0" material="metal" />
         <geom class="collision" mesh="lf0" />
         <site name="left_front_pin1" pos="-0.0892559140126 -0.0164970244594 -0.0699495662158" size="0.004" rgba="1 1 0 1" />
+        <!-- CAD lf001 换算到 lf0 局部系：左气弹簧上端。 -->
+        <site name="left_gas_spring_upper" pos="0.025606057708123 0.003500000000049 -0.037105298931257" size="0.004" rgba="1 0 0 1" />
         <body name="lf1" pos="-0.165288729653418 -0.0115000000014235 -0.129536233732203">
           <joint name="lf1" type="hinge" axis="0 -1 0" range="-0.77 0.12" />
           <inertial pos="0.078018324484777 -0.0103199473609263 -0.0862673341064149" mass="0.414858418961741" fullinertia="0.00264096842023 0.00449643859324 0.00188242439596 2.35673588989e-06 0.00206811984718 -3.24560463461e-06" />
           <geom class="visual" mesh="lf1" material="metal" />
           <geom class="collision" mesh="lf1" />
           <site name="left_front_pin2" pos="-0.0265322349803 0.00800297554204 0.0615226828644" size="0.004" rgba="1 1 0 1" />
+          <!-- CAD lf002 换算到 lf1 局部系：左气弹簧下端。 -->
+          <site name="left_gas_spring_lower" pos="0.019692562545793 -0.010000000000277 -0.044464367480479" size="0.004" rgba="1 0 0 1" />
           <body name="lfwheel" pos="0.16483247801054 -0.0280000000020713 -0.187963438447404">
             <joint name="lfwheel" type="hinge" axis="0 -1 0" limited="false" />
             <inertial pos="0.000400272099244092 -0.00475914549162054 -0.000274670509450486" mass="0.344781890910713" fullinertia="0.00032267537703 0.000620367874493 0.000322633200408 7.93341927054e-08 -2.34896908748e-06 -3.41113911781e-08" />
@@ -83,7 +92,8 @@
         </body>
       </body>
       <body name="rf00" pos="-0.0114000000001251 0.18795499999997 0.0235200000002041">
-        <joint name="rf00" type="hinge" axis="0 1 0" range="-3.14 3.14" />
+        <!-- 后输入轴连续旋转，避免 CAD 导出中的 ±pi 限位卡住整条闭链。 -->
+        <joint name="rf00" type="hinge" axis="0 1 0" limited="false" />
         <inertial pos="0.0287300930886477 0.00217309925781833 -0.0226492653085871" mass="0.108755464967073" fullinertia="9.09875569319e-05 0.000222724145523 0.000133403996798 -6.95628429076e-08 8.83433748701e-05 5.48396164445e-08" />
         <geom class="visual" mesh="rf00" material="metal" />
         <geom class="collision" mesh="rf00" />
@@ -109,7 +119,7 @@
         </body>
       </body>
       <body name="lf00" pos="-0.0114000000001247 -0.189595000000041 0.023519999999691">
-        <joint name="lf00" type="hinge" axis="0 -1 0" range="-3.14 3.14" />
+        <joint name="lf00" type="hinge" axis="0 -1 0" limited="false" />
         <inertial pos="0.0287300930886472 -0.00217309925803372 -0.0226492653085664" mass="0.108755464967074" fullinertia="9.09875569319e-05 0.000222724145523 0.000133403996798 6.95628437602e-08 8.83433748701e-05 -5.48396173066e-08" />
         <geom class="visual" mesh="lf00" material="metal" />
         <geom class="collision" mesh="lf00" />
@@ -142,6 +152,17 @@
     <connect name="lf_loop1" body1="lf02" body2="lf0" anchor="-0.0890095381252 1.98410732288e-12 0.101500256761" solref="0.01 1" solimp="0.95 0.99 0.001 0.5 2" />
     <connect name="lf_loop2" body1="lf03" body2="lf1" anchor="-0.0760328156403 1.8801626922e-13 -0.0595866675175" solref="0.01 1" solimp="0.95 0.99 0.001 0.5 2" />
   </equality>
+  <tendon>
+    <!-- 两端随前支路转动，恒定伸张推力始终沿 site 连线施加。 -->
+    <spatial name="left_gas_spring_tendon" width="0.001">
+      <site site="left_gas_spring_upper" />
+      <site site="left_gas_spring_lower" />
+    </spatial>
+    <spatial name="right_gas_spring_tendon" width="0.001">
+      <site site="right_gas_spring_upper" />
+      <site site="right_gas_spring_lower" />
+    </spatial>
+  </tendon>
   <actuator>
     <motor name="lf0_motor" joint="lf0" gear="1" ctrlrange="-40.0 40.0" />
     <motor name="lf00_motor" joint="lf00" gear="1" ctrlrange="-40.0 40.0" />
@@ -149,5 +170,8 @@
     <motor name="rf0_motor" joint="rf0" gear="1" ctrlrange="-40.0 40.0" />
     <motor name="rf00_motor" joint="rf00" gear="1" ctrlrange="-40.0 40.0" />
     <motor name="rfwheel_motor" joint="rfwheel" gear="1" ctrlrange="-3.9 3.9" />
+    <!-- 以每侧恒定 150 N 伸张推力近似气弹簧。 -->
+    <motor name="left_gas_spring_motor" tendon="left_gas_spring_tendon" gear="1" ctrlrange="0 150" />
+    <motor name="right_gas_spring_motor" tendon="right_gas_spring_tendon" gear="1" ctrlrange="0 150" />
   </actuator>
 </mujoco>
