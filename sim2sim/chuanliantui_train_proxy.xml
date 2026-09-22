@@ -2,7 +2,7 @@
 <mujoco model="chuanliantui_train_proxy">
   <!--由 chuanliantui_train.urdf 生成；仅用于 Isaac 串联训练代理一致性回放，不含真实闭链 connect 约束，不可用于真实机构验证。-->
   <compiler angle="radian" meshdir="../resources/robots/chuanliantui_new_1/meshes" autolimits="true" />
-  <option timestep="0.005" gravity="0 0 -9.81" integrator="implicitfast" solver="Newton" iterations="100" tolerance="1e-10" cone="elliptic" impratio="10" />
+  <option timestep="0.002" gravity="0 0 -9.81" integrator="implicitfast" solver="Newton" iterations="100" tolerance="1e-10" cone="elliptic" impratio="10" />
   <default>
     <joint damping="0" armature="0" frictionloss="0" />
     <geom contype="1" conaffinity="1" condim="3" friction="0.5 0.005 0.0001" />

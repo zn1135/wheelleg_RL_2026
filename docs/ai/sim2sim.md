@@ -72,6 +72,17 @@ XML 已用 `cone=elliptic` + `impratio=10`（轮式标准配置）。
 `scripts/agent/generate_chuanliantui_train_proxy_mjcf.py`，再用
 `scripts/agent/check_chuanliantui_train_proxy.py` 检查该契约。
 
+chuanliantui actor 观测为 25 维：机体系角速度(3)、重力投影(3)、命令(3)、四个腿关节
+`[lf0, lf1, rf0, rf1]` 的位置(4)、六个关节速度(6)、上次动作(6)。连续轮的绝对位置
+不进入 actor 或 encoder；历史为 `25×5=125`。这改变了网络的 encoder、actor 和 critic
+输入形状，所有旧 27 维 chuanliantui checkpoint 均不能加载，必须重新训练。
+提交观测变更前可运行 `python scripts/agent/check_chuanliantui_observation.py`，核对训练端布局、
+噪声、critic 维度、历史 FIFO 和 MuJoCo 构造是否一致。
+
+训练与 MuJoCo 回放均用 500 Hz 的物理/PD 内环（`sim_dt=0.002`），每 5 个内环步推理一次，
+因此策略、观测和历史 FIFO 保持 100 Hz（`0.002×5=0.01 s`）。动作在中间 4 个内环步零阶保持；
+气弹簧力在每个 2 ms 内环步重写。
+
 该模式只消除 Isaac 串联训练资产与 MuJoCo 回放资产的结构差异，**不是**真实闭链或
 真机 sim2sim。默认会拒绝任何含 equality/connect 约束的模型，防止两条链路混用。
 

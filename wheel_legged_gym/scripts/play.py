@@ -66,11 +66,14 @@ def play(args):
 
     # prepare environment
     env, _ = task_registry.make_env(name=args.task, args=args, env_cfg=env_cfg)
-    is_standup = args.task in {"chuanliantui_standup", "chuanliantui_ground_standup"}
+    is_standup = args.task == "chuanliantui_standup"
+    standup_height = None
     if is_standup:
+        # 起立任务的高度随配置走；避免回放旧策略目标（0.32 m）而与训练命令失配。
+        standup_height = env_cfg.commands.ranges.height[0]
         env.commands[:, 0] = 0.0
         env.commands[:, 1] = 0.0
-        env.commands[:, 2] = 0.32
+        env.commands[:, 2] = standup_height
     obs, obs_history = env.get_observations()
     # load policy
     train_cfg.runner.resume = True
@@ -117,7 +120,7 @@ def play(args):
         if is_standup:
             env.commands[:, 0] = 0.0
             env.commands[:, 1] = 0.0
-            env.commands[:, 2] = 0.32
+            env.commands[:, 2] = standup_height
         else:
             env.commands[:, 0] = 2.5
             env.commands[:, 2] = 0.30  # + 0.07 * np.sin(i * 0.01)

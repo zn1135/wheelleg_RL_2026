@@ -3,7 +3,7 @@
   <!--由 chuanliantui_new_1/urdf/chuanliantui.urdf 生成；真实闭链静态模型。
       气弹簧端点由 CAD 定位件 rf001/rf002、lf001/lf002 换算而来；串联策略映射由 Python 完成。-->
   <compiler angle="radian" meshdir="../resources/robots/chuanliantui_new_1/meshes" autolimits="true" />
-  <option timestep="0.005" gravity="0 0 -9.81" integrator="implicitfast" solver="Newton" iterations="100" tolerance="1e-10" cone="elliptic" impratio="10" />
+  <option timestep="0.002" gravity="0 0 -9.81" integrator="implicitfast" solver="Newton" iterations="100" tolerance="1e-10" cone="elliptic" impratio="10" />
   <default>
     <joint damping="0" armature="0" frictionloss="0" />
     <geom contype="1" conaffinity="1" condim="3" friction="0.5 0.005 0.0001" />

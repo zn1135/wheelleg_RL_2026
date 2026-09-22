@@ -168,7 +168,7 @@ def main():
         "autolimits": "true",
     })
     ET.SubElement(mj, "option", {
-        "timestep": "0.005", "gravity": "0 0 -9.81", "integrator": "implicitfast",
+        "timestep": "0.002", "gravity": "0 0 -9.81", "integrator": "implicitfast",
         "solver": "Newton", "iterations": "100", "tolerance": "1e-10",
         "cone": "elliptic", "impratio": "10",
     })

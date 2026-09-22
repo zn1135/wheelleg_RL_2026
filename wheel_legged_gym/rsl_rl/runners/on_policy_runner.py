@@ -237,6 +237,8 @@ class OnPolicyRunner:
         iteration_time = locs["collection_time"] + locs["learn_time"]
 
         ep_string = f""
+        terminal_episode_keys = self.cfg.get("terminal_episode_keys")
+        terminal_episode_labels = self.cfg.get("terminal_episode_labels", {})
         if locs["ep_infos"]:
             for key in locs["ep_infos"][0]:
                 infotensor = torch.tensor([], device=self.device)
@@ -249,7 +251,9 @@ class OnPolicyRunner:
                     infotensor = torch.cat((infotensor, ep_info[key].to(self.device)))
                 value = torch.mean(infotensor)
                 self.writer.add_scalar("Episode/" + key, value, locs["it"])
-                ep_string += f"""{f'Mean {key}:':>{pad}} {value:.4f}\n"""
+                if terminal_episode_keys is None or key in terminal_episode_keys:
+                    label = terminal_episode_labels.get(key, f"Mean {key}:")
+                    ep_string += f"""{label:>{pad}} {value:.4f}\n"""
         mean_std = self.alg.actor_critic.std.mean()
         fps = int(
             self.num_steps_per_env
@@ -323,6 +327,12 @@ class OnPolicyRunner:
         print(log_string)
 
     def save(self, path, infos=None):
+        get_env_checkpoint_state = getattr(self.env, "get_checkpoint_state", None)
+        env_state = (
+            get_env_checkpoint_state()
+            if get_env_checkpoint_state is not None
+            else None
+        )
         torch.save(
             {
                 "model_state_dict": self.alg.actor_critic.state_dict(),
@@ -333,6 +343,7 @@ class OnPolicyRunner:
                 ),
                 "iter": self.current_learning_iteration,
                 "infos": infos,
+                "env_state": env_state,
             },
             path,
         )
@@ -356,6 +367,14 @@ class OnPolicyRunner:
                         "using the newly initialized encoder optimizer."
                     )
         self.current_learning_iteration = loaded_dict["iter"]
+        load_env_checkpoint_state = getattr(self.env, "load_checkpoint_state", None)
+        if load_env_checkpoint_state is not None:
+            restored = load_env_checkpoint_state(loaded_dict.get("env_state"))
+            if not restored:
+                print(
+                    "Checkpoint has no environment state; "
+                    "using the environment's configured initial curriculum."
+                )
         return loaded_dict["infos"]
 
     def get_inference_policy(self, device=None):

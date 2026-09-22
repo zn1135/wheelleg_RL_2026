@@ -30,6 +30,7 @@ def main() -> None:
     print("nq={} nv={} nu={} njnt={} neq={}".format(model.nq, model.nv, model.nu, model.njnt, model.neq))
     print("movable_dofs={}".format(movable_names))
     print("actuators={}".format(actuator_names))
+    assert np.isclose(model.opt.timestep, 0.002), model.opt.timestep
     assert model.neq == 0, "串联训练代理不得包含 equality/connect 约束"
     assert movable_names == DOF_NAMES, "DOF 顺序不符：{}".format(movable_names)
     assert actuator_names == ACTUATOR_NAMES, "执行器顺序不符：{}".format(actuator_names)

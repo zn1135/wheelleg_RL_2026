@@ -26,6 +26,7 @@ from wheel_legged_gym.envs.base.legged_robot import LeggedRobot
 class Chuanliantui(LeggedRobot):
 
     _expected_dof_names = ("lf0", "lf1", "lfwheel", "rf0", "rf1", "rfwheel")
+    _leg_position_indices = (0, 1, 3, 4)
 
     def __init__(self, cfg, sim_params, physics_engine, sim_device, headless):
         super().__init__(cfg, sim_params, physics_engine, sim_device, headless)
@@ -37,6 +38,36 @@ class Chuanliantui(LeggedRobot):
                 "chuanliantui_train.urdf DOF contract changed: "
                 f"expected {self._expected_dof_names}, got {tuple(self.dof_names)}"
             )
+
+    def compute_proprioception_observations(self):
+        """构造 25 维 actor 观测，连续轮的位置不参与策略或历史编码。"""
+        dof_pos_obs = (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos
+        return torch.cat(
+            (
+                self.base_ang_vel * self.obs_scales.ang_vel,
+                self.projected_gravity,
+                self.commands[:, :3] * self.commands_scale,
+                dof_pos_obs[:, self._leg_position_indices],
+                self.dof_vel * self.obs_scales.dof_vel,
+                self.actions,
+            ),
+            dim=-1,
+        )
+
+    def _get_noise_scale_vec(self, cfg):
+        """与 25 维观测布局一一对应；轮位置已删除，轮速仍有传感器噪声。"""
+        noise_vec = torch.zeros_like(self.obs_buf[0])
+        self.add_noise = self.cfg.noise.add_noise
+        noise_scales = self.cfg.noise.noise_scales
+        noise_level = self.cfg.noise.noise_level
+        noise_vec[:3] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
+        noise_vec[3:6] = noise_scales.gravity * noise_level
+        noise_vec[6:9] = 0.0  # [vx, yaw_rate, height] commands
+        noise_vec[9:13] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
+        noise_vec[13:19] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
+        noise_vec[19:25] = 0.0  # previous actions
+        return noise_vec
+
     def post_physics_step(self):
         """与基类 legged_robot.post_physics_step 逐行一致,仅 FK 段换成带零位偏置的版本。"""
         self.gym.refresh_actor_root_state_tensor(self.sim)

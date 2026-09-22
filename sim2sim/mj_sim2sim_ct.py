@@ -10,16 +10,16 @@ chuanliantui 串联腿轮足机器人 sim2sim 部署验证脚本
     中的行为。该路径只用于训练代理一致性回放，不代表真实闭链机构或真机。
 
 关键契约（全部对齐 wheel_legged_gym/envs/base/legged_robot.py，勿改）
-    - 策略：ActorCriticSequence。action = actor(cat(obs_27, encoder(history_135)))
+    - 策略：ActorCriticSequence。action = actor(cat(obs_25, encoder(history_125)))
       导出的 policy_1.pt 只含 actor、缺 encoder，不可用；因此直接加载 model_*.pt 完整权重。
     - DOF 顺序：[lf0, lf1, lfwheel, rf0, rf1, rfwheel]
-    - 观测 27 维：[base_ang_vel*0.25(3), projected_gravity(3), cmd*[2.0,0.25,5.0](3),
-                   (dof_pos-default)*1.0(6), dof_vel*0.05(6), last_action(6)]，裁剪 ±100
-    - 历史 135=27*5：FIFO，最旧在前、最新在末尾；上电用首帧重复 5 次填充
+    - 观测 25 维：[base_ang_vel*0.25(3), projected_gravity(3), cmd*[2.0,0.25,5.0](3),
+                   腿关节 pos [lf0,lf1,rf0,rf1](4), dof_vel*0.05(6), last_action(6)]，裁剪 ±100
+    - 历史 125=25*5：FIFO，最旧在前、最新在末尾；上电用首帧重复 5 次填充
     - dof_vel 用位置差分：wrap_to_pi(dof_pos-last_dof_pos)/sim_dt，每个 sim 子步更新一次
     - 动作->串联训练代理力矩：腿位置控制(Kp=10,Kd=1)，轮速度控制(Kp=0,Kd=0.1)；
       六维力矩直接写入同名训练 DOF 的 MuJoCo motor，不做闭链 Jacobian 映射。
-    - 时序：sim_dt=0.005，decimation=2 -> 策略 100Hz，PD 内环 200Hz
+    - 时序：sim_dt=0.002，decimation=5 -> 策略 100Hz，PD 内环 500Hz
     - 力矩上限：[40,40,3.9,40,40,3.9] N·m
     - 动作延迟：当前起立配置关闭 action delay；本脚本同样零延迟。真机部署时通信+执行延迟
       必须与训练保持一致。
@@ -31,7 +31,7 @@ chuanliantui 串联腿轮足机器人 sim2sim 部署验证脚本
 运行
     /home/zn/miniforge3/envs/wheellegged_py38/bin/python sim2sim/mj_sim2sim_ct.py \
         --checkpoint logs/chuanliantui/Sep08_12-56-46_new1_train_proxy_v1_resume/model_3000.pt --render
-    先测站立：--cmd_vx 0 --cmd_height 0.32
+    先测起立：--standup --cmd_vx 0 --cmd_height 0.20
     再测行走：--cmd_vx 1.0
     需要先在该环境安装 mujoco：pip install mujoco
 """
@@ -63,17 +63,22 @@ from sim2sim.chuanliantui_closed_adapter import ClosedChainAdapter
 JOINT_NAMES = ["lf0", "lf1", "lfwheel", "rf0", "rf1", "rfwheel"]
 ACTUATOR_NAMES = ["{}_motor".format(name) for name in JOINT_NAMES]
 NUM_ACTIONS = 6
-NUM_OBS = 27
-# 特权观测维度（仅 critic 用，来自 legged_robot_config.py:42-44）：27 + 7*11 + 3 + 6*5 + 3 + 3 = 143
-NUM_PRIVILEGED_OBS = 67  # 平地版(measure_heights=False),见 chuanliantui_config.py
+NUM_OBS = 25
+# 平地特权观测 = base_lin_vel(3)+actor obs(25)+last_actions(12)+dof_acc(6)+height(1)+
+# torques(6)+mass(1)+com(3)+default_dof_offset(6)+friction(1)+restitution(1) = 65。
+NUM_PRIVILEGED_OBS = 65
 OBS_HISTORY_LENGTH = 5
-NUM_ENCODER_OBS = NUM_OBS * OBS_HISTORY_LENGTH  # 135
+NUM_ENCODER_OBS = NUM_OBS * OBS_HISTORY_LENGTH  # 125
 LATENT_DIM = 3
 
 DEFAULT_DOF_POS = np.array([-0.06, 0.10, 0.0, 0.06, -0.10, 0.0], dtype=np.float64)
-# 当前起立训练从微蹲零动作状态的 1 m 高空开始。落地前策略不推理，但零动作仍会
-# 经训练端相同的 PD 环作用到默认微蹲目标。
-FREEFALL_START_HEIGHT = 1.0
+LEG_POSITION_INDICES = np.array((0, 1, 3, 4), dtype=np.intp)
+# 当前起立训练从 0.15 m 的地面后摆初态开始。配置写入的连续关节角会在
+# MuJoCo 写入前规范到等价的 [-pi, pi) 表示；首次轮接地前策略不推理。
+STANDUP_START_HEIGHT = 0.15
+STANDUP_INITIAL_DOF_POS = np.array(
+    [11.0, 0.0, 0.0, -11.0, 0.0, 0.0], dtype=np.float64
+)
 WHEEL_CONTACT_FORCE_THRESHOLD = 1.0
 P_GAINS = np.array([10.0, 10.0, 0.0, 10.0, 10.0, 0.0], dtype=np.float64)
 D_GAINS = np.array([1.0, 1.0, 0.1, 1.0, 1.0, 0.1], dtype=np.float64)
@@ -91,17 +96,14 @@ COMMANDS_SCALE = np.array([2.0, 0.25, 5.0], dtype=np.float64)
 CLIP_OBS = 100.0
 CLIP_ACTIONS = 100.0
 
-SIM_DT = 0.005
-DECIMATION = 2  # 策略 100Hz，PD 内环 200Hz
+SIM_DT = 0.002
+DECIMATION = 5  # 策略 100Hz，PD 内环 500Hz
 
 # 策略网络结构（来自 legged_robot_config.py:class policy）
 ACTOR_HIDDEN_DIMS = [128, 64, 32]
 CRITIC_HIDDEN_DIMS = [256, 128, 64]
 ENCODER_HIDDEN_DIMS = [128, 64]
 
-DEFAULT_CHECKPOINT = os.path.join(
-    _REPO_ROOT, "logs", "chuanliantui", "Sep08_12-56-46_new1_train_proxy_v1_resume", "model_3000.pt"
-)
 DEFAULT_MODEL_XML = os.path.join(_THIS_DIR, "chuanliantui_train_proxy.xml")
 DEFAULT_CLOSED_MODEL_XML = os.path.join(_THIS_DIR, "chuanliantui.xml")
 GAS_SPRING_ACTUATOR_NAMES = (
@@ -144,9 +146,30 @@ def quat_wxyz_to_xyzw(q_wxyz: np.ndarray) -> np.ndarray:
 # --------------------------------------------------------------------------------------
 def load_policy(checkpoint_path: str, device: str = "cpu") -> ActorCriticSequence:
     """用仓库的 ActorCriticSequence 类重建网络并载入 model_*.pt 权重。"""
+    ckpt = torch.load(checkpoint_path, map_location=device)
+    if "model_state_dict" not in ckpt:
+        raise KeyError(
+            f"{checkpoint_path} 不含 model_state_dict；请使用 logs/.../model_*.pt 完整 checkpoint，"
+            f"而非导出的 policy_1.pt。"
+        )
+    state_dict = ckpt["model_state_dict"]
+    expected_shapes = {
+        "encoder.0.weight": (ENCODER_HIDDEN_DIMS[0], NUM_ENCODER_OBS),
+        "actor.0.weight": (ACTOR_HIDDEN_DIMS[0], NUM_OBS + LATENT_DIM),
+        "critic.0.weight": (CRITIC_HIDDEN_DIMS[0], NUM_PRIVILEGED_OBS + LATENT_DIM),
+    }
+    for name, expected_shape in expected_shapes.items():
+        if name not in state_dict or tuple(state_dict[name].shape) != expected_shape:
+            actual_shape = None if name not in state_dict else tuple(state_dict[name].shape)
+            raise ValueError(
+                "checkpoint 观测接口不匹配：{} 为 {}，当前 chuanliantui 需要 {}。"
+                "轮位置已从 actor 观测删除（25 维、历史 125），请使用重新训练的 25 维 model_*.pt。".format(
+                    name, actual_shape, expected_shape
+                )
+            )
     ac = ActorCriticSequence(
         num_obs=NUM_OBS,
-        num_critic_obs=NUM_PRIVILEGED_OBS + LATENT_DIM,  # 143+3=146（仅 critic 用，推理不涉及）
+        num_critic_obs=NUM_PRIVILEGED_OBS + LATENT_DIM,  # 65+3=68（仅 critic 用，推理不涉及）
         num_actions=NUM_ACTIONS,
         num_encoder_obs=NUM_ENCODER_OBS,
         latent_dim=LATENT_DIM,
@@ -155,13 +178,7 @@ def load_policy(checkpoint_path: str, device: str = "cpu") -> ActorCriticSequenc
         critic_hidden_dims=CRITIC_HIDDEN_DIMS,
         activation="elu",
     )
-    ckpt = torch.load(checkpoint_path, map_location=device)
-    if "model_state_dict" not in ckpt:
-        raise KeyError(
-            f"{checkpoint_path} 不含 model_state_dict；请使用 logs/.../model_*.pt 完整 checkpoint，"
-            f"而非导出的 policy_1.pt。"
-        )
-    ac.load_state_dict(ckpt["model_state_dict"])
+    ac.load_state_dict(state_dict)
     ac.to(device)
     ac.eval()
     return ac
@@ -171,7 +188,7 @@ def load_policy(checkpoint_path: str, device: str = "cpu") -> ActorCriticSequenc
 # 观测构造与力矩计算（严格对齐 legged_robot.py）
 # --------------------------------------------------------------------------------------
 def build_obs(base_quat_xyzw, base_ang_vel_body, dof_pos, dof_vel, commands, last_action):
-    """构造 27 维本体观测，顺序/缩放严格对齐 compute_proprioception_observations。
+    """构造 25 维本体观测，连续轮的位置被明确删除。
 
     注意：base_ang_vel_body 已是机体系角速度（由 mj_objectVelocity local 帧取得），
     无需再做 quat_rotate_inverse。projected_gravity 才需要把世界重力转到机体系。
@@ -183,11 +200,12 @@ def build_obs(base_quat_xyzw, base_ang_vel_body, dof_pos, dof_vel, commands, las
         base_ang_vel_body * OBS_SCALE_ANG_VEL,            # 3
         projected_gravity,                                # 3 (无缩放)
         commands[:3] * COMMANDS_SCALE,                    # 3
-        (dof_pos - DEFAULT_DOF_POS) * OBS_SCALE_DOF_POS,  # 6
+        (dof_pos[LEG_POSITION_INDICES] - DEFAULT_DOF_POS[LEG_POSITION_INDICES]) * OBS_SCALE_DOF_POS,  # 4
         dof_vel * OBS_SCALE_DOF_VEL,                      # 6
         last_action,                                      # 6 (原始未缩放)
     ]).astype(np.float64)
     obs = np.clip(obs, -CLIP_OBS, CLIP_OBS)
+    assert obs.shape == (NUM_OBS,), obs.shape
     return obs
 
 
@@ -300,10 +318,11 @@ def run(args):
     # 与 -1.566 rad 是同一姿态，但策略观测不是同一个数。MuJoCo 的 hinge
     # 不会自动回绕；若直接写 11，actor 会持续读到训练中不存在的大角度状态。
     # 在写入 MuJoCo 前统一规范化，随后观测、历史和 PD 都直接读取该状态。
-    initial_dof_pos = wrap_to_pi(
-        np.asarray(args.initial_dof_pos, dtype=np.float64)
+    requested_initial_dof_pos = (
+        STANDUP_INITIAL_DOF_POS if args.standup else args.initial_dof_pos
     )
-    if not np.allclose(initial_dof_pos, args.initial_dof_pos):
+    initial_dof_pos = wrap_to_pi(np.asarray(requested_initial_dof_pos, dtype=np.float64))
+    if not np.allclose(initial_dof_pos, requested_initial_dof_pos):
         print(
             "初始关节已按 PhysX 表示规范到 [-pi, pi)："
             f" {np.array2string(initial_dof_pos, precision=6)}"
@@ -333,20 +352,18 @@ def run(args):
               f"已平移到 clearance={args.ground_clearance:.4f} m；"
               f"base_z={data.qpos[base_qadr + 2]:.6f} m")
 
-    def reset_sim_state(freefall_standup):
+    def reset_sim_state(standup):
         mujoco.mj_resetData(model, data)
         if adapter is not None:
             adapter.set_virtual_pose(initial_dof_pos)
         else:
             for i, qpos in enumerate(initial_dof_pos):
                 data.qpos[qpos_adr[i]] = qpos
-        data.qpos[base_qadr + 2] = (
-            FREEFALL_START_HEIGHT if freefall_standup else args.init_height
-        )
+        data.qpos[base_qadr + 2] = STANDUP_START_HEIGHT if standup else args.init_height
         data.qpos[base_qadr + 3:base_qadr + 7] = np.array([1.0, 0.0, 0.0, 0.0])
         mujoco.mj_forward(model, data)
         if args.ground_start:
-            if freefall_standup:
+            if standup:
                 raise ValueError("--ground_start 不能与 --standup 同用")
             place_collision_meshes_on_ground()
 
@@ -386,9 +403,9 @@ def run(args):
             kb["height"] = max(kb["height"] - 0.02, 0.20)
         elif keycode in (32, 257):    # 空格 / 回车 急停
             kb["vx"] = 0.0
-        elif keycode == 268:          # Home 恢复启动姿态（--standup 时为高空微蹲）
+        elif keycode == 268:          # Home 恢复启动姿态（--standup 时为地面后摆）
             kb["reset_standup"] = args.standup
-            target = "1 m 高空微蹲" if args.standup else "启动站姿"
+            target = "0.15 m 地面后摆" if args.standup else "启动站姿"
             print(f"[遥操作] Home：恢复{target}请求...")
             return
         else:
@@ -444,7 +461,7 @@ def run(args):
     dof_pos = read_dof_pos()
     base_quat_xyzw, base_ang_vel_body, base_lin_vel_body = read_base_state()
     first_obs = build_obs(base_quat_xyzw, base_ang_vel_body, dof_pos, dof_vel, commands, last_action)
-    obs_history = np.tile(first_obs, OBS_HISTORY_LENGTH).astype(np.float64)  # 135
+    obs_history = np.tile(first_obs, OBS_HISTORY_LENGTH).astype(np.float64)  # 125
     has_landed = not args.standup
 
     viewer = None
@@ -491,7 +508,7 @@ def run(args):
     if viewer is not None:
         print("遥操作模式：点击 MuJoCo 窗口获得焦点后按键控制 —— "
               "↑ 加速 0.1 | ↓ 减速 | ← 左转 | → 右转 | PgUp/PgDn 升降高度 | 空格/回车 急停 | "
-              "Home 恢复启动姿态（--standup 时为 1 m 高空微蹲）。（字母键是 viewer 内置渲染快捷键，勿用）关闭窗口退出。")
+              "Home 恢复启动姿态（--standup 时为 0.15 m 地面后摆）。（字母键是 viewer 内置渲染快捷键，勿用）关闭窗口退出。")
 
     run_mode = "渲染遥操作（关闭窗口退出）" if viewer is not None else "无渲染连续运行（Ctrl+C 退出）"
     print(f"开始仿真：{run_mode} "
@@ -531,7 +548,7 @@ def run(args):
                     build_obs(base_quat_xyzw, base_ang_vel_body, dof_pos, dof_vel,
                               np.array([0.0, 0.0, kb["height"]]), last_action),
                     OBS_HISTORY_LENGTH).astype(np.float64)
-                pose_name = "1 m 高空微蹲" if reset_standup else "初始站姿"
+                pose_name = "0.15 m 地面后摆" if reset_standup else "初始站姿"
                 print(f"[遥操作] 已恢复{pose_name}（速度/航向清零，obs 历史按上电逻辑重填）")
 
             # ---- 策略推理（100Hz）----
@@ -570,10 +587,10 @@ def run(args):
             # latent 前 3 维被训练监督为 base_lin_vel*2.0（ppo.py:265，lin_vel scale=2），
             # chuanliantui 前向为 +x，因此 latent[0]/2 是策略内部估计的前向速度。
 
-            # ---- PD 内环（200Hz），顺序严格对齐训练：算力矩 -> 步进 -> 刷新 pos/vel ----
+            # ---- PD 内环（500Hz），顺序严格对齐训练：算力矩 -> 步进 -> 刷新 pos/vel ----
             # 训练每子步是 simulate 后 compute_dof_vel（legged_robot.py:111-115），最后一个
             # 子步结束时 dof_vel 是最新后向差分；若在步进前差分（旧写法），obs 里的
-            # dof_vel（含轮速里程计）会滞后一个子步 5ms，与陀螺仪滞后是同款问题。
+            # dof_vel（含轮速里程计）会滞后一个子步 2ms，与陀螺仪滞后是同款问题。
             for _ in range(DECIMATION):
                 torque = compute_torques(action, dof_pos, dof_vel)
                 if adapter is not None:
@@ -639,7 +656,11 @@ def selfcheck(args):
 
 def main():
     p = argparse.ArgumentParser(description="chuanliantui MuJoCo sim2sim 部署验证")
-    p.add_argument("--checkpoint", default=DEFAULT_CHECKPOINT, help="model_*.pt 完整 checkpoint 路径")
+    p.add_argument(
+        "--checkpoint",
+        required=True,
+        help="25 维 chuanliantui 的完整 model_*.pt 路径；历史 27 维权重不兼容",
+    )
     p.add_argument(
         "--model_xml",
         default=None,
@@ -680,7 +701,7 @@ def main():
     p.add_argument("--ground_clearance", type=float, default=0.002,
                    help="--ground_start 的碰撞网格最低点离地间隙 [m]")
     p.add_argument("--standup", action="store_true",
-                   help="使用当前起立训练的初态：1 m 高空微蹲；首次轮接地后的下一控制步才推理策略")
+                   help="使用当前起立训练的初态：0.15 m 地面后摆；覆盖 --init_height 和 --initial_dof_pos，首次轮接地后的下一控制步才推理策略")
     p.add_argument("--log_every", type=int, default=100, help="每多少策略步打印一次")
     p.add_argument("--selfcheck", action="store_true", help="仅做策略形状自检，不跑仿真")
     p.add_argument("--no_realtime", dest="realtime", action="store_false",

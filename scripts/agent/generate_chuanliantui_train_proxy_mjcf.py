@@ -132,7 +132,7 @@ def main() -> None:
         mj,
         "option",
         {
-            "timestep": "0.005",
+            "timestep": "0.002",
             "gravity": "0 0 -9.81",
             "integrator": "implicitfast",
             "solver": "Newton",

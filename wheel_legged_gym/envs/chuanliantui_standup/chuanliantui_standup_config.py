@@ -11,10 +11,21 @@ class ChuanliantuiStandupCfg(ChuanliantuiCfg):
         class ranges(ChuanliantuiCfg.commands.ranges):
             lin_vel_x = [0.0, 0.0]
             ang_vel_yaw = [0.0, 0.0]
-            height = [0.32, 0.32]
+            height = [0.20, 0.20]
+
+    class standup_curriculum:
+        # 每满一整个全局回合窗口评估一次；达标后在该训练进程内永久切换。
+        unlock_recovered_rate = 0.30
+        unlock_window_episodes = 4096
+        pre_unlock_target_height = 0.30
+        post_unlock_target_height = 0.20
+        pre_unlock_success_height = 0.28
+        post_unlock_success_height = 0.18
+        pre_unlock_orientation_scale = -1.0
+        post_unlock_orientation_scale = -10.0
 
     class init_state(ChuanliantuiCfg.init_state):
-        # 与 ground-standup 相同：后摆姿态的碰撞网格贴近地面，避免初始穿地。
+        # 后摆姿态的碰撞网格贴近地面，避免初始穿地。
         pos = [0.0, 0.0, 0.15]
         rot = [0.0, 0.0, 0.0, 1.0]
         lin_vel = [0.0, 0.0, 0.0]
@@ -23,13 +34,14 @@ class ChuanliantuiStandupCfg(ChuanliantuiCfg):
     class standup:
         fall_start_height = 0.15
         initial_base_height = 0.15
-        target_base_height = 0.32
-        # 与 ground-standup 相同的后摆初态；顺序为
-        # [lf0, lf1, lfwheel, rf0, rf1, rfwheel]。
+        target_base_height = 0.20
+        # 后摆初态；顺序为 [lf0, lf1, lfwheel, rf0, rf1, rfwheel]。
         initial_dof_pos = [11.0, 0.0, 0.0, -11.0, 0.0, 0.0]
-        success_height = 0.30
+        # 解锁后的 0.20 m 命令下留 2 cm 裕量；解锁前使用课程的 0.28 m 门槛。
+        success_height = 0.18
         success_projected_gravity_z = -0.90
-        success_requires_base_contact_free = False
+        # 高度、直立和 base_link 离地必须同时连续满足，才记为已站稳。
+        success_requires_base_contact_free = True
         success_base_contact_force_threshold = 0.1
         success_duration_s = 0.5
         wheels_airborne_timeout_s = 0.2  # 双轮连续同时无有效支撑达到该时间即判死。
@@ -38,7 +50,14 @@ class ChuanliantuiStandupCfg(ChuanliantuiCfg):
     class rewards(ChuanliantuiCfg.rewards):
         # 恢复放宽前的奖励强度，用于已学会起立策略的续训；不改成功判据或终止课程。
         tracking_sigma = 0.25  # 由 0.5 收紧，线速度/偏航速度及 enhance 项共用。
-        height_reward_tolerance = 0.0  # [m] 达到命令高度才获得满额高度奖励。
+        # 高度误差平方的指数分母 [m²]；误差 sqrt(0.01)=10 cm 时奖励为 e^-1。
+        height_reward_sigma = 0.01
+        # base_link 满接触力时保留的高度奖励比例；离地时始终为满额。
+        height_reward_contact_factor = 0.2
+        # [N] base_link 奖励门控从离地到满接触的连续过渡区间。
+        base_link_reward_force_scale = 5.0
+        # 两条虚拟腿摆角平方和的指数分母 [rad²]；合成误差 sqrt(0.3)=0.548 rad 时为 e^-1。
+        leg_angle_reward_sigma = 0.3
         recovered_reward_duration_s = 0.5  # [s] 满额稳站奖励与成功持续时间一致。
 
         class scales(ChuanliantuiCfg.rewards.scales):
@@ -47,14 +66,21 @@ class ChuanliantuiStandupCfg(ChuanliantuiCfg):
             tracking_ang_vel = 0.2
             tracking_ang_vel_enhance = 0.2
 
-            base_height = 1.0
-            # 9 项负权重恢复到放宽前的值，原先禁用的惩罚不额外启用。
-            orientation = -10.0
+            base_height = 2.0
+            orientation = -1.0
             nominal_state = -3.0
+            # 关闭绝对腿倾角奖励；仅保留 nominal_state 的左右腿角差约束。
+            leg_angle = 0.0
             dof_pos_limits = -1.0
             recovered = 1.0
-            wheels_airborne = -1.0  # 双轮同时无有效支撑时每步扣分；接地阈值与离地判死共用。
+            # base_link 接触地面时每个策略步扣分；首次轮触地前不进入 PPO 样本。
+            base_link_contact = -0.3
+            # base_link 离地时提供直接正反馈，协助策略获得高度奖励的前提条件。
+            base_link_airborne = 0.2
+            # 双轮同时无有效支撑时每步扣分；双轮离地 0.2 s 判死仍保留。
+            wheels_airborne = -0.3
             stand_still = 0.0
+            # 不再通过 collision 直接惩罚 base_link 碰地。
             collision = 0.0
             lin_vel_z = -1.0
             ang_vel_xy = -0.2
@@ -76,3 +102,32 @@ class ChuanliantuiStandupCfgPPO(ChuanliantuiCfgPPO):
     class runner(ChuanliantuiCfgPPO.runner):
         experiment_name = "chuanliantui_standup"
         max_iterations = 3000
+        # TensorBoard 仍记录全部项；终端只显示起立课程的关键反馈。
+        terminal_episode_keys = [
+            "standup_curriculum_unlocked",
+            "standup_curriculum_target_height",
+            "standup_curriculum_recent_recovered_rate",
+            "recovered_rate",
+            "rew_base_height",
+            "rew_orientation",
+            "rew_base_link_contact",
+            "rew_base_link_airborne",
+            "rew_wheels_airborne",
+            "rew_recovered",
+            "rew_nominal_state",
+            "rew_dof_pos_limits",
+        ]
+        terminal_episode_labels = {
+            "standup_curriculum_unlocked": "课程已解锁 (0/1):",
+            "standup_curriculum_target_height": "当前目标高度 [m]:",
+            "standup_curriculum_recent_recovered_rate": "最近窗口恢复率:",
+            "recovered_rate": "本批恢复率:",
+            "rew_base_height": "高度奖励:",
+            "rew_orientation": "机身姿态项:",
+            "rew_base_link_contact": "base_link 接地项:",
+            "rew_base_link_airborne": "base_link 离地奖励:",
+            "rew_wheels_airborne": "双轮离地项:",
+            "rew_recovered": "持续稳站奖励:",
+            "rew_nominal_state": "左右腿对称项:",
+            "rew_dof_pos_limits": "关节限位项:",
+        }

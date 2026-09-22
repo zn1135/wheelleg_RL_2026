@@ -18,6 +18,98 @@ class ChuanliantuiStandup(Chuanliantui):
         self.has_landed = torch.zeros(
             self.num_envs, dtype=torch.bool, device=self.device
         )
+        # 课程状态属于全局训练状态，不随单个环境 reset 回退，并随 checkpoint 保存。
+        self.standup_curriculum_unlocked = False
+        self.standup_curriculum_completed_episodes = 0
+        self.standup_curriculum_recovered_episodes = 0
+        self.standup_curriculum_last_recovered_rate = 0.0
+
+    def get_checkpoint_state(self):
+        """返回必须跨训练进程延续的站立课程状态。"""
+        return {
+            "standup_curriculum": {
+                "unlocked": self.standup_curriculum_unlocked,
+                "completed_episodes": self.standup_curriculum_completed_episodes,
+                "recovered_episodes": self.standup_curriculum_recovered_episodes,
+                "last_recovered_rate": self.standup_curriculum_last_recovered_rate,
+            }
+        }
+
+    def load_checkpoint_state(self, state):
+        """恢复站立课程，并把当前全部环境同步到恢复后的命令阶段。"""
+        curriculum_state = state.get("standup_curriculum") if state else None
+        if curriculum_state is None:
+            return False
+
+        self.standup_curriculum_unlocked = bool(curriculum_state["unlocked"])
+        self.standup_curriculum_completed_episodes = int(
+            curriculum_state["completed_episodes"]
+        )
+        self.standup_curriculum_recovered_episodes = int(
+            curriculum_state["recovered_episodes"]
+        )
+        self.standup_curriculum_last_recovered_rate = float(
+            curriculum_state["last_recovered_rate"]
+        )
+        if self.standup_curriculum_unlocked:
+            # reward_scales 已在父类初始化时乘过 dt；只恢复切换后的有效权重。
+            self.reward_scales["orientation"] = (
+                self.cfg.standup_curriculum.post_unlock_orientation_scale * self.dt
+            )
+        self.commands[:, 2] = self._current_standup_target_height()
+        return True
+
+    def _current_standup_target_height(self):
+        curriculum = self.cfg.standup_curriculum
+        return (
+            curriculum.post_unlock_target_height
+            if self.standup_curriculum_unlocked
+            else curriculum.pre_unlock_target_height
+        )
+
+    def _current_standup_success_height(self):
+        curriculum = self.cfg.standup_curriculum
+        return (
+            curriculum.post_unlock_success_height
+            if self.standup_curriculum_unlocked
+            else curriculum.pre_unlock_success_height
+        )
+
+    def _resample_commands(self, env_ids):
+        """重置时按全局站立课程写入固定高度命令。"""
+        super()._resample_commands(env_ids)
+        self.commands[env_ids, 2] = self._current_standup_target_height()
+
+    def _update_standup_curriculum(self, completed_episodes, recovered_episodes):
+        """按完整全局回合窗口评估恢复率；解锁后不再回退。"""
+        if self.standup_curriculum_unlocked:
+            return False
+        self.standup_curriculum_completed_episodes += completed_episodes
+        self.standup_curriculum_recovered_episodes += recovered_episodes
+        if (
+            self.standup_curriculum_completed_episodes
+            < self.cfg.standup_curriculum.unlock_window_episodes
+        ):
+            return False
+
+        recovered_rate = (
+            self.standup_curriculum_recovered_episodes
+            / self.standup_curriculum_completed_episodes
+        )
+        self.standup_curriculum_last_recovered_rate = recovered_rate
+        self.standup_curriculum_completed_episodes = 0
+        self.standup_curriculum_recovered_episodes = 0
+        if recovered_rate < self.cfg.standup_curriculum.unlock_recovered_rate:
+            return False
+
+        self.standup_curriculum_unlocked = True
+        # reward_scales 已在父类初始化时乘过 dt；此处只切换姿态项的有效权重。
+        self.reward_scales["orientation"] = (
+            self.cfg.standup_curriculum.post_unlock_orientation_scale * self.dt
+        )
+        # 正在运行的环境立即切换，避免等待各自 reset 后混用两套课程。
+        self.commands[:, 2] = self._current_standup_target_height()
+        return True
 
     def _reset_dofs(self, env_ids):
         self.dof_pos[env_ids] = torch.tensor(
@@ -51,16 +143,12 @@ class ChuanliantuiStandup(Chuanliantui):
         # 本步的零动作当作策略样本（runner 在 step 前读取 action mask）。
         newly_landed = ~self.has_landed & self._has_wheel_contact()
         self.has_landed |= newly_landed
-        # 自由落体是策略回合外的物理预备阶段。首次落地才开始计入 episode
+        # 首次轮触地前是策略回合外的物理预备阶段。首次落地才开始计入 episode
         # timeout，避免 train.py 的随机初始回合长度在触地瞬间触发超时重置。
         self.episode_length_buf[newly_landed] = 0
 
-        base_contact_force = torch.norm(
-            self.contact_forces[:, self.termination_contact_indices, :], dim=-1
-        )
-        base_contact = torch.any(
-            base_contact_force > self.cfg.standup.success_base_contact_force_threshold,
-            dim=1,
+        base_contact = self._base_link_has_contact(
+            self.cfg.standup.success_base_contact_force_threshold
         )
         upright = (
             self.projected_gravity[:, 2]
@@ -70,7 +158,7 @@ class ChuanliantuiStandup(Chuanliantui):
         # base_link 脱离地面，避免低姿态仅由轮子支撑被误判为“已起立”。
         standing = (
             self.has_landed
-            & (self.base_height >= self.cfg.standup.success_height)
+            & (self.base_height >= self._current_standup_success_height())
             & upright
         )
         if self.cfg.standup.success_requires_base_contact_free:
@@ -85,10 +173,7 @@ class ChuanliantuiStandup(Chuanliantui):
         )
         self.has_stood |= stable_now
 
-        base_contact = torch.any(
-            base_contact_force > 10.0,
-            dim=1,
-        )
+        base_contact = self._base_link_has_contact(10.0)
         fallen = self.has_landed & self.has_stood & (
             base_contact | (self.projected_gravity[:, 2] > -0.1)
         )
@@ -120,8 +205,28 @@ class ChuanliantuiStandup(Chuanliantui):
         if len(env_ids) == 0:
             return
         recovered_rate = self.has_stood[env_ids].float().mean()
+        unlocked_now = self._update_standup_curriculum(
+            completed_episodes=len(env_ids),
+            recovered_episodes=int(self.has_stood[env_ids].sum().item()),
+        )
         super().reset_idx(env_ids)
         self.extras["episode"]["recovered_rate"] = recovered_rate
+        self.extras["episode"]["standup_curriculum_unlocked"] = float(
+            self.standup_curriculum_unlocked
+        )
+        self.extras["episode"]["standup_curriculum_recent_recovered_rate"] = (
+            self.standup_curriculum_last_recovered_rate
+        )
+        self.extras["episode"]["standup_curriculum_target_height"] = (
+            self._current_standup_target_height()
+        )
+        if unlocked_now:
+            print(
+                "[standup curriculum] recovered_rate={:.3f}，已永久解锁："
+                "height=0.20 m，orientation=-10".format(
+                    self.standup_curriculum_last_recovered_rate
+                )
+            )
         self.has_stood[env_ids] = False
         self.standing_time[env_ids] = 0.0
         self.wheels_airborne_steps[env_ids] = 0
@@ -140,11 +245,37 @@ class ChuanliantuiStandup(Chuanliantui):
         return torch.any(wheel_contacts, dim=1)
 
     def _both_wheels_airborne(self):
-        """平地支撑代理，供离地奖励和判死共用；任一轮竖直接触力超过阈值即接地。"""
+        """平地支撑代理，供双轮离地判死使用；任一轮竖直接触力超过阈值即接地。"""
         return ~self._has_wheel_contact()
 
+    def _base_link_has_contact(self, force_threshold):
+        """base_link 任一接触力超过阈值即视为仍在地面上。"""
+        return self._base_link_contact_force() > force_threshold
+
+    def _base_link_contact_force(self):
+        """返回 base_link 各接触点中的最大合力 [N]。"""
+        base_contact_forces = torch.norm(
+            self.contact_forces[:, self.termination_contact_indices, :], dim=-1
+        )
+        return torch.amax(base_contact_forces, dim=1)
+
+    def _base_link_contact_ratio(self):
+        """奖励用连续接触比例：0 N 为离地，达到配置力值后为满接触。"""
+        return (
+            self._base_link_contact_force()
+            / self.cfg.rewards.base_link_reward_force_scale
+        ).clip(0.0, 1.0)
+
+    def _reward_base_link_contact(self):
+        """首次轮触地后，按 base_link 连续接触比例返回惩罚。"""
+        return self.has_landed.float() * self._base_link_contact_ratio()
+
+    def _reward_base_link_airborne(self):
+        """首次轮触地后，按连续离地比例返回正奖励。"""
+        return self.has_landed.float() * (1.0 - self._base_link_contact_ratio())
+
     def _reward_wheels_airborne(self):
-        # 原始值为0/1，负权重与dt由基类统一应用；不等待0.2秒，也不依赖has_stood。
+        """双轮同时无有效支撑时返回惩罚指示。"""
         return self._both_wheels_airborne().float()
 
     def _reward_recovered(self):
@@ -154,12 +285,16 @@ class ChuanliantuiStandup(Chuanliantui):
         )
 
     def _reward_base_height(self):
-        initial_height = self.cfg.standup.initial_base_height
-        reward_height = self.commands[:, 2] - self.cfg.rewards.height_reward_tolerance
-        return (
-            (self.base_height - initial_height)
-            / (reward_height - initial_height).clamp(min=1e-6)
-        ).clip(0.0, 1.0)
+        """按高度误差给指数奖励，并用连续 base_link 接触力软门控。"""
+        height_error_sq = torch.square(self.base_height - self.commands[:, 2])
+        height_reward = torch.exp(
+            -height_error_sq / self.cfg.rewards.height_reward_sigma
+        )
+        base_link_airborne = 1.0 - self._base_link_contact_ratio()
+        gate = self.cfg.rewards.height_reward_contact_factor + (
+            1.0 - self.cfg.rewards.height_reward_contact_factor
+        ) * base_link_airborne
+        return height_reward * gate
 
     def _reward_orientation(self):
         initial_height = self.cfg.standup.initial_base_height
@@ -168,6 +303,11 @@ class ChuanliantuiStandup(Chuanliantui):
             / (self.commands[:, 2] - initial_height)
         ).clip(0.0, 1.0)
         return height_progress * super()._reward_orientation()
+
+    def _reward_leg_angle(self):
+        """奖励左右虚拟腿接近 theta0=0 的绝对摆角，不只奖励两腿彼此对称。"""
+        angle_error_sq = torch.sum(torch.square(self.theta0), dim=1)
+        return torch.exp(-angle_error_sq / self.cfg.rewards.leg_angle_reward_sigma)
 
     def _reward_tracking_lin_vel(self):
         return self.has_stood * super()._reward_tracking_lin_vel()

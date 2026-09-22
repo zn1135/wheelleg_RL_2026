@@ -21,13 +21,15 @@ from wheel_legged_gym.envs.base.legged_robot_config import (
 class ChuanliantuiCfg(LeggedRobotCfg):
     class env(LeggedRobotCfg.env):
         num_envs = 4096
-        num_observations = 27
+        # actor: 角速度(3)+重力投影(3)+命令(3)+四个腿关节位置(4)+
+        # 六个关节速度(6)+上次动作(6)。两个连续轮的位置不进观测，防止累积角度泄露。
+        num_observations = 25
         obs_history_length = 5
         num_actions = 6
         # 平地版 measure_heights=False 时地形采样项塌缩成 1 维,
-        # 特权观测实际拼接 = 3+27+12+6+1+6+1+3+6+1+1 = 67;
-        # 切多地形(measure_heights=True)时改回基类公式 143
-        num_privileged_obs = 67
+        # 特权观测实际拼接 = 3+25+12+6+1+6+1+3+6+1+1 = 65;
+        # 切多地形(measure_heights=True)时恢复 77 个高度采样，得到 141。
+        num_privileged_obs = 65
 
     class terrain(LeggedRobotCfg.terrain):
         mesh_type = "plane"  # 首版平地;跑通后切 trimesh 多地形课程
@@ -58,10 +60,15 @@ class ChuanliantuiCfg(LeggedRobotCfg):
         }
 
     class control(LeggedRobotCfg.control):
+        # 500 Hz 执行/物理内环，每 5 个内环步推理一次，策略频率保持 100 Hz。
+        decimation = 5
         pos_action_scale = 0.5  # 腿:位置增量目标 [rad]
         vel_action_scale = 10.0  # 轮:速度目标 [rad/s]
         stiffness = {"f0": 10.0, "f1": 10.0, "wheel": 0}  # 复旦 plane 口径
         damping = {"f0": 1.0, "f1": 1.0, "wheel": 0.1}
+
+    class sim(LeggedRobotCfg.sim):
+        dt = 0.002  # 500 Hz 物理积分；decimation=5 -> 100 Hz 策略步。
 
     class asset(LeggedRobotCfg.asset):
         file = "{WHEEL_LEGGED_GYM_ROOT_DIR}/resources/robots/chuanliantui_new_1/urdf/chuanliantui_train.urdf"
@@ -120,6 +127,13 @@ class ChuanliantuiCfg(LeggedRobotCfg):
 
 
 class ChuanliantuiCfgPPO(LeggedRobotCfgPPO):
+    class policy(LeggedRobotCfgPPO.policy):
+        # 基类在定义时按默认 27×5 固化；串联腿删掉两个轮位置后必须显式同步。
+        num_encoder_obs = (
+            ChuanliantuiCfg.env.obs_history_length
+            * ChuanliantuiCfg.env.num_observations
+        )
+
     class runner(LeggedRobotCfgPPO.runner):
         experiment_name = "chuanliantui"
         max_iterations = 3000  # 首轮训练;效果评估后再拉长

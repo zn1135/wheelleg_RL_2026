@@ -26,6 +26,7 @@ def main():
     actual = (model.nq, model.nv, model.nu, model.nbody, model.njnt, model.neq)
     print("nq={} nv={} nu={} nbody={} njnt={} neq={}".format(*actual))
     assert actual == expected, "模型结构不符：{} != {}".format(actual, expected)
+    assert np.isclose(model.opt.timestep, 0.002), model.opt.timestep
 
     def named(kind, name):
         index = mujoco.mj_name2id(model, kind, name)
@@ -84,7 +85,7 @@ def main():
     mujoco.mj_resetData(model, data)
 
     max_error = 0.0
-    for _ in range(1000):  # 5 s，无控制
+    for _ in range(int(round(5.0 / model.opt.timestep))):  # 5 s，无控制
         mujoco.mj_step(model, data)
         if not np.isfinite(data.qpos).all() or not np.isfinite(data.qvel).all():
             raise RuntimeError("无控制仿真出现非有限状态")
