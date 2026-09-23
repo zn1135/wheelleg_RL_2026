@@ -49,6 +49,14 @@ def parse_args():
         required=True,
         help="导出的 .onnx 文件路径。",
     )
+    parser.add_argument(
+        "--fixed-batch", action="store_true",
+        help="固定 batch=1，供 STM32Cube.AI 等嵌入式工具使用。",
+    )
+    parser.add_argument(
+        "--opset", type=int, choices=(13, 15, 17), default=17,
+        help="ONNX opset（默认 17）；按目标 Cube.AI 版本选择。",
+    )
     return parser.parse_args()
 
 
@@ -70,11 +78,11 @@ def main():
         (observations, observation_history),
         str(output),
         export_params=True,
-        opset_version=17,
+        opset_version=args.opset,
         do_constant_folding=True,
         input_names=["observations", "observation_history"],
         output_names=["actions", "latent"],
-        dynamic_axes={
+        dynamic_axes=None if args.fixed_batch else {
             "observations": {0: "batch"},
             "observation_history": {0: "batch"},
             "actions": {0: "batch"},
@@ -84,14 +92,16 @@ def main():
 
     model = onnx.load(str(output))
     onnx.checker.check_model(model)
+    batch = "1" if args.fixed_batch else "batch"
     metadata = {
         "architecture": "ActorCriticSequence",
         "observation_layout": "25d chuanliantui actor observation",
         "history_layout": "5 x 25 FIFO, oldest-to-newest",
-        "observations_shape": f"batch x {NUM_OBS}",
-        "observation_history_shape": f"batch x {NUM_ENCODER_OBS}",
-        "actions_shape": f"batch x {NUM_ACTIONS}",
-        "latent_shape": f"batch x {LATENT_DIM}",
+        "observations_shape": f"{batch} x {NUM_OBS}",
+        "observation_history_shape": f"{batch} x {NUM_ENCODER_OBS}",
+        "actions_shape": f"{batch} x {NUM_ACTIONS}",
+        "latent_shape": f"{batch} x {LATENT_DIM}",
+        "opset": str(args.opset),
         "checkpoint": str(checkpoint),
     }
     for key, value in metadata.items():
@@ -124,8 +134,8 @@ def main():
 
     print(f"ONNX 导出并校验通过: {output}")
     print(
-        "输入: observations=[batch,25], observation_history=[batch,125]; "
-        "输出: actions=[batch,6], latent=[batch,3]；与 PyTorch 数值对比通过"
+        f"输入: observations=[{batch},25], observation_history=[{batch},125]; "
+        f"输出: actions=[{batch},6], latent=[{batch},3]；与 PyTorch 数值对比通过"
     )
 
 

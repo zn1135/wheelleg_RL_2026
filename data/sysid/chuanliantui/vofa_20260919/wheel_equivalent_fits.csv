@@ -1,0 +1,5 @@
+wheel,direction,input_plateau_count,fit_point_count,excluded_stall_count,coulomb_current_A,viscous_current_A_per_rad_s,fit_rmse_A,fit_r_squared,status,note
+left,positive,5,4,1,0.9222084735706142,0.0036334262890200097,0.2971122899636164,0.040098997780978585,observational_fit_only,I = I_c + k_v*|omega|；未做电流—力矩和传动效率换算
+left,negative,5,4,1,1.1175619552248717,0.0005628423128397064,0.36993019660730214,0.0006577216633142369,observational_fit_only,I = I_c + k_v*|omega|；未做电流—力矩和传动效率换算
+right,positive,5,5,0,0.5887765816335206,0.0032010425138405143,0.22919962238176567,0.09024507021016448,observational_fit_only,I = I_c + k_v*|omega|；未做电流—力矩和传动效率换算
+right,negative,5,5,0,0.6714586708402962,0.008738352751428782,0.4353621928151175,0.16353243674382156,observational_fit_only,I = I_c + k_v*|omega|；未做电流—力矩和传动效率换算

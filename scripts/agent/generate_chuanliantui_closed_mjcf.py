@@ -232,7 +232,12 @@ def main():
         joint_attrs = {"name": joint.attrib["name"], "type": "hinge", "axis": joint.find("axis").attrib["xyz"]}
         if link_name in CONTINUOUS_JOINTS:
             joint_attrs["limited"] = "false"
+            if link_name in WHEELS:
+                joint_attrs.update(damping="0.002", frictionloss="0.001")
+            else:
+                joint_attrs.update(damping="0.03", frictionloss="0.015")
         else:
+            joint_attrs.update(damping="0.03", frictionloss="0.015")
             limit = joint.find("limit")
             joint_attrs["range"] = "{} {}".format(limit.attrib["lower"], limit.attrib["upper"])
         ET.SubElement(body, "joint", joint_attrs)

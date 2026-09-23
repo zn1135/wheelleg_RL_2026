@@ -1,0 +1,5 @@
+side,joint,accepted_pose_count,mean_tracking_error_rad,rmse_tracking_error_rad,min_tracking_error_rad,max_tracking_error_rad,mean_commanded_torque_Nm,status,note
+left,thigh,5,0.09319460000000017,0.28500071336156335,-0.22707799999999967,0.5559150000000002,6.2195538,quasistatic_observation_only,下发力矩非实际输出力矩；无时间戳，不能拟合惯量、时延或动态阻尼
+left,shin,5,0.3595833843077519,0.35960515577255475,0.35572099999999995,0.3656583071795865,-6.8253194,quasistatic_observation_only,下发力矩非实际输出力矩；无时间戳，不能拟合惯量、时延或动态阻尼
+right,thigh,5,0.1291672000000002,0.37393165048227733,-0.2801929999999997,0.6967560000000002,6.312335,quasistatic_observation_only,下发力矩非实际输出力矩；无时间戳，不能拟合惯量、时延或动态阻尼
+right,shin,5,0.3758291843077516,0.37583990522193167,0.3722243071795859,0.380563,-7.1519218,quasistatic_observation_only,下发力矩非实际输出力矩；无时间戳，不能拟合惯量、时延或动态阻尼

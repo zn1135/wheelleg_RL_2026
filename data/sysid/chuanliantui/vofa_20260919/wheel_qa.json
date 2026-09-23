@@ -1,0 +1,29 @@
+{
+  "frame_count": 15451,
+  "column_count": 32,
+  "payload_columns_used": "I0..I9",
+  "expected_payload_column_count": 10,
+  "all_online_frame_count": 15451,
+  "wheel_test_frame_count": 14531,
+  "wheel_test_timestamp_start_us": 91166256.0,
+  "wheel_test_timestamp_end_us": 114832256.0,
+  "status": "accepted_for_steady_state_wheel_fit_with_frame_gaps",
+  "accepted_plateau_count": 10,
+  "plateau_fragment_count": 11,
+  "accepted_command_raw": [
+    -3276.0,
+    -2457.0,
+    -1638.0,
+    -819.0,
+    -409.0,
+    409.0,
+    819.0,
+    1638.0,
+    2457.0,
+    3276.0
+  ],
+  "missing_expected_command_raw": [],
+  "detail": "只使用前 10 列轮测试载荷；额外列不参与轮侧辨识。+3 A 平台被 22 帧非轮测试数据切断，使用切断后的完整尾窗；电流平台末尾 0.3 s 的均值已写入 wheel_plateau_windows.csv。",
+  "source": "vofa_20260919/raw/wheel_vofa.csv",
+  "source_sha256": "d88de23617753d0d58b0c7962e00714a89fd50b5b6ed240f96d86be1522a4b45"
+}

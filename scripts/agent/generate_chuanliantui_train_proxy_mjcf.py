@@ -182,8 +182,11 @@ def main() -> None:
             if joint.attrib["type"] == "revolute":
                 joint_attrs = {"name": joint.attrib["name"], "type": "hinge", "axis": joint.find("axis").attrib["xyz"]}
                 if joint.attrib["name"] in WHEEL_JOINTS:
-                    joint_attrs["limited"] = "false"
+                    joint_attrs.update(
+                        limited="false", damping="0.002", frictionloss="0.001"
+                    )
                 else:
+                    joint_attrs.update(damping="0.03", frictionloss="0.015")
                     limit = joint.find("limit")
                     if limit is None:
                         raise ValueError("关节 '{}' 缺少 limit".format(joint.attrib["name"]))
