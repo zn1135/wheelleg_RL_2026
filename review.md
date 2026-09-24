@@ -226,3 +226,85 @@ MuJoCo 鼠标外力语义参考：<https://raw.githubusercontent.com/google-deep
 - 已执行该 checkpoint 的 `mj_sim2sim_ct.py --selfcheck`，25/125/6 网络形状通过；也曾在串联训练代理中以 `--standup --render --cmd_vx 0 --cmd_height 0.20 --friction 0.75` 观察到首次接地后高度回到约 0.202 m、姿态稳定的前 6 秒。该窗口未构成完整长时回放记录。
 - **未执行当前 model_6000 的 Isaac `play.py` 人工回放，也未执行新策略的真实闭链 `--closed_chain` 长时行为验收、行走验收或实机验证。** 因此不应把本报告或 ONNX 导出视为跨引擎/硬件部署通过。
 - 没有附带 Git 提交信息或 PR 正文，故无提交/PR 文案可审；本轮没有提交、推送、创建 PR 或修改 `logs/` 历史内容。
+
+---
+
+# 闭链适配与 Ctrl+R 复位复查（2026-09-24）
+
+## 版本、范围和审查方式
+
+- review_commit / 比较基线：`0fd6c7c2e04df6ac595521a500e66f8d1432014c`；分支 `26_wheelleg`。候选是该提交上的未提交工作区，审查开始时 `COMMANDS.md`、`docs/ai/sim2sim.md`、`sim2sim/chuanliantui_closed_adapter.py`、`sim2sim/eval_isaac.py`、`sim2sim/mj_sim2sim_ct.py` 均为未暂存修改。
+- 审查范围：上述五个文件从 HEAD 到当前候选的差异及最终代码；同时只读核对闭链/串联 XML、生成器、训练环境、viewer 回调与复位调用路径。根 `logs/` 有大量先前暂存的训练产物，排除在代码审查外，未触碰。
+- 本次没有匹配的任务 manifest、base_commit 或 tests.md。已有的 T-20260913-01、T-20260915-02、T-20260915-03 均属于此前训练/验证任务，因此沿用仓库根目录已有 `review.md`，未创建任务目录、worktree 或资源锁。
+- 主 Agent 汇总，独立只读 Reviewer `independent_review` 审查最终代码和调用路径。未修改候选代码；`git diff --check` 无空白错误。
+- 候选 SHA-256：`COMMANDS.md` 08368a0c1be5a33f631c20095118c6be344e7355f21977655f17a580328ccc28；`docs/ai/sim2sim.md` c31dad362d3bbcb655a3ff84da5a5ab5e832c97f941b57f5d729afbc24d09faf；`chuanliantui_closed_adapter.py` 7a9f573e382ec10b5fbfa89a9d0d156734438f56678c0f9962be3b133b01d3ae；`eval_isaac.py` b97871974f0e4d88caff74e333d7a75e5526a17944ad4c5722188d855fecb573；`mj_sim2sim_ct.py` eb6fd3cc76d6139c652267a1e1ed1212ff972df36c66120a8678807a7dcccafd。
+
+## 发现
+
+### R1 / P1：默认闭链模型的被动膝限位与训练策略相反
+
+- 位置：`sim2sim/chuanliantui.xml:55,79`；对照 `sim2sim/chuanliantui_train_proxy.xml:60,98`；加载路径 `sim2sim/mj_sim2sim_ct.py:242-244`。
+- 触发：直接运行当前仓库的 `mj_sim2sim_ct.py --closed_chain --standup`，不经过临时运行时补丁。
+- 实际影响：闭链 `lf1` 只允许到 +0.12 rad、`rf1` 只允许到 −0.12 rad；训练代理分别允许到 +0.77 和 −0.77 rad。策略起立时需要接近这两个训练端极值，闭链腿会被反向限位挡住，随后单轮离地、滑移并失稳。此前仅在 `/tmp` 脚本中把两处限位改到训练范围，同一权重才在 MuJoCo 站稳；该临时结果不是仓库默认闭链路径的验收。
+- 来源与最小修复：这是候选范围外既存的 CAD/训练资产差异，不归因本次 Ctrl+R 改动。先核实实际机构机械行程，再同步闭链 XML 与 `scripts/agent/generate_chuanliantui_closed_mjcf.py:239-243` 的生成规则；正式重跑闭链起立。在修复前，不能宣称仓库默认闭链模型已能稳定起立。
+
+## 逐项检查
+
+| 项目 | 结论与证据 |
+|---|---|
+| 功能正确性 | R1 阻碍默认闭链起立。独立 Reviewer 检查几何反算、Jacobian 与虚功力矩映射的最终代码，未发现确定的关节顺序或符号错误；未在本轮进行动态数值复验。 |
+| 边界条件 | `chuanliantui_closed_adapter.py:90-99,144-147` 对几何不可达和病态 Jacobian 显式报错。MuJoCo 软闭链约束伸长时，理想几何反算的膝角可能与被动膝 qpos 不同；此前诊断观察到约 2–4 mm 销点偏离、约 0.07–0.1 rad 膝角差，本轮未重测或判定其单独造成失稳。 |
+| 架构一致性 | adapter 只在 `--closed_chain` 下创建；默认串联代理仍向六个同名电机直接写力矩。Isaac 对照脚本的任务选择、课程高度固定及重置/超时读取路径静态合理。 |
+| 线程、生命周期与资源 | `mj_sim2sim_ct.py:404-412` 的 Ctrl+R 回调只写复位请求；主循环 `:545-562` 执行状态重置并清空速度、动作和历史；`:649-651` 在退出时关闭 viewer。静态未发现确定的竞态或泄漏。viewer 窗口仍需获得键盘焦点。 |
+| 测试遗漏与限制 | 按本轮约束未运行新测试、训练、Isaac 回放或 GUI 按键实测。Ctrl+R 在本机已安装 MuJoCo 3.2.2 中的实际触发仍未验证，不能把仅启动窗口视为按键验收；没有执行完整闭链行为验收。 |
+| 注释和文档 | `COMMANDS.md:118` 的 Ctrl+R 用法与当前代码一致；`docs/ai/sim2sim.md` 描述几何路径与模型边界，未发现新增的明显重复解释注释。文档中的闭链回放命令仍受 R1 限制。 |
+| 范围外改动 | 已暂存的 `logs/` 产物、旧任务 manifest/tests.md 和其他用户窗口不属于本轮候选，没有修改或清理。 |
+| 提交与 PR 文案 | 未提供提交信息或 PR 正文，无此项可审；没有提交、推送或创建 PR。 |
+
+结论：**需要修改**。R1 是默认闭链行为验收的阻断项；Ctrl+R 代码路径经静态复查，但真实按键效果仍须单独验证。本报告不代表用户已采纳候选。
+
+## R1 回放跟进（2026-09-24）
+
+- 用户最终确认：**实机膝关节行程以 `chuanliantui_train.urdf` 为准**。此前把原始 `chuanliantui.urdf` 当作实机限位的判断已撤回。旧原始 URDF 曾为 `lf1=[-0.77,0.12]`、`rf1=[-0.12,0.77]` rad；训练资产及实机是 `lf1=[-0.12,0.77]`、`rf1=[-0.77,0.12]` rad。训练 URDF 生成器显式保留旧串联训练限位；原始 URDF 和默认闭链 XML 的这两处限位已改正。闭链生成器读取原始 URDF 的限位，无需额外硬编码覆盖。
+- 错误限位对照：同一 `model_9000.pt`，默认摩擦 0.5、气弹簧每侧 150 N，接地后 1 秒 `x=0.387 m, z=0.230 m, v_fwd=0.913 m/s, |a|max=9.461`；2 秒 `x=1.957 m, v_fwd=1.782 m/s`，无法原地稳定起立。该结果是**错误 CAD 限位**的对照，不代表实机限位下行为。
+- 修正限位后以仓库默认闭链路径运行 `--closed_chain --standup --render --cmd_vx 0 --cmd_height 0.20`：第 9 个策略步首次轮接地，1 秒时 `x=0.309 m, z=0.204 m`，此后 `z≈0.203 m`、前向速度接近零、重力投影约 `[0,0,-1]`；观察到两次 Ctrl+R 均恢复后摆初态并再次站稳。继续观察至约 101 秒仍未倾倒，但最大动作约 3.4，基座 x 从重置后约 0.293 m 缓慢降至 0.100 m。R1 的限位不一致已修正；仍需单独评估高动作幅值、漂移及实机表现。
+
+---
+
+# chuanliantui 膝限位修正复查（2026-09-24）
+
+## 版本与范围
+
+- review_commit / 比较基线：`0fd6c7c2e04df6ac595521a500e66f8d1432014c`；分支 `26_wheelleg`；候选为该提交上的未提交工作区。当前修正涉及原始 `chuanliantui.urdf`、闭链 `chuanliantui.xml` 和 `docs/ai/sim2sim.md`；`review.md` 是审查记录。此前候选中的 `COMMANDS.md`、闭链 adapter、`eval_isaac.py` 和 `mj_sim2sim_ct.py` 仍为未暂存修改，本轮只读检查其相关调用路径；根 `logs/` 训练产物已暂存，但不属此次审查范围，也未触碰。
+- 未找到与当前修正对应的任务 manifest、base_commit 或 tests.md。私有任务 T-20260913-01、T-20260915-02、T-20260915-03 对应此前工作，沿用仓库根目录的 `review.md`。独立只读 Reviewer `independent_review` 检查最终文件及生成、加载路径；主 Agent 汇总。未提交、推送或创建 PR。
+- 修正后 SHA-256：原始 `chuanliantui.urdf` `7b8a3541c2a7dd9c09d0cdc1164689a52e428f39bc74f4b57cb17aa1feed2ae9`；闭链 `chuanliantui.xml` `66e894257b50f9e78c70733c270a0beeb3cb678f76f3c26def25437917e9a2a0`；`docs/ai/sim2sim.md` `d59fe8fa4cea24abe3a8fe2e2370f159b744480de84461fca15f866d02a9c7c3`。前一节的 SHA 是当时历史候选快照，不代表本节候选。
+
+## 发现
+
+### R2 / P2：闭链静态检查缺少左右膝限位断言
+
+- 位置：`scripts/agent/check_chuanliantui_closed.py:36-57`；对照训练检查器 `scripts/agent/check_chuanliantui_new1_train_urdf.py:91-94`。
+- 触发：未来 CAD 重新导出或手工编辑时，再次把原始 URDF 的 `lf1/rf1` 限位写反，并据此重新生成闭链 XML。
+- 实际影响：闭链检查器核对后输入轴不限位、气弹簧和执行器，但不核对被动膝范围；训练检查器只核对训练 URDF 的固定契约。两项检查均可能通过，先前 R1 起立失稳问题静默复发。
+- 最小修复：在闭链检查器中断言原始 URDF、闭链 XML 的 `lf1=[-0.12,0.77]`、`rf1=[-0.77,0.12]` rad，并与训练资产相互核对。本轮按复查范围记录问题，未增改检查代码。
+
+## 逐项检查
+
+| 项目 | 结论与证据 |
+|---|---|
+| 功能正确性 | 原始 URDF `rf1:157-159`、`lf1:331-333`，训练 URDF `rf1:81`、`lf1:168`，闭链 XML `rf1:55`、`lf1:79` 和串联代理 XML `rf1:98`、`lf1:60` 的限位与轴向一致。闭链生成器 `generate_chuanliantui_closed_mjcf.py:228-243` 从源 URDF 读取限位；`mj_sim2sim_ct.py:242-288` 在 `--closed_chain` 下加载该闭链 XML。未发现本次修正的阻断错误。 |
+| 边界条件 | 训练 URDF 的膝关节是虚拟可驱动关节，原始 URDF/闭链 XML 的同名关节是被动关节；本次只同步机械角度范围，没有把被动关节改为实体电机。闭链几何反算、初态求解和力矩映射代码未因本次限位修正而变动。源 URDF 再次写反的回归风险见 R2。 |
+| 架构一致性 | 默认串联代理与显式 `--closed_chain` 路径仍分离；闭链 XML 仍有 4 个 connect，实体电机为 `lf0/lf00` 与 `rf0/rf00`。训练 URDF 生成器固定的训练限位与修正后的源 URDF 当前一致。 |
+| 线程、生命周期与资源 | 本次仅改静态模型限位和文档，未改 viewer 回调或资源释放。前一节已检查 Ctrl+R 复位路径；此前回放日志记录两次复位，独立 Reviewer 本轮未重复操作窗口。 |
+| 测试遗漏与环境限制 | 本轮复查未运行新测试、训练、Isaac 回放或实机验证；仅静态核对最终文件、调用关系和 `git diff --check`。上一轮记录的约 101 秒 MuJoCo 起立回放及 Ctrl+R 结果未由独立 Reviewer 重现。重新生成的临时 XML 与现有 XML 仅有注释、约 1 nm 级气弹簧 site 末位差异和末尾换行差异；膝限位一致，未覆盖现有 XML。 |
+| 注释和文档 | `docs/ai/sim2sim.md` 已写明用户确认的机械限位与模型边界；未见本次新增的无效或重复解释注释。前一节历史 R1 结论已由其“R1 回放跟进”和本节说明修复状态。 |
+| 范围外改动 | 未修改已暂存的根 `logs/`、旧任务记录、训练 URDF/串联代理或复旦模型。 |
+| 提交与 PR 文案 | 未提供提交信息或 PR 正文，无此项可审。reviewed 不代表用户已采纳候选。 |
+
+结论：**R1 限位不一致已修正并有此前默认闭链起立回放证据；本轮发现 R2 / P2 回归防护缺口。** MuJoCo 站立不能代替实机验证，高动作幅值与缓慢漂移仍待单独排查。
+
+## R2 修复跟进（2026-09-24）
+
+- `scripts/agent/check_chuanliantui_closed.py` 现以独立的实机范围常量检查原始 URDF、训练 URDF，以及 MuJoCo 编译后的闭链模型 `jnt_limited/jnt_range`。任何一处左右膝限位再被写反，检查将报错；文档中的闭链检查范围已同步更新。
+- 对新增检查和调用位置做了静态复查，`git diff --check` 无空白错误。随后使用项目 Python 3.8 环境运行 `python scripts/agent/check_chuanliantui_closed.py`，退出码 0；原始 URDF、训练 URDF 与闭链 XML 的膝限位一致，气弹簧连接/0 与 150 N 施力/±360° 闭合检查通过。5 秒无控制最大销轴误差 `0.000813068208 m`（阈值 `0.001 m`），最终基座高度 `0.169915831 m`。未做故意写反限位的负向注入，也未重新训练或实机验证。
+- 修复后候选 SHA-256：`check_chuanliantui_closed.py` `c3271c6f3a38703c32c3106974e576581d8134f4b0b48760dbc32bfac955284b`；`docs/ai/sim2sim.md` `1ceddbb888c5047de47b51be410f3ac21542f8d659db66a81a268a3e516bb6ee`。前述 R2 / P2 发现针对修复前快照，当前代码已加入防护。

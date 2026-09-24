@@ -52,7 +52,7 @@
         <!-- CAD rf001 换算到 rf0 局部系：右气弹簧上端。 -->
         <site name="right_gas_spring_upper" pos="0.0256060577081279 -0.003500000000051 -0.0371052989312678" size="0.004" rgba="1 0 0 1" />
         <body name="rf1" pos="-0.165288729653417 0.0114999999999917 -0.129536233732335">
-          <joint name="rf1" type="hinge" axis="0 1 0" damping="0.03" frictionloss="0.015" range="-0.12 0.77" />
+          <joint name="rf1" type="hinge" axis="0 1 0" damping="0.03" frictionloss="0.015" range="-0.77 0.12" />
           <inertial pos="0.0780229590622458 0.0103199473600926 -0.0862619955363456" mass="0.414858419057853" fullinertia="0.00264006392006 0.00449630400849 0.00188319431138 -2.34405638911e-06 0.00206820524894 3.25800440586e-06" />
           <geom class="visual" mesh="rf1" material="metal" />
           <geom class="collision" mesh="rf1" />
@@ -76,7 +76,7 @@
         <!-- CAD lf001 换算到 lf0 局部系：左气弹簧上端。 -->
         <site name="left_gas_spring_upper" pos="0.025606057708123 0.003500000000049 -0.037105298931257" size="0.004" rgba="1 0 0 1" />
         <body name="lf1" pos="-0.165288729653418 -0.0115000000014235 -0.129536233732203">
-          <joint name="lf1" type="hinge" axis="0 -1 0" damping="0.03" frictionloss="0.015" range="-0.77 0.12" />
+          <joint name="lf1" type="hinge" axis="0 -1 0" damping="0.03" frictionloss="0.015" range="-0.12 0.77" />
           <inertial pos="0.078018324484777 -0.0103199473609263 -0.0862673341064149" mass="0.414858418961741" fullinertia="0.00264096842023 0.00449643859324 0.00188242439596 2.35673588989e-06 0.00206811984718 -3.24560463461e-06" />
           <geom class="visual" mesh="lf1" material="metal" />
           <geom class="collision" mesh="lf1" />

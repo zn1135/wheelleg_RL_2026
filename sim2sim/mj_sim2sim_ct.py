@@ -16,7 +16,8 @@ chuanliantui 串联腿轮足机器人 sim2sim 部署验证脚本
     - 观测 25 维：[base_ang_vel*0.25(3), projected_gravity(3), cmd*[2.0,0.25,5.0](3),
                    腿关节 pos [lf0,lf1,rf0,rf1](4), dof_vel*0.05(6), last_action(6)]，裁剪 ±100
     - 历史 125=25*5：FIFO，最旧在前、最新在末尾；上电用首帧重复 5 次填充
-    - dof_vel 用位置差分：wrap_to_pi(dof_pos-last_dof_pos)/sim_dt，每个 sim 子步更新一次
+    - 串联代理 dof_vel 用位置差分；闭链模式虚拟膝速度由实体电机速度和几何 Jacobian 反算，
+      其余关节仍每个 sim 子步差分更新
     - 动作->串联训练代理力矩：腿位置控制(Kp=10,Kd=1)，轮速度控制(Kp=0,Kd=0.1)；
       六维力矩直接写入同名训练 DOF 的 MuJoCo motor，不做闭链 Jacobian 映射。
     - 时序：sim_dt=0.002，decimation=5 -> 策略 100Hz，PD 内环 500Hz
@@ -235,6 +236,7 @@ def compute_torques(action, dof_pos, dof_vel):
 # 主循环
 # --------------------------------------------------------------------------------------
 def run(args):
+    import glfw
     import mujoco
 
     model_xml = args.model_xml or (
@@ -272,15 +274,13 @@ def run(args):
         f"(nq={model.nq}, nv={model.nv}, nu={model.nu}, neq={model.neq})"
     )
 
-    # 解析与 Isaac 训练 URDF 相同顺序的六个关节和同名力矩电机地址。
     qpos_adr = np.zeros(NUM_ACTIONS, dtype=np.int32)
-    dof_adr = np.zeros(NUM_ACTIONS, dtype=np.int32)
     for i, name in enumerate(JOINT_NAMES):
         jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, name)
         if jid < 0:
             raise RuntimeError(f"MJCF 中找不到关节: {name}")
         qpos_adr[i] = model.jnt_qposadr[jid]
-        dof_adr[i] = model.jnt_dofadr[jid]
+
     mujoco.mj_forward(model, data)
     adapter = None
     gas_spring_actuator_ids = None
@@ -290,13 +290,11 @@ def run(args):
         for i, name in enumerate(GAS_SPRING_ACTUATOR_NAMES):
             actuator_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, name)
             if actuator_id < 0:
-                raise ValueError(
-                    "--closed_chain 气弹簧模型缺少执行器: {}；"
-                    "请使用包含 gas_spring_tendon 的 chuanliantui.xml".format(name)
-                )
+                raise ValueError("--closed_chain 模型缺少气弹簧执行器: " + name)
             gas_spring_actuator_ids[i] = actuator_id
         print(
-            "闭链气弹簧已启用：每侧恒定伸张推力 {:.1f} N（--gas_spring_force 可覆盖）".format(
+            "chuanliantui 闭链已启用：lf0/lf00 与 rf0/rf00 是实体电机；"
+            "气弹簧每侧 {:.1f} N。".format(
                 args.gas_spring_force
             )
         )
@@ -386,7 +384,7 @@ def run(args):
 
     def key_callback(keycode):
         # 注意：viewer 内置大量单字母快捷键（W线框/S阴影/R反射/数字键组显隐...）且无法拦截，
-        # 故遥操作只用方向键/PgUp/PgDn/空格等不冲突的键。
+        # 故遥操作使用方向键/PgUp/PgDn/空格；复位须同时按 Ctrl+R。
         if keycode == 265:            # ↑ 加速
             # 上限 1.5 = 当前策略安全包线（encoder 高速估计偏置，1.8 会瞬态发散翻车，
             # 详见 2026-07-21 排查：Isaac cmd 1.8 真实速度也只到 ~1.5）
@@ -403,23 +401,35 @@ def run(args):
             kb["height"] = max(kb["height"] - 0.02, 0.20)
         elif keycode in (32, 257):    # 空格 / 回车 急停
             kb["vx"] = 0.0
-        elif keycode == 268:          # Home 恢复启动姿态（--standup 时为地面后摆）
+        elif keycode == glfw.KEY_R and (
+            (window := glfw.get_current_context()) is not None
+            and (glfw.get_key(window, glfw.KEY_LEFT_CONTROL) == glfw.PRESS
+                 or glfw.get_key(window, glfw.KEY_RIGHT_CONTROL) == glfw.PRESS)
+        ):                            # Ctrl+R 恢复启动姿态（--standup 时为地面后摆）
             kb["reset_standup"] = args.standup
             target = "0.15 m 地面后摆" if args.standup else "启动站姿"
-            print(f"[遥操作] Home：恢复{target}请求...")
+            print(f"[遥操作] Ctrl+R：恢复{target}请求...")
             return
         else:
             return
         print(f"[遥操作] vx={kb['vx']:+.1f} m/s  偏航角速度={kb['yaw_rate']:+.1f} rad/s  "
               f"高度={kb['height']:.2f} m")
 
+    def read_dof_state():
+        dof_pos = np.empty(NUM_ACTIONS, dtype=np.float64)
+        for i in ((0, 2, 3, 5) if adapter is not None else range(NUM_ACTIONS)):
+            dof_pos[i] = data.qpos[qpos_adr[i]]
+        if adapter is None:
+            return dof_pos, None
+        # 闭链观测只用前/后实体电机状态反算虚拟膝；不读被动 lf1/rf1 的 qpos/qvel。
+        knees = adapter.read_virtual_leg_state()
+        dof_pos[1], dof_pos[4] = knees["left"][0], knees["right"][0]
+        return dof_pos, np.array((knees["left"][1], knees["right"][1]))
+
     # 状态缓冲
     last_action = np.zeros(NUM_ACTIONS, dtype=np.float64)
-    last_dof_pos = np.array([data.qpos[qpos_adr[i]] for i in range(NUM_ACTIONS)], dtype=np.float64)
+    last_dof_pos, _ = read_dof_state()
     dof_vel = np.zeros(NUM_ACTIONS, dtype=np.float64)
-
-    def read_dof_pos():
-        return np.array([data.qpos[qpos_adr[i]] for i in range(NUM_ACTIONS)], dtype=np.float64)
 
     base_bid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "base_link")
     wheel_bids = {
@@ -458,7 +468,7 @@ def run(args):
         return False
 
     # obs_history：上电用首帧重复填充（对齐 reset_idx）
-    dof_pos = read_dof_pos()
+    dof_pos, _ = read_dof_state()
     base_quat_xyzw, base_ang_vel_body, base_lin_vel_body = read_base_state()
     first_obs = build_obs(base_quat_xyzw, base_ang_vel_body, dof_pos, dof_vel, commands, last_action)
     obs_history = np.tile(first_obs, OBS_HISTORY_LENGTH).astype(np.float64)  # 125
@@ -508,7 +518,7 @@ def run(args):
     if viewer is not None:
         print("遥操作模式：点击 MuJoCo 窗口获得焦点后按键控制 —— "
               "↑ 加速 0.1 | ↓ 减速 | ← 左转 | → 右转 | PgUp/PgDn 升降高度 | 空格/回车 急停 | "
-              "Home 恢复启动姿态（--standup 时为 0.15 m 地面后摆）。（字母键是 viewer 内置渲染快捷键，勿用）关闭窗口退出。")
+              "Ctrl+R 恢复启动姿态（--standup 时为 0.15 m 地面后摆）。（单独的字母键是 viewer 内置渲染快捷键，勿用）关闭窗口退出。")
 
     run_mode = "渲染遥操作（关闭窗口退出）" if viewer is not None else "无渲染连续运行（Ctrl+C 退出）"
     print(f"开始仿真：{run_mode} "
@@ -521,7 +531,7 @@ def run(args):
     print("  vx_w     世界系 x 向速度 [m/s]（qvel 直读；与 v_fwd 应接近，差得远=速度读取有问题）")
     print("  轮速l/r  左/右轮等效线速度 [m/s]（轮角速度*半径0.0625；无打滑时应≈车速，")
     print("           远大于车速=轮子打滑空转，远小于=机器人在蹭移而轮子没滚）")
-    print("  pg_yz    重力在机体系的投影 y/z 分量（直立=[0,-1]；pg_y 偏离 0 = 前后倾，")
+    print("  pg_xyz   重力在机体系的投影（直立=[0,0,-1]；本机 +x 前向，pg_x 反映前后倾，")
     print("           持续增大 = 正在倾倒；pg_z 变正 = 已完全翻转）")
     print("  |a|max   6 维动作绝对值最大者（正常 <1，持续增长/饱和 = 策略在挣扎）")
 
@@ -537,7 +547,7 @@ def run(args):
                 kb["reset_standup"] = None
                 reset_sim_state(reset_standup)
                 last_action = np.zeros(NUM_ACTIONS, dtype=np.float64)
-                last_dof_pos = read_dof_pos()
+                last_dof_pos, _ = read_dof_state()
                 dof_pos = last_dof_pos.copy()
                 dof_vel = np.zeros(NUM_ACTIONS, dtype=np.float64)
                 kb["vx"] = 0.0
@@ -560,7 +570,7 @@ def run(args):
             # 不刷新的话 mj_objectVelocity 读到的角速度（策略的陀螺仪观测）滞后 5ms，
             # 静态站立无感，加速瞬态的快俯仰动力学会因此欠阻尼而向后掀翻。
             mujoco.mj_forward(model, data)
-            dof_pos = read_dof_pos()
+            dof_pos, _ = read_dof_state()
             base_quat_xyzw, base_ang_vel_body, base_lin_vel_body = read_base_state()
             obs = build_obs(base_quat_xyzw, base_ang_vel_body, dof_pos, dof_vel, commands, last_action)
 
@@ -587,10 +597,10 @@ def run(args):
             # latent 前 3 维被训练监督为 base_lin_vel*2.0（ppo.py:265，lin_vel scale=2），
             # chuanliantui 前向为 +x，因此 latent[0]/2 是策略内部估计的前向速度。
 
-            # ---- PD 内环（500Hz），顺序严格对齐训练：算力矩 -> 步进 -> 刷新 pos/vel ----
+            # ---- PD 内环（500Hz）：算力矩 -> 步进 -> 刷新 pos/vel ----
             # 训练每子步是 simulate 后 compute_dof_vel（legged_robot.py:111-115），最后一个
-            # 子步结束时 dof_vel 是最新后向差分；若在步进前差分（旧写法），obs 里的
-            # dof_vel（含轮速里程计）会滞后一个子步 2ms，与陀螺仪滞后是同款问题。
+            # 子步结束时 dof_vel 是最新后向差分；闭链的虚拟膝速度用电机速度反算。
+            # 若在步进前读取，obs 里的速度会滞后一个子步 2ms。
             for _ in range(DECIMATION):
                 torque = compute_torques(action, dof_pos, dof_vel)
                 if adapter is not None:
@@ -599,8 +609,10 @@ def run(args):
                 else:
                     data.ctrl[actuator_ids] = torque
                 mujoco.mj_step(model, data)
-                dof_pos = read_dof_pos()
+                dof_pos, knee_vel = read_dof_state()
                 dof_vel = wrap_to_pi(dof_pos - last_dof_pos) / SIM_DT
+                if knee_vel is not None:
+                    dof_vel[1], dof_vel[4] = knee_vel
                 last_dof_pos = dof_pos.copy()
 
             last_action = action
@@ -628,7 +640,7 @@ def run(args):
                 print(f"[{step:5d}] x={base_x:+.3f} z={base_z:.3f} v_fwd={v_fwd:+.3f} "
                       f"v̂={latent[0]/2.0:+.3f} vx_w={vx_world:+.3f} "
                       f"轮速l/r={wl:+.2f}/{wr:+.2f}m/s "
-                      f"pg_yz=[{pg[1]:+.2f},{pg[2]:+.2f}] yaw令={commands[1]:+.2f} "
+                      f"pg_xyz=[{pg[0]:+.2f},{pg[1]:+.2f},{pg[2]:+.2f}] yaw令={commands[1]:+.2f} "
                       f"|a|max={np.abs(action).max():.3f}")
 
             step += 1
@@ -664,12 +676,12 @@ def main():
     p.add_argument(
         "--model_xml",
         default=None,
-        help="覆盖模型路径；未指定时默认串联训练代理，配合 --closed_chain 时默认旧 chuanliantui.xml",
+        help="覆盖模型路径；未指定时默认串联代理，配合 --closed_chain 时默认 chuanliantui.xml",
     )
     p.add_argument(
         "--closed_chain",
         action="store_true",
-        help="启用真实闭链 XML、气弹簧及 ClosedChainAdapter 力矩映射；仅用于闭链差异诊断，默认关闭",
+        help="启用本机 chuanliantui.xml、闭链力矩映射和气弹簧；默认关闭",
     )
     p.add_argument(
         "--gas_spring_force",

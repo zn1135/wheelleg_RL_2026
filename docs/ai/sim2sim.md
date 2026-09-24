@@ -86,12 +86,21 @@ chuanliantui actor 观测为 25 维：机体系角速度(3)、重力投影(3)、
 该模式只消除 Isaac 串联训练资产与 MuJoCo 回放资产的结构差异，**不是**真实闭链或
 真机 sim2sim。默认会拒绝任何含 equality/connect 约束的模型，防止两条链路混用。
 
-仅在闭链差异诊断时，可显式传入 `--closed_chain`。该选项改用
-`chuanliantui.xml`（`neq=4`）和 `ClosedChainAdapter` 的闭链姿态求解/力矩映射；它还以
-两个 spatial tendon 模拟左右气弹簧。端点由 CAD 定位件 `rf001/rf002` 与
-`lf001/lf002` 换算后附着在实际前支路 body 上，默认每侧恒定伸张推力 150 N；可用
-`--gas_spring_force 0` 关闭以做对照。该恒力模型不含真实气弹簧的力—长度曲线、阻尼或
-行程，不能作为串联训练策略已完成 sim2sim 或可上真机的证据。
+仅在闭链差异诊断时，可显式传入 `--closed_chain`。该选项加载本机
+`chuanliantui.xml`（`neq=4`）和 `ClosedChainAdapter`，实体前、后输入轴分别是
+`lf0/lf00` 与 `rf0/rf00`。模型用两个 spatial tendon 模拟左右气弹簧；端点由本机
+CAD 定位件换算到前支路，默认每侧恒定伸张推力 150 N，可用 `--gas_spring_force 0`
+关闭做对照。复旦 XML 仅作为单独的模型参考，不参与本机策略回放。该恒力模型不含
+真实气弹簧的力—长度曲线、阻尼或行程，也不能作为真机验证通过的证据。
+
+闭链模式的策略观测不读取被动 `lf1/rf1` 的 qpos/qvel。它从本机 MJCF 的前/后
+支路尺寸、零位装配分支和实体电机 `lf0/lf00`、`rf0/rf00` 的角度解两次平面圆交点，
+得到训练策略所需的虚拟膝角；闭链几何方程的解析 Jacobian 把电机速度变为虚拟膝速度，
+并按虚功关系把虚拟膝力矩映射到两个实体电机。轮力矩仍直通。这沿用复旦部署的
+“电机状态→虚拟膝状态、虚拟力矩→电机力矩”路径，但使用 chuanliantui 自己的
+CAD 几何，不复制复旦的连杆长度或偏置。几何不可达或 Jacobian 奇异会显式报错。
+闭链模式的虚拟膝速度来自电机速度和几何 Jacobian，与串联训练代理的逐步位置差分
+不同；其余 DOF 仍按 2 ms 子步差分。
 
 用 `python sim2sim/mj_sim2sim_ct.py --gas_spring_view` 打开气弹簧专用视图（自动开启
 闭链和渲染）：半透明机构中，左侧青色、右侧橙色，圆点为安装端点，粗线为气弹簧轴线。
@@ -114,7 +123,10 @@ chuanliantui actor 观测为 25 维：机体系角速度(3)、重力投影(3)、
 复旦模型的 `l20/r20` 不限位；当前闭链 XML 的 `lf00/rf00` 也已改为
 `limited="false"`，允许后输入轴连续旋转，避免原 ±3.14 rad 限位阻挡髋部转过一圈。
 这是 MuJoCo 模型对原始 CAD URDF 限位的显式修正；闭链生成器已同步该规则和气弹簧定义，
-重新生成后运行 `python scripts/agent/check_chuanliantui_closed.py`，检查端点连接、
-每侧 0/150 N 施力、±360° 闭合姿态以及原有的 5 秒无控制仿真。
-前支路膝关节与其余被动关节仍保留原有范围。
+重新生成后运行 `python scripts/agent/check_chuanliantui_closed.py`，检查左右膝限位、
+端点连接、每侧 0/150 N 施力、±360° 闭合姿态以及原有的 5 秒无控制仿真。
+用户确认实机膝关节行程以 `chuanliantui_train.urdf` 为准：
+`lf1=[-0.12,0.77]`、`rf1=[-0.77,0.12]` rad。原始 `chuanliantui.urdf`
+的这两处限位曾与实机/训练资产相反，现已修正。闭链 XML 中的膝限位已同步；
+生成器也直接读取修正后的源 URDF。其余被动关节仍保留原始 CAD 范围。
 原始四对 site 存在约 10 mm 的横向错位，加载后的演示保留此偏差，不能视为闭合精度验证通过。

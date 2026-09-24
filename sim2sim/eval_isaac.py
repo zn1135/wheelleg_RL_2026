@@ -14,6 +14,7 @@ from wheel_legged_gym.envs import *  # noqa: F401,F403  触发任务注册
 from wheel_legged_gym.utils import get_args, task_registry
 import torch
 import sys
+import math
 
 
 def main():
@@ -65,6 +66,7 @@ def main():
         env_cfg.domain_rand.randomize_restitution = False
         env_cfg.domain_rand.randomize_base_com = False
         env_cfg.domain_rand.randomize_base_mass = False
+        env_cfg.domain_rand.randomize_inertia = False
         env_cfg.domain_rand.push_robots = False
         env_cfg.domain_rand.randomize_Kp = False
         env_cfg.domain_rand.randomize_Kd = False
@@ -81,9 +83,14 @@ def main():
     # （1.5*(目标航向-当前航向) 剪到±5），ang_vel_yaw 范围无效——必须把目标航向也钉死为 0，
     # 否则评估中每 resampling_time 秒收到一个 [-π,π] 随机航向目标，机器人被命令猛转弯。
     env_cfg.commands.ranges.heading = [0.0, 0.0]
+    if args.task == "chuanliantui_standup":
+        # 起立环境重采样时按课程写高度，必须同时固定两个课程阶段。
+        env_cfg.standup_curriculum.pre_unlock_target_height = cmd_height
+        env_cfg.standup_curriculum.post_unlock_target_height = cmd_height
+    forward_axis = 1 if args.task == "mini_wheel_legged" else 0
+    axis_name = "xyz"[forward_axis]
 
     env, _ = task_registry.make_env(name=args.task, args=args, env_cfg=env_cfg)
-    obs, obs_history = env.get_observations()
     # 关键：必须置 resume=True 才会加载 --load_run/--checkpoint 指定的权重
     # （对齐 play.py:71；漏掉这行会静默地跑随机初始化网络！）
     train_cfg.runner.resume = True
@@ -92,13 +99,22 @@ def main():
     )
     print(f"已加载权重: load_run={train_cfg.runner.load_run} checkpoint={train_cfg.runner.checkpoint}")
     policy = ppo_runner.get_inference_policy(device=env.device)
+    # runner 构造时会 reset，加载权重又会恢复课程；重新取得匹配当前状态的观测。
+    env.reset()
+    obs, obs_history = env.get_observations()
+    start_xy = env.root_states[0, :2].clone()
 
     n_steps = int(sim_seconds / env.dt)
     ac = ppo_runner.alg.actor_critic
     print(f"Isaac 对照评估：{sim_seconds}s (cmd_vx={cmd_vx}, yaw={cmd_yaw}, h={cmd_height}, "
           f"动作={'采样(训练同款噪声)' if stochastic else '确定性均值'})")
-    print("字段：z 高度 | v_fwd 机体系前向(y)速度 | pg_yz 重力投影 | done 是否触发终止(重置)")
+    print(f"字段：xy 世界系位置 | z 高度 | v_fwd 机体系前向({axis_name})速度 | pg_xyz 重力投影 | done 重置")
     n_dones = 0
+    n_timeouts = 0
+    max_drift = 0.0
+    max_speed = 0.0
+    max_tilt = 0.0
+    ever_stood = False
     for step in range(n_steps):
         with torch.no_grad():
             if stochastic:
@@ -108,18 +124,35 @@ def main():
                 actions, latent = policy(obs, obs_history)
         obs, _, _, dones, infos, obs_history = env.step(actions.detach())
         n_dones += int(dones[0].item())
+        if dones[0].item():
+            n_timeouts += int(infos.get("time_outs", env.time_out_buf)[0].item())
+            start_xy = env.root_states[0, :2].clone()
+        else:
+            max_drift = max(max_drift, torch.norm(env.root_states[0, :2] - start_xy).item())
+            max_speed = max(max_speed, abs(env.base_lin_vel[0, forward_axis].item()))
+            max_tilt = max(max_tilt, math.degrees(math.acos(
+                max(-1.0, min(1.0, -env.projected_gravity[0, 2].item())))))
+        if hasattr(env, "has_stood"):
+            ever_stood |= bool(env.has_stood[0].item())
         if step % 100 == 0 or dones[0].item():
             z = env.root_states[0, 2].item()
             pg = env.projected_gravity[0].cpu().numpy()
-            v_fwd = env.base_lin_vel[0, 1].item()
-            v_hat = latent[0, 1].item() / 2.0  # latent 前3维=base_lin_vel*2（ppo.py:265）
+            v_fwd = env.base_lin_vel[0, forward_axis].item()
+            v_hat = latent[0, forward_axis].item() / 2.0  # 推理前状态的速度估计
             cmd = env.commands[0, :3].cpu().numpy()
-            print(f"[{step:5d}] z={z:.3f} v_fwd={v_fwd:+.3f} v̂={v_hat:+.3f} "
-                  f"pg_yz=[{pg[1]:+.2f},{pg[2]:+.2f}] "
+            xy = env.root_states[0, :2].cpu().numpy()
+            stood = int(env.has_stood[0].item()) if hasattr(env, "has_stood") else -1
+            print(f"[{step:5d}] xy=[{xy[0]:+.3f},{xy[1]:+.3f}] z={z:.3f} v_fwd={v_fwd:+.3f} v̂={v_hat:+.3f} "
+                  f"pg_xyz=[{pg[0]:+.2f},{pg[1]:+.2f},{pg[2]:+.2f}] has_stood={stood} "
                   f"cmd=[{cmd[0]:+.2f},{cmd[1]:+.2f},{cmd[2]:.2f}] done={int(dones[0].item())}")
             if dones[0].item():
-                print(f">>> 第 {step} 步({step*env.dt:.1f}s)触发终止：Isaac 里同样失稳")
-    print(f"评估结束。{sim_seconds}s 内终止 {n_dones} 次（0 次 = 稳定）。")
+                print(f">>> 第 {step} 步({step*env.dt:.1f}s)触发重置；该行位置可能已复位，需区分超时和失败。")
+    print(f"评估结束。{sim_seconds}s 内重置 {n_dones} 次，其中超时 {n_timeouts} 次。")
+    print(f"非重置步统计：回合内最大水平位移={max_drift:.3f}m 最大前向速率={max_speed:.3f}m/s "
+          f"最大倾角={max_tilt:.1f}deg（包含起立瞬态）")
+    if hasattr(env, "has_stood"):
+        print(f"是否曾满足训练稳站判据：{ever_stood}（不代表此后持续稳定）")
+    print("未触发重置不等于稳定；结合高度、位移、速度、姿态和稳站判据判断。")
 
 
 if __name__ == "__main__":

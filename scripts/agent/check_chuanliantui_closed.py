@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
 import mujoco
 import numpy as np
@@ -11,6 +12,9 @@ import numpy as np
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MODEL_PATH = REPO_ROOT / "sim2sim/chuanliantui.xml"
+SOURCE_URDF = REPO_ROOT / "resources/robots/chuanliantui_new_1/urdf/chuanliantui.urdf"
+TRAIN_URDF = REPO_ROOT / "resources/robots/chuanliantui_new_1/urdf/chuanliantui_train.urdf"
+KNEE_RANGES = {"lf1": (-0.12, 0.77), "rf1": (-0.77, 0.12)}
 SITE_PAIRS = (
     ("right_A1", "right_rear_pin1", "right_front_pin1"),
     ("right_A2", "right_rear_pin2", "right_front_pin2"),
@@ -32,6 +36,26 @@ def main():
         index = mujoco.mj_name2id(model, kind, name)
         assert index >= 0, "缺少对象：" + name
         return index
+
+    # 实机膝限位以训练 URDF 为准，同时检查源资产和 MuJoCo 编译后的有效限位。
+    for urdf_path in (SOURCE_URDF, TRAIN_URDF):
+        urdf = ET.parse(urdf_path).getroot()
+        for name, expected_range in KNEE_RANGES.items():
+            limit = urdf.find("./joint[@name='{}']/limit".format(name))
+            assert limit is not None, "{} 缺少 {} 限位".format(urdf_path, name)
+            actual_range = (float(limit.attrib["lower"]), float(limit.attrib["upper"]))
+            np.testing.assert_allclose(
+                actual_range, expected_range, rtol=0, atol=1e-12,
+                err_msg="{} 的 {} 膝限位与实机范围不符".format(urdf_path, name),
+            )
+    for name, expected_range in KNEE_RANGES.items():
+        jid = named(mujoco.mjtObj.mjOBJ_JOINT, name)
+        assert model.jnt_limited[jid], "{} 膝关节应有限位".format(name)
+        np.testing.assert_allclose(
+            model.jnt_range[jid], expected_range, rtol=0, atol=1e-12,
+            err_msg="闭链 XML 的 {} 膝限位与实机范围不符".format(name),
+        )
+    print("原始 URDF、训练 URDF 与闭链 XML 的左右膝限位一致")
 
     spring_ids = []
     for side, prefix in (("left", "lf"), ("right", "rf")):

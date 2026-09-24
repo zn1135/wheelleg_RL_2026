@@ -79,6 +79,18 @@ python sim2sim/mj_sim2sim.py --render --teleop \
 
 ### chuanliantui
 
+零速度诊断可使用现有 Isaac 对照脚本，显式选择起立任务和同一 checkpoint：
+
+```bash
+python sim2sim/eval_isaac.py --task chuanliantui_standup \
+    --load_run Sep22_16-26-11_standup_no_legangle_resume --checkpoint 6000 \
+    --cmd_vx 0 --cmd_yaw 0 --cmd_height 0.20 --sim_time 15
+```
+
+该脚本按 chuanliantui 的 +x 前向记录真实速度和 encoder 估速，固定起立课程高度，
+并区分超时重置与其他重置。应同时检查位移、高度、姿态及 `has_stood`；
+没有重置不代表已经起立或保持原地稳定。它是诊断对照，不替代可视行为验收。
+
 chuanliantui 的 actor 观测已改为 25 维、历史为 125；轮绝对位置不再输入策略。
 此前所有 27 维 chuanliantui `model_*.pt` 与当前网络接口不兼容，以下回放命令均应替换为
 新训练产生的 25 维 checkpoint。
@@ -103,12 +115,14 @@ python sim2sim/mj_sim2sim_ct.py --selfcheck \
 
 # 训练一致的地面后摆起立回放。--standup 固定使用基座 0.15 m 和关节
 # [11,0,0,-11,0,0]（写入 MuJoCo 前规范到等价 [-pi,pi)）；首次轮触地后下一策略步接管。
+# 点击 MuJoCo 窗口后按 Ctrl+R，可恢复后摆初态并清空速度/航向及观测历史。
 python sim2sim/mj_sim2sim_ct.py --standup --render \
     --checkpoint logs/chuanliantui_standup/<run>/model_<checkpoint>.pt \
     --cmd_vx 0 --cmd_height 0.20 --friction 0.75
 
-# 可选：真实闭链差异诊断。--closed_chain 明确启用旧 chuanliantui.xml 与
-# ClosedChainAdapter；它不是串联训练代理一致性或真机验证通过的依据。
+# 可选：本机 chuanliantui.xml 闭链差异诊断。实体电机为 lf0/lf00、rf0/rf00；
+# 虚拟膝状态由电机状态和本机几何反算，虚拟力矩按几何 Jacobian 映射。
+# 它不是串联训练代理一致性或真机验证通过的依据。
 python sim2sim/mj_sim2sim_ct.py --closed_chain --standup --render \
     --checkpoint logs/chuanliantui_standup/<run>/model_<checkpoint>.pt \
     --cmd_vx 0 --cmd_height 0.20 --friction 0.75
@@ -144,7 +158,7 @@ python sim2sim/mj_sim2sim_ct.py --standup --render \
     --cmd_vx 0 --cmd_height 0.20
 ```
 
-`--standup` 使用当前 `chuanliantui_standup` 的 0.15 m 地面后摆初态与配置的后摆关节；落地前使用零策略动作但仍执行 PD 内环；首次轮接地后的下一控制步才调用策略，观测历史在落地前持续更新。它只能搭配完整 `model_*.pt`。渲染模式默认启用键盘遥操作，关闭窗口退出；无渲染模式持续运行，使用 Ctrl+C 退出。默认仍使用串联训练代理；`--closed_chain` 仅显式启用旧真实闭链 XML 与 `ClosedChainAdapter` 进行差异诊断。
+`--standup` 使用当前 `chuanliantui_standup` 的 0.15 m 地面后摆初态与配置的后摆关节；落地前使用零策略动作但仍执行 PD 内环；首次轮接地后的下一控制步才调用策略，观测历史在落地前持续更新。它只能搭配完整 `model_*.pt`。渲染模式默认启用键盘遥操作，关闭窗口退出；无渲染模式持续运行，使用 Ctrl+C 退出。日志 `pg_xyz` 中，+x 前向机器人的前后倾看 `pg_x`，直立时 `pg_z` 接近 -1。默认仍使用串联训练代理；`--closed_chain` 显式启用本机 `chuanliantui.xml` 与 `ClosedChainAdapter` 进行差异诊断，复旦模型仅作独立参考。
 
 ## 典型工作流
 
