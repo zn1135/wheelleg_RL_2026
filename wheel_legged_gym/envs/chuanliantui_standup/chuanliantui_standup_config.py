@@ -5,6 +5,15 @@ from wheel_legged_gym.envs.chuanliantui.chuanliantui_config import (
 
 
 class ChuanliantuiStandupCfg(ChuanliantuiCfg):
+    class terrain(ChuanliantuiCfg.terrain):
+        static_friction = 0.4
+        dynamic_friction = 0.4
+
+    class domain_rand(ChuanliantuiCfg.domain_rand):
+        # 平面摩擦 0.4，PhysX 平均合成；轮地接触分别覆盖 0.20–0.30 和 0.45–0.55。
+        friction_range = [0.0, 0.7]
+        friction_ranges = [[0.0, 0.2], [0.5, 0.7]]
+
     class commands(ChuanliantuiCfg.commands):
         curriculum = False
 
@@ -36,7 +45,7 @@ class ChuanliantuiStandupCfg(ChuanliantuiCfg):
         initial_base_height = 0.15
         target_base_height = 0.20
         # 后摆初态；顺序为 [lf0, lf1, lfwheel, rf0, rf1, rfwheel]。
-        initial_dof_pos = [11.0, 0.0, 0.0, -11.0, 0.0, 0.0]
+        initial_dof_pos = [-1.566, 0.0, 0.0, 1.566, 0.0, 0.0]
         # 解锁后的 0.20 m 命令下留 2 cm 裕量；解锁前使用课程的 0.28 m 门槛。
         success_height = 0.18
         success_projected_gravity_z = -0.90

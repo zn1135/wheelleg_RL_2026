@@ -442,17 +442,37 @@ class LeggedRobot(BaseTask):
         """
         if self.cfg.domain_rand.randomize_friction:
             if env_id == 0:
-                # prepare friction randomization
-                friction_range = self.cfg.domain_rand.friction_range
-                num_buckets = 64
-                bucket_ids = torch.randint(0, num_buckets, (self.num_envs, 1))
-                friction_buckets = torch_rand_float(
-                    friction_range[0],
-                    friction_range[1],
-                    (num_buckets, 1),
-                    device=self.device,
-                )
-                self.friction_coef = friction_buckets[bucket_ids]
+                friction_ranges = getattr(self.cfg.domain_rand, "friction_ranges", None)
+                if friction_ranges is None:
+                    friction_range = self.cfg.domain_rand.friction_range
+                    num_buckets = 64
+                    bucket_ids = torch.randint(0, num_buckets, (self.num_envs, 1))
+                    friction_buckets = torch_rand_float(
+                        friction_range[0],
+                        friction_range[1],
+                        (num_buckets, 1),
+                        device=self.device,
+                    )
+                    self.friction_coef = friction_buckets[bucket_ids]
+                else:
+                    if not friction_ranges or any(
+                        len(bounds) != 2 or bounds[0] < 0 or bounds[1] < bounds[0]
+                        for bounds in friction_ranges
+                    ):
+                        raise ValueError("Invalid friction ranges")
+                    # 每个环境独立选一个区间，再在区间内均匀采样。
+                    lower = torch.tensor(
+                        [bounds[0] for bounds in friction_ranges], device=self.device
+                    )
+                    upper = torch.tensor(
+                        [bounds[1] for bounds in friction_ranges], device=self.device
+                    )
+                    range_ids = torch.randint(
+                        len(friction_ranges), (self.num_envs, 1), device=self.device
+                    )
+                    self.friction_coef = lower[range_ids] + torch.rand(
+                        self.num_envs, 1, device=self.device
+                    ) * (upper[range_ids] - lower[range_ids])
 
             for s in range(len(props)):
                 props[s].friction = self.friction_coef[env_id]

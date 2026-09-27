@@ -78,7 +78,7 @@ LEG_POSITION_INDICES = np.array((0, 1, 3, 4), dtype=np.intp)
 # MuJoCo 写入前规范到等价的 [-pi, pi) 表示；首次轮接地前策略不推理。
 STANDUP_START_HEIGHT = 0.15
 STANDUP_INITIAL_DOF_POS = np.array(
-    [11.0, 0.0, 0.0, -11.0, 0.0, 0.0], dtype=np.float64
+    [-1.566, 0.0, 0.0, 1.566, 0.0, 0.0], dtype=np.float64
 )
 WHEEL_CONTACT_FORCE_THRESHOLD = 1.0
 P_GAINS = np.array([10.0, 10.0, 0.0, 10.0, 10.0, 0.0], dtype=np.float64)

@@ -114,7 +114,7 @@ python sim2sim/mj_sim2sim_ct.py --selfcheck \
     --checkpoint logs/chuanliantui/<new_25d_run>/model_<checkpoint>.pt
 
 # 训练一致的地面后摆起立回放。--standup 固定使用基座 0.15 m 和关节
-# [11,0,0,-11,0,0]（写入 MuJoCo 前规范到等价 [-pi,pi)）；首次轮触地后下一策略步接管。
+# [-1.566,0,0,1.566,0,0]；首次轮触地后下一策略步接管。
 # 点击 MuJoCo 窗口后按 Ctrl+R，可恢复后摆初态并清空速度/航向及观测历史。
 python sim2sim/mj_sim2sim_ct.py --standup --render \
     --checkpoint logs/chuanliantui_standup/<run>/model_<checkpoint>.pt \

@@ -8,6 +8,15 @@
 
 用法:
     python sim2sim/eval_isaac.py --load_run Jul21_06-00-36_ --checkpoint 1000 --cmd_vx 0.5
+
+chuanliantui_standup 可追加：
+    --pd_error_report /tmp/pd_error.json  逐个 PD 子步记录四个腿关节的位置误差。
+    --standup_config_snapshot <run>/chuanliantui_standup_config.py
+        加载可信的本地起立配置快照；继承的父类仍使用当前工作区版本。
+    --stochastic --noise --domain_rand  使用采样动作、观测噪声及域随机化。
+    --render  打开跟随机器人视角的回放窗口。
+    --frame_dir <新目录>  配合 --render，每秒保存一张回放画面。
+统计是有限采样诊断，不替代可视行为验收或历史训练全程记录。
 """
 import isaacgym  # noqa: F401  必须在 torch 之前 import
 from wheel_legged_gym.envs import *  # noqa: F401,F403  触发任务注册
@@ -15,6 +24,65 @@ from wheel_legged_gym.utils import get_args, task_registry
 import torch
 import sys
 import math
+import json
+import runpy
+from pathlib import Path
+
+
+class LegErrorRecorder:
+    """只读记录实际送入 PD 的四个腿关节误差；每次调用对应一个物理子步。"""
+
+    def __init__(self, env):
+        self.env = env
+        self.compute = env._compute_torques
+        self.rows = []
+
+    def __call__(self, actions):
+        env = self.env
+        ids = [0, 1, 3, 4]
+        q = env.dof_pos[0, ids]
+        target = (actions * env.cfg.control.pos_action_scale + env.default_dof_pos)[0, ids]
+        error = target - q
+        active = bool(env.get_policy_action_mask()[0].item()) if hasattr(env, "get_policy_action_mask") else True
+        stood = bool(env.has_stood[0].item()) if hasattr(env, "has_stood") else False
+        torque = self.compute(actions)
+        self.rows.append({
+            "t": len(self.rows) * env.sim_params.dt,
+            "active": active, "has_stood": stood,
+            "q": q.detach().cpu().tolist(),
+            "target": target.detach().cpu().tolist(),
+            "error": error.detach().cpu().tolist(),
+            "qd": env.dof_vel[0, ids].detach().cpu().tolist(),
+            "torque": torque[0, ids].detach().cpu().tolist(),
+        })
+        return torque
+
+    def save(self, path, metadata):
+        names = [self.env.dof_names[i] for i in [0, 1, 3, 4]]
+        summary = {}
+        for phase, predicate in [
+            ("before_policy", lambda r: not r["active"]),
+            ("policy_active", lambda r: r["active"]),
+            ("after_stood", lambda r: r["active"] and r["has_stood"]),
+        ]:
+            rows = [r for r in self.rows if predicate(r)]
+            if not rows:
+                summary[phase] = {"substeps": 0}
+                continue
+            errors = torch.tensor([r["error"] for r in rows]).abs()
+            maximum = errors.max(dim=0).values.tolist()
+            summary[phase] = {
+                "substeps": len(rows), "max_abs_error_rad": dict(zip(names, maximum)),
+                "fraction_abs_gt_pi": dict(zip(names, (errors > math.pi).float().mean(0).tolist())),
+                "fraction_abs_ge_3_5": dict(zip(names, (errors >= 3.5).float().mean(0).tolist())),
+                "peak_example": rows[int(errors.max(1).values.argmax())],
+            }
+        result = {"metadata": metadata, "joint_names": names, "summary": summary, "samples": self.rows}
+        # 避免覆盖已有诊断证据或历史训练文件。
+        with Path(path).open("x") as stream:
+            json.dump(result, stream, indent=2, allow_nan=False)
+        print("PD_ERROR_SUMMARY=" + json.dumps(summary))
+        print(f"PD 内环原始记录: {Path(path).resolve()}")
 
 
 def main():
@@ -27,6 +95,11 @@ def main():
     with_noise = False
     with_trimesh = False
     with_dr = False
+    contact_friction = None
+    pd_error_report = None
+    standup_config_snapshot = None
+    render = False
+    frame_dir = None
     argv = []
     it = iter(sys.argv[1:])
     for a in it:
@@ -46,12 +119,35 @@ def main():
             with_trimesh = True  # 消融：保留训练的 trimesh 地形（不强制 plane）
         elif a == "--domain_rand":
             with_dr = True  # 消融：保留训练的全部域随机化
+        elif a == "--contact_friction":
+            contact_friction = float(next(it))
+        elif a == "--pd_error_report":
+            pd_error_report = next(it)
+        elif a == "--standup_config_snapshot":
+            standup_config_snapshot = next(it)
+        elif a == "--render":
+            render = True
+        elif a == "--frame_dir":
+            frame_dir = Path(next(it))
         else:
             argv.append(a)
     sys.argv = ["eval_isaac", "--task=mini_wheel_legged", "--headless"] + argv
     args = get_args()
+    args.headless = not render
+    if frame_dir:
+        if not render:
+            raise ValueError("--frame_dir 需要 --render")
+        frame_dir.mkdir(parents=True, exist_ok=False)
 
     env_cfg, train_cfg = task_registry.get_cfgs(name=args.task)
+    if standup_config_snapshot:
+        if args.task != "chuanliantui_standup":
+            raise ValueError("--standup_config_snapshot 仅用于 chuanliantui_standup")
+        snapshot = runpy.run_path(standup_config_snapshot)
+        env_cfg = snapshot["ChuanliantuiStandupCfg"]()
+        train_cfg = snapshot["ChuanliantuiStandupCfgPPO"]()
+        env_cfg.seed = train_cfg.seed
+        print(f"加载起立配置快照（父类仍用当前代码）: {standup_config_snapshot}")
     env_cfg.env.num_envs = 1
     if not with_trimesh:
         env_cfg.terrain.mesh_type = "plane"
@@ -74,6 +170,17 @@ def main():
         env_cfg.domain_rand.randomize_default_dof_pos = False
         env_cfg.domain_rand.randomize_action_delay = False
         env_cfg.domain_rand.randomize_compliance = False
+    if contact_friction is not None:
+        if args.task != "chuanliantui_standup" or with_dr:
+            raise ValueError("--contact_friction 仅用于起立任务的无域随机化对照")
+        if env_cfg.terrain.static_friction != env_cfg.terrain.dynamic_friction:
+            raise ValueError("地面静、动摩擦不同，无法用单个接触摩擦目标评估")
+        robot_friction = 2.0 * contact_friction - env_cfg.terrain.static_friction
+        if robot_friction < 0:
+            raise ValueError("目标接触摩擦过低，所需机器人摩擦为负")
+        env_cfg.domain_rand.randomize_friction = True
+        env_cfg.domain_rand.friction_range = [robot_friction, robot_friction]
+        env_cfg.domain_rand.friction_ranges = [[robot_friction, robot_friction]]
     env_cfg.commands.curriculum = False
     # 固定命令（resample 也只会采到同一个值）
     env_cfg.commands.ranges.lin_vel_x = [cmd_vx, cmd_vx]
@@ -91,6 +198,12 @@ def main():
     axis_name = "xyz"[forward_axis]
 
     env, _ = task_registry.make_env(name=args.task, args=args, env_cfg=env_cfg)
+    if contact_friction is not None:
+        print(
+            f"轮地目标接触摩擦={contact_friction:.3f}，"
+            f"地面={env_cfg.terrain.static_friction:.3f}，"
+            f"机器人材质={env.friction_coef[0].item():.3f}"
+        )
     # 关键：必须置 resume=True 才会加载 --load_run/--checkpoint 指定的权重
     # （对齐 play.py:71；漏掉这行会静默地跑随机初始化网络！）
     train_cfg.runner.resume = True
@@ -99,6 +212,11 @@ def main():
     )
     print(f"已加载权重: load_run={train_cfg.runner.load_run} checkpoint={train_cfg.runner.checkpoint}")
     policy = ppo_runner.get_inference_policy(device=env.device)
+    recorder = LegErrorRecorder(env) if pd_error_report else None
+    if recorder:
+        if args.task != "chuanliantui_standup" or env.num_envs != 1:
+            raise ValueError("PD 误差统计仅支持单环境 chuanliantui_standup")
+        env._compute_torques = recorder
     # runner 构造时会 reset，加载权重又会恢复课程；重新取得匹配当前状态的观测。
     env.reset()
     obs, obs_history = env.get_observations()
@@ -116,13 +234,24 @@ def main():
     max_tilt = 0.0
     ever_stood = False
     for step in range(n_steps):
+        if render:
+            target = env.root_states[0, :3].detach().cpu().numpy()
+            env.set_camera(target + [1.4, -1.4, 0.8], target)
         with torch.no_grad():
-            if stochastic:
-                actions = ac.act(obs, obs_history)
-                latent = ac.latent
-            else:
-                actions, latent = policy(obs, obs_history)
+            mask = env.get_policy_action_mask() if hasattr(env, "get_policy_action_mask") else torch.ones(env.num_envs, dtype=torch.bool, device=env.device)
+            actions = torch.zeros(env.num_envs, env.num_actions, device=env.device)
+            latent = torch.zeros(env.num_envs, 3, device=env.device)
+            if mask.any():
+                if stochastic:
+                    actions[mask] = ac.act(obs[mask], obs_history[mask])
+                    latent[mask] = ac.latent
+                else:
+                    actions[mask], latent[mask] = policy(obs[mask], obs_history[mask])
         obs, _, _, dones, infos, obs_history = env.step(actions.detach())
+        if frame_dir and step % 100 == 0:
+            env.gym.write_viewer_image_to_file(
+                env.viewer, str(frame_dir / f"step_{step:05d}.png")
+            )
         n_dones += int(dones[0].item())
         if dones[0].item():
             n_timeouts += int(infos.get("time_outs", env.time_out_buf)[0].item())
@@ -153,6 +282,20 @@ def main():
     if hasattr(env, "has_stood"):
         print(f"是否曾满足训练稳站判据：{ever_stood}（不代表此后持续稳定）")
     print("未触发重置不等于稳定；结合高度、位移、速度、姿态和稳站判据判断。")
+    if recorder:
+        recorder.save(pd_error_report, {
+            "task": args.task, "load_run": train_cfg.runner.load_run,
+            "checkpoint": train_cfg.runner.checkpoint, "seed": env_cfg.seed,
+            "stochastic": stochastic, "noise": with_noise, "domain_rand": with_dr,
+            "config_snapshot": standup_config_snapshot,
+            "sim_seconds": sim_seconds, "dt": env.sim_params.dt,
+            "terrain_friction": env_cfg.terrain.static_friction,
+            "randomized_robot_friction": (
+                env.friction_coef[0].item()
+                if env_cfg.domain_rand.randomize_friction else None
+            ),
+            "resets": n_dones, "timeouts": n_timeouts, "ever_stood": ever_stood,
+        })
 
 
 if __name__ == "__main__":
