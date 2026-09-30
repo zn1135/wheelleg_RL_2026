@@ -1,10 +1,22 @@
 # sim2sim 与部署契约
 
-改动观测构造、控制时序、URDF/XML、或准备真机部署时读这篇。权威来源是 `sim2sim/mj_sim2sim.py` 的文件头注释，本文是它的索引与排查经验。
+关节 USB 台架采集后的固定机身闭链对照使用 `sim2sim/fit_joint_usb.py`，数据协议及安全门见 H7 仓库 `md/joint-usb-sysid.md`。它只拟合实测力矩输入下的模型响应，不修改训练策略、部署物理极性或现有 XML。
 
-## 部署契约
+采集到独立的拟合 run 和留出 run、并由台架作者确认四实体电机的关节对应、符号与零点后，在训练仓用已配置的 `WHEELLEGGED_PYTHON` 执行：
 
-任何部署端（MuJoCo 脚本、真机驱动）必须逐条对齐 `wheel_legged_gym/envs/base/legged_robot.py`：
+```bash
+"$WHEELLEGGED_PYTHON" sim2sim/fit_joint_usb.py \
+  --run <拟合采集目录> --holdout <留出采集目录> \
+  --mapping <已确认映射.json> --out <新结果目录>
+```
+
+脚本拒绝未批准映射、相同的拟合/留出 CSV、故障、坏帧或丢帧超过 1% 的 run；输出参数、四实体关节及左右腿几何的实测/仿真对照。`delay_s` 从主控 CAN 排队时刻估计，不能解释为电机内部生效延迟；几何角度约定须先做静态核对，参数 Jacobian 秩不足时不能断言所有参数都已辨识。
+
+改动观测构造、控制时序、URDF/XML、或准备真机部署时读这篇。imcawl 的权威来源是 `sim2sim/mj_sim2sim.py` 的文件头注释；chuanliantui 见本文后面的对应小节及 `sim2sim/mj_sim2sim_ct.py`、训练实现。跨仓库接口版本与模型交付要求见 [部署接口约定](../deployment-contract.md)。
+
+## imcawl 部署契约
+
+imcawl 的部署端（MuJoCo 脚本、真机驱动）必须逐条对齐训练实现；本表不适用于 chuanliantui：
 
 | 项 | 值 |
 |---|---|
@@ -115,8 +127,8 @@ CAD 几何，不复制复旦的连杆长度或偏置。几何不可达或 Jacobi
 有效力臂（mm）。力矩按 `actuator_force * actuator_moment` 计算，符号遵循各自
 关节轴，不包含重力、鼠标外力和闭链约束反力，也不是主动电机轴的等效补偿力矩。
 
-复旦原腿的固定机身对照：`python sim2sim/view_gas_spring_fudan.py`，默认从本机
-`/home/zn/文档/fudan_rl_wheel_leg-main` 加载原 XML（可用 `--xml` 指定路径），
+复旦原腿的固定机身对照：`python sim2sim/view_gas_spring_fudan.py`，使用 `--xml`
+指定本机参考仓库中的原 XML，不依赖脚本内某位成员的默认路径，
 每侧使用 150 N 便于同力对照；`--gas_spring_force 300` 恢复原脚本的力值。
 该视图无策略、无实体电机驱动，保留原模型的限位、阻尼和闭链锚点；在内存中把
 `connect site1/site2` 转为 MuJoCo 3.2.2 支持的两刚体局部锚点，不修改源 XML。

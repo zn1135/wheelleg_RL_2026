@@ -4,6 +4,15 @@
 
 本仓库 fork 自 [legged_gym](https://github.com/leggedrobotics/legged_gym)，并把 [rsl_rl](https://github.com/leggedrobotics/rsl_rl) **内嵌**为 `wheel_legged_gym/rsl_rl/`（不是 pip 依赖）。改 RL 算法直接改这个目录，不要去装外部 rsl_rl。
 
+## 训练与部署仓库
+
+| 仓库 | 职责 | 本机位置 |
+|---|---|---|
+| Wheel-Legged-Gym（本仓库） | 强化学习训练、策略导出与 MuJoCo sim2sim 验证 | 当前克隆的仓库根目录 |
+| [H7_RL](https://github.com/zn1135/H7_RL.git) | 板端策略部署与真机控制 | `.env.local` 中的 `H7_REPO_PATH` |
+
+本机配置与团队流程见 [CONTRIBUTING.md](../../CONTRIBUTING.md)。涉及板端实现时，以 H7_RL 对应版本的代码和仓库说明为准；远程名称因克隆而异，跨仓库操作前分别核对 URL、分支、版本与未提交改动。接口差异及同步要求见 [部署接口约定](../deployment-contract.md)。
+
 ## 训练数据流
 
 ```
@@ -56,7 +65,7 @@ class Mini_WheelLeggedCfg(LeggedRobotCfg):
 
 ## 奖励函数清单
 
-`LeggedRobot` 定义 26 个 `_reward_*`（截至当前分支核实）。`MiniWheelLegged` override 了 `_reward_tracking_lin_vel`、`_reward_tracking_lin_vel_enhance`、`check_termination`。
+奖励函数随分支和版本变化，以下为 imcawl 相关实现的索引。`MiniWheelLegged` override 了 `_reward_tracking_lin_vel`、`_reward_tracking_lin_vel_enhance`、`check_termination`。
 
 跟踪类：`tracking_lin_vel`、`tracking_lin_vel_enhance`、`tracking_ang_vel`、`tracking_ang_vel_enhance`、`tracking_lin_vel_pbrs`、`tracking_ang_vel_pbrs`（后两个是 PBRS 势能形式）
 
@@ -66,7 +75,7 @@ class Mini_WheelLeggedCfg(LeggedRobotCfg):
 
 限位与接触：`dof_pos_limits`、`dof_vel_limits`、`torque_limits`、`collision`、`stumble`、`feet_contact_forces`、`termination`、`stand_still`
 
-`XML` 分支另有 `alive` 奖励，当前分支没有。
+跨维护线移植奖励时核对所选版本的实现与配置；不能仅凭任务同名认定奖励一致。
 
 ## VMC 工作原理
 

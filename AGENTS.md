@@ -1,17 +1,28 @@
 # AGENTS.md
 
+本文件约束 AI 助手的工作方式。团队通用流程见 [CONTRIBUTING.md](CONTRIBUTING.md)，AI 同样遵守；本文中的用户确认要求不作为团队成员日常提交的审批流程。
+
 ## 项目是什么
 
-轮足机器人强化学习训练仓，fork 自 legged_gym 并内嵌 rsl_rl。在 Isaac Gym 里训练策略，经 MuJoCo sim2sim 验证后通向真机部署。当前分支主力目标是 imcawl 机器人（任务名 `mini_wheel_legged`）。纯 Python，无编译步骤，Linux + NVIDIA GPU。
+轮足机器人强化学习训练仓，fork 自 legged_gym 并内嵌 rsl_rl。在 Isaac Gym 里训练策略，经 MuJoCo sim2sim 验证后通向真机部署。训练仓为纯 Python，无编译步骤，Linux + NVIDIA GPU；H7 部署仓有独立的固件构建流程。
 
-仓库有两条活跃分支且**没有 `main`**：`大腿`（当前，imcawl）与 `XML`（同一 `mini_wheel_legged` 任务绑定 xwl 机器人，且含当前分支没有的基类改动）。动手前先 `git branch --show-current`，跨分支引用代码或权重要格外小心，详见 [docs/ai/modules.md](docs/ai/modules.md) 的「分支分叉」。
+已记录的维护线包括 `26_wheelleg`（含 chuanliantui 与 imcawl）、`大腿`（imcawl）、`XML`（`mini_wheel_legged` 绑定 xwl）。动手前先 `git branch --show-current`，不假定合入目标为 `main`；分支用途与机器人映射见 [docs/ai/modules.md](docs/ai/modules.md) 的“分支分叉与维护线”。
+
+## 关联部署仓库
+
+- 真机部署仓库：[H7_RL](https://github.com/zn1135/H7_RL.git)。
+- 本机代码路径由 `.env.local` 的 `H7_REPO_PATH` 提供；配置方式见 [协作指南](CONTRIBUTING.md)，公共示例见 [.env.example](.env.example)。
+- 本仓库负责强化学习训练与 MuJoCo sim2sim 验证；H7_RL 负责板端策略部署与真机控制。
+- 涉及部署端代码时，先检查本机配置，再读取部署仓库说明及适用的 `AGENTS.md`（如有），并核对分支和未提交改动。远程名由各克隆自行设置，操作远程前按 URL 核对地址。
 
 ## 开始任务前先读
 
+- 团队流程：[CONTRIBUTING.md](CONTRIBUTING.md)
 - 架构与数据流：[docs/ai/architecture.md](docs/ai/architecture.md)
 - 模块职责与任务注册：[docs/ai/modules.md](docs/ai/modules.md)
 - 构建与测试：[docs/ai/build-test.md](docs/ai/build-test.md)
 - 改动观测/控制时序/URDF/XML，或做真机部署时**另读**：[docs/ai/sim2sim.md](docs/ai/sim2sim.md)
+- 涉及模型或跨仓库交付时另读：[部署接口约定](docs/deployment-contract.md)，填写其中关联的接口／模型交付模板
 - 命令速查：[COMMANDS.md](COMMANDS.md)
 
 ## 正式构建与测试
@@ -19,8 +30,10 @@
 无编译。必须用装了 Isaac Gym 的 Python 3.8 conda 环境，不能用系统 python；本机路径见 [COMMANDS.md](COMMANDS.md) 开头，下文 `python` 均指它。`import isaacgym` 要在 `import torch` 之前。
 
 ```bash
-# 训练
+# imcawl 训练示例；其他机器人按 COMMANDS.md 选择任务
 python wheel_legged_gym/scripts/train.py --task=mini_wheel_legged --headless
+# 在另一终端监控；仅交付命令，默认不启动
+tensorboard --logdir=logs/mini_wheel_legged --port=8080
 
 # Isaac 内回放
 python wheel_legged_gym/scripts/play.py --task=mini_wheel_legged
@@ -47,11 +60,12 @@ python sim2sim/eval_isaac.py --load_run <run> --checkpoint <n> --cmd_vx 0.5
 |---|---|---|
 | 环境基类 | [wheel_legged_gym/envs/base/legged_robot.py](wheel_legged_gym/envs/base/legged_robot.py) | 仿真步进、观测构造、奖励、域随机化 |
 | 基础配置 | [wheel_legged_gym/envs/base/legged_robot_config.py](wheel_legged_gym/envs/base/legged_robot_config.py) | 所有任务的配置基类 |
-| 当前主力环境 | [wheel_legged_gym/envs/mini_wheel_legged/](wheel_legged_gym/envs/mini_wheel_legged/) | imcawl，override 前向轴与倾角终止 |
+| imcawl 环境 | [wheel_legged_gym/envs/mini_wheel_legged/](wheel_legged_gym/envs/mini_wheel_legged/) | override 前向轴与倾角终止 |
+| chuanliantui 环境 | [wheel_legged_gym/envs/chuanliantui/](wheel_legged_gym/envs/chuanliantui/) | 25 维观测、+x 前向；起立任务在 [chuanliantui_standup/](wheel_legged_gym/envs/chuanliantui_standup/) |
 | 任务注册 | [wheel_legged_gym/envs/__init__.py](wheel_legged_gym/envs/__init__.py) | 新任务必须注册才能用 `--task` |
 | RL 算法 | [wheel_legged_gym/rsl_rl/](wheel_legged_gym/rsl_rl/) | 内嵌 rsl_rl：PPO / ActorCriticSequence / runner |
 | 训练回放入口 | [wheel_legged_gym/scripts/](wheel_legged_gym/scripts/) | `train.py` / `play.py` |
-| sim2sim | [sim2sim/](sim2sim/) | `mj_sim2sim.py` 头注释是**部署契约权威来源** |
+| sim2sim | [sim2sim/](sim2sim/) | imcawl 以 `mj_sim2sim.py` 头注释为契约来源；chuanliantui 见 `mj_sim2sim_ct.py` 与对应训练实现 |
 | 机器人资产 | [resources/robots/imcawl/](resources/robots/imcawl/) | URDF / mesh / 关节配置 |
 
 ## 禁止事项
@@ -60,7 +74,7 @@ python sim2sim/eval_isaac.py --load_run <run> --checkpoint <n> --cmd_vx 0.5
 - 不得用导出的 `policy_1.pt` 做 sim2sim / 部署——它缺 encoder。只用 `model_*.pt`。
 - 不得回退 `sim2sim/mj_sim2sim.py` 里 MuJoCo 观测读取的三处修复（`mjOBJ_XBODY`、读状态前 `mj_forward`、PD 内环「算力矩→步进→差分 dof_vel」顺序）。理由见 docs/ai/sim2sim.md。
 - 不得给 imcawl 写基于「x 是前向」的代码——它的前进方向是机体 **+y**。
-- 不得在部署端把 yaw 命令当常数喂——训练时它是航向保持外环的反馈值。
+- imcawl 部署端不得把 yaw 命令当常数喂——训练时它是航向保持外环的反馈值。chuanliantui 使用偏航角速度命令，不套用该外环；按 [部署接口约定](docs/deployment-contract.md) 区分。
 - 配置子类覆盖内部类时不得省略继承（写 `class physx(LeggedRobotCfg.sim.physx)`，不是 `class physx`），否则静默丢掉基类兄弟字段。
 - 改 `resources/robots/imcawl/urdf/` 后不得不同步 `sim2sim/imcawl.xml`（以及 config 里的 `asset.l1/l2`），改完必须跑 `check_model.py`。
 - **不得删除、移动、覆盖仓库根 `logs/` 下的任何内容。** 那是历史训练产物（`model_*.pt` 与 tensorboard 记录），用途是回放旧策略、与新训练结果做效果对比，属于不可再生资产。它被 gitignore 因此没有 Git 兜底，删了就没了。需要腾空间时先问，不要自行判断哪个 run「没用了」。
@@ -69,9 +83,9 @@ python sim2sim/eval_isaac.py --load_run <run> --checkpoint <n> --cmd_vx 0.5
 
 ## 工作区约定
 
-默认直接在当前工作区开发。除非用户在当次请求中明确要求，不得创建或使用 Git worktree，也不启用任务注册、资源锁或私有任务目录等 worktree 工作流。
+默认直接在当前工作区和分支开发。团队使用功能分支的约定不授权 AI 自动切换分支；除非用户在当次请求中明确要求，不得创建或切换分支、创建或使用 Git worktree，也不启用任务注册、资源锁或私有任务目录等 worktree 工作流。开始时核对并保留已有暂存与未提交改动，提交范围不得夹带他人修改。
 
-## Git 提交约定
+## AI 的 Git 操作授权
 
-- Git 提交信息（标题和正文）必须使用中文。
+- Git 提交信息（标题和正文）必须使用中文，团队提交与 PR 规则见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 - 每次实际执行 `git commit` 前，必须先向用户展示暂存文件范围和拟用的中文提交信息，并等待用户明确确认；未确认时不得提交、amend、推送或创建 PR。

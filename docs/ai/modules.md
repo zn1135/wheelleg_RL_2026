@@ -1,5 +1,7 @@
 # 模块职责
 
+以下任务和目录索引以 `26_wheelleg` 代码为基准；其他维护线的差异见下文。开始工作时以实际检出的分支与任务配置为准。
+
 ## 顶层
 
 | 路径 | 职责 |
@@ -20,7 +22,7 @@
 | `BaseTask` | `envs/base/base_task.py` | gym 接口骨架 |
 | `LeggedRobot` | `envs/base/legged_robot.py` | 主力基类：仿真步进、观测构造、奖励、域随机化、地形 |
 | `LeggedRobotVMC` | `envs/wheel_legged_vmc/wheel_legged_vmc.py` | 用 VMC 统一开链/闭链机构的运动控制 |
-| `MiniWheelLegged` | `envs/mini_wheel_legged/mini_wheel_legged.py` | **当前主力**，imcawl 机器人。override 前向轴（+y）与倾角终止阈值 |
+| `MiniWheelLegged` | `envs/mini_wheel_legged/mini_wheel_legged.py` | imcawl 机器人。override 前向轴（+y）与倾角终止阈值 |
 
 ## 已注册任务
 
@@ -28,18 +30,18 @@
 
 | `--task` 值 | 环境类 | 机器人 | 说明 |
 |---|---|---|---|
-| `mini_wheel_legged` | `MiniWheelLegged` | imcawl | **当前主力**，`experiment_name = mini_wheel_legged` |
+| `mini_wheel_legged` | `MiniWheelLegged` | imcawl | `experiment_name = mini_wheel_legged` |
 | `wheel_legged` | `LeggedRobot` | wl | 端到端开链，多地形 |
 | `wheel_legged_vmc` | `LeggedRobotVMC` | wl | VMC，可迁移到闭链实机 |
 | `wheel_legged_vmc_flat` | `LeggedRobotVMC` | wl | 平地，显存需求低 |
 | `chuanliantui` | `Chuanliantui` | chuanliantui | 串联腿平地站立/行走 |
-| `chuanliantui_standup` | `ChuanliantuiStandup` | chuanliantui | 高空微蹲自由落地后稳站 |
+| `chuanliantui_standup` | `ChuanliantuiStandup` | chuanliantui | 0.15 m 地面后摆起立；与站立任务共享 25 维观测 |
 
 ## 机器人资产
 
 | 名称 | 路径 | 状态 |
 |---|---|---|
-| imcawl | `resources/robots/imcawl/urdf/imcawl.urdf` | 当前分支主力。MuJoCo 侧对应 `sim2sim/imcawl.xml`，两者必须手工保持一致 |
+| imcawl | `resources/robots/imcawl/urdf/imcawl.urdf` | MuJoCo 侧对应 `sim2sim/imcawl.xml`，两者必须手工保持一致 |
 | wl | `resources/robots/wl/urdf/wl.urdf` | **在用**。`wheel_legged` 任务直接引用；`wheel_legged_vmc` / `wheel_legged_vmc_flat` 继承其 `asset` 段，也用它 |
 | xwl | `resources/robots/xwl/urdf/xwl.urdf` | **在用，但 env config 在 `XML` 分支上**，见下节 |
 
@@ -53,24 +55,26 @@ imcawl 关键参数（`mini_wheel_legged_config.py`）：
 - 站高命令范围 `[0.20, 0.40]` m
 - `fail_tilt_pg_z = -0.85`（约 32°）：基类 -0.1 太松，策略曾学会 ~40° 前倾斜靠停机作弊
 
-## 分支分叉：mini_wheel_legged 绑定两台不同机器人
+## 分支分叉与维护线
 
-`mini_wheel_legged` 任务在两个分支上指向不同资产：
+下表在 2026-09-28 按本地分支代码核对，是维护线用途索引，不表示远程默认分支。开始任务和提交 PR 时都要再次核对实际版本及目标分支。
 
-| 分支 | `Mini_WheelLeggedCfg.asset.file` |
-|---|---|
-| `大腿`（当前） | `resources/robots/imcawl/urdf/imcawl.urdf` |
-| `XML` | `resources/robots/xwl/urdf/xwl.urdf` |
+| 维护分支 | 机器人／任务范围 | `mini_wheel_legged` 使用的资产 |
+|---|---|---|
+| `26_wheelleg` | 含 `chuanliantui`、`chuanliantui_standup`，同时保留 imcawl 与 wl 任务 | `resources/robots/imcawl/urdf/imcawl.urdf` |
+| `大腿` | imcawl 维护线，同时保留 wl 任务 | `resources/robots/imcawl/urdf/imcawl.urdf` |
+| `XML` | xwl 维护线，同时保留 wl 任务 | `resources/robots/xwl/urdf/xwl.urdf` |
 
-**xwl 不是废弃资产，是同一任务的前一代机器人**，它的 env config 活在 `XML` 分支。`logs/xwl_*` 下的 147 个权重是那条线的产物。
+`大腿` 与 `XML` 的 `mini_wheel_legged` 同名但机器人不同；xwl 的配置和历史权重属于 `XML` 这条线，不应误用 imcawl 的接口或资产。chuanliantui 的 25 维观测也不兼容旧 27 维 checkpoint。
 
-两分支在 `5892702` 分叉，`XML` 独有 6 个 commit，含基类改动（`alive` 奖励、reset 静态启动、屏蔽轮位置观测）——这些**当前分支没有**。跨分支引用代码或权重前先确认自己在哪个分支。`XML` 分支根目录另有一份 335 行的旧 AGENTS.md（`e02e598`），内容与本 `docs/ai/` 有重叠也有冲突，以当前分支为准。
+基类、奖励、reset 和观测实现也可能随维护线分叉。跨分支引用代码或权重前，对比具体 SHA 的实现并读取该分支的仓库说明；不使用“当前分支”或固定提交数量代替版本记录。团队的功能分支与 PR 流程见 [CONTRIBUTING.md](../../CONTRIBUTING.md)。
 
 ## sim2sim 工具
 
 | 文件 | 职责 |
 |---|---|
-| `mj_sim2sim.py` | MuJoCo 部署验证主脚本。文件头注释是**部署契约的权威来源**，真机实现照它抄 |
+| `mj_sim2sim.py` | imcawl 的 MuJoCo 部署验证脚本，文件头注释是该机器人的部署契约权威来源 |
+| `mj_sim2sim_ct.py` | chuanliantui 串联训练代理回放；闭链模式用于差异诊断，不能据此声称真机已通过 |
 | `eval_isaac.py` | Isaac 干净环境对照组，分辨「策略问题」vs「引擎 gap」 |
 | `check_model.py` | `imcawl.xml` 碰撞对与轮几何自检，改完 XML 跑一次 |
 

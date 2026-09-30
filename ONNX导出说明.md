@@ -6,11 +6,12 @@
 
 输入必须是训练保存的完整 `model_*.pt`，包含 `model_state_dict` 中的 encoder 和 actor。不能使用仅含 actor 的 `policy_1.pt`，旧的 27 维 chuanliantui checkpoint 也不兼容。
 
-在仓库根目录执行，使用本机 Python 3.8 环境：
+先按 [协作指南](CONTRIBUTING.md) 配置 `.env.local` 并激活对应 Python 3.8 conda 环境，再在仓库根目录执行：
 
 ```bash
-cd /home/zn/文档/Wheel-Legged-Gym
-export PATH="/home/zn/miniforge3/envs/wheellegged_py38/bin:$PATH"
+source ./.env.local
+: "${WHEELLEGGED_PYTHON:?请配置装有 Isaac Gym 的 Python 3.8 环境}"
+export PATH="$(dirname "$WHEELLEGGED_PYTHON"):$PATH"
 ```
 
 脚本使用环境中的 PyTorch、NumPy 和 ONNX，并通过 `onnx.reference.ReferenceEvaluator` 校验结果，无需安装 ONNX Runtime。若出现依赖缺失，应在上述环境中补齐兼容 Python 3.8 的依赖，不使用系统 Python。导出本身在 CPU 上运行，不创建 Isaac Gym 或 MuJoCo 仿真。
@@ -104,11 +105,10 @@ chuanliantui 前向为机体 **+x**，当前命令通道 1 是偏航角速度。
 下面的 checkpoint 来自已有 ONNX 的 metadata，表示同一份权重来源，不意味着它已经通过真机行为验收。若部署其他策略，请替换路径和输出文件名。
 
 ```bash
-cd /home/zn/文档/Wheel-Legged-Gym
+# 在仓库根目录、已按第 1 节启用环境的终端执行。
 mkdir -p exports/chuanliantui_standup
 export_dir=$(mktemp -d exports/chuanliantui_standup/h723-XXXXXX)
-/home/zn/miniforge3/envs/wheellegged_py38/bin/python \
-    -m scripts.agent.export_chuanliantui_onnx \
+python -m scripts.agent.export_chuanliantui_onnx \
     --checkpoint logs/chuanliantui_standup/Sep22_16-26-11_standup_no_legangle_resume/model_6000.pt \
     --output "$export_dir/model_6000_h723.onnx" \
     --fixed-batch --opset 13

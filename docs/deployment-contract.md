@@ -1,0 +1,57 @@
+# 训练与部署接口约定
+
+本页按机器人索引接口，供训练仓与 [H7_RL](https://github.com/zn1135/H7_RL.git) 协作使用。下表依据训练仓 `26_wheelleg` 的 `f98b8bfcc70b4be7ec1fe82850fad0f3159f2afc` 代码核对，只描述训练与 MuJoCo 接口，不表示 H7 固件已对齐或真机验证通过。
+
+imcawl 的权威来源是 [mj_sim2sim.py](../sim2sim/mj_sim2sim.py) 文件头部署契约及训练实现；chuanliantui 使用 [mj_sim2sim_ct.py](../sim2sim/mj_sim2sim_ct.py)、[训练配置](../wheel_legged_gym/envs/chuanliantui/chuanliantui_config.py) 和 [观测实现](../wheel_legged_gym/envs/chuanliantui/chuanliantui.py)。说明与代码不一致时先核实版本并记录差异，不静默采用另一机器人的参数。
+
+## 已记录接口
+
+接口标识用于交付记录，由团队维护；运行程序目前不会自动检查这些标识。
+
+| 项目 | imcawl | chuanliantui 串联训练代理 |
+|---|---|---|
+| 接口标识 | `imcawl-27d-100hz-r1` | `chuanliantui-25d-100hz-r1` |
+| 任务 | `mini_wheel_legged` | `chuanliantui`、`chuanliantui_standup` |
+| 前向轴 | 机体 +y | 机体 +x |
+| 命令通道 | 前向速度、航向保持外环输出、目标高度 | 前向速度、偏航角速度、目标高度 |
+| yaw 处理 | `heading_command=True`；航向误差经回绕、乘 1.5、限幅 ±5，每策略步更新 | `heading_command=False`；直接使用偏航角速度命令 |
+| 当前观测／历史／latent／动作维度 | 27／135／3／6 | 25／125／3／6 |
+| 关节及动作顺序 | `[lf0_joint, lf1_joint, l_wheel_joint, rf0_joint, rf1_joint, r_wheel_joint]` | `[lf0, lf1, lfwheel, rf0, rf1, rfwheel]` |
+| 零动作默认角（rad） | `[0.9, -1.62, 0, -0.9, 1.62, 0]` | `[-0.06, 0.10, 0, 0.06, -0.10, 0]` |
+| 策略／PD 频率 | 100 Hz／200 Hz（dt=0.005、decimation=2） | 100 Hz／500 Hz（dt=0.002、decimation=5） |
+| 腿 Kp／Kd；轮 Kp／Kd | 60／2；0／0.5 | 10／1；0／0.1 |
+| 力矩限幅（N·m） | `[30, 30, 5, 30, 30, 5]` | `[40, 40, 3.9, 40, 40, 3.9]` |
+
+其他任务（包括 `XML` 分支的 xwl、wl 的 VMC 任务）不能直接复用此表，首次交付时按 [接口模板](templates/interface-change.md) 核对各自实现。
+
+## 观测顺序和历史
+
+以下为从 0 开始的半开区间。角速度单位 rad/s，关节位置 rad，关节速度 rad/s，前向速度 m/s，高度 m；投影重力为机体系中的单位重力方向。
+
+| 内容 | imcawl 索引 | chuanliantui 索引 | 处理 |
+|---|---|---|---|
+| 机体系角速度 | `0:3` | `0:3` | ×0.25 |
+| 投影重力 | `3:6` | `3:6` | 不缩放 |
+| 三通道命令 | `6:9` | `6:9` | ×`[2.0, 0.25, 5.0]`，yaw 含义见上表 |
+| 相对默认角的位置 | `9:15`，六关节 | `9:13`，仅 `[lf0, lf1, rf0, rf1]` | ×1.0；chuanliantui 不输入轮绝对位置 |
+| 六关节速度 | `15:21` | `13:19` | ×0.05 |
+| 上一次动作 | `21:27` | `19:25` | 控制尺度缩放前，随整体观测裁剪至 ±100 |
+
+观测整体裁剪至 ±100。每个策略步构造当前观测，移除最旧帧并追加当前帧，再推理；历史最后一帧等于本次观测。初始化时首帧重复五次，复位时清空旧动作与历史后重新填充。网络不维护历史状态。
+
+## 动作、时序与模型
+
+两个已记录接口均先将动作裁剪至 ±100。腿索引为 0、1、3、4，目标角为 `default + action × 0.5`；轮索引为 2、5，目标角速度为 `action × 10.0`。PD 根据上表增益计算力矩后再限幅，不能将网络输出直接当成电机力矩。
+
+串联代理内环顺序为“算力矩 → 仿真步进 → 位置差分更新 dof_vel”；速度差分为 `wrap_to_pi(Δq)/sim_dt`。策略步之间保持动作。imcawl 的 MuJoCo 状态读取修复与延迟约束见 [sim2sim 说明](ai/sim2sim.md)，变更采样方式或控制频率要同时更新接口记录。
+
+chuanliantui 起立任务与站立任务共享张量布局，但初态和接管条件不同，不能据此认为模型行为可互换。`--standup` 使用 0.15 m 后摆初态；首次轮接地前保持零策略动作并继续 PD 与历史更新，从接地后的下一策略步开始推理。真实闭链还需要实体电机到虚拟膝状态、虚拟力矩到实体电机的映射，详见 [闭链适配器](../sim2sim/chuanliantui_closed_adapter.py) 和对应 sim2sim 说明；串联代理通过不代表该映射或真机通过。
+
+训练与现有 MuJoCo 脚本使用包含 encoder 的完整 `model_*.pt`；`policy_1.pt` 缺 encoder，不能作为部署输入。chuanliantui 的板端导出使用包含 encoder + actor 的 ONNX，输入 `observations`（25）和 `observation_history`（125），输出 `actions`（6）和 `latent`（3），float32。H723 的固定 batch=1、opset 13 导出方式及工具兼容范围见 [ONNX 导出说明](../ONNX导出说明.md)。模型图不包含观测预处理、历史、PD 或起立接管逻辑。
+
+## 接口变更与双仓库交付
+
+1. 使用 [接口记录模板](templates/interface-change.md) 创建新记录，列出旧、新接口标识与每项差异；旧定义保留用于历史权重。形状不变但顺序、单位、缩放、坐标、动作或时序改变，也算兼容性变化。
+2. 明确 checkpoint 能否加载、策略行为是否仍适用、是否需要重新训练或导出；旧 27 维 chuanliantui checkpoint 不兼容本页 25 维接口。
+3. 在训练仓与 H7_RL 的 PR 中互相链接，分别列出需同步文件、目标版本、负责人及合入顺序。未核实的板端情况写“待核实”。
+4. 将代码 SHA、接口标识、模型校验值及各阶段结果写入 [模型交付记录](templates/model-handoff.md)。形状检查、数值对齐、仿真行为、板端时序与真机行为分别给出结论。

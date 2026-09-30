@@ -24,7 +24,9 @@ python -m pip install --upgrade --upgrade-strategy only-if-needed 'mujoco==3.2.2
 
 ## 正式流程
 
-改完代码按顺序走完这三步，不要跳步——它们分别隔离「训练没练好」和「sim2sim 有 gap」两类问题。
+策略、控制和机器人资产改动按对应任务执行训练、Isaac 回放、MuJoCo 行为验证，区分“策略未训练好”和“sim2sim 有差异”。以下为 imcawl 示例，chuanliantui 使用 [COMMANDS.md](../../COMMANDS.md) 的对应命令。纯文档或本机路径示例修改按 [协作指南](../../CONTRIBUTING.md) 检查差异、链接和配置语法，并明确未运行行为验证。
+
+每项结果记录实际代码 SHA、工作区差异、模型版本和执行证据；模型交付使用 [交付模板](../templates/model-handoff.md)。
 
 ### 1. 训练
 
@@ -41,7 +43,7 @@ python wheel_legged_gym/scripts/train.py --task=mini_wheel_legged --headless \
 runner 恢复 PPO 优化器后会同步自适应学习率；新 checkpoint 也保存 encoder 优化器。旧 checkpoint 不含 encoder 优化器状态时会明确提示，并使用新建的 encoder 优化器，不能视为完整训练状态的逐步重放。
 `scripts/agent/check_training_resume.py` 可在上述 Python 3.8 环境做 CPU 续训状态检查（新旧 checkpoint、仅加载权重和无 encoder 分支），不创建仿真，也不替代可见预检、正式训练或行为验收。
 输出：`logs/mini_wheel_legged/<日期时间_run_name>/model_*.pt`。
-监控：`tensorboard --logdir=./ --port=8080`。
+在另一终端监控：`tensorboard --logdir=logs/mini_wheel_legged --port=8080`。
 
 ### 2. Isaac 内回放
 

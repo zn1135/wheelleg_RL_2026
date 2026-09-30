@@ -1,5 +1,7 @@
 # Wheel Legged Gym Environments #
 
+团队协作从 [CONTRIBUTING.md](CONTRIBUTING.md) 开始：本机配置、维护分支、PR 复查和模型交付均在其中说明。运行环境与命令见 [COMMANDS.md](COMMANDS.md)，训练与 H7 部署仓的接口见 [部署接口约定](docs/deployment-contract.md)。AI 助手另读 [AGENTS.md](AGENTS.md)。
+
 ### Acknowledgment
 
 The implementation of Wheel-Legged-Gym relies on resources from [legged_gym](https://github.com/leggedrobotics/legged_gym) and [rsl_rl](https://github.com/leggedrobotics/rsl_rl) projects, created by the [Robotic Systems Lab](https://rsl.ethz.ch/).
@@ -10,7 +12,7 @@ Related Links:
 - [Concurrent Training of a Control Policy and a State Estimator for Dynamic and Robust Legged Locomotion](https://arxiv.org/abs/2202.05481)
 
 ### Installation ###
-1. Create a new python virtual env with python 3.6, 3.7 or 3.8 (3.8 recommended)
+1. Use a Python 3.8 conda environment with Isaac Gym installed; see [environment setup](docs/ai/build-test.md) and configure the local interpreter path as described in [CONTRIBUTING.md](CONTRIBUTING.md).
 2. Install pytorch with cuda from https://pytorch.org/get-started/
 3. Install Isaac Gym
    - Download and install Isaac Gym Preview 4 from https://developer.nvidia.com/isaac-gym
@@ -34,7 +36,7 @@ Related Links:
     -  To run headless (no rendering) add `--headless`.
     - **Important**: To improve performance, once the training starts press `v` to stop the rendering. You can then enable it later to check the progress.
     - The trained policy is saved in `logs/<experiment_name>/<date_time>_<run_name>/model_<iteration>.pt`. Where `<experiment_name>` and `<run_name>` are defined in the train config.
-    - Use TensorBoard to monitor training process `tensorboard --logdir=./ --port=8080` 
+    - Use TensorBoard to monitor training process `tensorboard --logdir=logs/wheel_legged_vmc_flat --port=8080`
     -  The following command line arguments override the values set in the config files:
      - --task TASK: Task name.
      - --resume:   Resume training from a checkpoint
@@ -93,6 +95,5 @@ The base environment `legged_robot` implements a rough terrain locomotion task. 
     self.gym.refresh_force_sensor_tensor(self.sim)
     contact = self.sensor_forces[:, :, 2] > 1.
 ```
-
 
 

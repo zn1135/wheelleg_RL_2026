@@ -1,6 +1,15 @@
 # 常用命令速查
 
-Python 环境：`/home/zn/miniforge3/envs/wheellegged_py38/bin/python`（下面简写为 `python`）
+先按 [协作指南](CONTRIBUTING.md) 创建并填写 `.env.local`。在仓库根目录、已激活对应 Python 3.8 conda 环境的终端执行：
+
+```bash
+source ./.env.local
+: "${WHEELLEGGED_PYTHON:?请配置装有 Isaac Gym 的 Python 3.8 环境}"
+export PATH="$(dirname "$WHEELLEGGED_PYTHON"):$PATH"
+command -v python
+```
+
+确认 `python` 指向 `WHEELLEGGED_PYTHON`，下面的 `python` 和 `tensorboard` 均指该环境中的程序，不能使用系统 Python。本机路径仅保存在 Git 忽略的 `.env.local` 中。
 
 Sim2Sim 使用同一环境内固定的 `mujoco==3.2.2`；重建环境时执行：
 
@@ -28,6 +37,12 @@ python wheel_legged_gym/scripts/train.py --task=mini_wheel_legged --headless \
 ```
 
 日志和模型存在 `logs/mini_wheel_legged/<日期时间_run_name>/model_*.pt`。
+
+在另一个启用相同环境的终端监控：
+
+```bash
+tensorboard --logdir=logs/mini_wheel_legged --port=8080
+```
 
 ## 回放（Isaac Gym 里看策略效果）
 
@@ -147,6 +162,9 @@ python sim2sim/mj_sim2sim_ct.py --render \
 # 用户确认画面后才可去掉 --num_envs 并加 --headless 做正式训练。
 # --task=chuanliantui_standup：选择 0.15 m 地面后摆起立任务；--num_envs 20：只创建 20 个并行环境，便于人工观察。
 python wheel_legged_gym/scripts/train.py --task=chuanliantui_standup --num_envs 20
+
+# 另一个启用相同环境的终端监控训练输出。
+tensorboard --logdir=logs/chuanliantui_standup --port=8080
 
 # 新起立权重的串联训练代理 MuJoCo 回放：将 <run> 和 <checkpoint> 替换为新训练输出。
 # --standup：使用与当前 Isaac 训练一致的 0.15 m 地面后摆初态；首次轮接地后下一控制步才推理策略。

@@ -210,11 +210,12 @@ def build_obs(base_quat_xyzw, base_ang_vel_body, dof_pos, dof_vel, commands, las
     return obs
 
 
-def compute_torques(action, dof_pos, dof_vel):
-    """动作->关节力矩，严格对齐 legged_robot._compute_torques。
+def compute_torques(action, dof_pos, dof_vel, wheel_vel_limit=None):
+    """动作->关节力矩；默认对齐 legged_robot._compute_torques。
 
     腿关节(0,1,3,4)：位置控制，目标角 = action*0.5 + default。
     轮关节(2,5)：速度控制，目标速度 = action*10.0，Kp=0。
+    wheel_vel_limit 仅用于复现实机速度目标限幅的诊断对照。
     """
     action = np.clip(action, -CLIP_ACTIONS, CLIP_ACTIONS)
 
@@ -227,6 +228,8 @@ def compute_torques(action, dof_pos, dof_vel):
     vel_ref[1] = 0.0
     vel_ref[3] = 0.0
     vel_ref[4] = 0.0
+    if wheel_vel_limit is not None:
+        vel_ref[[2, 5]] = np.clip(vel_ref[[2, 5]], -wheel_vel_limit, wheel_vel_limit)
 
     torques = P_GAINS * (pos_ref + DEFAULT_DOF_POS - dof_pos) + D_GAINS * (vel_ref - dof_vel)
     return np.clip(torques, -TORQUE_LIMITS, TORQUE_LIMITS)
@@ -520,9 +523,10 @@ def run(args):
               "↑ 加速 0.1 | ↓ 减速 | ← 左转 | → 右转 | PgUp/PgDn 升降高度 | 空格/回车 急停 | "
               "Ctrl+R 恢复启动姿态（--standup 时为 0.15 m 地面后摆）。（单独的字母键是 viewer 内置渲染快捷键，勿用）关闭窗口退出。")
 
-    run_mode = "渲染遥操作（关闭窗口退出）" if viewer is not None else "无渲染连续运行（Ctrl+C 退出）"
+    run_mode = "渲染遥操作（关闭窗口退出）" if viewer is not None else "无渲染运行"
     print(f"开始仿真：{run_mode} "
-          f"(vx={args.cmd_vx}, yaw={args.cmd_yaw}, height={args.cmd_height})")
+          f"(vx={args.cmd_vx}, yaw={args.cmd_yaw}, height={args.cmd_height}, "
+          f"wheel_vel_limit={args.wheel_vel_limit}, sim_time={args.sim_time})")
     print("日志字段说明：")
     print("  [步号]   策略步序号（100Hz，100 步 = 1 秒）")
     print("  x        基座世界系 x 坐标 [m]（前进方向，位置在涨=向前移动）")
@@ -539,8 +543,12 @@ def run(args):
     wall_start = time.perf_counter()
 
     step = 0
+    wheel_limit_steps = 0
+    wheel_limit_targets = 0
     try:
-        while viewer is None or viewer.is_running():
+        while (viewer is None or viewer.is_running()) and (
+            args.sim_time is None or step * policy_dt < args.sim_time
+        ):
             # ---- 遥操作复位：回目标姿态并清空控制器/历史缓冲 ----
             if viewer is not None and kb["reset_standup"] is not None:
                 reset_standup = kb["reset_standup"]
@@ -594,6 +602,10 @@ def run(args):
             else:
                 action = np.zeros(NUM_ACTIONS, dtype=np.float64)
                 latent = np.zeros(LATENT_DIM, dtype=np.float64)
+            if args.wheel_vel_limit is not None:
+                limited_wheels = np.abs(action[[2, 5]] * VEL_ACTION_SCALE) > args.wheel_vel_limit
+                wheel_limit_steps += bool(np.any(limited_wheels))
+                wheel_limit_targets += int(np.count_nonzero(limited_wheels))
             # latent 前 3 维被训练监督为 base_lin_vel*2.0（ppo.py:265，lin_vel scale=2），
             # chuanliantui 前向为 +x，因此 latent[0]/2 是策略内部估计的前向速度。
 
@@ -602,7 +614,7 @@ def run(args):
             # 子步结束时 dof_vel 是最新后向差分；闭链的虚拟膝速度用电机速度反算。
             # 若在步进前读取，obs 里的速度会滞后一个子步 2ms。
             for _ in range(DECIMATION):
-                torque = compute_torques(action, dof_pos, dof_vel)
+                torque = compute_torques(action, dof_pos, dof_vel, args.wheel_vel_limit)
                 if adapter is not None:
                     data.ctrl[adapter.actuator_ids] = adapter.map_virtual_torques(torque)
                     data.ctrl[gas_spring_actuator_ids] = args.gas_spring_force
@@ -650,7 +662,10 @@ def run(args):
         if viewer is not None:
             viewer.close()
 
-    print("仿真结束。")
+    print(f"仿真结束：{step} 个策略步。")
+    if args.wheel_vel_limit is not None:
+        print(f"轮目标限幅触发：{wheel_limit_steps} 个策略步，"
+              f"{wheel_limit_targets} 个轮目标（两轮合计）。")
 
 
 def selfcheck(args):
@@ -715,6 +730,10 @@ def main():
     p.add_argument("--standup", action="store_true",
                    help="使用当前起立训练的初态：0.15 m 地面后摆；覆盖 --init_height 和 --initial_dof_pos，首次轮接地后的下一控制步才推理策略")
     p.add_argument("--log_every", type=int, default=100, help="每多少策略步打印一次")
+    p.add_argument("--wheel_vel_limit", type=float, default=None,
+                   help="诊断用：轮目标速度绝对限幅 [rad/s]；默认不限制，与训练一致；实机当前为 20")
+    p.add_argument("--sim_time", type=float, default=None,
+                   help="运行的仿真时长 [s]；默认持续运行直到关闭窗口或 Ctrl+C")
     p.add_argument("--selfcheck", action="store_true", help="仅做策略形状自检，不跑仿真")
     p.add_argument("--no_realtime", dest="realtime", action="store_false",
                    help="关闭实时节流（默认按真实时间播放，便于观察）")
@@ -725,6 +744,14 @@ def main():
         args.render = True
     if not 0.0 <= args.gas_spring_force <= DEFAULT_GAS_SPRING_FORCE:
         p.error("--gas_spring_force 必须在 0~150 N 内（受 MJCF actuator ctrlrange 限制）")
+    if args.wheel_vel_limit is not None and (
+        not math.isfinite(args.wheel_vel_limit) or args.wheel_vel_limit <= 0.0
+    ):
+        p.error("--wheel_vel_limit 必须是正的有限数值")
+    if args.sim_time is not None and (not math.isfinite(args.sim_time) or args.sim_time <= 0.0):
+        p.error("--sim_time 必须是正的有限数值")
+    if args.log_every <= 0:
+        p.error("--log_every 必须为正整数")
 
     if args.selfcheck:
         selfcheck(args)
