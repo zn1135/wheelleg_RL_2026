@@ -93,6 +93,9 @@ class ChuanliantuiCfg(LeggedRobotCfg):
         push_robots = False  # 平地首版关推搡(复旦 plane 同)
         randomize_Kp_range = [0.95, 1.05]
         randomize_Kd_range = [0.95, 1.05]
+        # 每个环境的各关节使用固定力矩倍率，模拟电机实际输出偏离目标力矩。
+        randomize_motor_torque = True
+        randomize_motor_torque_range = [0.8, 1.2]
         randomize_default_dof_pos_range = [-0.03, 0.03]
         randomize_action_delay = False
 
