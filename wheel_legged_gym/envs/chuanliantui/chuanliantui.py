@@ -6,7 +6,7 @@
 #   (虚拟腿长 L0 / 摆角 theta0)仅作为正运动学派生量进入 nominal_state 奖励,
 #   不进观测、不参与动作解释。
 #
-# 与基类的唯一差异:post_physics_step 中二连杆 FK 的零位偏置。基类公式
+# post_physics_step 中使用二连杆 FK 的 CAD 零位偏置。基类公式
 #   theta1 = dof_hip, theta2 = dof_knee + π/2
 # 是 wl/imcawl 腿形的约定;chuanliantui 的 URDF 零位构型(大腿角 a1=atan2(0.12977,
 # 0.1651)≈0.6662,小腿绝对角 a2=atan2(0.18773,−0.1651)≈2.2921,由重排 URDF 几何推得,
@@ -14,13 +14,18 @@
 #   theta1 = dof_hip + fk_offset_hip, theta2 = dof_knee + fk_offset_knee
 # 偏置从 cfg.asset.fk_offset_* 读取(l1=0.21/l2=0.25 由 URDF 连杆矢量模长实测)。
 #
-# 其余逻辑——混合 PD(_compute_torques 的腿位置环+轮速度环索引恰与 DOF 字母序兼容)、
-# 终止判定、奖励装配、观测构造——全部继承基类,不覆写。
+# 混合 PD 继承基类；另构造 25 维观测，并在每个物理子步施加 CAD 气弹簧
+# 等效膝力矩。弹簧与电机输出分开，起立子类的随机推力也在此统一提交。
+
+import math
 
 import torch
-from isaacgym.torch_utils import quat_rotate_inverse
+from isaacgym import gymapi, gymtorch
+from isaacgym.torch_utils import quat_rotate, quat_rotate_inverse
 
+from wheel_legged_gym import WHEEL_LEGGED_GYM_ROOT_DIR
 from wheel_legged_gym.envs.base.legged_robot import LeggedRobot
+from wheel_legged_gym.utils.chuanliantui_gas_spring import GasSpringGeometry
 
 
 class Chuanliantui(LeggedRobot):
@@ -38,6 +43,49 @@ class Chuanliantui(LeggedRobot):
                 "chuanliantui_train.urdf DOF contract changed: "
                 f"expected {self._expected_dof_names}, got {tuple(self.dof_names)}"
             )
+        self._init_gas_spring()
+
+    def _init_gas_spring(self):
+        self.gas_spring_force_n = float(self.cfg.gas_spring.force_n)
+        if not math.isfinite(self.gas_spring_force_n) or not 0 <= self.gas_spring_force_n <= 150:
+            raise ValueError("gas_spring.force_n 必须是 0~150 N 的有限数")
+        urdf_path = self.cfg.asset.file.format(WHEEL_LEGGED_GYM_ROOT_DIR=WHEEL_LEGGED_GYM_ROOT_DIR)
+        self.gas_spring_geometry = GasSpringGeometry(urdf_path, device=self.device)
+        self.gas_spring_upper_bodies = []
+        self.gas_spring_lower_bodies = []
+        for target, names in ((self.gas_spring_upper_bodies, ("lf0", "rf0")),
+                              (self.gas_spring_lower_bodies, ("lf1", "rf1"))):
+            for name in names:
+                index = self.gym.find_actor_rigid_body_handle(self.envs[0], self.actor_handles[0], name)
+                if not 0 <= index < self.num_bodies:
+                    raise RuntimeError("Gas spring requires rigid body: " + name)
+                target.append(index)
+        # 独立记录末个物理子步的被动力矩；self.torques 仍只记录电机。
+        self.gas_spring_knee_torques = torch.zeros(self.num_envs, 2, device=self.device)
+
+    def _apply_external_forces(self):
+        """合并水平推扰和弹簧，每个 2 ms 子步只提交一次刚体外力。"""
+        self.rigid_body_external_forces.zero_()
+        self.rigid_body_external_torques.zero_()
+        if self.cfg.domain_rand.push_robots:
+            self._accumulate_push_forces()
+        self.gas_spring_knee_torques[:] = self.gas_spring_geometry.knee_torques(
+            self.dof_pos[:, [1, 4]], self.gas_spring_force_n
+        )
+        # root tensor 必须刷新到当前子步；不能沿用上个 100 Hz 策略拍的姿态。
+        self.gym.refresh_actor_root_state_tensor(self.sim)
+        axis_local = self.gas_spring_geometry.axes.expand(self.num_envs, -1, -1)
+        quat = self.root_states[:, 3:7].unsqueeze(1).expand(-1, 2, -1)
+        axis_world = quat_rotate(quat.reshape(-1, 4), axis_local.reshape(-1, 3)).view(self.num_envs, 2, 3)
+        torque_world = axis_world * self.gas_spring_knee_torques.unsqueeze(-1)
+        # 对上下刚体施加等大反向膝轴扭矩，在理想串联铰链上与端点力等效。
+        # 独立于 DOF motor effort 限幅，不把弹簧计入电机能耗或限矩奖励。
+        self.rigid_body_external_torques[:, self.gas_spring_lower_bodies] += torque_world
+        self.rigid_body_external_torques[:, self.gas_spring_upper_bodies] -= torque_world
+        self.gym.apply_rigid_body_force_tensors(
+            self.sim, gymtorch.unwrap_tensor(self.rigid_body_external_forces),
+            gymtorch.unwrap_tensor(self.rigid_body_external_torques), gymapi.ENV_SPACE,
+        )
 
     def compute_proprioception_observations(self):
         """构造 25 维 actor 观测，连续轮的位置不参与策略或历史编码。"""

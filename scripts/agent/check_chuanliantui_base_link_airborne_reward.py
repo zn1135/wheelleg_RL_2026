@@ -25,9 +25,9 @@ def main():
     env.cfg = ChuanliantuiStandupCfg()
     assert env.cfg.standup.success_requires_base_contact_free
     assert env.cfg.standup_curriculum.unlock_recovered_rate == 0.30
-    assert env.cfg.commands.ranges.height == [0.20, 0.20]
+    assert env.cfg.commands.ranges.height == [0.22, 0.22]
     assert env.cfg.rewards.scales.orientation == -1.0
-    assert env.cfg.rewards.scales.base_height == 2.0
+    assert env.cfg.rewards.scales.base_height == 1.0
     assert env.cfg.rewards.scales.leg_angle == 0.0
     assert env.cfg.rewards.height_reward_sigma == 0.01
     assert env.cfg.rewards.height_reward_contact_factor == 0.2
@@ -38,6 +38,7 @@ def main():
     env.device = "cpu"
     env.num_envs = 4
     env.dt = env.cfg.sim.dt * env.cfg.control.decimation
+    env.standup_curriculum_unlocked = False
     env.has_landed = torch.tensor([False, True, True, True])
     env.termination_contact_indices = torch.tensor([0])
     env.contact_forces = torch.zeros(4, 3, 3)
@@ -110,7 +111,7 @@ def main():
     env._prepare_reward_function()
     assert env.reward_names == []
 
-    # 课程在完整 4096 回合窗口达到 30% 恢复率后，永久切换为 0.20 m / -10。
+    # 课程在完整 4096 回合窗口达到 30% 恢复率后，永久切换为 0.22 m / -10。
     env.standup_curriculum_unlocked = False
     env.standup_curriculum_completed_episodes = 0
     env.standup_curriculum_recovered_episodes = 0
@@ -123,9 +124,9 @@ def main():
     assert not env.standup_curriculum_unlocked
     assert env._update_standup_curriculum(4096, 1229)
     assert env.standup_curriculum_unlocked
-    assert env._current_standup_target_height() == 0.20
-    assert env._current_standup_success_height() == 0.18
-    assert torch.equal(env.commands[:, 2], torch.full((2,), 0.20))
+    assert env._current_standup_target_height() == 0.22
+    assert env._current_standup_success_height() == 0.20
+    assert torch.equal(env.commands[:, 2], torch.full((2,), 0.22))
     assert env.reward_scales["orientation"] == -10.0 * env.dt
     assert not env._update_standup_curriculum(4096, 0)
     assert env.standup_curriculum_unlocked
@@ -144,7 +145,7 @@ def main():
     assert restored_env.standup_curriculum_completed_episodes == 0
     assert restored_env.standup_curriculum_recovered_episodes == 0
     assert restored_env.standup_curriculum_last_recovered_rate == 1229 / 4096
-    assert torch.equal(restored_env.commands[:, 2], torch.full((2,), 0.20))
+    assert torch.equal(restored_env.commands[:, 2], torch.full((2,), 0.22))
     assert restored_env.reward_scales["orientation"] == -10.0 * restored_env.dt
 
     print("PASS: 连续 base_link 奖励与可恢复站立课程均按配置生效")

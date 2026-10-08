@@ -70,6 +70,11 @@ class ChuanliantuiCfg(LeggedRobotCfg):
     class sim(LeggedRobotCfg.sim):
         dt = 0.002  # 500 Hz 物理积分；decimation=5 -> 100 Hz 策略步。
 
+    class gas_spring:
+        # 与 CAD 闭链回放一致的每侧恒定伸张力；0 可回放原无弹簧训练条件。
+        # 被动作用独立于电机倍率、限矩、动作延迟及是否已经站起。
+        force_n = 150.0
+
     class asset(LeggedRobotCfg.asset):
         file = "{WHEEL_LEGGED_GYM_ROOT_DIR}/resources/robots/chuanliantui_new_1/urdf/chuanliantui_train.urdf"
         name = "chuanliantui"
@@ -97,7 +102,9 @@ class ChuanliantuiCfg(LeggedRobotCfg):
         randomize_motor_torque = True
         randomize_motor_torque_range = [0.8, 1.2]
         randomize_default_dof_pos_range = [-0.03, 0.03]
-        randomize_action_delay = False
+        # 初始化时每环境采样一次，按 2 ms 内环量化为 0/2/4/6/8/10 ms。
+        randomize_action_delay = True
+        delay_ms_range = [0, 10]
 
     class rewards(LeggedRobotCfg.rewards):
         tracking_sigma = 0.25

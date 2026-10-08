@@ -2,9 +2,13 @@
 
 ## 环境
 
-无编译步骤，纯 Python 包，`pip install -e .` 一次即可。
+项目源码为纯 Python 包，`pip install -e .` 一次即可；Isaac Gym 依赖的
+`gymtorch` 在导入时可能通过 PyTorch JIT 编译 C++ 扩展，需要可用的主机 C++ 编译器。
 
 本仓库必须用**装了 Isaac Gym 的 Python 3.8 conda 环境**，不能用系统 python。本机该环境的路径见 [COMMANDS.md](../../COMMANDS.md) 开头，下文 `python` 均指它。
+
+按 `COMMANDS.md` 完整执行 `conda activate`，使编译器 `CXX` 和动态库路径的激活脚本生效。
+只指定环境内的 Python 绝对路径不等于激活环境；`which c++` 返回非零时先核对这一点。
 
 已验证可用的版本组合：Python 3.8.20 / torch 2.1.0（CUDA 可用）/ mujoco 3.2.2 / Isaac Gym Preview 4。
 
@@ -90,7 +94,33 @@ python sim2sim/eval_isaac.py --load_run <run> --checkpoint <n> --cmd_vx 0.5
 
 Isaac 也失稳 → 策略问题，回去调训练。Isaac 稳 → 引擎 gap，调 MJCF 接触参数或加强域随机化。
 
+#### chuanliantui 30 秒静站与共同推扰
+
+按 [命令速查](../../COMMANDS.md#30-秒静站与共同推扰计划) 先做同 checkpoint、零速度、
+0.22 m、150 N/侧气弹簧、摩擦 0.5 的 30 秒无推扰对照，再给两端追加同一
+`--push_schedule /tmp/standing-pushes.json`。用
+`python sim2sim/standing_push_schedule.py --output /tmp/standing-pushes.json` 生成默认
+30 秒、seed 42 的计划；`python scripts/agent/check_standing_push_schedule.py` 仅检查
+2 ms 边界、重叠拒绝及计划可复现性，不替代抗扰行为验收。
+
+Isaac 评估自动延长回合期限到至少 `sim_time + 1` 秒，保留失稳终止；训练期限不变。
+取消轮目标裁剪的 H7 对照需显式传 `--h7_no_wheel_target_clip`，电机力矩限幅仍保留。
+固定计划在两端每 2 ms 向基座质心施加同一世界系力，重置不重播；Isaac 不能同时启用
+`--pushes` / `--domain_rand`。轨迹中的真速度和 encoder 估速应按同一推理时刻比较。
+100 Hz 推力采样相位不同（MuJoCo 为策略步起点、Isaac 为末个物理子步），不可直接积分
+核对；检查 metadata 的 `scheduled_push_impulse_world_ns` 与计划总冲量。
+分别报告位移、速度、高度、姿态、重置及推后恢复；原本持续漂移的模型恢复运动状态，
+不等于恢复原地稳站。命令和静态检查通过不代表本轮行为验收通过。
+
 ## 没有单元测试
+
+### chuanliantui 气弹簧
+
+`python scripts/agent/check_chuanliantui_gas_spring.py` 在 CPU 对比 Torch 的姿态相关
+膝力矩、MuJoCo tendon 广义力和长度差分，检查左右符号、零推力、刚体姿态旋转、
+电机/被动力分离与随机推力合成。它是数值和接口检查，不替代行为回放。
+`check_chuanliantui_train_proxy.py` 同时检查代理的六电机、两气弹簧及 CAD 安装点。
+气弹簧默认 150 N/侧；历史无弹簧行为对照需在两种回放中显式传 `--gas_spring_force 0`。
 
 ### chuanliantui ONNX 导出检查
 

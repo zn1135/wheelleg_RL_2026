@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <mujoco model="chuanliantui_train_proxy">
-  <!--由 chuanliantui_train.urdf 生成；仅用于 Isaac 串联训练代理一致性回放，不含真实闭链 connect 约束，不可用于真实机构验证。-->
+  <!--由 chuanliantui_train.urdf 生成；仅用于 Isaac 串联训练代理一致性回放，不含真实闭链 connect 约束，不可用于真实机构验证；气弹簧端点和传动复制自 chuanliantui.xml，由回放脚本每侧施加 150 N。-->
   <compiler angle="radian" meshdir="../resources/robots/chuanliantui_new_1/meshes" autolimits="true" />
   <option timestep="0.002" gravity="0 0 -9.81" integrator="implicitfast" solver="Newton" iterations="100" tolerance="1e-10" cone="elliptic" impratio="10" />
   <default>
@@ -57,7 +57,7 @@
         <geom class="visual" mesh="lf0" material="metal" />
         <geom class="collision" mesh="lf0" />
         <body name="lf1" pos="-0.165288729653418 -0.0115000000014235 -0.129536233732203">
-          <joint name="lf1" type="hinge" axis="0 -1 0" damping="0.03" frictionloss="0.015" range="-0.12 0.77" />
+          <joint name="lf1" type="hinge" axis="0 -1 0" damping="0.03" frictionloss="0.015" solreflimit="0.004 1" range="-0.12 0.77" />
           <inertial pos="0.078018324484777 -0.0103199473609263 -0.0862673341064149" mass="0.414858418961741" fullinertia="0.00264096842022897 0.00449643859324455 0.00188242439596148 2.35673588988693E-06 0.00206811984718295 -3.24560463461076E-06" />
           <geom class="visual" mesh="lf1" material="metal" />
           <geom class="collision" mesh="lf1" />
@@ -67,6 +67,7 @@
             <geom class="visual" mesh="lfwheel" material="metal" />
             <geom class="collision" mesh="lfwheel" />
           </body>
+          <site name="left_gas_spring_lower" pos="0.019692562545793 -0.010000000000277 -0.044464367480479" size="0.004" rgba="1 0 0 1" />
         </body>
         <body name="lf00" pos="-1.49880108324396e-15 -0.011022024459524 -8.99974539336768e-15">
           <inertial pos="0.0287300930886472 -0.00217309925803372 -0.0226492653085664" mass="0.108755464967074" fullinertia="9.09875569319398E-05 0.000222724145523072 0.000133403996797969 6.95628437601573E-08 8.83433748700853E-05 -5.48396173065685E-08" />
@@ -88,6 +89,7 @@
             </body>
           </body>
         </body>
+        <site name="left_gas_spring_upper" pos="0.025606057708123 0.003500000000049 -0.037105298931257" size="0.004" rgba="1 0 0 1" />
       </body>
       <body name="rf0" pos="-0.0114000000001256 0.176932975540448 0.0235200000001889">
         <joint name="rf0" type="hinge" axis="0 1 0" damping="0.03" frictionloss="0.015" range="-100 100" />
@@ -95,7 +97,7 @@
         <geom class="visual" mesh="rf0" material="metal" />
         <geom class="collision" mesh="rf0" />
         <body name="rf1" pos="-0.165288729653417 0.0114999999999917 -0.129536233732335">
-          <joint name="rf1" type="hinge" axis="0 1 0" damping="0.03" frictionloss="0.015" range="-0.77 0.12" />
+          <joint name="rf1" type="hinge" axis="0 1 0" damping="0.03" frictionloss="0.015" solreflimit="0.004 1" range="-0.77 0.12" />
           <inertial pos="0.0780229590622458 0.0103199473600926 -0.0862619955363456" mass="0.414858419057853" fullinertia="0.00264006392005862 0.00449630400849377 0.00188319431137968 -2.34405638910854E-06 0.00206820524894272 3.25800440585515E-06" />
           <geom class="visual" mesh="rf1" material="metal" />
           <geom class="collision" mesh="rf1" />
@@ -105,6 +107,7 @@
             <geom class="visual" mesh="rfwheel" material="metal" />
             <geom class="collision" mesh="rfwheel" />
           </body>
+          <site name="right_gas_spring_lower" pos="0.019692562545789 0.010000000000237 -0.044464367480282" size="0.004" rgba="1 0 0 1" />
         </body>
         <body name="rf00" pos="4.9960036108132e-16 0.011022024459522 1.51996470965088e-14">
           <inertial pos="0.0287300930886477 0.00217309925781833 -0.0226492653085871" mass="0.108755464967073" fullinertia="9.09875569319413E-05 0.000222724145523073 0.000133403996797966 -6.95628429076217E-08 8.83433748700864E-05 5.48396164444915E-08" />
@@ -126,6 +129,7 @@
             </body>
           </body>
         </body>
+        <site name="right_gas_spring_upper" pos="0.0256060577081279 -0.003500000000051 -0.0371052989312678" size="0.004" rgba="1 0 0 1" />
       </body>
       <body name="imu-link" pos="-0.0109010626554575 -0.000819999999844778 -0.113980000000039">
         <inertial pos="0.000184082171325678 -9.40102762600828E-05 0.00497698966932855" mass="0.00303751642818645" fullinertia="1.45387679451712E-07 1.21883316071383E-07 2.31438970445244E-07 2.11270620322235E-09 2.90844814825675E-09 -2.23555953007131E-10" />
@@ -174,6 +178,16 @@
       </body>
     </body>
   </worldbody>
+  <tendon>
+    <spatial name="left_gas_spring_tendon" width="0.001">
+      <site site="left_gas_spring_upper" />
+      <site site="left_gas_spring_lower" />
+    </spatial>
+    <spatial name="right_gas_spring_tendon" width="0.001">
+      <site site="right_gas_spring_upper" />
+      <site site="right_gas_spring_lower" />
+    </spatial>
+  </tendon>
   <actuator>
     <motor name="lf0_motor" joint="lf0" gear="1" ctrlrange="-40.0 40.0" />
     <motor name="lf1_motor" joint="lf1" gear="1" ctrlrange="-40.0 40.0" />
@@ -181,5 +195,7 @@
     <motor name="rf0_motor" joint="rf0" gear="1" ctrlrange="-40.0 40.0" />
     <motor name="rf1_motor" joint="rf1" gear="1" ctrlrange="-40.0 40.0" />
     <motor name="rfwheel_motor" joint="rfwheel" gear="1" ctrlrange="-3.9 3.9" />
+    <motor name="left_gas_spring_motor" tendon="left_gas_spring_tendon" gear="1" ctrlrange="0 150" />
+    <motor name="right_gas_spring_motor" tendon="right_gas_spring_tendon" gear="1" ctrlrange="0 150" />
   </actuator>
 </mujoco>

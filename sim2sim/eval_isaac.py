@@ -14,6 +14,11 @@ chuanliantui_standup 可追加：
     --standup_config_snapshot <run>/chuanliantui_standup_config.py
         加载可信的本地起立配置快照；继承的父类仍使用当前工作区版本。
     --stochastic --noise --domain_rand  使用采样动作、观测噪声及域随机化。
+    --pushes  单独启用首次轮接地后的随机推扰，其他域随机化仍默认关闭。
+    --gas_spring_force 0  chuanliantui 每侧气弹簧推力；0 回放旧无弹簧条件。
+    --action_delay_ms 6  固定动作延迟（按物理步量化），不启用其他随机化。
+    --standup_post_unlock  加载后统一为解锁阶段，使用该阶段的成功判据。
+    --metrics_report /tmp/metrics.json  保存逐控制步轨迹及 5 秒之后的统计。
     --render  打开跟随机器人视角的回放窗口。
     --frame_dir <新目录>  配合 --render，每秒保存一张回放画面。
 统计是有限采样诊断，不替代可视行为验收或历史训练全程记录。
@@ -26,7 +31,86 @@ import sys
 import math
 import json
 import runpy
+import numpy as np
 from pathlib import Path
+
+
+class StandupMetricsRecorder:
+    """单环境轨迹；重置步只保留事件，不记录已清零的下一回合推扰状态。"""
+
+    def __init__(self, env):
+        self.env = env
+        self.rows = []
+        self.episode = 0
+        self.origin = env.root_states[0, :2].clone()
+
+    def record(self, step, active, actions, done, timeout, policy_feedback=None):
+        env = self.env
+        row = {"t": (step + 1) * env.dt, "episode": self.episode,
+               "reset": done, "timeout": timeout, "policy_active": active}
+        if done:
+            self.episode += 1
+            self.origin = env.root_states[0, :2].clone()
+        else:
+            pg = env.projected_gravity[0].tolist()
+            row.update({
+                "z_m": env.root_states[0, 2].item(),
+                "height_m": env.base_height[0].item(),
+                "xy_m": env.root_states[0, :2].tolist(),
+                "drift_m": torch.norm(env.root_states[0, :2] - self.origin).item(),
+                "vx_m_s": env.base_lin_vel[0, 0].item(),
+                "pitch_deg": math.degrees(math.asin(max(-1., min(1., pg[0])))),
+                "tilt_deg": math.degrees(math.acos(max(-1., min(1., -pg[2])))),
+                "has_stood": bool(env.has_stood[0].item()),
+                "standing_now": bool(env.standing_time[0].item() > 0),
+                "stable_now": bool(env.standing_time[0].item() >= env.cfg.standup.success_duration_s),
+                "actions": actions[0].tolist(),
+                "motor_torque_nm": env.torques[0].tolist(),
+                "gas_spring_knee_torque_nm": (env.gas_spring_knee_torques[0].tolist()
+                                              if hasattr(env, "gas_spring_knee_torques") else [0., 0.]),
+                # 此 buffer 保留刚完成的物理子步已施加的力，不能读未来待施加的目标。
+                "push_force_world_n": (env.standup_push_force[0].tolist()
+                                       if hasattr(env, "standup_push_force") else [0., 0., 0.]),
+                "push_count": (int(env.standup_push_count[0].item())
+                               if hasattr(env, "standup_push_count") else 0),
+            })
+            if policy_feedback is not None:
+                row.update(policy_feedback)
+        self.rows.append(row)
+
+    def save(self, path, metadata):
+        summaries = {}
+        for name, start in [("whole", 0.), ("after_5s", 5.)]:
+            selected = [r for r in self.rows if r["t"] > start]
+            valid = [r for r in selected if not r["reset"]]
+            stats = {"samples": len(valid), "valid_duration_s": len(valid) * self.env.dt,
+                     "resets": sum(r["reset"] for r in selected),
+                     "failures": sum(r["reset"] and not r["timeout"] for r in selected),
+                     "push_force_nonzero_duration_s": 0., "push_force_peak_n": 0.}
+            if valid:
+                push_norm = np.linalg.norm([r["push_force_world_n"] for r in valid], axis=1)
+                stats["push_force_nonzero_duration_s"] = float(np.count_nonzero(push_norm) * self.env.dt)
+                stats["push_force_peak_n"] = float(push_norm.max())
+                for key in ("z_m", "height_m", "pitch_deg", "vx_m_s", "drift_m", "tilt_deg"):
+                    x = np.asarray([r[key] for r in valid])
+                    stats[key] = {"mean": float(x.mean()), "std": float(x.std()),
+                                  "min": float(x.min()), "max": float(x.max()),
+                                  "rms": float(np.sqrt(np.mean(x * x)))}
+                stats["height_mae_m"] = float(np.mean([abs(r["height_m"] - metadata["cmd_height"]) for r in valid]))
+                for key in ("standing_now", "stable_now"):
+                    stats[key + "_fraction"] = sum(r[key] for r in valid) / len(valid)
+                changes = [np.asarray(b["actions"]) - np.asarray(a["actions"])
+                           for a, b in zip(selected, selected[1:])
+                           if not a["reset"] and not b["reset"] and a["policy_active"] and b["policy_active"]
+                           and a["episode"] == b["episode"]]
+                stats["action_delta_rms"] = float(np.sqrt(np.mean(np.square(changes)))) if changes else None
+            summaries[name] = stats
+        summaries["first_stood_s"] = next((r["t"] for r in self.rows if r.get("has_stood")), None)
+        with Path(path).open("x") as stream:
+            json.dump({"metadata": metadata, "summary": summaries, "samples": self.rows},
+                      stream, indent=2, allow_nan=False)
+        print("METRICS_SUMMARY=" + json.dumps(summaries))
+        print(f"完整轨迹: {Path(path).resolve()}")
 
 
 class LegErrorRecorder:
@@ -95,11 +179,17 @@ def main():
     with_noise = False
     with_trimesh = False
     with_dr = False
+    with_pushes = False
     contact_friction = None
     pd_error_report = None
     standup_config_snapshot = None
     render = False
     frame_dir = None
+    action_delay_ms = None
+    metrics_report = None
+    standup_post_unlock = False
+    gas_spring_force = None
+    push_schedule_path = None
     argv = []
     it = iter(sys.argv[1:])
     for a in it:
@@ -119,10 +209,22 @@ def main():
             with_trimesh = True  # 消融：保留训练的 trimesh 地形（不强制 plane）
         elif a == "--domain_rand":
             with_dr = True  # 消融：保留训练的全部域随机化
+        elif a == "--pushes":
+            with_pushes = True
+        elif a == "--gas_spring_force":
+            gas_spring_force = float(next(it))
+        elif a == "--push_schedule":
+            push_schedule_path = next(it)
         elif a == "--contact_friction":
             contact_friction = float(next(it))
         elif a == "--pd_error_report":
             pd_error_report = next(it)
+        elif a == "--action_delay_ms":
+            action_delay_ms = float(next(it))
+        elif a == "--metrics_report":
+            metrics_report = next(it)
+        elif a == "--standup_post_unlock":
+            standup_post_unlock = True
         elif a == "--standup_config_snapshot":
             standup_config_snapshot = next(it)
         elif a == "--render":
@@ -134,6 +236,19 @@ def main():
     sys.argv = ["eval_isaac", "--task=mini_wheel_legged", "--headless"] + argv
     args = get_args()
     args.headless = not render
+    if not math.isfinite(sim_seconds) or sim_seconds <= 0:
+        raise ValueError("--sim_time 必须是正有限数")
+    if (metrics_report or standup_post_unlock) and args.task != "chuanliantui_standup":
+        raise ValueError("轨迹指标及课程阶段覆盖仅支持 chuanliantui_standup")
+    if with_pushes and args.task != "chuanliantui_standup":
+        raise ValueError("--pushes 仅支持 chuanliantui_standup")
+    if push_schedule_path and (args.task != "chuanliantui_standup" or with_pushes or with_dr):
+        raise ValueError("--push_schedule 仅用于起立对照，不能与 --pushes/--domain_rand 合用")
+    for path in (metrics_report, pd_error_report):
+        if path and Path(path).exists():
+            raise FileExistsError(f"不覆盖已有报告: {path}")
+    if action_delay_ms is not None and (not math.isfinite(action_delay_ms) or action_delay_ms < 0):
+        raise ValueError("--action_delay_ms 必须是非负有限数")
     if frame_dir:
         if not render:
             raise ValueError("--frame_dir 需要 --render")
@@ -148,7 +263,15 @@ def main():
         train_cfg = snapshot["ChuanliantuiStandupCfgPPO"]()
         env_cfg.seed = train_cfg.seed
         print(f"加载起立配置快照（父类仍用当前代码）: {standup_config_snapshot}")
+    if gas_spring_force is not None:
+        if not hasattr(env_cfg, "gas_spring"):
+            raise ValueError("--gas_spring_force 仅用于具有气弹簧配置的 chuanliantui")
+        if not math.isfinite(gas_spring_force) or not 0 <= gas_spring_force <= 150:
+            raise ValueError("--gas_spring_force 必须是 0~150 N 的有限数")
+        env_cfg.gas_spring.force_n = gas_spring_force
     env_cfg.env.num_envs = 1
+    # 有限时长评估观察同一回合；保留失稳终止，避免训练20s超时截断30s站立。
+    env_cfg.env.episode_length_s = max(env_cfg.env.episode_length_s, sim_seconds + 1.0)
     if not with_trimesh:
         env_cfg.terrain.mesh_type = "plane"
         env_cfg.terrain.curriculum = False
@@ -170,6 +293,23 @@ def main():
         env_cfg.domain_rand.randomize_default_dof_pos = False
         env_cfg.domain_rand.randomize_action_delay = False
         env_cfg.domain_rand.randomize_compliance = False
+    push_parameter_names = (
+        "standup_push_force_range", "standup_push_unstable_force_range",
+        "standup_push_duration_s", "standup_push_interval_s_range",
+    )
+    if with_pushes:
+        missing = [name for name in push_parameter_names if not hasattr(env_cfg.domain_rand, name)]
+        if missing:
+            raise ValueError(
+                "--pushes 需要新的起立推扰配置；当前配置/旧快照缺少: " + ", ".join(missing)
+            )
+        env_cfg.domain_rand.push_robots = True
+    push_metadata = {"push_robots": bool(env_cfg.domain_rand.push_robots)}
+    push_metadata.update({name: getattr(env_cfg.domain_rand, name, None)
+                          for name in push_parameter_names})
+    if action_delay_ms is not None:
+        env_cfg.domain_rand.randomize_action_delay = True
+        env_cfg.domain_rand.delay_ms_range = [action_delay_ms, action_delay_ms]
     if contact_friction is not None:
         if args.task != "chuanliantui_standup" or with_dr:
             raise ValueError("--contact_friction 仅用于起立任务的无域随机化对照")
@@ -198,6 +338,10 @@ def main():
     axis_name = "xyz"[forward_axis]
 
     env, _ = task_registry.make_env(name=args.task, args=args, env_cfg=env_cfg)
+    if with_pushes and not all(hasattr(env, name) for name in (
+        "standup_push_force", "standup_push_count"
+    )):
+        raise RuntimeError("--pushes 需要支持 standup_push_force/count 的起立环境实现")
     if contact_friction is not None:
         print(
             f"轮地目标接触摩擦={contact_friction:.3f}，"
@@ -211,6 +355,10 @@ def main():
         env=env, name=args.task, args=args, train_cfg=train_cfg
     )
     print(f"已加载权重: load_run={train_cfg.runner.load_run} checkpoint={train_cfg.runner.checkpoint}")
+    if standup_post_unlock:
+        env.standup_curriculum_unlocked = True
+        env.reward_scales["orientation"] = env_cfg.standup_curriculum.post_unlock_orientation_scale * env.dt
+        print(f"统一解锁阶段，成功高度门槛={env._current_standup_success_height():.3f}m")
     policy = ppo_runner.get_inference_policy(device=env.device)
     recorder = LegErrorRecorder(env) if pd_error_report else None
     if recorder:
@@ -219,10 +367,42 @@ def main():
         env._compute_torques = recorder
     # runner 构造时会 reset，加载权重又会恢复课程；重新取得匹配当前状态的观测。
     env.reset()
+    scheduled_push = None
+    scheduled_impulse = np.zeros(3)
+    if push_schedule_path:
+        from sim2sim.standing_push_schedule import load
+        scheduled_push = load(push_schedule_path)
+        schedule_dt = scheduled_push.to_dict()["physics_dt_s"]
+        if not math.isclose(schedule_dt, env.sim_params.dt, abs_tol=1e-8):
+            raise ValueError("推力计划的物理步长与Isaac不一致")
+        schedule_step = 0
+        env.cfg.domain_rand.push_robots = True
+        push_metadata["push_robots"] = True
+        schedule_starts = {round(e["t_start_s"] / schedule_dt)
+                           for e in scheduled_push.to_dict()["events"]}
+        env._update_standup_pushes = lambda: None
+
+        def accumulate_scheduled_push():
+            nonlocal schedule_step
+            force = scheduled_push.force_at(schedule_step * schedule_dt)
+            force32 = force.astype(np.float32)
+            env.standup_push_force[0] = torch.as_tensor(force32, device=env.device)
+            env.rigid_body_external_forces[0, env.standup_push_body_index] += env.standup_push_force[0]
+            scheduled_impulse[:] += force32.astype(np.float64) * schedule_dt
+            if schedule_step in schedule_starts:
+                env.standup_push_count += 1
+            schedule_step += 1
+
+        env._accumulate_push_forces = accumulate_scheduled_push
     obs, obs_history = env.get_observations()
     start_xy = env.root_states[0, :2].clone()
+    metrics = StandupMetricsRecorder(env) if metrics_report else None
+    actual_delay_ms = float(env.action_delay_idx[0].item() * env.sim_params.dt * 1000) if env_cfg.domain_rand.randomize_action_delay else 0.
+    print(f"实际动作延迟={actual_delay_ms:.3f}ms")
+    if with_pushes:
+        print("随机推扰配置=" + json.dumps(push_metadata, ensure_ascii=False))
 
-    n_steps = int(sim_seconds / env.dt)
+    n_steps = int(round(sim_seconds / env.dt))
     ac = ppo_runner.alg.actor_critic
     print(f"Isaac 对照评估：{sim_seconds}s (cmd_vx={cmd_vx}, yaw={cmd_yaw}, h={cmd_height}, "
           f"动作={'采样(训练同款噪声)' if stochastic else '确定性均值'})")
@@ -238,7 +418,7 @@ def main():
             target = env.root_states[0, :3].detach().cpu().numpy()
             env.set_camera(target + [1.4, -1.4, 0.8], target)
         with torch.no_grad():
-            mask = env.get_policy_action_mask() if hasattr(env, "get_policy_action_mask") else torch.ones(env.num_envs, dtype=torch.bool, device=env.device)
+            mask = env.get_policy_action_mask().clone() if hasattr(env, "get_policy_action_mask") else torch.ones(env.num_envs, dtype=torch.bool, device=env.device)
             actions = torch.zeros(env.num_envs, env.num_actions, device=env.device)
             latent = torch.zeros(env.num_envs, 3, device=env.device)
             if mask.any():
@@ -247,7 +427,18 @@ def main():
                     latent[mask] = ac.latent
                 else:
                     actions[mask], latent[mask] = policy(obs[mask], obs_history[mask])
+        policy_feedback = {
+            "policy_t_s": step * env.dt,
+            "policy_true_velocity_m_s": env.base_lin_vel[0].tolist(),
+            "estimated_velocity_m_s": (latent[0] / 2.).tolist(),
+            "velocity_estimation_error_m_s": (latent[0] / 2. - env.base_lin_vel[0]).tolist(),
+        } if metrics else None
         obs, _, _, dones, infos, obs_history = env.step(actions.detach())
+        if metrics:
+            done = bool(dones[0].item())
+            metrics.record(step, bool(mask[0].item()), actions,
+                           done, done and bool(infos.get("time_outs", env.time_out_buf)[0].item()),
+                           policy_feedback)
         if frame_dir and step % 100 == 0:
             env.gym.write_viewer_image_to_file(
                 env.viewer, str(frame_dir / f"step_{step:05d}.png")
@@ -282,11 +473,42 @@ def main():
     if hasattr(env, "has_stood"):
         print(f"是否曾满足训练稳站判据：{ever_stood}（不代表此后持续稳定）")
     print("未触发重置不等于稳定；结合高度、位移、速度、姿态和稳站判据判断。")
+    if metrics:
+        metrics.save(metrics_report, {
+            "task": args.task, "load_run": train_cfg.runner.load_run,
+            "checkpoint": train_cfg.runner.checkpoint, "seed": env_cfg.seed,
+            "cmd_vx": cmd_vx, "cmd_yaw": cmd_yaw, "cmd_height": cmd_height,
+            "sim_seconds": sim_seconds, "control_dt": env.dt, "physics_dt": env.sim_params.dt,
+            "episode_timeout_s": env_cfg.env.episode_length_s,
+            "action_delay_ms": actual_delay_ms, "stochastic": stochastic,
+            "gas_spring_force_n": getattr(env, "gas_spring_force_n", 0.0),
+            "push_schedule": scheduled_push.to_dict() if scheduled_push else None,
+            "scheduled_push_impulse_world_ns": scheduled_impulse.tolist(),
+            "push_mode": "schedule" if scheduled_push else ("random" if with_pushes else "none"),
+            "velocity_error_sampling": "actor推理前的encoder与同一时刻10ms位置差分机体系真速度",
+            "noise": with_noise, "domain_rand": with_dr, "terrain": env_cfg.terrain.mesh_type,
+            **push_metadata,
+            "push_force_sampling": "末个物理子步已施加的世界系力，每个策略步记录一次；重置行不记录力和计数",
+            "push_duration_measurement": "非零力采样数乘 control_dt，精度为策略步；排除重置步",
+            "push_count_scope": "每回合已开始的推扰次数；重置后重新计数",
+            "contact_friction_requested": contact_friction,
+            "ground_friction": env_cfg.terrain.static_friction,
+            "robot_friction": env.friction_coef[0].item() if env_cfg.domain_rand.randomize_friction else None,
+            "curriculum_unlocked": env.standup_curriculum_unlocked,
+            "success_height": env._current_standup_success_height(),
+            "success_pg_z": env_cfg.standup.success_projected_gravity_z,
+            "success_duration_s": env_cfg.standup.success_duration_s,
+            "initial_position": env_cfg.init_state.pos,
+            "initial_dof_pos": env_cfg.standup.initial_dof_pos,
+            "config_snapshot": standup_config_snapshot,
+        })
     if recorder:
         recorder.save(pd_error_report, {
             "task": args.task, "load_run": train_cfg.runner.load_run,
             "checkpoint": train_cfg.runner.checkpoint, "seed": env_cfg.seed,
             "stochastic": stochastic, "noise": with_noise, "domain_rand": with_dr,
+            "gas_spring_force_n": getattr(env, "gas_spring_force_n", 0.0),
+            **push_metadata,
             "config_snapshot": standup_config_snapshot,
             "sim_seconds": sim_seconds, "dt": env.sim_params.dt,
             "terrain_friction": env_cfg.terrain.static_friction,

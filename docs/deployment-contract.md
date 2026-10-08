@@ -58,6 +58,11 @@ DM 槽位的左右归属来自现场确认，仍需在电机失能状态下按�
 
 chuanliantui 起立任务与站立任务共享张量布局，但初态和接管条件不同，不能据此认为模型行为可互换。`--standup` 使用 0.15 m 后摆初态；首次轮接地前保持零策略动作并继续 PD 与历史更新，从接地后的下一策略步开始推理。真实闭链还需要实体电机到虚拟膝状态、虚拟力矩到实体电机的映射，详见 [闭链适配器](../sim2sim/chuanliantui_closed_adapter.py) 和对应 sim2sim 说明；串联代理通过不代表该映射或真机通过。
 
+上述首次接地门控用于串联代理及原 CAD 控制对照。当前 `--closed_chain` 默认在 CAD
+机构上使用 H7 五连杆状态解算、反馈速度、环绕 PD、轮目标限幅和十拍预热；
+`--closed_chain_controller cad` 保留旧行为。H7 默认高度为 0.20 m，0.22 m 是显式测试覆盖。
+角度注册、失效处理、版本与验证结果见[H7 闭链回放接口](interfaces/chuanliantui-h7-closed-replay.md)。
+
 2026-10-01 的电脑推理／H7 执行候选使用独立 USB `2901` 会话：25/125 浮点观测历史以100 Hz由 H7 发送，电脑载入完整 `model_6000.pt` 运行 encoder+actor，H7 在2 ms循环计算 PD 与闭链虚功力矩。用户确认 B 机械身份：DM1/DM3 驱动各自 CAD 前长输入，DM0/DM2 驱动 CAD 后短输入；实物左侧 DM0/1 对训练 `rf`，实物右侧 DM2/3 对训练 `lf`。原 `dm_sign`/`dm_zero` 逐槽保持；同姿态 SolidWorks 右髋到轮轴尺寸拟合出的 CAD 输入角候选偏置为奇数槽0.8138714045 rad、偶数槽2.3227884081 rad。该单姿态 CAD 拟合不验证实体方向、左侧零点或力矩；源码中的执行资格和六路实体限值均锁定，不能将本段视为已部署。详见[设计规格](superpowers/specs/2026-10-01-chuanliantui-host-policy-h7-standup-design.md)及[模型使用记录](model-deliveries/20261001-chuanliantui-h7-policy-execution.md)。
 
 训练与现有 MuJoCo 脚本使用包含 encoder 的完整 `model_*.pt`；`policy_1.pt` 缺 encoder，不能作为部署输入。chuanliantui 的板端导出使用包含 encoder + actor 的 ONNX，输入 `observations`（25）和 `observation_history`（125），输出 `actions`（6）和 `latent`（3），float32。H723 的固定 batch=1、opset 13 导出方式及工具兼容范围见 [ONNX 导出说明](../ONNX导出说明.md)。模型图不包含观测预处理、历史、PD 或起立接管逻辑。

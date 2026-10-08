@@ -8,6 +8,8 @@
 from __future__ import annotations
 
 import argparse
+from copy import deepcopy
+import math
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
@@ -15,6 +17,7 @@ from xml.etree import ElementTree as ET
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_URDF = REPO_ROOT / "resources/robots/chuanliantui_new_1/urdf/chuanliantui_train.urdf"
 DEFAULT_OUTPUT = REPO_ROOT / "sim2sim/chuanliantui_train_proxy.xml"
+GAS_SPRING_SOURCE = REPO_ROOT / "sim2sim/chuanliantui.xml"
 
 DOF_NAMES = ("lf0", "lf1", "lfwheel", "rf0", "rf1", "rfwheel")
 WHEEL_JOINTS = {"lfwheel", "rfwheel"}
@@ -77,6 +80,41 @@ def _add_inertial(body: ET.Element, link: ET.Element) -> None:
     )
 
 
+def _add_gas_springs(mj: ET.Element, actuators: ET.Element) -> None:
+    """复制闭链前支路上的物理弹簧；六个策略电机保留在执行器列表前六位。"""
+    source = ET.parse(GAS_SPRING_SOURCE).getroot()
+    tendons = ET.Element("tendon")
+    mj.insert(list(mj).index(actuators), tendons)
+    for side, prefix in (("left", "lf"), ("right", "rf")):
+        for end, suffix in (("upper", "0"), ("lower", "1")):
+            body_name = prefix + suffix
+            path = ".//body[@name='{}']".format(body_name)
+            original, target = source.find(path), mj.find(path)
+            if original is None or target is None:
+                raise ValueError("气弹簧端点缺少 body: " + body_name)
+            # 两个模型的前支路使用同一个局部坐标系，才能直接复制 CAD 端点。
+            for attr, default in (("pos", "0 0 0"), ("quat", "1 0 0 0")):
+                expected = tuple(map(float, original.get(attr, default).split()))
+                actual = tuple(map(float, target.get(attr, default).split()))
+                if len(actual) != len(expected) or any(
+                    not math.isclose(a, b, rel_tol=0., abs_tol=1e-10)
+                    for a, b in zip(actual, expected)
+                ):
+                    raise ValueError("气弹簧端点局部系不一致: {} {}".format(body_name, attr))
+            name = side + "_gas_spring_" + end
+            site = original.find("./site[@name='{}']".format(name))
+            if site is None:
+                raise ValueError("闭链 XML 缺少气弹簧 site: " + name)
+            target.append(deepcopy(site))
+        tendon_name = side + "_gas_spring_tendon"
+        tendon = source.find("./tendon/spatial[@name='{}']".format(tendon_name))
+        motor = source.find("./actuator/motor[@name='{}_gas_spring_motor']".format(side))
+        if tendon is None or motor is None or motor.get("tendon") != tendon_name:
+            raise ValueError("闭链 XML 气弹簧 tendon/motor 不完整: " + side)
+        tendons.append(deepcopy(tendon))
+        actuators.append(deepcopy(motor))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--urdf", type=Path, default=DEFAULT_URDF)
@@ -116,7 +154,8 @@ def main() -> None:
     mj.append(
         ET.Comment(
             "由 chuanliantui_train.urdf 生成；仅用于 Isaac 串联训练代理一致性回放，"
-            "不含真实闭链 connect 约束，不可用于真实机构验证。"
+            "不含真实闭链 connect 约束，不可用于真实机构验证；"
+            "气弹簧端点和传动复制自 chuanliantui.xml，由回放脚本每侧施加 150 N。"
         )
     )
     ET.SubElement(
@@ -187,6 +226,9 @@ def main() -> None:
                     )
                 else:
                     joint_attrs.update(damping="0.03", frictionloss="0.015")
+                    if joint.attrib["name"] in ("lf1", "rf1"):
+                        # 对齐 Isaac 的膝限位柔度，避免站立载荷下过度越过硬行程。
+                        joint_attrs["solreflimit"] = "0.004 1"
                     limit = joint.find("limit")
                     if limit is None:
                         raise ValueError("关节 '{}' 缺少 limit".format(joint.attrib["name"]))
@@ -210,6 +252,7 @@ def main() -> None:
             "motor",
             {"name": "{}_motor".format(joint_name), "joint": joint_name, "gear": "1", "ctrlrange": "-{} {}".format(limit, limit)},
         )
+    _add_gas_springs(mj, actuators)
 
     _indent(mj)
     args.output.parent.mkdir(parents=True, exist_ok=True)

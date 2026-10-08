@@ -9,30 +9,33 @@ chuanliantui 串联腿轮足机器人 sim2sim 部署验证脚本
     观测构造、历史缓冲、动作->力矩映射与控制时序，验证策略在 MuJoCo 串联代理
     中的行为。该路径只用于训练代理一致性回放，不代表真实闭链机构或真机。
 
-关键契约（全部对齐 wheel_legged_gym/envs/base/legged_robot.py，勿改）
+串联代理契约（对齐 wheel_legged_gym/envs/base/legged_robot.py）
     - 策略：ActorCriticSequence。action = actor(cat(obs_25, encoder(history_125)))
       导出的 policy_1.pt 只含 actor、缺 encoder，不可用；因此直接加载 model_*.pt 完整权重。
     - DOF 顺序：[lf0, lf1, lfwheel, rf0, rf1, rfwheel]
     - 观测 25 维：[base_ang_vel*0.25(3), projected_gravity(3), cmd*[2.0,0.25,5.0](3),
                    腿关节 pos [lf0,lf1,rf0,rf1](4), dof_vel*0.05(6), last_action(6)]，裁剪 ±100
     - 历史 125=25*5：FIFO，最旧在前、最新在末尾；上电用首帧重复 5 次填充
-    - 串联代理 dof_vel 用位置差分；闭链模式虚拟膝速度由实体电机速度和几何 Jacobian 反算，
-      其余关节仍每个 sim 子步差分更新
+    - 串联代理 dof_vel 用位置差分；闭链默认复现 H7 五连杆解算和反馈速度路径。
+      --closed_chain_controller cad 可回到原 CAD 解算与混合差分速度路径。
     - 动作->串联训练代理力矩：腿位置控制(Kp=10,Kd=1)，轮速度控制(Kp=0,Kd=0.1)；
       六维力矩直接写入同名训练 DOF 的 MuJoCo motor，不做闭链 Jacobian 映射。
     - 时序：sim_dt=0.002，decimation=5 -> 策略 100Hz，PD 内环 500Hz
     - 力矩上限：[40,40,3.9,40,40,3.9] N·m
-    - 动作延迟：当前起立配置关闭 action delay；本脚本同样零延迟。真机部署时通信+执行延迟
-      必须与训练保持一致。
+    - 串联代理与闭链都独立施加每侧 150 N 气弹簧伸张力；
+      --gas_spring_force 0 可复现旧串联代理的无弹簧条件，不占用策略电机限矩。
+    - 动作延迟：训练随机化 0–10 ms；本脚本默认零延迟，属于无延迟对照。
     - 前进方向:机体 +x(与训练 tracking_lin_vel 的 base_lin_vel[:,0] 一致)。
       cmd_vx 是策略命令通道 0，对应机体系 vx。
     - 训练 `heading_command=False`，命令通道 1 是偏航角速度，直接写入 cmd_yaw；
       不使用航向保持外环。
+    - H7 闭链控制另外采用腿角差环绕、轮目标 ±20 rad/s 和十拍零动作预热。
+      CAD 后轴角采用名义几何注册，不等同于实机编码器标定；详见 H7 适配器。
 
 运行
     /home/zn/miniforge3/envs/wheellegged_py38/bin/python sim2sim/mj_sim2sim_ct.py \
         --checkpoint logs/chuanliantui/Sep08_12-56-46_new1_train_proxy_v1_resume/model_3000.pt --render
-    先测起立：--standup --cmd_vx 0 --cmd_height 0.20
+    先测起立：--standup --cmd_vx 0 --cmd_height 0.22
     再测行走：--cmd_vx 1.0
     需要先在该环境安装 mujoco：pip install mujoco
 """
@@ -40,10 +43,12 @@ chuanliantui 串联腿轮足机器人 sim2sim 部署验证脚本
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import os
 import sys
 import time
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -235,6 +240,31 @@ def compute_torques(action, dof_pos, dof_vel, wheel_vel_limit=None):
     return np.clip(torques, -TORQUE_LIMITS, TORQUE_LIMITS)
 
 
+class H7PolicyHistory:
+    """H7 有效观测 FIFO 和十个策略步的零动作预热。"""
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.history = np.zeros(NUM_ENCODER_OBS, dtype=np.float64)
+        self.ready = False
+        self.warmup_count = 0
+
+    def update(self, obs, valid):
+        if not valid or not np.isfinite(obs).all():
+            self.reset()
+            return self.history.copy(), False
+        if not self.ready:
+            self.history = np.tile(obs, OBS_HISTORY_LENGTH)
+            self.ready = True
+        else:
+            self.history = np.concatenate((self.history[NUM_OBS:], obs))
+        active = self.warmup_count >= 10
+        self.warmup_count = min(10, self.warmup_count + 1)
+        return self.history.copy(), active
+
+
 # --------------------------------------------------------------------------------------
 # 主循环
 # --------------------------------------------------------------------------------------
@@ -286,21 +316,26 @@ def run(args):
 
     mujoco.mj_forward(model, data)
     adapter = None
-    gas_spring_actuator_ids = None
+    h7_adapter = None
+    h7_history = None
+    h7_output_ready = False
     if args.closed_chain:
-        adapter = ClosedChainAdapter(mujoco, model, data)
-        gas_spring_actuator_ids = np.empty(len(GAS_SPRING_ACTUATOR_NAMES), dtype=np.int32)
-        for i, name in enumerate(GAS_SPRING_ACTUATOR_NAMES):
-            actuator_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, name)
-            if actuator_id < 0:
-                raise ValueError("--closed_chain 模型缺少气弹簧执行器: " + name)
-            gas_spring_actuator_ids[i] = actuator_id
-        print(
-            "chuanliantui 闭链已启用：lf0/lf00 与 rf0/rf00 是实体电机；"
-            "气弹簧每侧 {:.1f} N。".format(
-                args.gas_spring_force
-            )
-        )
+        if args.closed_chain_controller == "h7":
+            from sim2sim.chuanliantui_h7_adapter import H7ClosedChainAdapter
+            h7_adapter = H7ClosedChainAdapter(mujoco, model, data, rear_zero=args.h7_rear_zero,
+                                              wheel_vel_limit=args.wheel_vel_limit)
+            adapter = h7_adapter
+            h7_history = H7PolicyHistory()
+        else:
+            adapter = ClosedChainAdapter(mujoco, model, data)
+        print("chuanliantui 闭链已启用：lf0/lf00 与 rf0/rf00 是实体电机。")
+        print("闭链控制路径：{}".format(args.closed_chain_controller))
+        if h7_adapter is not None:
+            print("H7：五连杆 0.21/0.25 m、反馈速度、角差环绕、轮目标限幅={} rad/s、预热 10 拍。".format(args.wheel_vel_limit))
+            print("后轴角使用{}；这是仿真角度注册，未经实机共同姿态标定。".format(
+                "显式 --h7_rear_zero" if args.h7_rear_zero is not None else "CAD 输入杆名义方向"))
+            if not np.isclose(args.cmd_height, 0.20):
+                print("高度命令覆盖为 {:.3f} m；所对照 H7 源码默认为 0.20 m。".format(args.cmd_height))
     else:
         actuator_ids = np.zeros(NUM_ACTIONS, dtype=np.int32)
         for i, name in enumerate(ACTUATOR_NAMES):
@@ -308,6 +343,14 @@ def run(args):
             if actuator_id < 0:
                 raise RuntimeError(f"MJCF 中找不到训练代理电机: {name}")
             actuator_ids[i] = actuator_id
+
+    gas_spring_actuator_ids = np.empty(len(GAS_SPRING_ACTUATOR_NAMES), dtype=np.int32)
+    for i, name in enumerate(GAS_SPRING_ACTUATOR_NAMES):
+        actuator_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, name)
+        if actuator_id < 0:
+            raise ValueError("模型缺少气弹簧执行器（请同步生成代理 XML）: " + name)
+        gas_spring_actuator_ids[i] = actuator_id
+    print("气弹簧每侧 {:.1f} N，独立于六个策略电机施力。".format(args.gas_spring_force))
 
     # 基座 free joint 地址（qpos 前 7 位 = pos(3)+quat wxyz(4)，qvel 前 6 位 = linvel(3)+angvel(3)）
     base_jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "floating_base")
@@ -355,6 +398,8 @@ def run(args):
 
     def reset_sim_state(standup):
         mujoco.mj_resetData(model, data)
+        if h7_history is not None:
+            h7_history.reset()
         if adapter is not None:
             adapter.set_virtual_pose(initial_dof_pos)
         else:
@@ -362,6 +407,8 @@ def run(args):
                 data.qpos[qpos_adr[i]] = qpos
         data.qpos[base_qadr + 2] = STANDUP_START_HEIGHT if standup else args.init_height
         data.qpos[base_qadr + 3:base_qadr + 7] = np.array([1.0, 0.0, 0.0, 0.0])
+        # mj_resetData 会清 ctrl；首帧诊断和起立预备阶段也应包含物理弹簧。
+        data.ctrl[gas_spring_actuator_ids] = args.gas_spring_force
         mujoco.mj_forward(model, data)
         if args.ground_start:
             if standup:
@@ -419,6 +466,8 @@ def run(args):
               f"高度={kb['height']:.2f} m")
 
     def read_dof_state():
+        if h7_adapter is not None:
+            return h7_adapter.read_policy_state()
         dof_pos = np.empty(NUM_ACTIONS, dtype=np.float64)
         for i in ((0, 2, 3, 5) if adapter is not None else range(NUM_ACTIONS)):
             dof_pos[i] = data.qpos[qpos_adr[i]]
@@ -429,12 +478,28 @@ def run(args):
         dof_pos[1], dof_pos[4] = knees["left"][0], knees["right"][0]
         return dof_pos, np.array((knees["left"][1], knees["right"][1]))
 
+    def control_outputs(action):
+        if h7_adapter is not None:
+            if not h7_output_ready:
+                return np.zeros(NUM_ACTIONS), np.zeros(NUM_ACTIONS)
+            return h7_adapter.compute_control(action)
+        virtual = compute_torques(action, dof_pos, dof_vel, args.wheel_vel_limit)
+        motor = adapter.map_virtual_torques(virtual) if adapter is not None else virtual
+        return virtual, motor
+
     # 状态缓冲
     last_action = np.zeros(NUM_ACTIONS, dtype=np.float64)
-    last_dof_pos, _ = read_dof_state()
-    dof_vel = np.zeros(NUM_ACTIONS, dtype=np.float64)
+    last_dof_pos, feedback_vel = read_dof_state()
+    dof_vel = feedback_vel if h7_adapter is not None else np.zeros(NUM_ACTIONS, dtype=np.float64)
 
     base_bid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "base_link")
+    push_schedule = None
+    push_impulse = np.zeros(3)
+    if args.push_schedule:
+        from sim2sim.standing_push_schedule import load
+        push_schedule = load(args.push_schedule)
+        if not math.isclose(push_schedule.to_dict()["physics_dt_s"], SIM_DT, abs_tol=1e-8):
+            raise ValueError("推力计划的物理步长与MuJoCo不一致")
     wheel_bids = {
         mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "lfwheel"),
         mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "rfwheel"),
@@ -545,6 +610,11 @@ def run(args):
     step = 0
     wheel_limit_steps = 0
     wheel_limit_targets = 0
+    diagnostic_rows = []
+    previous_base_pos = data.qpos[base_qadr:base_qadr + 3].copy()
+    joint_ids = np.array([mujoco.mj_name2id(
+        model, mujoco.mjtObj.mjOBJ_JOINT, name) for name in JOINT_NAMES])
+    dof_adr = model.jnt_dofadr[joint_ids]
     try:
         while (viewer is None or viewer.is_running()) and (
             args.sim_time is None or step * policy_dt < args.sim_time
@@ -555,9 +625,9 @@ def run(args):
                 kb["reset_standup"] = None
                 reset_sim_state(reset_standup)
                 last_action = np.zeros(NUM_ACTIONS, dtype=np.float64)
-                last_dof_pos, _ = read_dof_state()
+                last_dof_pos, feedback_vel = read_dof_state()
                 dof_pos = last_dof_pos.copy()
-                dof_vel = np.zeros(NUM_ACTIONS, dtype=np.float64)
+                dof_vel = feedback_vel if h7_adapter is not None else np.zeros(NUM_ACTIONS, dtype=np.float64)
                 kb["vx"] = 0.0
                 kb["yaw_rate"] = 0.0
                 has_landed = not reset_standup
@@ -578,30 +648,104 @@ def run(args):
             # 不刷新的话 mj_objectVelocity 读到的角速度（策略的陀螺仪观测）滞后 5ms，
             # 静态站立无感，加速瞬态的快俯仰动力学会因此欠阻尼而向后掀翻。
             mujoco.mj_forward(model, data)
-            dof_pos, _ = read_dof_state()
+            dof_pos, feedback_vel = read_dof_state()
+            if h7_adapter is not None:
+                dof_vel = feedback_vel
             base_quat_xyzw, base_ang_vel_body, base_lin_vel_body = read_base_state()
-            obs = build_obs(base_quat_xyzw, base_ang_vel_body, dof_pos, dof_vel, commands, last_action)
+            # 与训练 chuanliantui 的 10ms 位置差分速度定义一致；仅供诊断。
+            current_base_pos = data.qpos[base_qadr:base_qadr + 3].copy()
+            velocity_pos_diff = quat_rotate_inverse(
+                base_quat_xyzw, (current_base_pos - previous_base_pos) / policy_dt)
+            previous_base_pos = current_base_pos
+            source_valid = h7_adapter is None or (
+                h7_adapter.valid and all(np.isfinite(value).all() for value in (
+                    base_quat_xyzw, base_ang_vel_body, dof_pos, dof_vel, commands, last_action))
+                and np.linalg.norm(base_quat_xyzw) > 1e-6)
+            obs = (build_obs(base_quat_xyzw, base_ang_vel_body, dof_pos, dof_vel, commands, last_action)
+                   if source_valid else np.zeros(NUM_OBS, dtype=np.float64))
 
-            # 历史 FIFO：丢最旧、末尾追加最新（对齐 legged_robot.py:395-398）
-            obs_history = np.concatenate([obs_history[NUM_OBS:], obs])
-
-            # 对齐 ChuanliantuiStandup.get_policy_action_mask()：触地的那个控制步仍是
-            # 零动作；从下一控制步才让 actor/critic 接管。观测历史始终滚动。
-            newly_landed = args.standup and not has_landed and has_wheel_contact()
-            if newly_landed:
-                has_landed = True
-                print(f"[{step:5d}] 首次轮接地；下一控制步开始策略推理。")
-            policy_active = not args.standup or (has_landed and not newly_landed)
+            if h7_history is not None:
+                # 模拟 H7 已投入 RL：十拍预热；无效观测清历史、重新预热。
+                # H7 不使用训练端首次轮接地门控。
+                obs_history, policy_active = h7_history.update(obs, source_valid)
+                h7_output_ready = h7_history.ready
+            else:
+                obs_history = np.concatenate([obs_history[NUM_OBS:], obs])
+                newly_landed = args.standup and not has_landed and has_wheel_contact()
+                if newly_landed:
+                    has_landed = True
+                    print(f"[{step:5d}] 首次轮接地；下一控制步开始策略推理。")
+                policy_active = not args.standup or (has_landed and not newly_landed)
             if policy_active:
                 with torch.no_grad():
                     obs_t = torch.from_numpy(obs).float().unsqueeze(0)
                     hist_t = torch.from_numpy(obs_history).float().unsqueeze(0)
                     action_t, latent_t = policy.act_inference(obs_t, hist_t)
+                    if args.diagnostic_true_vx and step * policy_dt >= args.diagnostic_true_vx_after:
+                        # 单因素消融：只用仿真真值替换 actor 的 x 速度 latent。
+                        # 保留原 encoder 输出用于记录，其余 latent/观测保持不变。
+                        actor_latent = latent_t.clone()
+                        actor_latent[:, 0] = float(velocity_pos_diff[0] * COMMANDS_SCALE[0])
+                        action_t = policy.actor(torch.cat((obs_t, actor_latent), dim=-1))
                 action = action_t.squeeze(0).cpu().numpy().astype(np.float64)
                 latent = latent_t.squeeze(0).cpu().numpy().astype(np.float64)
+                if h7_adapter is not None:
+                    if not (np.isfinite(action).all() and np.isfinite(latent).all()):
+                        action = np.zeros(NUM_ACTIONS, dtype=np.float64)
+                        latent = np.zeros(LATENT_DIM, dtype=np.float64)
+                        h7_output_ready = False
+                        policy_active = False
+                    else:
+                        action = np.clip(action, -CLIP_ACTIONS, CLIP_ACTIONS)
             else:
                 action = np.zeros(NUM_ACTIONS, dtype=np.float64)
                 latent = np.zeros(LATENT_DIM, dtype=np.float64)
+            if args.diagnostic_report:
+                virtual_torque, motor_torque = control_outputs(action)
+                # tendon motor 属于 actuator 力，不在 qfrc_passive 中；只累加两侧弹簧。
+                gas_spring_qfrc = (
+                    data.actuator_force[gas_spring_actuator_ids]
+                    @ data.actuator_moment[gas_spring_actuator_ids]
+                )
+                contact_rows = []
+                contact_force = np.zeros(6)
+                for contact_id in range(data.ncon):
+                    contact = data.contact[contact_id]
+                    if contact.geom1 != floor_gid and contact.geom2 != floor_gid:
+                        continue
+                    mujoco.mj_contactForce(model, data, contact_id, contact_force)
+                    contact_rows.append({"pos": contact.pos.tolist(), "normal_force": float(contact_force[0]),
+                                         "geom1": int(contact.geom1), "geom2": int(contact.geom2)})
+                diagnostic_rows.append({
+                    "t": step * policy_dt, "active": policy_active,
+                    "base_pos": current_base_pos.tolist(), "base_quat_xyzw": base_quat_xyzw.tolist(),
+                    "pitch_deg": math.degrees(math.asin(float(np.clip(
+                        quat_rotate_inverse(base_quat_xyzw, np.array([0., 0., -1.]))[0], -1., 1.)))),
+                    "velocity_instant": base_lin_vel_body.tolist(),
+                    "velocity_pos_diff": velocity_pos_diff.tolist(), "estimated_velocity": (latent / 2.).tolist(),
+                    "commands": commands.tolist(), "obs": obs.tolist(), "history": obs_history.tolist(),
+                    "action": action.tolist(), "dof_pos": dof_pos.tolist(), "dof_vel": dof_vel.tolist(),
+                    "torque_at_policy_start": virtual_torque.tolist(),
+                    "motor_torque_at_policy_start": motor_torque.tolist(),
+                    "gas_spring_actuator_force_n": data.actuator_force[gas_spring_actuator_ids].tolist(),
+                    "gas_spring_knee_torque_nm": gas_spring_qfrc[dof_adr[[1, 4]]].tolist(),
+                    "physical_dof_pos": data.qpos[qpos_adr].tolist(),
+                    "physical_dof_vel": data.qvel[dof_adr].tolist(),
+                    "closed_pin_residual_m": ({side[0]: adapter._pin_residual(side).tolist()
+                                                for side in adapter._SIDES} if adapter is not None else None),
+                    "scheduled_push_force_world_n": (push_schedule.force_at(step * policy_dt).tolist()
+                                                       if push_schedule else [0., 0., 0.]),
+                    "h7_geometry_valid": bool(h7_adapter.valid) if h7_adapter is not None else None,
+                    "h7_output_ready": bool(h7_output_ready) if h7_adapter is not None else None,
+                    "motor_pos": data.qpos[model.jnt_qposadr[model.actuator_trnid[
+                        adapter.actuator_ids if adapter is not None else actuator_ids, 0]]].tolist(),
+                    "motor_vel": data.qvel[model.jnt_dofadr[model.actuator_trnid[
+                        adapter.actuator_ids if adapter is not None else actuator_ids, 0]]].tolist(),
+                    "passive_torque": data.qfrc_passive[dof_adr].tolist(),
+                    "whole_robot_com": data.subtree_com[base_bid].tolist(),
+                    "wheel_body_positions": [data.xpos[bid].tolist() for bid in sorted(wheel_bids)],
+                    "floor_contacts": contact_rows,
+                })
             if args.wheel_vel_limit is not None:
                 limited_wheels = np.abs(action[[2, 5]] * VEL_ACTION_SCALE) > args.wheel_vel_limit
                 wheel_limit_steps += bool(np.any(limited_wheels))
@@ -613,18 +757,26 @@ def run(args):
             # 训练每子步是 simulate 后 compute_dof_vel（legged_robot.py:111-115），最后一个
             # 子步结束时 dof_vel 是最新后向差分；闭链的虚拟膝速度用电机速度反算。
             # 若在步进前读取，obs 里的速度会滞后一个子步 2ms。
-            for _ in range(DECIMATION):
-                torque = compute_torques(action, dof_pos, dof_vel, args.wheel_vel_limit)
+            for substep in range(DECIMATION):
+                torque, motor_torque = control_outputs(action)
                 if adapter is not None:
-                    data.ctrl[adapter.actuator_ids] = adapter.map_virtual_torques(torque)
-                    data.ctrl[gas_spring_actuator_ids] = args.gas_spring_force
+                    data.ctrl[adapter.actuator_ids] = motor_torque
                 else:
                     data.ctrl[actuator_ids] = torque
+                data.ctrl[gas_spring_actuator_ids] = args.gas_spring_force
+                if push_schedule:
+                    force = push_schedule.force_at((step * DECIMATION + substep) * SIM_DT)
+                    data.xfrc_applied[base_bid, :] = 0.
+                    data.xfrc_applied[base_bid, :3] = force
+                    push_impulse += force * SIM_DT
                 mujoco.mj_step(model, data)
-                dof_pos, knee_vel = read_dof_state()
-                dof_vel = wrap_to_pi(dof_pos - last_dof_pos) / SIM_DT
-                if knee_vel is not None:
-                    dof_vel[1], dof_vel[4] = knee_vel
+                dof_pos, feedback_vel = read_dof_state()
+                if h7_adapter is not None:
+                    dof_vel = feedback_vel
+                else:
+                    dof_vel = wrap_to_pi(dof_pos - last_dof_pos) / SIM_DT
+                    if feedback_vel is not None:
+                        dof_vel[1], dof_vel[4] = feedback_vel
                 last_dof_pos = dof_pos.copy()
 
             last_action = action
@@ -663,6 +815,36 @@ def run(args):
             viewer.close()
 
     print(f"仿真结束：{step} 个策略步。")
+    if args.diagnostic_report:
+        with Path(args.diagnostic_report).open("x") as stream:
+            json.dump({"metadata": {
+                "checkpoint": str(Path(args.checkpoint).resolve()), "model_xml": str(Path(model_xml).resolve()),
+                "true_vx_override": args.diagnostic_true_vx, "velocity_definition": "10ms position difference in current body frame",
+                "true_vx_after_s": args.diagnostic_true_vx_after,
+                "sim_dt": SIM_DT, "policy_dt": policy_dt, "friction_override": args.friction,
+                "dof_damping": model.dof_damping[dof_adr].tolist(),
+                "dof_frictionloss": model.dof_frictionloss[dof_adr].tolist(),
+                "dof_armature": model.dof_armature[dof_adr].tolist(),
+                "joint_limit_solref": model.jnt_solref[joint_ids].tolist(),
+                "joint_limit_solimp": model.jnt_solimp[joint_ids].tolist(),
+                "joint_range": model.jnt_range[joint_ids].tolist(),
+                "standup": args.standup, "closed_chain": args.closed_chain,
+                "gas_spring_force_n_per_side": args.gas_spring_force,
+                "push_schedule": push_schedule.to_dict() if push_schedule else None,
+                "scheduled_push_impulse_world_ns": push_impulse.tolist(),
+                "scheduled_push_force_sampling": "策略步起点的计划力；冲量按实际提交的每2ms力累计",
+                "gas_spring_actuator_names": GAS_SPRING_ACTUATOR_NAMES,
+                "gas_spring_knee_joint_names": ["lf1", "rf1"],
+                "closed_chain_controller": args.closed_chain_controller if args.closed_chain else None,
+                "h7_rear_zero_override": args.h7_rear_zero,
+                "h7_front_zero": h7_adapter.front_zero.tolist() if h7_adapter is not None else None,
+                "h7_rear_zero": h7_adapter.rear_zero.tolist() if h7_adapter is not None else None,
+                "physical_dof_names": JOINT_NAMES,
+                "motor_names": [model.joint(model.actuator_trnid[aid, 0]).name for aid in (
+                    adapter.actuator_ids if adapter is not None else actuator_ids)],
+                "wheel_vel_limit": args.wheel_vel_limit,
+            }, "samples": diagnostic_rows}, stream, allow_nan=False)
+        print(f"诊断轨迹（均在策略推理时刻采样）: {args.diagnostic_report}")
     if args.wheel_vel_limit is not None:
         print(f"轮目标限幅触发：{wheel_limit_steps} 个策略步，"
               f"{wheel_limit_targets} 个轮目标（两轮合计）。")
@@ -696,13 +878,17 @@ def main():
     p.add_argument(
         "--closed_chain",
         action="store_true",
-        help="启用本机 chuanliantui.xml、闭链力矩映射和气弹簧；默认关闭",
+        help="启用 CAD 闭链机构，默认使用 H7 解算/控制；默认关闭；两种机构均含气弹簧",
     )
+    p.add_argument("--closed_chain_controller", choices=("h7", "cad"), default=None,
+                   help="闭链控制：h7=H7 五连杆解算/PD/预热（默认），cad=原 CAD 多环解算")
+    p.add_argument("--h7_rear_zero", type=float, nargs=2, metavar=("LF", "RF"), default=None,
+                   help="H7 路径：CAD 后轴 q=0 对应的固件 qb [rad]；默认取 CAD 杆方向，仅为名义注册")
     p.add_argument(
         "--gas_spring_force",
         type=float,
         default=DEFAULT_GAS_SPRING_FORCE,
-        help="--closed_chain 下每侧气弹簧恒定伸张推力 [N]，范围 0~150；默认 150 N，0 可关闭",
+        help="串联代理/闭链每侧气弹簧恒定伸张推力 [N]，范围 0~150；默认 150 N，0 复现无弹簧条件",
     )
     p.add_argument("--render", action="store_true",
                    help="启动 MuJoCo passive viewer 和键盘遥操作；关闭窗口退出")
@@ -711,7 +897,8 @@ def main():
     p.add_argument("--cmd_vx", type=float, default=0.0, help="目标前向线速度 [m/s]")
     p.add_argument("--cmd_yaw", type=float, default=0.0,
                    help="目标偏航角速度 [rad/s]；训练使用 heading_command=False，直接写入命令通道 1")
-    p.add_argument("--cmd_height", type=float, default=0.32, help="目标机身高度 [m]")
+    p.add_argument("--cmd_height", type=float, default=None,
+                   help="目标机身高度 [m]；H7 闭链默认 0.20，其余路径默认 0.32")
     p.add_argument("--cmd_delay", type=float, default=3.0,
                    help="速度/偏航命令延迟生效时间 [s]（先站稳再动，高度命令不受影响）")
     p.add_argument("--cmd_ramp", type=float, default=1.0,
@@ -731,10 +918,20 @@ def main():
                    help="使用当前起立训练的初态：0.15 m 地面后摆；覆盖 --init_height 和 --initial_dof_pos，首次轮接地后的下一控制步才推理策略")
     p.add_argument("--log_every", type=int, default=100, help="每多少策略步打印一次")
     p.add_argument("--wheel_vel_limit", type=float, default=None,
-                   help="诊断用：轮目标速度绝对限幅 [rad/s]；默认不限制，与训练一致；实机当前为 20")
+                   help="轮目标速度绝对限幅 [rad/s]；H7 闭链固定 20，其余路径默认不限制")
     p.add_argument("--sim_time", type=float, default=None,
                    help="运行的仿真时长 [s]；默认持续运行直到关闭窗口或 Ctrl+C")
     p.add_argument("--selfcheck", action="store_true", help="仅做策略形状自检，不跑仿真")
+    p.add_argument("--h7_no_wheel_target_clip", action="store_true",
+                   help="显式回放已取消轮速目标裁剪的H7变体；仍保留原电机力矩限幅")
+    p.add_argument("--push_schedule", default=None,
+                   help="加载固定JSON推力计划，在base_link质心每2ms施加世界系水平力")
+    p.add_argument("--diagnostic_report", default=None,
+                   help="无渲染有限时长诊断：将每个策略时刻的状态/估计/动作写入新 JSON 文件")
+    p.add_argument("--diagnostic_true_vx", action="store_true",
+                   help="仅诊断：用与训练同定义的仿真真 vx 替换 actor 的前向速度 latent，不用于部署")
+    p.add_argument("--diagnostic_true_vx_after", type=float, default=0.0,
+                   help="诊断替换起始时刻 [s]；设为 5 可保留原始起立轨迹")
     p.add_argument("--no_realtime", dest="realtime", action="store_false",
                    help="关闭实时节流（默认按真实时间播放，便于观察）")
     p.set_defaults(realtime=True)
@@ -742,6 +939,22 @@ def main():
     if args.gas_spring_view:
         args.closed_chain = True
         args.render = True
+    if not args.closed_chain and (args.closed_chain_controller is not None or args.h7_rear_zero is not None):
+        p.error("闭链控制参数需要 --closed_chain")
+    args.closed_chain_controller = args.closed_chain_controller or "h7"
+    is_h7 = args.closed_chain and args.closed_chain_controller == "h7"
+    if args.h7_rear_zero is not None and (
+        not is_h7 or not np.isfinite(args.h7_rear_zero).all()
+    ):
+        p.error("--h7_rear_zero 需要 H7 闭链路径和两个有限角度")
+    if args.cmd_height is None:
+        args.cmd_height = 0.20 if is_h7 else 0.32
+    if args.h7_no_wheel_target_clip and (not is_h7 or args.wheel_vel_limit is not None):
+        p.error("--h7_no_wheel_target_clip 仅用于H7闭链，且不能同时指定 --wheel_vel_limit")
+    if is_h7 and not args.h7_no_wheel_target_clip:
+        if args.wheel_vel_limit is not None and args.wheel_vel_limit != 20.0:
+            p.error("H7 闭链固定轮目标限幅 20 rad/s；其他限幅对照请使用 cad 控制路径")
+        args.wheel_vel_limit = 20.0
     if not 0.0 <= args.gas_spring_force <= DEFAULT_GAS_SPRING_FORCE:
         p.error("--gas_spring_force 必须在 0~150 N 内（受 MJCF actuator ctrlrange 限制）")
     if args.wheel_vel_limit is not None and (
@@ -752,6 +965,15 @@ def main():
         p.error("--sim_time 必须是正的有限数值")
     if args.log_every <= 0:
         p.error("--log_every 必须为正整数")
+    if args.diagnostic_true_vx and not args.diagnostic_report:
+        p.error("--diagnostic_true_vx 需要 --diagnostic_report 留存消融证据")
+    if not math.isfinite(args.diagnostic_true_vx_after) or args.diagnostic_true_vx_after < 0:
+        p.error("--diagnostic_true_vx_after 必须是非负有限数值")
+    if args.diagnostic_report:
+        if args.render or args.sim_time is None or args.selfcheck:
+            p.error("--diagnostic_report 需要无渲染的有限 --sim_time 行为回放")
+        if Path(args.diagnostic_report).exists():
+            p.error("不覆盖已有诊断报告")
 
     if args.selfcheck:
         selfcheck(args)

@@ -1,4 +1,6 @@
-from isaacgym import gymtorch
+import math
+
+from isaacgym import gymapi, gymtorch
 import torch
 
 from wheel_legged_gym.envs.chuanliantui.chuanliantui import Chuanliantui
@@ -23,6 +25,103 @@ class ChuanliantuiStandup(Chuanliantui):
         self.standup_curriculum_completed_episodes = 0
         self.standup_curriculum_recovered_episodes = 0
         self.standup_curriculum_last_recovered_rate = 0.0
+        self._init_standup_pushes()
+
+    def _init_standup_pushes(self):
+        self.standup_push_body_index = self.gym.find_actor_rigid_body_handle(
+            self.envs[0], self.actor_handles[0], "base_link"
+        )
+        if not 0 <= self.standup_push_body_index < self.num_bodies:
+            raise RuntimeError("Standup pushes require base_link")
+        self.standup_push_force = torch.zeros(self.num_envs, 3, device=self.device)
+        self.standup_push_steps_left = torch.zeros(self.num_envs, dtype=torch.long, device=self.device)
+        self.standup_push_wait_steps = torch.zeros_like(self.standup_push_steps_left)
+        self.standup_push_count = torch.zeros_like(self.standup_push_steps_left)
+        self.standup_push_interval_steps = (0, 0)
+        self.standup_push_duration_steps = 0
+        if self.cfg.domain_rand.push_robots:
+            rand = self.cfg.domain_rand
+            for name in ("standup_push_force_range", "standup_push_unstable_force_range",
+                         "standup_push_interval_s_range"):
+                bounds = getattr(rand, name)
+                if (len(bounds) != 2 or not all(math.isfinite(v) for v in bounds)
+                        or not 0 <= bounds[0] <= bounds[1]):
+                    raise ValueError(f"Invalid {name}: {bounds}")
+            if not math.isfinite(rand.standup_push_duration_s) or rand.standup_push_duration_s <= 0:
+                raise ValueError("standup_push_duration_s 必须为正有限数")
+            self.standup_push_duration_steps = max(1, round(rand.standup_push_duration_s / self.dt))
+            self.standup_push_interval_steps = tuple(
+                math.ceil(v / self.dt) for v in rand.standup_push_interval_s_range
+            )
+        self._reset_standup_pushes(torch.arange(self.num_envs, device=self.device))
+
+    def _sample_standup_push_wait(self, count):
+        low, high = self.standup_push_interval_steps
+        return torch.randint(low, high + 1, (count,), device=self.device)
+
+    def _reset_standup_pushes(self, env_ids):
+        self.standup_push_force[env_ids] = 0.0
+        self.standup_push_steps_left[env_ids] = 0
+        self.standup_push_count[env_ids] = 0
+        self.standup_push_wait_steps[env_ids] = self._sample_standup_push_wait(len(env_ids))
+        self.rigid_body_external_forces[env_ids] = 0.0
+        self.rigid_body_external_torques[env_ids] = 0.0
+
+    def pre_physics_step(self):
+        super().pre_physics_step()
+        self._update_standup_pushes()
+
+    def _update_standup_pushes(self):
+        """100 Hz 调度；随后每个 2 ms 物理子步重提交相同水平力。"""
+        if not self.cfg.domain_rand.push_robots:
+            self.standup_push_force.zero_()
+            self.standup_push_steps_left.zero_()
+            self.rigid_body_external_forces.zero_()
+            return
+        idle = self.standup_push_steps_left == 0
+        self.standup_push_force[idle] = 0.0
+        ready = idle & self.has_landed
+        # 先判到期再扣计时，保证两个脉冲间有完整的无外力空档。
+        start_ids = (ready & (self.standup_push_wait_steps <= 0)).nonzero(as_tuple=False).flatten()
+        self.standup_push_wait_steps[ready] -= 1
+        self.standup_push_wait_steps.clamp_(min=0)
+        if len(start_ids):
+            stable = self.has_stood[start_ids] & (
+                self.standing_time[start_ids] >= self.cfg.standup.success_duration_s
+            )
+            rand = self.cfg.domain_rand
+            low = torch.where(stable, rand.standup_push_force_range[0],
+                              rand.standup_push_unstable_force_range[0])
+            high = torch.where(stable, rand.standup_push_force_range[1],
+                               rand.standup_push_unstable_force_range[1])
+            magnitude = low + torch.rand(len(start_ids), device=self.device) * (high - low)
+            angle = torch.rand(len(start_ids), device=self.device) * (2 * math.pi)
+            self.standup_push_force[start_ids, 0] = magnitude * torch.cos(angle)
+            self.standup_push_force[start_ids, 1] = magnitude * torch.sin(angle)
+            self.standup_push_steps_left[start_ids] = self.standup_push_duration_steps
+            self.standup_push_wait_steps[start_ids] = self._sample_standup_push_wait(len(start_ids))
+            self.standup_push_count[start_ids] += 1
+        self.standup_push_steps_left.sub_(1).clamp_(min=0)
+
+    def _accumulate_push_forces(self):
+        """组装 base_link 质心的环境系推力，与气弹簧统一提交。"""
+        self.rigid_body_external_forces[:, self.standup_push_body_index] += self.standup_push_force
+
+    def _process_dof_props(self, props, env_id):
+        # 父类会将奖励用 dof_pos_limits 缩为软限位；先保存两膝的真实硬限位。
+        if env_id == 0:
+            indices = [self.dof_names.index(name) for name in ("lf1", "rf1")]
+            self.knee_dof_indices = torch.tensor(indices, dtype=torch.long, device=self.device)
+            self.knee_hard_limits = torch.tensor(
+                [[float(props["lower"][i]), float(props["upper"][i])] for i in indices],
+                dtype=torch.float, device=self.device,
+            )
+            # 旧配置快照可能没有新奖励；零余量仅表示该配置未启用本项。
+            margin = getattr(self.cfg.rewards, "knee_limit_margin_rad", 0.0)
+            half_range = (self.knee_hard_limits[:, 1] - self.knee_hard_limits[:, 0]).min().item() / 2
+            if not 0.0 <= margin < half_range:
+                raise ValueError("knee_limit_margin_rad 必须非负且小于膝关节行程的一半")
+        return super()._process_dof_props(props, env_id)
 
     def get_checkpoint_state(self):
         """返回必须跨训练进程延续的站立课程状态。"""
@@ -223,14 +322,17 @@ class ChuanliantuiStandup(Chuanliantui):
         if unlocked_now:
             print(
                 "[standup curriculum] recovered_rate={:.3f}，已永久解锁："
-                "height=0.20 m，orientation=-10".format(
-                    self.standup_curriculum_last_recovered_rate
+                "height={:.2f} m，orientation={:g}".format(
+                    self.standup_curriculum_last_recovered_rate,
+                    self._current_standup_target_height(),
+                    self.cfg.standup_curriculum.post_unlock_orientation_scale,
                 )
             )
         self.has_stood[env_ids] = False
         self.standing_time[env_ids] = 0.0
         self.wheels_airborne_steps[env_ids] = 0
         self.has_landed[env_ids] = False
+        self._reset_standup_pushes(env_ids)
 
     def get_policy_action_mask(self):
         """返回本控制步可进入 actor/critic 的环境；首次轮接地前为 False。"""
@@ -287,14 +389,28 @@ class ChuanliantuiStandup(Chuanliantui):
     def _reward_base_height(self):
         """按高度误差给指数奖励，并用连续 base_link 接触力软门控。"""
         height_error_sq = torch.square(self.base_height - self.commands[:, 2])
+        sigma = self.cfg.rewards.height_reward_sigma
+        if self.standup_curriculum_unlocked:
+            # 旧 run 快照没有精细容差字段时，保持该快照原来的高度项。
+            sigma = getattr(self.cfg.rewards, "height_reward_sigma_post_unlock", sigma)
         height_reward = torch.exp(
-            -height_error_sq / self.cfg.rewards.height_reward_sigma
+            -height_error_sq / sigma
         )
         base_link_airborne = 1.0 - self._base_link_contact_ratio()
         gate = self.cfg.rewards.height_reward_contact_factor + (
             1.0 - self.cfg.rewards.height_reward_contact_factor
         ) * base_link_airborne
         return height_reward * gate
+
+    def _reward_knee_limit_margin(self):
+        """站起后惩罚进入两膝端点余量区；端点之外的小超限继续增罚。"""
+        margin = self.cfg.rewards.knee_limit_margin_rad
+        if margin <= 0:
+            raise ValueError("启用 knee_limit_margin 奖励时余量必须大于零")
+        q = self.dof_pos[:, self.knee_dof_indices]
+        lower, upper = self.knee_hard_limits[:, 0], self.knee_hard_limits[:, 1]
+        penetration = torch.maximum(lower + margin - q, q - upper + margin).clamp(min=0.)
+        return self.has_stood * torch.square(penetration / margin).mean(dim=1)
 
     def _reward_orientation(self):
         initial_height = self.cfg.standup.initial_base_height

@@ -106,8 +106,7 @@ class LeggedRobot(BaseTask):
             self.gym.set_dof_actuation_force_tensor(
                 self.sim, gymtorch.unwrap_tensor(self.torques)
             )
-            if self.cfg.domain_rand.push_robots:
-                self._push_robots()
+            self._apply_external_forces()
             self.gym.simulate(self.sim)
             if self.device == "cpu":
                 self.gym.fetch_results(self.sim, True)
@@ -263,6 +262,8 @@ class LeggedRobot(BaseTask):
         self._resample_commands(env_ids)
 
         # reset buffers
+        self.actions[env_ids] = 0.0
+        self.action_fifo[env_ids] = 0.0
         self.last_actions[env_ids] = 0.0
         self.last_dof_vel[env_ids] = 0.0
         self.feet_air_time[env_ids] = 0.0
@@ -766,8 +767,25 @@ class LeggedRobot(BaseTask):
             len(env_ids_int32),
         )
 
+    def _apply_external_forces(self):
+        """每个物理子步的外力入口；子类可叠加被动机构力。"""
+        if self.cfg.domain_rand.push_robots:
+            self._push_robots()
+
     def _push_robots(self):
-        """Random pushes the robots."""
+        """提交随机推力；保留供 VMC 等既有步进路径调用的入口。"""
+        self.rigid_body_external_forces.zero_()
+        self.rigid_body_external_torques.zero_()
+        self._accumulate_push_forces()
+        self.gym.apply_rigid_body_force_tensors(
+            self.sim,
+            gymtorch.unwrap_tensor(self.rigid_body_external_forces),
+            gymtorch.unwrap_tensor(self.rigid_body_external_torques),
+            gymapi.ENV_SPACE,
+        )
+
+    def _accumulate_push_forces(self):
+        """只组装随机推力；由调用者统一提交，避免覆盖被动机构力。"""
         env_ids = (
             (
                 self.envs_steps_buf
@@ -785,7 +803,6 @@ class LeggedRobot(BaseTask):
             * self.cfg.domain_rand.max_push_vel_xy
             / self.sim_params.dt
         )
-        self.rigid_body_external_forces[:] = 0
         rigid_body_external_forces = torch_rand_float(
             -max_push_force, max_push_force, (self.num_envs, 3), device=self.device
         )
@@ -793,13 +810,6 @@ class LeggedRobot(BaseTask):
             self.base_quat[env_ids], rigid_body_external_forces[env_ids]
         )
         self.rigid_body_external_forces[env_ids, 0, 2] *= 0.5
-
-        self.gym.apply_rigid_body_force_tensors(
-            self.sim,
-            gymtorch.unwrap_tensor(self.rigid_body_external_forces),
-            gymtorch.unwrap_tensor(self.rigid_body_external_torques),
-            gymapi.ENV_SPACE,
-        )
 
     def _update_terrain_curriculum(self, env_ids):
         """Implements the game-inspired curriculum.
@@ -1108,8 +1118,9 @@ class LeggedRobot(BaseTask):
         delay_max = np.int64(
             np.ceil(self.cfg.domain_rand.delay_ms_range[1] / 1000 / self.sim_params.dt)
         )
+        # 索引 0 是当前动作；保留到 delay_max（含）的历史，零延迟也需一槽。
         self.action_fifo = torch.zeros(
-            (self.num_envs, delay_max, self.cfg.env.num_actions),
+            (self.num_envs, delay_max + 1, self.cfg.env.num_actions),
             dtype=torch.float,
             device=self.device,
             requires_grad=False,
