@@ -63,3 +63,9 @@ docs/reference/
 # 每位协作者的本机路径；公共示例 .env.example 保留在 Git 中。
 /.env.local
 /mjlab_training/.venv/
+
+# 内置 H7 工程配置；编译输出由子目录的 .gitignore 管理。
+!/deployment/H7_RL/.vscode/
+!/deployment/H7_RL/.vscode/settings.json
+!/deployment/H7_RL/.vscode/tasks.json
+/deployment/H7_RL/MDK-ARM/CtrBoard-H7_ALL/

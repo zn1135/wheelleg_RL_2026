@@ -7,3 +7,6 @@
 resources/robots/chuanliantui_new_1/config/joint_names_chuanliantui.yaml whitespace=cr-at-eol
 resources/robots/chuanliantui_new_1/urdf/chuanliantui.urdf whitespace=cr-at-eol,-trailing-space
 resources/robots/chuanliantui_new_1/urdf/chuanliantui.csv whitespace=-trailing-space
+
+# Preserve imported firmware bytes across platforms for source fingerprints.
+deployment/H7_RL/** -text

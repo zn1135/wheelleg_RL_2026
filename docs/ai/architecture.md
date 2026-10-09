@@ -9,9 +9,9 @@
 | 仓库 | 职责 | 本机位置 |
 |---|---|---|
 | Wheel-Legged-Gym（本仓库） | 强化学习训练、策略导出与 MuJoCo sim2sim 验证 | 当前克隆的仓库根目录 |
-| [H7_RL](https://github.com/zn1135/H7_RL.git) | 板端策略部署与真机控制 | `.env.local` 中的 `H7_REPO_PATH` |
+| [H7_RL](../../deployment/H7_RL/README.md) | 板端策略部署与真机控制 | 本仓 `deployment/H7_RL`；`.env.local` 中的 `H7_REPO_PATH` 可显式改为外部克隆 |
 
-本机配置与团队流程见 [CONTRIBUTING.md](../../CONTRIBUTING.md)。涉及板端实现时，以 H7_RL 对应版本的代码和仓库说明为准；远程名称因克隆而异，跨仓库操作前分别核对 URL、分支、版本与未提交改动。接口差异及同步要求见 [部署接口约定](../deployment-contract.md)。
+本机配置与团队流程见 [CONTRIBUTING.md](../../CONTRIBUTING.md)。内置 H7 工程作为普通目录随训练仓版本管理；来源与逐文件校验在 `deployment/H7_RL/SOURCE_IMPORT.json`。涉及板端实现时，以该目录代码和固件说明为准；若使用外部克隆，再分别核对 URL、分支、版本与未提交改动。接口差异及同步要求见 [部署接口约定](../deployment-contract.md)。
 
 ## 训练数据流
 

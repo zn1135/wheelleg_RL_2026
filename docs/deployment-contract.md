@@ -1,5 +1,7 @@
 # 训练与部署接口约定
 
+H7 部署工程已作为普通目录纳入 [deployment/H7_RL](../deployment/H7_RL/README.md)，与训练代码统一提交。导入的是旧25/125维、100Hz策略部署工程，内置网络仍为 `model_15000_h723`；纳入同仓不表示已适配下面的新 mjlab 实体接口。源码指纹及eIDE引用问题见部署目录说明，原有接口历史继续保留。
+
 ## 新 mjlab 实体关节接口
 
 `chuanliantui-mjlab-huananhu-v14-flat-standup-r1` 使用 actor35／critic78／action6，实体顺序 `[lf0, lf00, rf0, rf00, lfwheel, rfwheel]`；四腿位置PD、两轮速度控制，50Hz。完整字段、缩放、延迟、哈希校验和导出见 [mjlab接口](mjlab-chuanliantui.md)，兼容性与同步见 [独立接口记录](interfaces/chuanliantui-mjlab-huananhu-v14-flat-standup-r1.md)。本次没有训练模型交付、没有H7固件适配或真机验收；新ONNX不可直接替换旧虚拟关节模型。导出时生成同名JSON记录checkpoint和ONNX SHA256、opset及数值误差。
