@@ -276,10 +276,10 @@ def write_wheel_summary(path: Path, rows: Sequence[Sequence[float]]) -> List[Dic
         "frame_count",
         "observed_hz",
         "tail_window_samples",
-        "left_current_mean_A",
         "right_current_mean_A",
-        "left_speed_mean_rad_s",
+        "left_current_mean_A",
         "right_speed_mean_rad_s",
+        "left_speed_mean_rad_s",
         "mean_can_delay_ms",
         "accepted_for_steady_state_fit",
         "reason",
@@ -303,10 +303,10 @@ def write_wheel_summary(path: Path, rows: Sequence[Sequence[float]]) -> List[Dic
                 "frame_count": len(plateau.rows),
                 "observed_hz": len(plateau.rows) / duration_s if duration_s > 0 else 0.0,
                 "tail_window_samples": len(tail_rows),
-                "left_current_mean_A": mean(row[2] for row in tail_rows) / 819.2,
-                "right_current_mean_A": mean(row[3] for row in tail_rows) / 819.2,
-                "left_speed_mean_rad_s": mean(row[6] for row in tail_rows),
-                "right_speed_mean_rad_s": mean(row[7] for row in tail_rows),
+                "right_current_mean_A": mean(row[2] for row in tail_rows) / 819.2,
+                "left_current_mean_A": mean(row[3] for row in tail_rows) / 819.2,
+                "right_speed_mean_rad_s": mean(row[6] for row in tail_rows),
+                "left_speed_mean_rad_s": mean(row[7] for row in tail_rows),
                 "mean_can_delay_ms": mean(row[9] - row[8] for row in tail_rows) / 1000.0,
                 "accepted_for_steady_state_fit": str(accepted).lower(),
                 "reason": "" if accepted else "平台时长不足 0.5 s 或末尾 0.3 s 少于 20 帧",
@@ -355,8 +355,8 @@ def write_wheel_equivalent_fit(path: Path, records: Sequence[Dict[str, object]])
     )
     output: List[Dict[str, object]] = []
     for wheel, current_key, speed_key in (
-        ("left", "left_current_mean_A", "left_speed_mean_rad_s"),
         ("right", "right_current_mean_A", "right_speed_mean_rad_s"),
+        ("left", "left_current_mean_A", "left_speed_mean_rad_s"),
     ):
         for direction, sign in (("positive", 1.0), ("negative", -1.0)):
             candidates = [
@@ -411,10 +411,10 @@ def write_hip_tracking_fit(path: Path, records: Sequence[Dict[str, object]]) -> 
     )
     output: List[Dict[str, object]] = []
     layouts = (
-        ("left", "thigh", "target_thigh_rad", "q_lf0_mean_rad", "tau_lf0_mean_Nm"),
-        ("left", "shin", "target_shin_rad", "q_lf00_mean_rad", "tau_lf00_mean_Nm"),
-        ("right", "thigh", "target_thigh_rad", "q_rf0_mean_rad", "tau_rf0_mean_Nm"),
-        ("right", "shin", "target_shin_rad", "q_rf00_mean_rad", "tau_rf00_mean_Nm"),
+        ("right", "thigh", "target_thigh_rad", "q_lf0_mean_rad", "tau_lf0_mean_Nm"),
+        ("right", "shin", "target_shin_rad", "q_lf00_mean_rad", "tau_lf00_mean_Nm"),
+        ("left", "thigh", "target_thigh_rad", "q_rf0_mean_rad", "tau_rf0_mean_Nm"),
+        ("left", "shin", "target_shin_rad", "q_rf00_mean_rad", "tau_rf00_mean_Nm"),
     )
     accepted = [record for record in records if record["accepted_for_quasistatic_fit"] == "true"]
     for side, joint, target_key, position_key, torque_key in layouts:

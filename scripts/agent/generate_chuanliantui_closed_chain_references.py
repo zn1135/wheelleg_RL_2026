@@ -27,8 +27,8 @@ if str(REPO_ROOT) not in sys.path:
 from sim2sim.chuanliantui_closed_adapter import ClosedChainAdapter
 
 
-VIRTUAL_JOINT_ORDER = ("lf0", "lf1", "lfwheel", "rf0", "rf1", "rfwheel")
-PHYSICAL_ACTIVE_ORDER = ("lf0", "lf00", "rf0", "rf00")
+VIRTUAL_JOINT_ORDER = ("rf0", "rf1", "rfwheel", "lf0", "lf1", "lfwheel")
+PHYSICAL_ACTIVE_ORDER = ("rf0", "rf00", "lf0", "lf00")
 DEFAULT_XML = REPO_ROOT / "sim2sim" / "chuanliantui.xml"
 DEFAULT_OUTPUT_ROOT = REPO_ROOT / "data" / "sysid" / "chuanliantui" / "reference"
 
@@ -50,17 +50,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--motion-s", type=float, default=6.0, help="中间激励时长 [s]")
     parser.add_argument("--cycles", type=int, default=2, help="中间激励周期数")
     parser.add_argument("--amplitude-rad", type=float, default=0.02,
-                        help="虚拟 lf0/lf1 的激励幅值 [rad]")
+                        help="虚拟 rf0/rf1 的激励幅值 [rad]")
     parser.add_argument("--reference-version", default="v1")
     return parser.parse_args()
 
 
 def virtual_pose(seed: Tuple[float, float, float, float], excitation: float) -> np.ndarray:
     """把镜像的虚拟腿目标组装为训练 DOF 顺序。"""
-    lf0, lf1, rf0, rf1 = seed
+    rf0, rf1, lf0, lf1 = seed
     # 两个虚拟腿同时做镜像低幅屈伸；轮始终不参与关节辨识轨迹。
     return np.array(
-        (lf0 + excitation, lf1 - excitation, 0.0, rf0 - excitation, rf1 + excitation, 0.0),
+        (rf0 + excitation, rf1 - excitation, 0.0, lf0 - excitation, lf1 + excitation, 0.0),
         dtype=np.float64,
     )
 
@@ -128,7 +128,7 @@ def write_reference(output_dir: Path, pose_name: str, seed: Tuple[float, float, 
         "generator": str(Path(__file__).resolve().relative_to(REPO_ROOT)),
         "physical_active_joint_order": list(PHYSICAL_ACTIVE_ORDER),
         "virtual_joint_order": list(VIRTUAL_JOINT_ORDER),
-        "virtual_pose_seed_rad": dict(zip(("lf0", "lf1", "rf0", "rf1"), seed)),
+        "virtual_pose_seed_rad": dict(zip(("rf0", "rf1", "lf0", "lf1"), seed)),
         "sample_hz": args.sample_hz,
         "settle_s": args.settle_s,
         "motion_s": args.motion_s,

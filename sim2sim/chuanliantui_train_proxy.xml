@@ -17,28 +17,28 @@
   <asset>
     <mesh name="base_link" file="base_link_simple.STL" />
     <mesh name="imu-link" file="imu-link.STL" />
-    <mesh name="lf0" file="lf0.STL" />
-    <mesh name="lf00" file="lf00.STL" />
-    <mesh name="lf001" file="lf001.STL" />
-    <mesh name="lf002" file="lf002.STL" />
-    <mesh name="lf01" file="lf01.STL" />
-    <mesh name="lf02" file="lf02.STL" />
-    <mesh name="lf03" file="lf03.STL" />
-    <mesh name="lf04" file="lf04.STL" />
-    <mesh name="lf05" file="lf05.STL" />
-    <mesh name="lf1" file="lf1.STL" />
-    <mesh name="lfwheel" file="lfwheel.STL" />
-    <mesh name="rf0" file="rf0.STL" />
-    <mesh name="rf00" file="rf00.STL" />
-    <mesh name="rf001" file="rf001.STL" />
-    <mesh name="rf002" file="rf002.STL" />
-    <mesh name="rf01" file="rf01.STL" />
-    <mesh name="rf02" file="rf02.STL" />
-    <mesh name="rf03" file="rf03.STL" />
-    <mesh name="rf04" file="rf04.STL" />
-    <mesh name="rf05" file="rf05.STL" />
-    <mesh name="rf1" file="rf1.STL" />
-    <mesh name="rfwheel" file="rfwheel.STL" />
+    <mesh name="lf0" file="rf0.STL" />
+    <mesh name="lf00" file="rf00.STL" />
+    <mesh name="lf001" file="rf001.STL" />
+    <mesh name="lf002" file="rf002.STL" />
+    <mesh name="lf01" file="rf01.STL" />
+    <mesh name="lf02" file="rf02.STL" />
+    <mesh name="lf03" file="rf03.STL" />
+    <mesh name="lf04" file="rf04.STL" />
+    <mesh name="lf05" file="rf05.STL" />
+    <mesh name="lf1" file="rf1.STL" />
+    <mesh name="lfwheel" file="rfwheel.STL" />
+    <mesh name="rf0" file="lf0.STL" />
+    <mesh name="rf00" file="lf00.STL" />
+    <mesh name="rf001" file="lf001.STL" />
+    <mesh name="rf002" file="lf002.STL" />
+    <mesh name="rf01" file="lf01.STL" />
+    <mesh name="rf02" file="lf02.STL" />
+    <mesh name="rf03" file="lf03.STL" />
+    <mesh name="rf04" file="lf04.STL" />
+    <mesh name="rf05" file="lf05.STL" />
+    <mesh name="rf1" file="lf1.STL" />
+    <mesh name="rfwheel" file="lfwheel.STL" />
     <material name="metal" rgba="0.75 0.75 0.75 1" />
     <texture name="grid" type="2d" builtin="checker" rgb1="0.2 0.3 0.4" rgb2="0.1 0.15 0.2" width="512" height="512" />
     <material name="grid" texture="grid" texrepeat="4 4" reflectance="0.1" />
@@ -51,151 +51,151 @@
       <inertial pos="-0.00602877755221842 0.000229808150438118 -0.00910941310145087" mass="9.25503219054007" fullinertia="0.0180319947363064 0.0362971613717438 0.0417155474758287 -0.000148435002152105 3.87836261073974E-05 -3.81309965605312E-06" />
       <geom class="visual" mesh="base_link" material="metal" />
       <geom class="collision" mesh="base_link" />
-      <body name="lf0" pos="-0.0114000000001232 -0.178572975540517 0.0235199999997">
-        <joint name="lf0" type="hinge" axis="0 -1 0" damping="0.03" frictionloss="0.015" range="-100 100" />
+      <body name="rf0" pos="-0.0114000000001232 -0.178572975540517 0.0235199999997">
+        <joint name="rf0" type="hinge" axis="0 -1 0" damping="0.03" frictionloss="0.015" range="-100 100" />
         <inertial pos="-0.0599303446620469 0.00497568108572646 -0.0535401395509289" mass="0.843183721447544" fullinertia="0.000862027161496384 0.0020484271685008 0.00130234764188992 -3.20295947234109E-06 -0.000779607817918225 -2.1095721935805E-06" />
-        <geom class="visual" mesh="lf0" material="metal" />
-        <geom class="collision" mesh="lf0" />
-        <body name="lf1" pos="-0.165288729653418 -0.0115000000014235 -0.129536233732203">
-          <joint name="lf1" type="hinge" axis="0 -1 0" damping="0.03" frictionloss="0.015" solreflimit="0.004 1" range="-0.12 0.77" />
-          <inertial pos="0.078018324484777 -0.0103199473609263 -0.0862673341064149" mass="0.414858418961741" fullinertia="0.00264096842022897 0.00449643859324455 0.00188242439596148 2.35673588988693E-06 0.00206811984718295 -3.24560463461076E-06" />
-          <geom class="visual" mesh="lf1" material="metal" />
-          <geom class="collision" mesh="lf1" />
-          <body name="lfwheel" pos="0.16483247801054 -0.0280000000020713 -0.187963438447404">
-            <joint name="lfwheel" type="hinge" axis="0 -1 0" limited="false" damping="0.002" frictionloss="0.001" />
-            <inertial pos="0.000400272099244092 -0.00475914549162054 -0.000274670509450486" mass="0.344781890910713" fullinertia="0.000322675377029588 0.000620367874493374 0.000322633200407531 7.93341927053792E-08 -2.34896908748287E-06 -3.41113911781432E-08" />
-            <geom class="visual" mesh="lfwheel" material="metal" />
-            <geom class="collision" mesh="lfwheel" />
-          </body>
-          <site name="left_gas_spring_lower" pos="0.019692562545793 -0.010000000000277 -0.044464367480479" size="0.004" rgba="1 0 0 1" />
-        </body>
-        <body name="lf00" pos="-1.49880108324396e-15 -0.011022024459524 -8.99974539336768e-15">
-          <inertial pos="0.0287300930886472 -0.00217309925803372 -0.0226492653085664" mass="0.108755464967074" fullinertia="9.09875569319398E-05 0.000222724145523072 0.000133403996797969 6.95628437601573E-08 8.83433748700853E-05 -5.48396173065685E-08" />
-          <geom class="visual" mesh="lf00" material="metal" />
-          <geom class="collision" mesh="lf00" />
-          <body name="lf01" pos="0.0890545087133239 0.0110249999992321 -0.0702058008845904">
-            <inertial pos="-0.0446504423003861 -0.000189202772297822 -0.0506220110463771" mass="0.0527615983680122" fullinertia="3.44040667678935E-05 6.10850450919854E-05 2.70794555800586E-05 -3.20540987491865E-16 -2.91000644183978E-05 -3.74572243619093E-16" />
-            <geom class="visual" mesh="lf01" material="metal" />
-            <geom class="collision" mesh="lf01" />
-            <body name="lf02" pos="-0.0893008846007706 -0.0165000000010802 -0.101244022092578">
-              <inertial pos="-0.0707835765672591 0.000678963353767797 0.084613869721171" mass="0.131348519233667" fullinertia="0.00025866828424452 0.000390303775067041 0.000133396478429443 1.89740839656789E-15 0.000172315524142171 -2.82893856390611E-15" />
-              <geom class="visual" mesh="lf02" material="metal" />
-              <geom class="collision" mesh="lf02" />
-              <body name="lf03" pos="-0.115541773105979 0.0130000000017961 0.163022939626841">
-                <inertial pos="-0.0380164078202828 -7.54951656745106E-15 -0.029793333758428" mass="0.0511656410370526" fullinertia="1.55939895831299E-05 3.95520545085039E-05 2.43190852262417E-05 6.62410802011277E-19 -1.77228713484194E-05 4.96240148893304E-19" />
-                <geom class="visual" mesh="lf03" material="metal" />
-                <geom class="collision" mesh="lf03" />
-              </body>
-            </body>
-          </body>
-        </body>
-        <site name="left_gas_spring_upper" pos="0.025606057708123 0.003500000000049 -0.037105298931257" size="0.004" rgba="1 0 0 1" />
-      </body>
-      <body name="rf0" pos="-0.0114000000001256 0.176932975540448 0.0235200000001889">
-        <joint name="rf0" type="hinge" axis="0 1 0" damping="0.03" frictionloss="0.015" range="-100 100" />
-        <inertial pos="-0.059929412590832 -0.00497568108631433 -0.053540218687971" mass="0.843183721447544" fullinertia="0.000862027161715789 0.00204842716850085 0.00130234764167046 3.2046569368156E-06 -0.000779607816635491 2.10942806214608E-06" />
         <geom class="visual" mesh="rf0" material="metal" />
         <geom class="collision" mesh="rf0" />
-        <body name="rf1" pos="-0.165288729653417 0.0114999999999917 -0.129536233732335">
-          <joint name="rf1" type="hinge" axis="0 1 0" damping="0.03" frictionloss="0.015" solreflimit="0.004 1" range="-0.77 0.12" />
-          <inertial pos="0.0780229590622458 0.0103199473600926 -0.0862619955363456" mass="0.414858419057853" fullinertia="0.00264006392005862 0.00449630400849377 0.00188319431137968 -2.34405638910854E-06 0.00206820524894272 3.25800440585515E-06" />
+        <body name="rf1" pos="-0.165288729653418 -0.0115000000014235 -0.129536233732203">
+          <joint name="rf1" type="hinge" axis="0 -1 0" damping="0.03" frictionloss="0.015" solreflimit="0.004 1" range="-0.12 0.77" />
+          <inertial pos="0.078018324484777 -0.0103199473609263 -0.0862673341064149" mass="0.414858418961741" fullinertia="0.00264096842022897 0.00449643859324455 0.00188242439596148 2.35673588988693E-06 0.00206811984718295 -3.24560463461076E-06" />
           <geom class="visual" mesh="rf1" material="metal" />
           <geom class="collision" mesh="rf1" />
-          <body name="rfwheel" pos="0.164832478009991 0.0199999999999965 -0.187963438447721">
-            <joint name="rfwheel" type="hinge" axis="0 1 0" limited="false" damping="0.002" frictionloss="0.001" />
-            <inertial pos="0.000258895715753299 0.0127591454924048 -0.000369429481127753" mass="0.344781890891785" fullinertia="0.000322531613191001 0.000620367874493322 0.000322776964245954 -3.23871644327295E-08 -2.34585830896995E-06 8.00535601875758E-08" />
+          <body name="rfwheel" pos="0.16483247801054 -0.0280000000020713 -0.187963438447404">
+            <joint name="rfwheel" type="hinge" axis="0 -1 0" limited="false" damping="0.002" frictionloss="0.001" />
+            <inertial pos="0.000400272099244092 -0.00475914549162054 -0.000274670509450486" mass="0.344781890910713" fullinertia="0.000322675377029588 0.000620367874493374 0.000322633200407531 7.93341927053792E-08 -2.34896908748287E-06 -3.41113911781432E-08" />
             <geom class="visual" mesh="rfwheel" material="metal" />
             <geom class="collision" mesh="rfwheel" />
           </body>
-          <site name="right_gas_spring_lower" pos="0.019692562545789 0.010000000000237 -0.044464367480282" size="0.004" rgba="1 0 0 1" />
+          <site name="right_gas_spring_lower" pos="0.0196925625458 -0.00999999999834 -0.0444643664125" size="0.004" rgba="1 0 0 1" />
         </body>
-        <body name="rf00" pos="4.9960036108132e-16 0.011022024459522 1.51996470965088e-14">
-          <inertial pos="0.0287300930886477 0.00217309925781833 -0.0226492653085871" mass="0.108755464967073" fullinertia="9.09875569319413E-05 0.000222724145523073 0.000133403996797966 -6.95628429076217E-08 8.83433748700864E-05 5.48396164444915E-08" />
+        <body name="rf00" pos="-1.49880108324396e-15 -0.011022024459524 -8.99974539336768e-15">
+          <inertial pos="0.0287300930886472 -0.00217309925803372 -0.0226492653085664" mass="0.108755464967074" fullinertia="9.09875569319398E-05 0.000222724145523072 0.000133403996797969 6.95628437601573E-08 8.83433748700853E-05 -5.48396173065685E-08" />
           <geom class="visual" mesh="rf00" material="metal" />
           <geom class="collision" mesh="rf00" />
-          <body name="rf01" pos="0.0890545087133235 -0.0110249999999036 -0.0702058008844835">
-            <inertial pos="-0.0446504423003866 0.000189202771808422 -0.0506220110463802" mass="0.0527615983680123" fullinertia="3.44040667678936E-05 6.10850450919855E-05 2.70794555800587E-05 3.91600237083142E-17 -2.91000644183978E-05 4.57930837523081E-17" />
+          <body name="rf01" pos="0.0890545087133239 0.0110249999992321 -0.0702058008845904">
+            <inertial pos="-0.0446504423003861 -0.000189202772297822 -0.0506220110463771" mass="0.0527615983680122" fullinertia="3.44040667678935E-05 6.10850450919854E-05 2.70794555800586E-05 -3.20540987491865E-16 -2.91000644183978E-05 -3.74572243619093E-16" />
             <geom class="visual" mesh="rf01" material="metal" />
             <geom class="collision" mesh="rf01" />
-            <body name="rf02" pos="-0.0893008846007715 0.0165000000001005 -0.101244022092738">
-              <inertial pos="-0.0707835765672588 -0.000678963352955642 0.0846138697211773" mass="0.131348519233667" fullinertia="0.00025866828424452 0.000390303775067041 0.000133396478429443 -2.36401615329327E-16 0.000172315524142171 3.52063709971865E-16" />
+            <body name="rf02" pos="-0.0893008846007706 -0.0165000000010802 -0.101244022092578">
+              <inertial pos="-0.0707835765672591 0.000678963353767797 0.084613869721171" mass="0.131348519233667" fullinertia="0.00025866828424452 0.000390303775067041 0.000133396478429443 1.89740839656789E-15 0.000172315524142171 -2.82893856390611E-15" />
               <geom class="visual" mesh="rf02" material="metal" />
               <geom class="collision" mesh="rf02" />
-              <body name="rf03" pos="-0.115541773105976 -0.0130000000002235 0.163022939626966">
-                <inertial pos="-0.0380164078202833 4.69346783660285E-14 -0.029793333758428" mass="0.0511656410370527" fullinertia="1.55939895831299E-05 3.95520545085041E-05 2.43190852262419E-05 2.37014245891641E-17 -1.77228713484195E-05 2.04168619845963E-17" />
+              <body name="rf03" pos="-0.115541773105979 0.0130000000017961 0.163022939626841">
+                <inertial pos="-0.0380164078202828 -7.54951656745106E-15 -0.029793333758428" mass="0.0511656410370526" fullinertia="1.55939895831299E-05 3.95520545085039E-05 2.43190852262417E-05 6.62410802011277E-19 -1.77228713484194E-05 4.96240148893304E-19" />
                 <geom class="visual" mesh="rf03" material="metal" />
                 <geom class="collision" mesh="rf03" />
               </body>
             </body>
           </body>
         </body>
-        <site name="right_gas_spring_upper" pos="0.0256060577081279 -0.003500000000051 -0.0371052989312678" size="0.004" rgba="1 0 0 1" />
+        <site name="right_gas_spring_upper" pos="0.0256060577081 0.00350000000005 -0.0371052989313" size="0.004" rgba="1 0 0 1" />
+      </body>
+      <body name="lf0" pos="-0.0114000000001256 0.176932975540448 0.0235200000001889">
+        <joint name="lf0" type="hinge" axis="0 1 0" damping="0.03" frictionloss="0.015" range="-100 100" />
+        <inertial pos="-0.059929412590832 -0.00497568108631433 -0.053540218687971" mass="0.843183721447544" fullinertia="0.000862027161715789 0.00204842716850085 0.00130234764167046 3.2046569368156E-06 -0.000779607816635491 2.10942806214608E-06" />
+        <geom class="visual" mesh="lf0" material="metal" />
+        <geom class="collision" mesh="lf0" />
+        <body name="lf1" pos="-0.165288729653417 0.0114999999999917 -0.129536233732335">
+          <joint name="lf1" type="hinge" axis="0 1 0" damping="0.03" frictionloss="0.015" solreflimit="0.004 1" range="-0.77 0.12" />
+          <inertial pos="0.0780229590622458 0.0103199473600926 -0.0862619955363456" mass="0.414858419057853" fullinertia="0.00264006392005862 0.00449630400849377 0.00188319431137968 -2.34405638910854E-06 0.00206820524894272 3.25800440585515E-06" />
+          <geom class="visual" mesh="lf1" material="metal" />
+          <geom class="collision" mesh="lf1" />
+          <body name="lfwheel" pos="0.164832478009991 0.0199999999999965 -0.187963438447721">
+            <joint name="lfwheel" type="hinge" axis="0 1 0" limited="false" damping="0.002" frictionloss="0.001" />
+            <inertial pos="0.000258895715753299 0.0127591454924048 -0.000369429481127753" mass="0.344781890891785" fullinertia="0.000322531613191001 0.000620367874493322 0.000322776964245954 -3.23871644327295E-08 -2.34585830896995E-06 8.00535601875758E-08" />
+            <geom class="visual" mesh="lfwheel" material="metal" />
+            <geom class="collision" mesh="lfwheel" />
+          </body>
+          <site name="left_gas_spring_lower" pos="0.0196925625458 0.0100000000002 -0.0444643664123" size="0.004" rgba="1 0 0 1" />
+        </body>
+        <body name="lf00" pos="4.9960036108132e-16 0.011022024459522 1.51996470965088e-14">
+          <inertial pos="0.0287300930886477 0.00217309925781833 -0.0226492653085871" mass="0.108755464967073" fullinertia="9.09875569319413E-05 0.000222724145523073 0.000133403996797966 -6.95628429076217E-08 8.83433748700864E-05 5.48396164444915E-08" />
+          <geom class="visual" mesh="lf00" material="metal" />
+          <geom class="collision" mesh="lf00" />
+          <body name="lf01" pos="0.0890545087133235 -0.0110249999999036 -0.0702058008844835">
+            <inertial pos="-0.0446504423003866 0.000189202771808422 -0.0506220110463802" mass="0.0527615983680123" fullinertia="3.44040667678936E-05 6.10850450919855E-05 2.70794555800587E-05 3.91600237083142E-17 -2.91000644183978E-05 4.57930837523081E-17" />
+            <geom class="visual" mesh="lf01" material="metal" />
+            <geom class="collision" mesh="lf01" />
+            <body name="lf02" pos="-0.0893008846007715 0.0165000000001005 -0.101244022092738">
+              <inertial pos="-0.0707835765672588 -0.000678963352955642 0.0846138697211773" mass="0.131348519233667" fullinertia="0.00025866828424452 0.000390303775067041 0.000133396478429443 -2.36401615329327E-16 0.000172315524142171 3.52063709971865E-16" />
+              <geom class="visual" mesh="lf02" material="metal" />
+              <geom class="collision" mesh="lf02" />
+              <body name="lf03" pos="-0.115541773105976 -0.0130000000002235 0.163022939626966">
+                <inertial pos="-0.0380164078202833 4.69346783660285E-14 -0.029793333758428" mass="0.0511656410370527" fullinertia="1.55939895831299E-05 3.95520545085041E-05 2.43190852262419E-05 2.37014245891641E-17 -1.77228713484195E-05 2.04168619845963E-17" />
+                <geom class="visual" mesh="lf03" material="metal" />
+                <geom class="collision" mesh="lf03" />
+              </body>
+            </body>
+          </body>
+        </body>
+        <site name="left_gas_spring_upper" pos="0.0256060577081 -0.00349999999995 -0.0371052989313" size="0.004" rgba="1 0 0 1" />
       </body>
       <body name="imu-link" pos="-0.0109010626554575 -0.000819999999844778 -0.113980000000039">
         <inertial pos="0.000184082171325678 -9.40102762600828E-05 0.00497698966932855" mass="0.00303751642818645" fullinertia="1.45387679451712E-07 1.21883316071383E-07 2.31438970445244E-07 2.11270620322235E-09 2.90844814825675E-09 -2.23555953007131E-10" />
         <geom class="visual" mesh="imu-link" material="metal" />
         <geom class="collision" mesh="imu-link" />
       </body>
-      <body name="lf001" pos="0.014206057708 -0.175072975540468 -0.0135852989315572">
-        <inertial pos="-3.77475828372553E-15 6.20337115009306E-15 4.55885329486705E-15" mass="0.000125663706143592" fullinertia="1.07861347773249E-09 8.16814089933349E-10 1.07861347773249E-09 -1.84299232572944E-24 -1.49064839553833E-25 -6.15747036041989E-25" />
+      <body name="lf001" pos="0.0142060577080023 0.173432975540499 -0.0135852989310789">
+        <inertial pos="-3.46944695195361E-15 -2.77555756156289E-17 1.15046860926782E-14" mass="0.000125663706143591" fullinertia="1.07861347773249E-09 8.16814089933348E-10 1.07861347773249E-09 4.66480852066549E-24 -1.84500050690524E-25 -6.70892410212183E-25" />
         <geom class="visual" mesh="lf001" material="metal" />
         <geom class="collision" mesh="lf001" />
       </body>
-      <body name="lf002" pos="-0.156996167107749 -0.200072975540276 -0.150480600144982">
-        <inertial pos="-0.046224797525756 0.0170029755405088 0.105987049277025" mass="0.000188495559215424" fullinertia="2.87455727803607E-09 1.22522113490026E-09 2.87455727803607E-09 -1.86710865195642E-23 7.18936274574598E-27 -6.74448727042132E-24" />
+      <body name="lf002" pos="-0.156996167107753 0.198432975540677 -0.150480600144429">
+        <inertial pos="-4.9960036108132E-16 6.43929354282591E-15 -8.49320613838245E-15" mass="0.000314159265358979" fullinertia="1.14929931243826E-08 2.04203522483337E-09 1.14929931243826E-08 1.45267818847665E-22 1.8008411252462E-24 -3.54299064370818E-23" />
         <geom class="visual" mesh="lf002" material="metal" />
         <geom class="collision" mesh="lf002" />
       </body>
-      <body name="lf04" pos="-0.100655914012723 -0.195069999999905 -0.0464295662160984">
-        <inertial pos="-1.88737914186277E-15 -0.00100000000000916 -7.40726924242097E-16" mass="0.000188495559215424" fullinertia="2.87455727803608E-09 1.22522113490026E-09 2.87455727803608E-09 -1.86917660348765E-23 -1.34901525654984E-26 2.21181961844378E-22" />
+      <body name="lf04" pos="-0.100655914012724 0.193430000000029 -0.0464295662155702">
+        <inertial pos="5.55111512312578E-17 0.00100000000000641 -3.98119037736677E-16" mass="0.000188495559215424" fullinertia="2.87455727803606E-09 1.22522113490025E-09 2.87455727803606E-09 2.27002900884047E-23 7.18936274527304E-27 3.98668057916869E-23" />
         <geom class="visual" mesh="lf04" material="metal" />
         <geom class="collision" mesh="lf04" />
       </body>
-      <body name="lf05" pos="-0.203220964633882 -0.182069999999905 -0.0444935508680955">
-        <inertial pos="0.102565050621151 -0.0140000000000128 -0.00193601534834479" mass="0.000188495559215424" fullinertia="2.87455727803608E-09 1.22522113490026E-09 2.87455727803608E-09 -1.86917660348765E-23 -1.34901525654984E-26 2.21181961844378E-22" />
+      <body name="lf05" pos="-0.203220964633881 0.180430000000026 -0.0444935508676031">
+        <inertial pos="6.10622663543836E-16 0.00100000000000905 5.9015292652731E-15" mass="0.000188495559215424" fullinertia="2.87455727803608E-09 1.22522113490026E-09 2.87455727803608E-09 2.27623286343447E-23 -1.86600313970138E-26 3.98047672457444E-23" />
         <geom class="visual" mesh="lf05" material="metal" />
         <geom class="collision" mesh="lf05" />
       </body>
-      <body name="rf001" pos="0.0142060577080023 0.173432975540499 -0.0135852989310789">
-        <inertial pos="-3.46944695195361E-15 -2.77555756156289E-17 1.15046860926782E-14" mass="0.000125663706143591" fullinertia="1.07861347773249E-09 8.16814089933348E-10 1.07861347773249E-09 4.66480852066549E-24 -1.84500050690524E-25 -6.70892410212183E-25" />
+      <body name="rf001" pos="0.014206057708 -0.175072975540468 -0.0135852989315572">
+        <inertial pos="-3.77475828372553E-15 6.20337115009306E-15 4.55885329486705E-15" mass="0.000125663706143592" fullinertia="1.07861347773249E-09 8.16814089933349E-10 1.07861347773249E-09 -1.84299232572944E-24 -1.49064839553833E-25 -6.15747036041989E-25" />
         <geom class="visual" mesh="rf001" material="metal" />
         <geom class="collision" mesh="rf001" />
       </body>
-      <body name="rf002" pos="-0.156996167107753 0.198432975540677 -0.150480600144429">
-        <inertial pos="-4.9960036108132E-16 6.43929354282591E-15 -8.49320613838245E-15" mass="0.000314159265358979" fullinertia="1.14929931243826E-08 2.04203522483337E-09 1.14929931243826E-08 1.45267818847665E-22 1.8008411252462E-24 -3.54299064370818E-23" />
+      <body name="rf002" pos="-0.156996167107749 -0.200072975540276 -0.150480600144982">
+        <inertial pos="-0.046224797525756 0.0170029755405088 0.105987049277025" mass="0.000188495559215424" fullinertia="2.87455727803607E-09 1.22522113490026E-09 2.87455727803607E-09 -1.86710865195642E-23 7.18936274574598E-27 -6.74448727042132E-24" />
         <geom class="visual" mesh="rf002" material="metal" />
         <geom class="collision" mesh="rf002" />
       </body>
-      <body name="rf04" pos="-0.100655914012724 0.193430000000029 -0.0464295662155702">
-        <inertial pos="5.55111512312578E-17 0.00100000000000641 -3.98119037736677E-16" mass="0.000188495559215424" fullinertia="2.87455727803606E-09 1.22522113490025E-09 2.87455727803606E-09 2.27002900884047E-23 7.18936274527304E-27 3.98668057916869E-23" />
+      <body name="rf04" pos="-0.100655914012723 -0.195069999999905 -0.0464295662160984">
+        <inertial pos="-1.88737914186277E-15 -0.00100000000000916 -7.40726924242097E-16" mass="0.000188495559215424" fullinertia="2.87455727803608E-09 1.22522113490026E-09 2.87455727803608E-09 -1.86917660348765E-23 -1.34901525654984E-26 2.21181961844378E-22" />
         <geom class="visual" mesh="rf04" material="metal" />
         <geom class="collision" mesh="rf04" />
       </body>
-      <body name="rf05" pos="-0.203220964633881 0.180430000000026 -0.0444935508676031">
-        <inertial pos="6.10622663543836E-16 0.00100000000000905 5.9015292652731E-15" mass="0.000188495559215424" fullinertia="2.87455727803608E-09 1.22522113490026E-09 2.87455727803608E-09 2.27623286343447E-23 -1.86600313970138E-26 3.98047672457444E-23" />
+      <body name="rf05" pos="-0.203220964633882 -0.182069999999905 -0.0444935508680955">
+        <inertial pos="0.102565050621151 -0.0140000000000128 -0.00193601534834479" mass="0.000188495559215424" fullinertia="2.87455727803608E-09 1.22522113490026E-09 2.87455727803608E-09 -1.86917660348765E-23 -1.34901525654984E-26 2.21181961844378E-22" />
         <geom class="visual" mesh="rf05" material="metal" />
         <geom class="collision" mesh="rf05" />
       </body>
     </body>
   </worldbody>
   <tendon>
-    <spatial name="left_gas_spring_tendon" width="0.001">
-      <site site="left_gas_spring_upper" />
-      <site site="left_gas_spring_lower" />
-    </spatial>
     <spatial name="right_gas_spring_tendon" width="0.001">
       <site site="right_gas_spring_upper" />
       <site site="right_gas_spring_lower" />
     </spatial>
+    <spatial name="left_gas_spring_tendon" width="0.001">
+      <site site="left_gas_spring_upper" />
+      <site site="left_gas_spring_lower" />
+    </spatial>
   </tendon>
   <actuator>
-    <motor name="lf0_motor" joint="lf0" gear="1" ctrlrange="-40.0 40.0" />
-    <motor name="lf1_motor" joint="lf1" gear="1" ctrlrange="-40.0 40.0" />
-    <motor name="lfwheel_motor" joint="lfwheel" gear="1" ctrlrange="-3.9 3.9" />
     <motor name="rf0_motor" joint="rf0" gear="1" ctrlrange="-40.0 40.0" />
     <motor name="rf1_motor" joint="rf1" gear="1" ctrlrange="-40.0 40.0" />
     <motor name="rfwheel_motor" joint="rfwheel" gear="1" ctrlrange="-3.9 3.9" />
-    <motor name="left_gas_spring_motor" tendon="left_gas_spring_tendon" gear="1" ctrlrange="0 150" />
+    <motor name="lf0_motor" joint="lf0" gear="1" ctrlrange="-40.0 40.0" />
+    <motor name="lf1_motor" joint="lf1" gear="1" ctrlrange="-40.0 40.0" />
+    <motor name="lfwheel_motor" joint="lfwheel" gear="1" ctrlrange="-3.9 3.9" />
     <motor name="right_gas_spring_motor" tendon="right_gas_spring_tendon" gear="1" ctrlrange="0 150" />
+    <motor name="left_gas_spring_motor" tendon="left_gas_spring_tendon" gear="1" ctrlrange="0 150" />
   </actuator>
 </mujoco>

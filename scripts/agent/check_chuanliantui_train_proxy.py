@@ -13,16 +13,16 @@ import numpy as np
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MODEL_PATH = REPO_ROOT / "sim2sim/chuanliantui_train_proxy.xml"
 CLOSED_MODEL_PATH = REPO_ROOT / "sim2sim/chuanliantui.xml"
-DOF_NAMES = ("lf0", "lf1", "lfwheel", "rf0", "rf1", "rfwheel")
+DOF_NAMES = ("rf0", "rf1", "rfwheel", "lf0", "lf1", "lfwheel")
 ACTUATOR_NAMES = tuple("{}_motor".format(name) for name in DOF_NAMES)
-GAS_ACTUATOR_NAMES = ("left_gas_spring_motor", "right_gas_spring_motor")
+GAS_ACTUATOR_NAMES = ("right_gas_spring_motor", "left_gas_spring_motor")
 TORQUE_LIMITS = np.array((40.0, 40.0, 3.9, 40.0, 40.0, 3.9))
 
 
 def check_gas_springs(model: mujoco.MjModel) -> None:
     proxy, closed = ET.parse(MODEL_PATH).getroot(), ET.parse(CLOSED_MODEL_PATH).getroot()
     assert model.ntendon == 2
-    for side, prefix in (("left", "lf"), ("right", "rf")):
+    for side, prefix in (("right", "rf"), ("left", "lf")):
         for end, suffix in (("upper", "0"), ("lower", "1")):
             path = ".//body[@name='{}{}']/site[@name='{}_gas_spring_{}']".format(
                 prefix, suffix, side, end
@@ -44,7 +44,7 @@ def check_gas_springs(model: mujoco.MjModel) -> None:
     assert np.array_equal(gas_ids, [6, 7]), gas_ids
     assert np.all(model.actuator_trntype[gas_ids] == mujoco.mjtTrn.mjTRN_TENDON)
     knee_ids = np.array([mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, name)
-                         for name in ("lf1", "rf1")])
+                         for name in ("rf1", "lf1")])
     knee_qadr, knee_dadr = model.jnt_qposadr[knee_ids], model.jnt_dofadr[knee_ids]
     tendon_ids = model.actuator_trnid[gas_ids, 0]
     data = mujoco.MjData(model)
@@ -105,7 +105,7 @@ def main() -> None:
     for name in DOF_NAMES:
         joint_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, name)
         # 仅两膝加强限位约束，其余关节保留 MuJoCo 默认的限位柔度。
-        expected_solref = (0.004, 1.0) if name in ("lf1", "rf1") else (0.02, 1.0)
+        expected_solref = (0.004, 1.0) if name in ("rf1", "lf1") else (0.02, 1.0)
         assert np.allclose(model.jnt_solref[joint_id], expected_solref), (
             "{} 限位 solref 不符：{}，期望 {}".format(
                 name, model.jnt_solref[joint_id], expected_solref

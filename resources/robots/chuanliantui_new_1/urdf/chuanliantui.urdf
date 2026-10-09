@@ -45,7 +45,7 @@
     </collision>
   </link>
   <link
-    name="rf0">
+    name="lf0">
     <inertial>
       <origin
         xyz="-0.059929412590832 -0.00497568108631433 -0.053540218687971"
@@ -85,7 +85,7 @@
     </collision>
   </link>
   <joint
-    name="rf0"
+    name="lf0"
     type="revolute">
     <origin
       xyz="-0.0114000000001256 0.176932975540448 0.0235200000001889"
@@ -93,7 +93,7 @@
     <parent
       link="base_link" />
     <child
-      link="rf0" />
+      link="lf0" />
     <axis
       xyz="0 1 0" />
     <limit
@@ -103,7 +103,7 @@
       velocity="0" />
   </joint>
   <link
-    name="rf1">
+    name="lf1">
     <inertial>
       <origin
         xyz="0.0780229590622458 0.0103199473600926 -0.0862619955363456"
@@ -143,15 +143,15 @@
     </collision>
   </link>
   <joint
-    name="rf1"
+    name="lf1"
     type="revolute">
     <origin
       xyz="-0.165288729653417 0.0114999999999917 -0.129536233732335"
       rpy="0 0 0" />
     <parent
-      link="rf0" />
+      link="lf0" />
     <child
-      link="rf1" />
+      link="lf1" />
     <axis
       xyz="0 1 0" />
     <limit
@@ -161,7 +161,7 @@
       velocity="0" />
   </joint>
   <link
-    name="rfwheel">
+    name="lfwheel">
     <inertial>
       <origin
         xyz="0.000258895715753299 0.0127591454924048 -0.000369429481127753"
@@ -201,15 +201,15 @@
     </collision>
   </link>
   <joint
-    name="rfwheel"
+    name="lfwheel"
     type="revolute">
     <origin
       xyz="0.164832478009991 0.0199999999999965 -0.187963438447721"
       rpy="0 0 0" />
     <parent
-      link="rf1" />
+      link="lf1" />
     <child
-      link="rfwheel" />
+      link="lfwheel" />
     <axis
       xyz="0 1 0" />
     <limit
@@ -219,7 +219,7 @@
       velocity="0" />
   </joint>
   <link
-    name="lf0">
+    name="rf0">
     <inertial>
       <origin
         xyz="-0.0599303446620469 0.00497568108572646 -0.0535401395509289"
@@ -259,7 +259,7 @@
     </collision>
   </link>
   <joint
-    name="lf0"
+    name="rf0"
     type="revolute">
     <origin
       xyz="-0.0114000000001232 -0.178572975540517 0.0235199999997"
@@ -267,7 +267,7 @@
     <parent
       link="base_link" />
     <child
-      link="lf0" />
+      link="rf0" />
     <axis
       xyz="0 -1 0" />
     <limit
@@ -277,7 +277,7 @@
       velocity="0" />
   </joint>
   <link
-    name="lf1">
+    name="rf1">
     <inertial>
       <origin
         xyz="0.078018324484777 -0.0103199473609263 -0.0862673341064149"
@@ -317,15 +317,15 @@
     </collision>
   </link>
   <joint
-    name="lf1"
+    name="rf1"
     type="revolute">
     <origin
       xyz="-0.165288729653418 -0.0115000000014235 -0.129536233732203"
       rpy="0 0 0" />
     <parent
-      link="lf0" />
+      link="rf0" />
     <child
-      link="lf1" />
+      link="rf1" />
     <axis
       xyz="0 -1 0" />
     <limit
@@ -335,7 +335,7 @@
       velocity="0" />
   </joint>
   <link
-    name="lfwheel">
+    name="rfwheel">
     <inertial>
       <origin
         xyz="0.000400272099244092 -0.00475914549162054 -0.000274670509450486"
@@ -375,15 +375,15 @@
     </collision>
   </link>
   <joint
-    name="lfwheel"
+    name="rfwheel"
     type="revolute">
     <origin
       xyz="0.16483247801054 -0.0280000000020713 -0.187963438447404"
       rpy="0 0 0" />
     <parent
-      link="lf1" />
+      link="rf1" />
     <child
-      link="lfwheel" />
+      link="rfwheel" />
     <axis
       xyz="0 -1 0" />
     <limit
@@ -393,7 +393,7 @@
       velocity="0" />
   </joint>
   <link
-    name="rf00">
+    name="lf00">
     <inertial>
       <origin
         xyz="0.0287300930886477 0.00217309925781833 -0.0226492653085871"
@@ -433,7 +433,7 @@
     </collision>
   </link>
   <joint
-    name="rf00"
+    name="lf00"
     type="revolute">
     <origin
       xyz="-0.0114000000001251 0.18795499999997 0.0235200000002041"
@@ -441,7 +441,7 @@
     <parent
       link="base_link" />
     <child
-      link="rf00" />
+      link="lf00" />
     <axis
       xyz="0 1 0" />
     <limit
@@ -451,7 +451,7 @@
       velocity="0" />
   </joint>
   <link
-    name="rf01">
+    name="lf01">
     <inertial>
       <origin
         xyz="-0.0446504423003866 0.000189202771808422 -0.0506220110463802"
@@ -491,15 +491,15 @@
     </collision>
   </link>
   <joint
-    name="rf01"
+    name="lf01"
     type="revolute">
     <origin
       xyz="0.0890545087133235 -0.0110249999999036 -0.0702058008844835"
       rpy="0 0 0" />
     <parent
-      link="rf00" />
+      link="lf00" />
     <child
-      link="rf01" />
+      link="lf01" />
     <axis
       xyz="0 1 0" />
     <limit
@@ -509,7 +509,7 @@
       velocity="0" />
   </joint>
   <link
-    name="rf02">
+    name="lf02">
     <inertial>
       <origin
         xyz="-0.0707835765672588 -0.000678963352955642 0.0846138697211773"
@@ -549,15 +549,15 @@
     </collision>
   </link>
   <joint
-    name="rf02"
+    name="lf02"
     type="revolute">
     <origin
       xyz="-0.0893008846007715 0.0165000000001005 -0.101244022092738"
       rpy="0 0 0" />
     <parent
-      link="rf01" />
+      link="lf01" />
     <child
-      link="rf02" />
+      link="lf02" />
     <axis
       xyz="0 1 0" />
     <limit
@@ -567,7 +567,7 @@
       velocity="0" />
   </joint>
   <link
-    name="rf03">
+    name="lf03">
     <inertial>
       <origin
         xyz="-0.0380164078202833 4.69346783660285E-14 -0.029793333758428"
@@ -607,15 +607,15 @@
     </collision>
   </link>
   <joint
-    name="rf03"
+    name="lf03"
     type="revolute">
     <origin
       xyz="-0.115541773105976 -0.0130000000002235 0.163022939626966"
       rpy="0 0 0" />
     <parent
-      link="rf02" />
+      link="lf02" />
     <child
-      link="rf03" />
+      link="lf03" />
     <axis
       xyz="0 1 0" />
     <limit
@@ -625,7 +625,7 @@
       velocity="0" />
   </joint>
   <link
-    name="lf00">
+    name="rf00">
     <inertial>
       <origin
         xyz="0.0287300930886472 -0.00217309925803372 -0.0226492653085664"
@@ -665,7 +665,7 @@
     </collision>
   </link>
   <joint
-    name="lf00"
+    name="rf00"
     type="revolute">
     <origin
       xyz="-0.0114000000001247 -0.189595000000041 0.023519999999691"
@@ -673,7 +673,7 @@
     <parent
       link="base_link" />
     <child
-      link="lf00" />
+      link="rf00" />
     <axis
       xyz="0 -1 0" />
     <limit
@@ -683,7 +683,7 @@
       velocity="0" />
   </joint>
   <link
-    name="lf01">
+    name="rf01">
     <inertial>
       <origin
         xyz="-0.0446504423003861 -0.000189202772297822 -0.0506220110463771"
@@ -723,15 +723,15 @@
     </collision>
   </link>
   <joint
-    name="lf01"
+    name="rf01"
     type="revolute">
     <origin
       xyz="0.0890545087133239 0.0110249999992321 -0.0702058008845904"
       rpy="0 0 0" />
     <parent
-      link="lf00" />
+      link="rf00" />
     <child
-      link="lf01" />
+      link="rf01" />
     <axis
       xyz="0 -1 0" />
     <limit
@@ -741,7 +741,7 @@
       velocity="0" />
   </joint>
   <link
-    name="lf02">
+    name="rf02">
     <inertial>
       <origin
         xyz="-0.0707835765672591 0.000678963353767797 0.084613869721171"
@@ -781,15 +781,15 @@
     </collision>
   </link>
   <joint
-    name="lf02"
+    name="rf02"
     type="revolute">
     <origin
       xyz="-0.0893008846007706 -0.0165000000010802 -0.101244022092578"
       rpy="0 0 0" />
     <parent
-      link="lf01" />
+      link="rf01" />
     <child
-      link="lf02" />
+      link="rf02" />
     <axis
       xyz="0 -1 0" />
     <limit
@@ -799,7 +799,7 @@
       velocity="0" />
   </joint>
   <link
-    name="lf03">
+    name="rf03">
     <inertial>
       <origin
         xyz="-0.0380164078202828 -7.54951656745106E-15 -0.029793333758428"
@@ -839,15 +839,15 @@
     </collision>
   </link>
   <joint
-    name="lf03"
+    name="rf03"
     type="revolute">
     <origin
       xyz="-0.115541773105979 0.0130000000017961 0.163022939626841"
       rpy="0 0 0" />
     <parent
-      link="lf02" />
+      link="rf02" />
     <child
-      link="lf03" />
+      link="rf03" />
     <axis
       xyz="0 -1 0" />
     <limit
@@ -910,7 +910,7 @@
       xyz="0 0 0" />
   </joint>
   <link
-    name="rf001">
+    name="lf001">
     <inertial>
       <origin
         xyz="-3.46944695195361E-15 -2.77555756156289E-17 1.15046860926782E-14"
@@ -950,7 +950,7 @@
     </collision>
   </link>
   <joint
-    name="rf001"
+    name="lf001"
     type="fixed">
     <origin
       xyz="0.0142060577080023 0.173432975540499 -0.0135852989310789"
@@ -958,7 +958,7 @@
     <parent
       link="base_link" />
     <child
-      link="rf001" />
+      link="lf001" />
     <axis
       xyz="0 1 0" />
     <limit
@@ -968,7 +968,7 @@
       velocity="0" />
   </joint>
   <link
-    name="rf002">
+    name="lf002">
     <inertial>
       <origin
         xyz="-4.9960036108132E-16 6.43929354282591E-15 -8.49320613838245E-15"
@@ -1008,7 +1008,7 @@
     </collision>
   </link>
   <joint
-    name="rf002"
+    name="lf002"
     type="fixed">
     <origin
       xyz="-0.156996167107753 0.198432975540677 -0.150480600144429"
@@ -1016,7 +1016,7 @@
     <parent
       link="base_link" />
     <child
-      link="rf002" />
+      link="lf002" />
     <axis
       xyz="0 1 0" />
     <limit
@@ -1026,7 +1026,7 @@
       velocity="0" />
   </joint>
   <link
-    name="lf001">
+    name="rf001">
     <inertial>
       <origin
         xyz="-3.77475828372553E-15 6.20337115009306E-15 4.55885329486705E-15"
@@ -1066,7 +1066,7 @@
     </collision>
   </link>
   <joint
-    name="lf001"
+    name="rf001"
     type="fixed">
     <origin
       xyz="0.014206057708 -0.175072975540468 -0.0135852989315572"
@@ -1074,7 +1074,7 @@
     <parent
       link="base_link" />
     <child
-      link="lf001" />
+      link="rf001" />
     <axis
       xyz="0 -1 0" />
     <limit
@@ -1084,7 +1084,7 @@
       velocity="0" />
   </joint>
   <link
-    name="lf002">
+    name="rf002">
     <inertial>
       <origin
         xyz="-0.046224797525756 0.0170029755405088 0.105987049277025"
@@ -1124,7 +1124,7 @@
     </collision>
   </link>
   <joint
-    name="lf002"
+    name="rf002"
     type="fixed">
     <origin
       xyz="-0.156996167107749 -0.200072975540276 -0.150480600144982"
@@ -1132,7 +1132,7 @@
     <parent
       link="base_link" />
     <child
-      link="lf002" />
+      link="rf002" />
     <axis
       xyz="0 -1 0" />
     <limit
@@ -1142,7 +1142,7 @@
       velocity="0" />
   </joint>
   <link
-    name="rf04">
+    name="lf04">
     <inertial>
       <origin
         xyz="5.55111512312578E-17 0.00100000000000641 -3.98119037736677E-16"
@@ -1182,7 +1182,7 @@
     </collision>
   </link>
   <joint
-    name="rf04"
+    name="lf04"
     type="fixed">
     <origin
       xyz="-0.100655914012724 0.193430000000029 -0.0464295662155702"
@@ -1190,7 +1190,7 @@
     <parent
       link="base_link" />
     <child
-      link="rf04" />
+      link="lf04" />
     <axis
       xyz="0 1 0" />
     <limit
@@ -1200,7 +1200,7 @@
       velocity="0" />
   </joint>
   <link
-    name="rf05">
+    name="lf05">
     <inertial>
       <origin
         xyz="6.10622663543836E-16 0.00100000000000905 5.9015292652731E-15"
@@ -1240,7 +1240,7 @@
     </collision>
   </link>
   <joint
-    name="rf05"
+    name="lf05"
     type="fixed">
     <origin
       xyz="-0.203220964633881 0.180430000000026 -0.0444935508676031"
@@ -1248,7 +1248,7 @@
     <parent
       link="base_link" />
     <child
-      link="rf05" />
+      link="lf05" />
     <axis
       xyz="0 1 0" />
     <limit
@@ -1258,7 +1258,7 @@
       velocity="0" />
   </joint>
   <link
-    name="lf04">
+    name="rf04">
     <inertial>
       <origin
         xyz="-1.88737914186277E-15 -0.00100000000000916 -7.40726924242097E-16"
@@ -1298,7 +1298,7 @@
     </collision>
   </link>
   <joint
-    name="lf04"
+    name="rf04"
     type="fixed">
     <origin
       xyz="-0.100655914012723 -0.195069999999905 -0.0464295662160984"
@@ -1306,7 +1306,7 @@
     <parent
       link="base_link" />
     <child
-      link="lf04" />
+      link="rf04" />
     <axis
       xyz="0 -1 0" />
     <limit
@@ -1316,7 +1316,7 @@
       velocity="0" />
   </joint>
   <link
-    name="lf05">
+    name="rf05">
     <inertial>
       <origin
         xyz="0.102565050621151 -0.0140000000000128 -0.00193601534834479"
@@ -1356,7 +1356,7 @@
     </collision>
   </link>
   <joint
-    name="lf05"
+    name="rf05"
     type="fixed">
     <origin
       xyz="-0.203220964633882 -0.182069999999905 -0.0444935508680955"
@@ -1364,7 +1364,7 @@
     <parent
       link="base_link" />
     <child
-      link="lf05" />
+      link="rf05" />
     <axis
       xyz="0 -1 0" />
     <limit

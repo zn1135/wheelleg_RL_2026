@@ -19,30 +19,30 @@ DEFAULT_OUTPUT = REPO_ROOT / "sim2sim/chuanliantui.xml"
 
 # 两条真实支链。imu 和气弹簧/销轴标记 link 仅用于推导 site，不能成为独立 DOF。
 PHYSICAL_LINKS = {
-    "base_link", "rf0", "rf1", "rfwheel", "lf0", "lf1", "lfwheel",
-    "rf00", "rf01", "rf02", "rf03", "lf00", "lf01", "lf02", "lf03",
+    "base_link", "lf0", "lf1", "lfwheel", "rf0", "rf1", "rfwheel",
+    "lf00", "lf01", "lf02", "lf03", "rf00", "rf01", "rf02", "rf03",
 }
-ROOT_CHILDREN = ("rf0", "lf0", "rf00", "lf00")
-WHEELS = {"rfwheel", "lfwheel"}
-CONTINUOUS_JOINTS = WHEELS | {"lf00", "rf00"}
+ROOT_CHILDREN = ("lf0", "rf0", "lf00", "rf00")
+WHEELS = {"lfwheel", "rfwheel"}
+CONTINUOUS_JOINTS = WHEELS | {"rf00", "lf00"}
 GAS_SPRING_SITES = (
-    ("rf001", "rf0", "right_gas_spring_upper"),
-    ("rf002", "rf1", "right_gas_spring_lower"),
     ("lf001", "lf0", "left_gas_spring_upper"),
     ("lf002", "lf1", "left_gas_spring_lower"),
+    ("rf001", "rf0", "right_gas_spring_upper"),
+    ("rf002", "rf1", "right_gas_spring_lower"),
 )
 MOTOR_LIMITS = {
-    "rf0": 40.0, "rf00": 40.0, "rfwheel": 3.9,
     "lf0": 40.0, "lf00": 40.0, "lfwheel": 3.9,
+    "rf0": 40.0, "rf00": 40.0, "rfwheel": 3.9,
 }
 
 # marker link 的 URDF origin 是真实销轴在 base_link 零位坐标系中的位置。
 # (marker, 后支链 body1, 前支链 body2, connect name)
 CLOSURES = (
-    ("rf04", "rf02", "rf0", "rf_loop1"),
-    ("rf05", "rf03", "rf1", "rf_loop2"),
     ("lf04", "lf02", "lf0", "lf_loop1"),
     ("lf05", "lf03", "lf1", "lf_loop2"),
+    ("rf04", "rf02", "rf0", "rf_loop1"),
+    ("rf05", "rf03", "rf1", "rf_loop2"),
 )
 
 
@@ -185,7 +185,12 @@ def main():
 
     assets = ET.SubElement(mj, "asset")
     for link_name in sorted(PHYSICAL_LINKS):
-        mesh_file = "base_link_simple.STL" if link_name == "base_link" else "{}.STL".format(link_name)
+        mesh = links[link_name].find("visual/geometry/mesh")
+        if mesh is None:
+            raise ValueError("URDF 缺少 mesh: {}".format(link_name))
+        mesh_file = Path(mesh.attrib["filename"]).name
+        if link_name == "base_link":
+            mesh_file = "base_link_simple.STL"
         ET.SubElement(assets, "mesh", {"name": link_name, "file": mesh_file})
     ET.SubElement(assets, "material", {"name": "metal", "rgba": "0.75 0.75 0.75 1"})
     ET.SubElement(assets, "texture", {
@@ -266,7 +271,7 @@ def main():
 
     tendons = ET.SubElement(mj, "tendon")
     tendons.append(ET.Comment("正执行器力沿 site 连线推开两端，使气弹簧伸长。"))
-    for side in ("left", "right"):
+    for side in ("right", "left"):
         tendon = ET.SubElement(tendons, "spatial", {
             "name": side + "_gas_spring_tendon", "width": "0.001",
         })
@@ -274,7 +279,7 @@ def main():
             ET.SubElement(tendon, "site", {"site": side + "_gas_spring_" + end})
 
     actuators = ET.SubElement(mj, "actuator")
-    for joint_name in ("lf0", "lf00", "lfwheel", "rf0", "rf00", "rfwheel"):
+    for joint_name in ("rf0", "rf00", "rfwheel", "lf0", "lf00", "lfwheel"):
         limit = MOTOR_LIMITS[joint_name]
         ET.SubElement(actuators, "motor", {
             "name": "{}_motor".format(joint_name), "joint": joint_name, "gear": "1",
@@ -282,7 +287,7 @@ def main():
         })
 
     actuators.append(ET.Comment("每侧恒定伸张推力由控制端写入，默认 150 N，0 N 关闭。"))
-    for side in ("left", "right"):
+    for side in ("right", "left"):
         ET.SubElement(actuators, "motor", {
             "name": side + "_gas_spring_motor", "tendon": side + "_gas_spring_tendon",
             "gear": "1", "ctrlrange": "0 150",

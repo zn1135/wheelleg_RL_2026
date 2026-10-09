@@ -1,5 +1,7 @@
 # 模块职责
 
+新串联腿训练入口 `mjlab_training/src/ct_mjlab/` 基于 mjlab Scene/Simulation 的 direct VecEnv，`ct-mjlab` 注册独立 `chuanliantui` 任务；配置、回放及ONNX接口见 [mjlab说明](../mjlab-chuanliantui.md)。旧 `wheel_legged_gym` 任务和内嵌算法继续服务历史模型。
+
 以下任务和目录索引以 `26_wheelleg` 代码为基准；其他维护线的差异见下文。开始工作时以实际检出的分支与任务配置为准。
 
 ## 顶层

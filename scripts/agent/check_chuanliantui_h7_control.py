@@ -175,14 +175,14 @@ def check_adapter(reference, module):
     assert adapter.valid
     np.testing.assert_allclose(initial_q, initial_pose, atol=2e-6)
     np.testing.assert_array_equal(initial_dq, np.zeros(6))
-    joint_names = ["lf0", "lf00", "lfwheel", "rf0", "rf00", "rfwheel"]
+    joint_names = ["rf0", "rf00", "rfwheel", "lf0", "lf00", "lfwheel"]
     jids = [model.joint(name).id for name in joint_names]
     qadr, vadr = model.jnt_qposadr[jids], model.jnt_dofadr[jids]
     axes = model.jnt_axis[jids, 1]
     front_zero = [np.arctan2(-model.body_pos[model.body(n).id, 2],
-                            model.body_pos[model.body(n).id, 0]) for n in ("lf1", "rf1")]
+                            model.body_pos[model.body(n).id, 0]) for n in ("rf1", "lf1")]
     rear_zero = [np.arctan2(-model.body_pos[model.body(n).id, 2],
-                           model.body_pos[model.body(n).id, 0]) for n in ("lf01", "rf01")]
+                           model.body_pos[model.body(n).id, 0]) for n in ("rf01", "lf01")]
     config = np.zeros(16, dtype=np.float32)
     reference.bridge_config(config)
     np.testing.assert_allclose(front_zero, config[[6, 8]], atol=1e-6)
@@ -214,7 +214,7 @@ def check_adapter(reference, module):
     # 被动膝和支链状态故意污染，主动轴不变；H7 读数和控制必须保持不变。
     q_before, dq_before = adapter.read_policy_state()
     torque_before = adapter.compute_control(np.ones(6))
-    for name in ("lf1", "rf1", "lf01", "lf02", "lf03", "rf01", "rf02", "rf03"):
+    for name in ("rf1", "lf1", "rf01", "rf02", "rf03", "lf01", "lf02", "lf03"):
         joint = model.joint(name).id
         data.qpos[model.jnt_qposadr[joint]] = np.nan
         data.qvel[model.jnt_dofadr[joint]] = np.nan

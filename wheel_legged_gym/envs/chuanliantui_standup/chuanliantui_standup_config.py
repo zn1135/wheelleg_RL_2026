@@ -50,7 +50,7 @@ class ChuanliantuiStandupCfg(ChuanliantuiCfg):
         fall_start_height = 0.15
         initial_base_height = 0.15
         target_base_height = 0.22
-        # 后摆初态；顺序为 [lf0, lf1, lfwheel, rf0, rf1, rfwheel]。
+        # 后摆初态；顺序为 [rf0, rf1, rfwheel, lf0, lf1, lfwheel]。
         initial_dof_pos = [-1.566, 0.0, 0.0, 1.566, 0.0, 0.0]
         # 解锁后的 0.22 m 命令下留 2 cm 裕量；解锁前使用课程的 0.28 m 门槛。
         success_height = 0.20

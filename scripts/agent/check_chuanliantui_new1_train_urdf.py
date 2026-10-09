@@ -12,16 +12,16 @@ import numpy as np
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SOURCE = REPO_ROOT / "resources/robots/chuanliantui_new_1/urdf/chuanliantui.urdf"
 TRAIN = REPO_ROOT / "resources/robots/chuanliantui_new_1/urdf/chuanliantui_train.urdf"
-MAIN_JOINTS = ("lf0", "lf1", "lfwheel", "rf0", "rf1", "rfwheel")
-REAR_JOINTS = ("rf00", "rf01", "rf02", "rf03", "lf00", "lf01", "lf02", "lf03")
-MARKER_JOINTS = ("imu-link", "rf001", "rf002", "lf001", "lf002", "rf04", "rf05", "lf04", "lf05")
+MAIN_JOINTS = ("rf0", "rf1", "rfwheel", "lf0", "lf1", "lfwheel")
+REAR_JOINTS = ("lf00", "lf01", "lf02", "lf03", "rf00", "rf01", "rf02", "rf03")
+MARKER_JOINTS = ("imu-link", "lf001", "lf002", "rf001", "rf002", "lf04", "lf05", "rf04", "rf05")
 TRAIN_LIMITS = {
-    "lf0": {"lower": "-100", "upper": "100", "effort": "40", "velocity": "16.8"},
-    "lf1": {"lower": "-0.12", "upper": "0.77", "effort": "40", "velocity": "16.8"},
-    "lfwheel": {"effort": "3.9", "velocity": "58.4"},
     "rf0": {"lower": "-100", "upper": "100", "effort": "40", "velocity": "16.8"},
-    "rf1": {"lower": "-0.77", "upper": "0.12", "effort": "40", "velocity": "16.8"},
+    "rf1": {"lower": "-0.12", "upper": "0.77", "effort": "40", "velocity": "16.8"},
     "rfwheel": {"effort": "3.9", "velocity": "58.4"},
+    "lf0": {"lower": "-100", "upper": "100", "effort": "40", "velocity": "16.8"},
+    "lf1": {"lower": "-0.77", "upper": "0.12", "effort": "40", "velocity": "16.8"},
+    "lfwheel": {"effort": "3.9", "velocity": "58.4"},
 }
 
 
@@ -85,8 +85,8 @@ def main():
     assert set(movable) == set(MAIN_JOINTS)
     assert len(fixed) == 17
     assert all(train_joints[name].attrib["type"] == "fixed" for name in REAR_JOINTS + MARKER_JOINTS)
-    assert train_joints["rf00"].find("parent").attrib["link"] == "rf0"
     assert train_joints["lf00"].find("parent").attrib["link"] == "lf0"
+    assert train_joints["rf00"].find("parent").attrib["link"] == "rf0"
 
     for name in MAIN_JOINTS:
         actual = train_joints[name].find("limit").attrib

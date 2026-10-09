@@ -62,3 +62,4 @@ docs/reference/
 
 # 每位协作者的本机路径；公共示例 .env.example 保留在 Git 中。
 /.env.local
+/mjlab_training/.venv/

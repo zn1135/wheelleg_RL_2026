@@ -1,5 +1,7 @@
 # 常用命令速查
 
+串联腿 mjlab 新任务的独立 Python 3.12 安装、可视预检、训练／TensorBoard、CPU回放和ONNX导出命令见 [mjlab命令](docs/mjlab-chuanliantui.md#可执行命令本次未启动训练)。下文命令仍属于旧 Isaac 环境，不混装依赖。
+
 先按 [协作指南](CONTRIBUTING.md) 创建并填写 `.env.local`。在仓库根目录执行以下准备，完整激活对应 Python 3.8 conda 环境（`conda` 命令需已在 PATH 中）：
 
 ```bash

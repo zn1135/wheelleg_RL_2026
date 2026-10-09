@@ -1,5 +1,7 @@
 # 构建与测试
 
+串联腿新任务使用独立 Python 3.12 / mjlab 环境，入口、有限检查及待训练行为验收见 [mjlab 串联腿迁移](../mjlab-chuanliantui.md)。下文 Python 3.8 / Isaac Gym 约定适用于旧任务；新包不得安装进旧环境。
+
 ## 环境
 
 项目源码为纯 Python 包，`pip install -e .` 一次即可；Isaac Gym 依赖的
@@ -121,6 +123,12 @@ Isaac 评估自动延长回合期限到至少 `sim_time + 1` 秒，保留失稳�
 电机/被动力分离与随机推力合成。它是数值和接口检查，不替代行为回放。
 `check_chuanliantui_train_proxy.py` 同时检查代理的六电机、两气弹簧及 CAD 安装点。
 气弹簧默认 150 N/侧；历史无弹簧行为对照需在两种回放中显式传 `--gas_spring_force 0`。
+
+`python scripts/agent/check_gas_spring_asset_geometry.py` 检查从原始/训练 URDF
+定位件读取端点、任意关节轴及安装 RPY，使用独立 MuJoCo tendon 和长度差分作
+数值参照；覆盖安装点变更、左右改名、joint/link 不同名、两侧不同推力及无效资产。
+CUDA 可用时同时检查批量 GPU 数学路径，不创建 Isaac 物理仿真。
+2026-10-08 的执行范围与结果见[气弹簧资产几何验证](../diagnostics/20261008-gas-spring-asset-geometry.md)。
 
 ### chuanliantui ONNX 导出检查
 

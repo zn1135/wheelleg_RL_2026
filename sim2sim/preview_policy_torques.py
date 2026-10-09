@@ -103,14 +103,14 @@ def analyze(path):
         report[field] = ranges([r[field] for r in rows])
     report["leg_target_outside_urdf_frames"] = {}
     report["leg_observation_outside_urdf_frames"] = {}
-    for i, name in enumerate(("lf0", "lf1", "rf0", "rf1")):
+    for i, name in enumerate(("rf0", "rf1", "lf0", "lf1")):
         lo, hi = limits[name]["lower"], limits[name]["upper"]
         for field, key in (("leg_target_rad", "leg_target_outside_urdf_frames"),
                            ("leg_q_rad", "leg_observation_outside_urdf_frames")):
             report[key][name] = sum(not lo <= r[field][i] <= hi for r in rows)
     report["wheel_target_above_urdf_velocity_frames"] = {
         name: sum(abs(r["wheel_target_rad_s"][i]) > limits[name]["velocity"] for r in rows)
-        for i, name in enumerate(("lfwheel", "rfwheel"))}
+        for i, name in enumerate(("rfwheel", "lfwheel"))}
     metadata_path = path.with_name("summary.json")
     if metadata_path.exists():
         metadata = json.loads(metadata_path.read_text(encoding="utf-8")).get("metadata", {})
@@ -132,8 +132,8 @@ def main():
         parser.error("output must be a new directory")
     results = [analyze(path.resolve()) for path in args.records]
     report = {"scope": "offline nominal virtual PD preview; no motor commands or motion prediction",
-              "dof_order": sim.JOINT_NAMES, "leg_order": ["lf0", "lf1", "rf0", "rf1"],
-              "wheel_order": ["lfwheel (physical right)", "rfwheel (physical left)"],
+              "dof_order": sim.JOINT_NAMES, "leg_order": ["rf0", "rf1", "lf0", "lf1"],
+              "wheel_order": ["rfwheel (physical right)", "lfwheel (physical left)"],
               "kp": sim.P_GAINS.tolist(), "kd": sim.D_GAINS.tolist(),
               "torque_limit_nm": sim.TORQUE_LIMITS.tolist(), "urdf_limits": joint_limits(),
               "source_sha256": source_versions(), "runs": [r for r, _ in results],

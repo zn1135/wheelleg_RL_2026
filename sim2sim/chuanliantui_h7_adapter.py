@@ -94,7 +94,7 @@ class H7ClosedChainAdapter(ClosedChainAdapter):
         if wheel_vel_limit is not None and (not np.isfinite(wheel_vel_limit) or wheel_vel_limit <= 0):
             raise ValueError("wheel_vel_limit must be positive or None")
         self.wheel_vel_limit = wheel_vel_limit
-        names = ("lf0", "lf00", "lfwheel", "rf0", "rf00", "rfwheel")
+        names = ("rf0", "rf00", "rfwheel", "lf0", "lf00", "lfwheel")
         joint_ids = np.array([model.joint(name).id for name in names])
         axes = model.jnt_axis[joint_ids]
         if not np.allclose(axes[:, [0, 2]], 0) or not np.allclose(np.abs(axes[:, 1]), 1):
@@ -105,14 +105,14 @@ class H7ClosedChainAdapter(ClosedChainAdapter):
         self.front_zero = np.array([
             np.arctan2(-self.geometry[side].front1_offset[1],
                        self.geometry[side].front1_offset[0])
-            for side in ("left", "right")
+            for side in ("right", "left")
         ])
         if not np.allclose(self.front_zero, H7_RL_ZERO[[0, 2]], rtol=0, atol=1e-5):
             raise ValueError("CAD front directions do not match H7 rl.zero: {}".format(self.front_zero))
         nominal_rear = np.array([
             np.arctan2(-self.geometry[side].rear1_offset[1],
                        self.geometry[side].rear1_offset[0])
-            for side in ("left", "right")
+            for side in ("right", "left")
         ])
         self.rear_zero = nominal_rear if rear_zero is None else np.asarray(rear_zero, dtype=float).copy()
         if self.rear_zero.shape != (2,) or not np.isfinite(self.rear_zero).all():

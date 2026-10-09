@@ -19,8 +19,8 @@ from wheel_legged_gym.utils.chuanliantui_gas_spring import GasSpringGeometry
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DOF_NAMES = ("lf0", "lf1", "lfwheel", "rf0", "rf1", "rfwheel")
-SIDES = ("left", "right")
+DOF_NAMES = ("rf0", "rf1", "rfwheel", "lf0", "lf1", "lfwheel")
+SIDES = ("right", "left")
 
 
 class TendonOracle:
@@ -116,7 +116,7 @@ def check_tendon_geometry():
 class ForceBoundary:
     """只替代 Isaac API，所有力矩计算、推力累加及step钩子用真实源码。"""
 
-    body_indices = {"rf0": 1, "lf1": 2, "base_link": 3, "lf0": 5, "rf1": 6}
+    body_indices = {"lf0": 1, "rf1": 2, "base_link": 3, "rf0": 5, "lf1": 6}
 
     def __init__(self, env, pending_quat):
         self.env = env

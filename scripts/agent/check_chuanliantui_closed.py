@@ -14,12 +14,12 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 MODEL_PATH = REPO_ROOT / "sim2sim/chuanliantui.xml"
 SOURCE_URDF = REPO_ROOT / "resources/robots/chuanliantui_new_1/urdf/chuanliantui.urdf"
 TRAIN_URDF = REPO_ROOT / "resources/robots/chuanliantui_new_1/urdf/chuanliantui_train.urdf"
-KNEE_RANGES = {"lf1": (-0.12, 0.77), "rf1": (-0.77, 0.12)}
+KNEE_RANGES = {"rf1": (-0.12, 0.77), "lf1": (-0.77, 0.12)}
 SITE_PAIRS = (
-    ("right_A1", "right_rear_pin1", "right_front_pin1"),
-    ("right_A2", "right_rear_pin2", "right_front_pin2"),
     ("left_A1", "left_rear_pin1", "left_front_pin1"),
     ("left_A2", "left_rear_pin2", "left_front_pin2"),
+    ("right_A1", "right_rear_pin1", "right_front_pin1"),
+    ("right_A2", "right_rear_pin2", "right_front_pin2"),
 )
 
 
@@ -58,7 +58,7 @@ def main():
     print("原始 URDF、训练 URDF 与闭链 XML 的左右膝限位一致")
 
     spring_ids = []
-    for side, prefix in (("left", "lf"), ("right", "rf")):
+    for side, prefix in (("right", "rf"), ("left", "lf")):
         aid = named(mujoco.mjtObj.mjOBJ_ACTUATOR, side + "_gas_spring_motor")
         tid = named(mujoco.mjtObj.mjOBJ_TENDON, side + "_gas_spring_tendon")
         assert model.actuator_trntype[aid] == mujoco.mjtTrn.mjTRN_TENDON
@@ -76,7 +76,7 @@ def main():
         rear = named(mujoco.mjtObj.mjOBJ_JOINT, prefix + "00")
         assert not model.jnt_limited[rear], "后输入轴不应有整圈限位"
         spring_ids.append(aid)
-    for index, name in enumerate(("lf0", "lf00", "lfwheel", "rf0", "rf00", "rfwheel")):
+    for index, name in enumerate(("rf0", "rf00", "rfwheel", "lf0", "lf00", "lfwheel")):
         assert named(mujoco.mjtObj.mjOBJ_ACTUATOR, name + "_motor") == index
     assert set(spring_ids).isdisjoint(range(6))
     for force in (0.0, 150.0):
@@ -99,7 +99,7 @@ def main():
     # 同侧前后输入轴一起转动，保持膝部零位；检查跨整圈时几何仍闭合。
     for angle in np.linspace(-2 * np.pi, 2 * np.pi, 65):
         mujoco.mj_resetData(model, data)
-        for name in ("lf0", "lf00", "rf0", "rf00"):
+        for name in ("rf0", "rf00", "lf0", "lf00"):
             jid = named(mujoco.mjtObj.mjOBJ_JOINT, name)
             data.qpos[model.jnt_qposadr[jid]] = angle
         mujoco.mj_forward(model, data)

@@ -18,7 +18,7 @@ def fixture(n):
     env = ChuanliantuiStandup.__new__(ChuanliantuiStandup)
     env.cfg = ChuanliantuiStandupCfg()
     env.device, env.num_envs, env.num_dof = "cpu", n, 6
-    env.dof_names = ["lf0", "lf1", "lfwheel", "rf0", "rf1", "rfwheel"]
+    env.dof_names = ["rf0", "rf1", "rfwheel", "lf0", "lf1", "lfwheel"]
     env.dt = env.cfg.sim.dt * env.cfg.control.decimation
     env.rew_buf = torch.zeros(n)
     env.has_stood = torch.ones(n, dtype=torch.bool)

@@ -30,7 +30,7 @@ from wheel_legged_gym.utils.chuanliantui_gas_spring import GasSpringGeometry
 
 class Chuanliantui(LeggedRobot):
 
-    _expected_dof_names = ("lf0", "lf1", "lfwheel", "rf0", "rf1", "rfwheel")
+    _expected_dof_names = ("rf0", "rf1", "rfwheel", "lf0", "lf1", "lfwheel")
     _leg_position_indices = (0, 1, 3, 4)
 
     def __init__(self, cfg, sim_params, physics_engine, sim_device, headless):
@@ -53,8 +53,8 @@ class Chuanliantui(LeggedRobot):
         self.gas_spring_geometry = GasSpringGeometry(urdf_path, device=self.device)
         self.gas_spring_upper_bodies = []
         self.gas_spring_lower_bodies = []
-        for target, names in ((self.gas_spring_upper_bodies, ("lf0", "rf0")),
-                              (self.gas_spring_lower_bodies, ("lf1", "rf1"))):
+        for target, names in ((self.gas_spring_upper_bodies, self.gas_spring_geometry.upper_bodies),
+                              (self.gas_spring_lower_bodies, self.gas_spring_geometry.lower_bodies)):
             for name in names:
                 index = self.gym.find_actor_rigid_body_handle(self.envs[0], self.actor_handles[0], name)
                 if not 0 <= index < self.num_bodies:
@@ -74,7 +74,7 @@ class Chuanliantui(LeggedRobot):
         )
         # root tensor 必须刷新到当前子步；不能沿用上个 100 Hz 策略拍的姿态。
         self.gym.refresh_actor_root_state_tensor(self.sim)
-        axis_local = self.gas_spring_geometry.axes.expand(self.num_envs, -1, -1)
+        axis_local = self.gas_spring_geometry.knee_axes_in_base(self.dof_pos[:, [0, 3]])
         quat = self.root_states[:, 3:7].unsqueeze(1).expand(-1, 2, -1)
         axis_world = quat_rotate(quat.reshape(-1, 4), axis_local.reshape(-1, 3)).view(self.num_envs, 2, 3)
         torque_world = axis_world * self.gas_spring_knee_torques.unsqueeze(-1)

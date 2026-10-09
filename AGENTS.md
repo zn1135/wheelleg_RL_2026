@@ -4,6 +4,8 @@
 
 ## 项目是什么
 
+串联腿的新训练入口为独立的 `mjlab_training/` Python 3.12 / mjlab 环境，采用华南虎 V14 flat v0 普通 PPO；迁移范围、实体关节接口、命令和验证见 [mjlab 串联腿说明](docs/mjlab-chuanliantui.md)。下文 Isaac Gym / Python 3.8 约定仍适用于旧环境、旧模型和旧检查脚本；不得把新依赖装进旧环境。新任务无需 `import isaacgym`，其普通 actor 没有旧 encoder，旧 `policy_1.pt` 禁令不适用于新接口的独立 ONNX 导出。历史 `logs/` 保护和默认不启动训练／TensorBoard仍适用于两个入口。
+
 轮足机器人强化学习训练仓，fork 自 legged_gym 并内嵌 rsl_rl。在 Isaac Gym 里训练策略，经 MuJoCo sim2sim 验证后通向真机部署。训练仓为纯 Python，无编译步骤，Linux + NVIDIA GPU；H7 部署仓有独立的固件构建流程。
 
 已记录的维护线包括 `26_wheelleg`（含 chuanliantui 与 imcawl）、`大腿`（imcawl）、`XML`（`mini_wheel_legged` 绑定 xwl）。动手前先 `git branch --show-current`，不假定合入目标为 `main`；分支用途与机器人映射见 [docs/ai/modules.md](docs/ai/modules.md) 的“分支分叉与维护线”。

@@ -166,8 +166,8 @@ def check_source_isolation(library):
     cases = []
     # 源槽 -> 已实测模型侧，位置输出、速度输出、前输入符号；不复用Reference。
     for source, model, pos, vel, sign in (
-            (0, "rf", [2, 3], [3, 4], 1), (1, "rf", [2, 3], [3, 4], 1),
-            (2, "lf", [0, 1], [0, 1], -1), (3, "lf", [0, 1], [0, 1], -1)):
+            (0, "lf", [2, 3], [3, 4], 1), (1, "lf", [2, 3], [3, 4], 1),
+            (2, "rf", [0, 1], [0, 1], -1), (3, "rf", [0, 1], [0, 1], -1)):
         data = Input.from_buffer_copy(baseline)
         data.dm_pos[source] += 0.07
         data.dm_vel[source] = 0.4
@@ -239,8 +239,8 @@ def check_cad_zero_fit(library, fit_data, capture_dir, bilateral_data=None):
     assert library.Lower_Observation_Build(ct.byref(data), ct.byref(result))
     hip, knee = result.joint_pos[:2]
     xml = mujoco.MjModel.from_xml_path(str(ROOT / "sim2sim/chuanliantui.xml"))
-    upper = np.asarray(xml.body_pos[xml.body("lf1").id])[[0, 2]]
-    lower = np.asarray(xml.body_pos[xml.body("lfwheel").id])[[0, 2]]
+    upper = np.asarray(xml.body_pos[xml.body("rf1").id])[[0, 2]]
+    lower = np.asarray(xml.body_pos[xml.body("rfwheel").id])[[0, 2]]
 
     def rotate(angle, point):
         c, s = np.cos(angle), np.sin(angle)
@@ -257,8 +257,8 @@ def check_cad_zero_fit(library, fit_data, capture_dir, bilateral_data=None):
         assert bilateral_data["left_mirror_pose_user_confirmed"]
         np.testing.assert_allclose(position, bilateral_data["old_capture_dm_pos_zero_rad"], atol=1e-7)
         left_hip, left_knee = result.joint_pos[2:4]
-        left_upper = np.asarray(xml.body_pos[xml.body("rf1").id])[[0, 2]]
-        left_lower = np.asarray(xml.body_pos[xml.body("rfwheel").id])[[0, 2]]
+        left_upper = np.asarray(xml.body_pos[xml.body("lf1").id])[[0, 2]]
+        left_lower = np.asarray(xml.body_pos[xml.body("lfwheel").id])[[0, 2]]
         left_wheel = rotate(-left_hip, left_upper) + rotate(-(left_hip + left_knee), left_lower)
         left_error_mm = ((left_wheel - target) * 1000).tolist()
         assert np.max(np.abs(left_error_mm)) < 1.0, left_error_mm

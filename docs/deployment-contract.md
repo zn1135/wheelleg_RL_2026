@@ -1,5 +1,11 @@
 # 训练与部署接口约定
 
+## 新 mjlab 实体关节接口
+
+`chuanliantui-mjlab-huananhu-v14-flat-standup-r1` 使用 actor35／critic78／action6，实体顺序 `[lf0, lf00, rf0, rf00, lfwheel, rfwheel]`；四腿位置PD、两轮速度控制，50Hz。完整字段、缩放、延迟、哈希校验和导出见 [mjlab接口](mjlab-chuanliantui.md)，兼容性与同步见 [独立接口记录](interfaces/chuanliantui-mjlab-huananhu-v14-flat-standup-r1.md)。本次没有训练模型交付、没有H7固件适配或真机验收；新ONNX不可直接替换旧虚拟关节模型。导出时生成同名JSON记录checkpoint和ONNX SHA256、opset及数值误差。
+
+2026-10-08 更正CAD左右命名：原 rf→当前 lf（+y实际左），原 lf→当前 rf（−y实际右）。旧Isaac／H7数字通道及极性保留，当前名称分别为 `[rf0, rf1, rfwheel, lf0, lf1, lfwheel]` 和 `[rf0, rf00, rfwheel, lf0, lf00, lfwheel]`；下面历史版本中的名称按其记录版本解释。
+
 本页按机器人索引接口，供训练仓与 [H7_RL](https://github.com/zn1135/H7_RL.git) 协作使用。下表依据训练仓 `26_wheelleg` 的 `f98b8bfcc70b4be7ec1fe82850fad0f3159f2afc` 代码核对，只描述训练与 MuJoCo 接口，不表示 H7 固件已对齐或真机验证通过。
 
 imcawl 的权威来源是 [mj_sim2sim.py](../sim2sim/mj_sim2sim.py) 文件头部署契约及训练实现；chuanliantui 使用 [mj_sim2sim_ct.py](../sim2sim/mj_sim2sim_ct.py)、[训练配置](../wheel_legged_gym/envs/chuanliantui/chuanliantui_config.py) 和 [观测实现](../wheel_legged_gym/envs/chuanliantui/chuanliantui.py)。说明与代码不一致时先核实版本并记录差异，不静默采用另一机器人的参数。

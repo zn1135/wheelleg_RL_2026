@@ -19,15 +19,15 @@ DEFAULT_URDF = REPO_ROOT / "resources/robots/chuanliantui_new_1/urdf/chuanliantu
 DEFAULT_OUTPUT = REPO_ROOT / "sim2sim/chuanliantui_train_proxy.xml"
 GAS_SPRING_SOURCE = REPO_ROOT / "sim2sim/chuanliantui.xml"
 
-DOF_NAMES = ("lf0", "lf1", "lfwheel", "rf0", "rf1", "rfwheel")
-WHEEL_JOINTS = {"lfwheel", "rfwheel"}
+DOF_NAMES = ("rf0", "rf1", "rfwheel", "lf0", "lf1", "lfwheel")
+WHEEL_JOINTS = {"rfwheel", "lfwheel"}
 TORQUE_LIMITS = {
-    "lf0": 40.0,
-    "lf1": 40.0,
-    "lfwheel": 3.9,
     "rf0": 40.0,
     "rf1": 40.0,
     "rfwheel": 3.9,
+    "lf0": 40.0,
+    "lf1": 40.0,
+    "lfwheel": 3.9,
 }
 
 
@@ -85,7 +85,7 @@ def _add_gas_springs(mj: ET.Element, actuators: ET.Element) -> None:
     source = ET.parse(GAS_SPRING_SOURCE).getroot()
     tendons = ET.Element("tendon")
     mj.insert(list(mj).index(actuators), tendons)
-    for side, prefix in (("left", "lf"), ("right", "rf")):
+    for side, prefix in (("right", "rf"), ("left", "lf")):
         for end, suffix in (("upper", "0"), ("lower", "1")):
             body_name = prefix + suffix
             path = ".//body[@name='{}']".format(body_name)
@@ -141,11 +141,11 @@ def main() -> None:
     def ordered_children(parent_name: str) -> list[str]:
         names = children.get(parent_name, [])
         preferred = {
-            "base_link": ("lf0", "rf0"),
-            "lf0": ("lf1", "lf00"),
-            "lf1": ("lfwheel",),
+            "base_link": ("rf0", "lf0"),
             "rf0": ("rf1", "rf00"),
             "rf1": ("rfwheel",),
+            "lf0": ("lf1", "lf00"),
+            "lf1": ("lfwheel",),
         }.get(parent_name, ())
         order = {name: index for index, name in enumerate(preferred)}
         return sorted(names, key=lambda name: (order.get(name, len(order)), name))
@@ -226,7 +226,7 @@ def main() -> None:
                     )
                 else:
                     joint_attrs.update(damping="0.03", frictionloss="0.015")
-                    if joint.attrib["name"] in ("lf1", "rf1"):
+                    if joint.attrib["name"] in ("rf1", "lf1"):
                         # 对齐 Isaac 的膝限位柔度，避免站立载荷下过度越过硬行程。
                         joint_attrs["solreflimit"] = "0.004 1"
                     limit = joint.find("limit")

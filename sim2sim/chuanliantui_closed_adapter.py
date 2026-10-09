@@ -156,10 +156,10 @@ class ClosedChainAdapter:
 
     _SIDES = (
         # 虚拟关节索引, 真实主动/被动 joint, connect site 对, actuator 顺序索引
-        ("left", 0, 1, 2, "lf0", "lf1", ("lf00", "lf01", "lf02", "lf03"),
-         (("left_rear_pin1", "left_front_pin1"), ("left_rear_pin2", "left_front_pin2")), (0, 1, 2)),
-        ("right", 3, 4, 5, "rf0", "rf1", ("rf00", "rf01", "rf02", "rf03"),
-         (("right_rear_pin1", "right_front_pin1"), ("right_rear_pin2", "right_front_pin2")), (3, 4, 5)),
+        ("right", 0, 1, 2, "rf0", "rf1", ("rf00", "rf01", "rf02", "rf03"),
+         (("right_rear_pin1", "right_front_pin1"), ("right_rear_pin2", "right_front_pin2")), (0, 1, 2)),
+        ("left", 3, 4, 5, "lf0", "lf1", ("lf00", "lf01", "lf02", "lf03"),
+         (("left_rear_pin1", "left_front_pin1"), ("left_rear_pin2", "left_front_pin2")), (3, 4, 5)),
     )
     def __init__(self, mujoco, model, data):
         self.mujoco = mujoco
@@ -184,8 +184,8 @@ class ClosedChainAdapter:
                         raise RuntimeError("MJCF 缺少闭链 site: {}".format(name))
                     self.site[name] = sid
         self.actuator_ids = np.array([
-            self._actuator("lf0_motor"), self._actuator("lf00_motor"), self._actuator("lfwheel_motor"),
             self._actuator("rf0_motor"), self._actuator("rf00_motor"), self._actuator("rfwheel_motor"),
+            self._actuator("lf0_motor"), self._actuator("lf00_motor"), self._actuator("lfwheel_motor"),
         ], dtype=np.int32)
         self.geometry = {
             side[0]: _PlanarLegGeometry(model, side) for side in self._SIDES

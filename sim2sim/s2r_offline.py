@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 
 
-MODEL_JOINTS = ("lf0", "lf00", "lfwheel", "rf0", "rf00", "rfwheel")
+MODEL_JOINTS = ("rf0", "rf00", "rfwheel", "lf0", "lf00", "lfwheel")
 MOTOR_NAMES = ("front_left", "rear_left", "front_right", "rear_right",
                "wheel_left", "wheel_right")
 # S2R1 CONTROL 的物理槽顺序是四个 DM，随后两轮；模型交叉顺序在映射里显式指定。

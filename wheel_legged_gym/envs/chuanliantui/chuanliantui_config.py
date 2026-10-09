@@ -2,11 +2,11 @@
 #
 # 模板 = 复旦星云EGA开源 plane 方案(方法论与数值出处见任务 T-20260823-01 调研),
 # 机器人相关参数以 chuanliantui_new_1 的 6-DOF 训练派生 URDF 为准:
-#   - 6 DOF,DOF 字母序 [lf0, lf1, lfwheel, rf0, rf1, rfwheel],恰与基类
+#   - 6 DOF,DOF 字母序 [rf0, rf1, rfwheel, lf0, lf1, lfwheel],恰与基类
 #     _compute_torques 的"索引 2/5 为轮、其余为腿位置环"约定兼容;
 #   - 连杆 l1=0.21(髋→膝)、l2=0.25(膝→轮心),FK 零位偏置
 #     (0.664720554, 1.626002937)，由新主链的 x-z 平面几何计算;
-#   - 默认站姿 lf0=∓0.06 / lf1=±0.10(rf 取反镜像):微蹲 L0≈0.297m、摆角≈0,
+#   - 默认站姿 rf0=∓0.06 / rf1=±0.10(rf 取反镜像):微蹲 L0≈0.297m、摆角≈0,
 #     base 站高 ≈0.324m;height 命令域覆盖其上下;
 #   - 电机:腿 DM8009P(effort 40)、轮改装 M3508 减速比16.6(effort 3.9),
 #     URDF limit 由 Isaac 自动读入 torque_limits。
@@ -51,12 +51,12 @@ class ChuanliantuiCfg(LeggedRobotCfg):
     class init_state(LeggedRobotCfg.init_state):
         pos = [0.0, 0.0, 0.3376]  # 默认站高 0.3276m，留 1cm 下落余量
         default_joint_angles = {  # action=0 时的目标角;微蹲、轮心位于髋正下方(theta0≈0)
-            "lf0": -0.06,
-            "lf1": 0.10,
-            "lfwheel": 0.0,
-            "rf0": 0.06,
-            "rf1": -0.10,
+            "rf0": -0.06,
+            "rf1": 0.10,
             "rfwheel": 0.0,
+            "lf0": 0.06,
+            "lf1": -0.10,
+            "lfwheel": 0.0,
         }
 
     class control(LeggedRobotCfg.control):

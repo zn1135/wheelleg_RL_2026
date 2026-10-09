@@ -1,0 +1,455 @@
+{
+  "commit": "868467c3427fc00d34ebb1176683652d9597ba1c",
+  "task": "Robotics-Wheelbipe-V14-Flat-v0",
+  "files": {
+    "wheelbipe25_v3/env.py": "9959c7fae6eff8591d655a18c29986f2c184c13f4905361b6c722efefbad12bc",
+    "wheelbipe25_v3/env_cfg.py": "f2f2ca817b1f9d6c8a3ffc91dc1407853813ab1ab6fe6560e8670be3c2170887",
+    "wheelbipe_V14/env.py": "71388264b7db94d02bd2c906eae0387bbe5175504187b97575c09894faf58853",
+    "wheelbipe_V14/env_cfg.py": "e287a0dda7124dda6526a9a6f351f00d2ac0e1774ad390b9e2eebf077b9efc93",
+    "wheelbipe_V14/cfg_utils.py": "60dbc341079a3a26bd57a94bb5cfbbe740efa565652b18f926e765de7a782d69",
+    "agents/rsl_rl_ppo_cfg.py": "fbfe7b45a043241275fce6529bc3fcc6a63bddfb93919e2d10f8bd159eeff9c4",
+    "../../manager/mdp/isaaclab/events.py": "cca3ea5d10f3b3cf00f13f6b0d1f8b96e836e04355a5965de951bcd84d6e0bd0"
+  },
+  "parameters": {
+    "decimation": 4,
+    "episode_length_s": 20.0,
+    "termination_roll_deg": 40.0,
+    "termination_pitch_deg": 40.0,
+    "termination_duration_enabled": true,
+    "termination_duration_steps": 20,
+    "action_scale": 0.25,
+    "action_space": 6,
+    "observation_space": 28,
+    "state_space": 71,
+    "value_space": 1,
+    "play": false,
+    "play_keep_done_reset": true,
+    "reset_heading_axis_aligned_only": false,
+    "reset_heading_axis_aligned_candidates_deg": [
+      0.0,
+      90.0,
+      180.0,
+      -90.0
+    ],
+    "reset_heading_target_terminate_enabled": false,
+    "reset_heading_target_terminate_threshold_deg": 20.0,
+    "num_obs_hist": 1,
+    "num_privileged_obs_hist": 1,
+    "num_single_obs": 28,
+    "num_single_privileged_obs": 71,
+    "task_flag_obs_enabled": false,
+    "task_flag_obs_dim": 0,
+    "play_height_scanner_debug_vis": false,
+    "play_terrain_debug_vis": false,
+    "play_ang_vel_z_debug_vis": true,
+    "enable_state_machines": false,
+    "undesired_contact_force_threshold": 3.0,
+    "desired_contact_force_threshold": 5.0,
+    "frame_mask_probs": null,
+    "obs_delay_cfg": {
+      "root_ang_vel_b": [
+        1,
+        4
+      ],
+      "projected_gravity_b": [
+        1,
+        4
+      ],
+      "joint_pos": [
+        1,
+        4
+      ],
+      "joint_vel": [
+        1,
+        4
+      ]
+    },
+    "obs_history_len": 10,
+    "obs_default_time_lag": 1,
+    "use_obs_delay": true,
+    "act_delay_cfg": {
+      "leg_actions": [
+        1,
+        3
+      ],
+      "wheel_actions": [
+        1,
+        3
+      ]
+    },
+    "use_act_delay": true,
+    "undesired_contact_debug_interval": 0,
+    "undesired_contact_debug_force_threshold": 1.0,
+    "undesired_contact_debug_max_envs": 4,
+    "undesired_contact_debug_max_links": 6,
+    "leg_action_scale": 0.5,
+    "wheel_action_scale": 1.0,
+    "lin_vel_scale": 1.0,
+    "height_scale": 5.0,
+    "ang_vel_scale": 1.0,
+    "joint_pos_scale": 1.0,
+    "joint_vel_scale": 0.1,
+    "wheel_vel_scale": 0.1,
+    "joint_torque_scale": 0.1,
+    "default_height_cmd": 0.22,
+    "height_range": [
+      0.2,
+      0.42
+    ],
+    "use_leg_length_as_height": false,
+    "use_absolute_height": true,
+    "height_obs_clip_enabled": false,
+    "height_obs_clip_range": [
+      null,
+      null
+    ],
+    "leg_front_rear_range": [
+      0.0,
+      1.4
+    ],
+    "soft_range_scale": 1.0,
+    "foot_bound_dist": 0.12,
+    "no_fork_distance": 0.05,
+    "no_fork_z_distance": 0.05,
+    "upper_joint_limit": 3.14,
+    "lower_joint_limit": -3.14,
+    "max_wheel_torque": 10.0,
+    "mute_wheel_pos_obs": true,
+    "use_wheel_vel_control": true,
+    "wheel_vel_action_scale": 10.0,
+    "max_wheel_vel": 100.0,
+    "use_action_low_pass_filter": false,
+    "action_low_pass_prev_weight": 0.2,
+    "action_low_pass_curr_weight": 0.8,
+    "use_leg_random_start": true,
+    "links_length": [
+      0.1134,
+      0.135,
+      0.21
+    ],
+    "leg_length_range": [
+      0.13,
+      0.32
+    ],
+    "use_predefined_leg_random_start": true,
+    "use_joint_vel_random_start": true,
+    "wheel_joint_vel_range": [
+      -50.0,
+      50.0
+    ],
+    "lin_vel_err_constraint": 1.0,
+    "lin_vel_xy_sigma": 0.5,
+    "lin_vel_xy_soft_sigma": 1.5,
+    "lin_vel_xy_tight_sigma": 0.1,
+    "lin_vel_xy_torlarance_gap": 0.5,
+    "lin_vel_xy_square_sigma": 0.25,
+    "high_speed_pen_sigma": 1.0,
+    "ang_vel_err_constraint": 0.8,
+    "ang_vel_z_sigma": 0.25,
+    "amg_vel_z_soft_sigma": 1.0,
+    "ang_vel_z_torlarance_gap": 1.0,
+    "ang_vel_z_square_sigma": 0.5,
+    "high_angVel_pen_sigma": 1.0,
+    "height_err_constraint": 0.15,
+    "height_sigma": 0.025,
+    "height_soft_sigma": 0.1,
+    "height_tight_sigma": 0.001,
+    "height_square_sigma": 10.0,
+    "height_l1_sigma": 2.0,
+    "height_tanh_sigma": 0.02,
+    "height_torlarance_gap": 0.02,
+    "base_height_bound": 0.2,
+    "pen_base_too_low_sigma": 5.0,
+    "wheel_motor_z_axis_align_ref_y_offset": 0.20855,
+    "wheel_motor_z_axis_align_tolerance": 0.0,
+    "wheel_motor_z_axis_align_sigma": 0.01,
+    "wheel_motor_z_axis_align_tight_sigma": 0.001,
+    "lin_vel_z_sigma": 0.25,
+    "orientation_x_bias": 2.0,
+    "orientation_x_sigma": 3.0,
+    "orientation_x_A": 2.0,
+    "orientation_y_bias": 2.0,
+    "orientation_y_sigma": 3.0,
+    "orientation_y_A": 2.0,
+    "orientation_x_square_sigma": 4.0,
+    "orientation_y_square_sigma": 2.0,
+    "orientation_y_exp_sigma": 0.02,
+    "orientation_x_exp_sigma": 0.01,
+    "flat_pitch_l1_sigma": 1.0,
+    "flat_roll_l1_sigma": 1.0,
+    "flat_pitch_tanh_sigma": 0.1,
+    "flat_roll_tanh_sigma": 0.05,
+    "foot_bound_square_sigma": 2.0,
+    "foot_bound_exp_pen_sigma": 0.2,
+    "foot_bound_exp_sigma": 0.02,
+    "foot_bound_ssquare_sigma": 8.0,
+    "no_fork_square_sigma": 5.0,
+    "no_fork_exp_sigma": 0.0001,
+    "no_fork_z_square_sigma": 2.0,
+    "no_fork_z_exp_sigma": 0.0001,
+    "l_leg_ang_exp_sigma": 0.1,
+    "r_leg_ang_exp_sigma": 0.1,
+    "vel_upright_gate_enabled": false,
+    "vel_upright_gate_sigma": 0.1,
+    "vel_height_gate_enabled": false,
+    "vel_height_gate_tracker_sigma": 0.02,
+    "height_upright_gate_enabled": false,
+    "height_upright_gate_sigma": 0.1,
+    "stand_still_deadzone_enabled": true,
+    "stand_still_deadzone_threshold": 0.1,
+    "training_progress_steps_per_iteration": 24,
+    "curriculum": null,
+    "use_gimbal": true,
+    "gimbal_pitch_target_pos": -0.5,
+    "self_act_noise_cfg": null,
+    "terrain_command_switch_hold_steps": 0,
+    "front_rear_joint_limit_rewards_enabled": false,
+    "rear2_rear1_joint_limit_boundary_ratio": 0.03,
+    "rear2_rear1_joint_limit_lower_boundary_ratio": 0.03,
+    "rear2_rear1_joint_limit_upper_boundary_ratio": 0.03,
+    "rear2_rear1_joint_limit_vel_threshold": 10.0,
+    "ctrl_mode_obs_enabled": true,
+    "ctrl_mode_obs_dim": 7,
+    "ctrl_mode_obs_layout": [
+      "normal",
+      "stair",
+      "slope",
+      "recover",
+      "jump",
+      "height_target",
+      "state_time"
+    ],
+    "jump_takeoff_extra_obs_slope_terrain_names": [
+      "slope_for_rm_low",
+      "slope_for_rm_high",
+      "inv_slope_for_rm_low",
+      "inv_slope_for_rm_high",
+      "stair_slope_for_rm_low",
+      "stair_slope_for_rm_high",
+      "inv_stair_slope_for_rm_low",
+      "inv_stair_slope_for_rm_high",
+      "cliff_inv_stair_slope_for_rm",
+      "cliff_inv_stair_slope_tall_for_rm"
+    ],
+    "airborne_state_machine_cfg": {
+      "enabled": false,
+      "allowed_terrain_names": [],
+      "not_allowed_terrain_names": [],
+      "enter": {
+        "wheel_radius": 0.06,
+        "body_height_threshold": 0.3,
+        "wheel_clearance_threshold": 0.08,
+        "duration_s": 0.02
+      },
+      "target_height": {
+        "enabled": false,
+        "bias": 0.12,
+        "max": 0.36
+      },
+      "landing_trajectory": {
+        "enabled": false,
+        "start_wheel_contact_duration_s": 0.02,
+        "target_height": 0.22,
+        "end_vel_z": 0.0,
+        "min_height_margin": 0.02,
+        "min_down_vel": 0.2,
+        "duration_s": 0.3,
+        "max_abs_acc": 30.0
+      },
+      "exit": {
+        "wheel_contact_force_threshold": 20.0,
+        "wheel_contact_height_threshold": 0.15,
+        "wheel_contact_duration_s": 0.3,
+        "base_contact_force_threshold": 5.0,
+        "base_contact_duration_s": 0.25,
+        "max_duration_s": 1.0
+      },
+      "reward_scales": {
+        "undesired_contact": 25.0,
+        "foot_bound_square": 1.0,
+        "termination": 3
+      },
+      "reward_full": {},
+      "reward_additions": {},
+      "terrain_command_resample": {
+        "enabled": false,
+        "prob": 0.15,
+        "lin_vel_x_sign_from_current": true,
+        "profiles": {
+          "high_stair_for_rm": {
+            "lin_vel_x": [
+              [
+                -1.5,
+                1.5
+              ]
+            ],
+            "lin_vel_y": [
+              0.0,
+              0.0
+            ],
+            "ang_vel_z": [
+              -1.0,
+              1.0
+            ]
+          },
+          "high_speed_stair_for_rm": {
+            "lin_vel_x": [
+              [
+                -1.5,
+                1.5
+              ]
+            ],
+            "lin_vel_y": [
+              0.0,
+              0.0
+            ],
+            "ang_vel_z": [
+              -1.0,
+              1.0
+            ]
+          },
+          "low_speed_stair_for_rm": {
+            "lin_vel_x": [
+              [
+                -1.5,
+                1.5
+              ]
+            ],
+            "lin_vel_y": [
+              0.0,
+              0.0
+            ],
+            "ang_vel_z": [
+              -1.0,
+              1.0
+            ]
+          }
+        }
+      }
+    },
+    "jump_takeoff_permission_cfg": {
+      "enabled": false,
+      "rel_envs": 0.0,
+      "iteration_start": 0,
+      "iteration_end": -1,
+      "steps_per_iteration": 24,
+      "ranges": null,
+      "height_range": null
+    },
+    "wheel_forward_scan_cfg": {
+      "enabled": false,
+      "scan": {
+        "forward_offset": 0.5
+      },
+      "detect": {
+        "step_height_min": 0.12,
+        "step_height_max": 0.14,
+        "wall_height": 0.14
+      },
+      "height_cmd": {
+        "bias": 0.16,
+        "hold_s": 2.0,
+        "max": 0.4
+      }
+    },
+    "use_frame_stack": false,
+    "vel_orientation_y_gate_enabled": false,
+    "vel_orientation_y_gate_full_deg": 5.0,
+    "vel_orientation_y_gate_zero_deg": 20.0,
+    "vel_height_gate_mode": "linear_band",
+    "vel_height_gate_full_error": 0.05,
+    "vel_height_gate_zero_error": 0.1,
+    "play_wheel_motor_z_axis_align_debug": false,
+    "play_wheel_motor_z_axis_align_debug_interval": 50,
+    "play_wheel_motor_z_axis_align_debug_env_id": 0,
+    "play_wheel_material_debug": true,
+    "play_wheel_material_debug_interval": 50,
+    "play_wheel_material_debug_env_id": 0,
+    "debug_value_diagnosis": false,
+    "debug_value_diagnosis_interval": 50,
+    "debug_value_diagnosis_topk": 3,
+    "debug_value_diagnosis_threshold_only": false,
+    "debug_value_diagnosis_thresholds": {
+      "reward_total_abs": 1.0,
+      "reward_term_abs": 0.5,
+      "state_joint_vel_wheel_abs": 120.0,
+      "state_root_lin_vel_b_abs": 20.0,
+      "state_root_ang_vel_b_abs": 20.0,
+      "state_applied_torque_abs": 350.0,
+      "obs_policy_abs": 100.0,
+      "obs_critic_abs": 100.0
+    },
+    "obs_input_scale_enabled": true,
+    "obs_input_scale_streams": [
+      "policy",
+      "critic"
+    ],
+    "joint_pos_obs_encoding": "raw",
+    "privileged_extra_obs_enabled": true,
+    "privileged_extra_obs_dim": 39,
+    "privileged_extra_joint_count": 6,
+    "privileged_extra_wheel_count": 2,
+    "privileged_extra_body_count": 1,
+    "privileged_extra_inertia_body_count": 0,
+    "privileged_extra_material_body_count": 2,
+    "privileged_extra_joint_names": [
+      ".*_rear1_joint",
+      ".*_front1_joint",
+      ".*_wheel_joint"
+    ],
+    "privileged_extra_wheel_body_names": [
+      "left_wheel_link",
+      "right_wheel_link"
+    ],
+    "privileged_extra_body_names": [
+      "base_link"
+    ],
+    "privileged_extra_inertia_body_names": [],
+    "privileged_extra_material_body_names": [
+      "left_wheel_link",
+      "right_wheel_link"
+    ],
+    "debug_obs_alert_threshold": 120.0,
+    "debug_obs_alert_topk": 3,
+    "debug_obs_alert_print_interval": 1
+  },
+  "rewards": {
+    "termination": -200.0,
+    "leg_joint_acc": -5e-07,
+    "leg_joint_vel": -0.005,
+    "leg_joint_pair_pos_diff": -0.0,
+    "joint_torque": -0.0001,
+    "wheel_acc": -1e-08,
+    "wheel_vel": -1e-05,
+    "wheel_power": -0.0001,
+    "wheel_air_spin": 0.0,
+    "lin_vel_z": -0.5,
+    "ang_vel_xy": -0.05,
+    "action_smoothness_leg": -0.05,
+    "action_rate": -0.01,
+    "action_smoothness_wheel": -0.01,
+    "flat_orientation_y": -0.0,
+    "flat_orientation_y_v": -2.0,
+    "flat_orientation_y_exp": 1.0,
+    "flat_orientation_x": -0.0,
+    "flat_orientation_x_v": -2.0,
+    "flat_orientation_x_exp": 1.0,
+    "track_lin_vel_xy": 1.0,
+    "track_lin_vel_xy_tight": 0.0,
+    "track_lin_vel_xy_square": -1.0,
+    "track_ang_vel_z": 1.0,
+    "track_ang_vel_z_square": -1.0,
+    "stand_still_lin_vel": -1.0,
+    "stand_still": -0.0,
+    "track_height_exp": 0.0,
+    "track_height_exp_soft": 0.0,
+    "track_height_exp_tight": 1.0,
+    "track_height_square": -1.0,
+    "track_height_exp_both_wheels_contact": 0.0,
+    "no_fork": -1.0,
+    "no_fork_square": -1.0,
+    "no_fork_exp": -0.0,
+    "no_fork_z_exp": -0.0,
+    "undesired_contact": -2.0
+  }
+}

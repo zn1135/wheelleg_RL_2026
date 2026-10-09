@@ -18,7 +18,7 @@ from view_gas_spring_ct import build_model
 
 
 H7_NAMES = ("front_left", "rear_left", "front_right", "rear_right")
-MODEL_JOINTS = ("lf0", "lf00", "rf0", "rf00")
+MODEL_JOINTS = ("rf0", "rf00", "lf0", "lf00")
 
 
 def digest(path):
@@ -33,7 +33,7 @@ def load_mapping(path):
     if set(records) != set(H7_NAMES):
         raise ValueError("motor_to_model 必须列出四个物理 DM 槽")
     if {records[name].get("joint") for name in H7_NAMES} != set(MODEL_JOINTS):
-        raise ValueError("四个实体关节必须一一对应 lf0/lf00/rf0/rf00")
+        raise ValueError("四个实体关节必须一一对应 rf0/rf00/lf0/lf00")
     order = [H7_NAMES.index(next(name for name in H7_NAMES
                                  if records[name]["joint"] == joint)) for joint in MODEL_JOINTS]
     sign = np.array([records[H7_NAMES[i]]["sign"] for i in order], dtype=float)
@@ -105,8 +105,8 @@ class Replay:
         self.dof = np.array([self.adapter.dof[name] for name in MODEL_JOINTS])
         self.base_damping = self.model.dof_damping[self.dof].copy()
         self.base_friction = self.model.dof_frictionloss[self.dof].copy()
-        self.hip_body = np.array([self.model.body(name).id for name in ("lf0", "rf0")])
-        self.wheel_body = np.array([self.model.body(name).id for name in ("lfwheel", "rfwheel")])
+        self.hip_body = np.array([self.model.body(name).id for name in ("rf0", "lf0")])
+        self.wheel_body = np.array([self.model.body(name).id for name in ("rfwheel", "lfwheel")])
 
     def initialize(self, q):
         knee_left, _ = self.adapter.geometry["left"].knee_and_jacobian(q[0], q[1])

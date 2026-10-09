@@ -1,0 +1,113 @@
+{
+  "interface": {
+    "interface": "chuanliantui-mjlab-huananhu-v14-flat-standup-r1",
+    "source_commit": "868467c3427fc00d34ebb1176683652d9597ba1c",
+    "source_task": "Robotics-Wheelbipe-V14-Flat-v0",
+    "asset_sha256": "b309cf2a35cfd09ec8c70b3379e38d9fdc963ca341df7eacd99361b381d58abb",
+    "joints": [
+      "lf0",
+      "lf00",
+      "rf0",
+      "rf00",
+      "lfwheel",
+      "rfwheel"
+    ],
+    "actor_dim": 35,
+    "critic_dim": 78,
+    "action_dim": 6,
+    "physics_dt": 0.005,
+    "decimation": 4,
+    "height": 0.22,
+    "gas_spring_force_n": 150,
+    "recipe_sha256": "f9256b8709b8a2c85a123d76db5dedc3c28a2dbda4e17f70eebe62456f4ea1fd",
+    "poses_sha256": "8960f3218fa023d5f15f2d5f9d206e5704ab6368d417937aaedffbb86d8198ab",
+    "control": {
+      "leg_scale": 0.5,
+      "wheel_scale": 10,
+      "wheel_speed_limit": 20,
+      "leg_target_limit": [
+        -3.141592653589793,
+        3.141592653589793
+      ],
+      "kp": [
+        10,
+        10,
+        10,
+        10,
+        0,
+        0
+      ],
+      "kd": [
+        1,
+        1,
+        1,
+        1,
+        0.1,
+        0.1
+      ],
+      "effort": [
+        40,
+        40,
+        40,
+        40,
+        3.9,
+        3.9
+      ],
+      "effort_scale_before_clip": true,
+      "leg_effort_scale_sampling": [
+        0.8,
+        1.1
+      ],
+      "wheel_effort_scale_sampling": [
+        0.9,
+        1.1
+      ],
+      "zero_torque_s": 0.2,
+      "obs_delay_sampling": [
+        1,
+        4
+      ],
+      "act_delay_sampling": [
+        1,
+        3
+      ],
+      "delay_sampling_upper_exclusive": true,
+      "delay_step_s": 0.005,
+      "clear_delay_on_reset": true
+    }
+  },
+  "source_reward_max_abs_error": {
+    "termination": 0.0,
+    "leg_joint_acc": 0.0,
+    "leg_joint_vel": 0.0,
+    "joint_torque": 0.0,
+    "wheel_acc": 0.0,
+    "wheel_vel": 0.0,
+    "wheel_power": 0.0,
+    "lin_vel_z": 0.0,
+    "ang_vel_xy": 0.0,
+    "action_smoothness_leg": 0.0,
+    "action_rate": 0.0,
+    "action_smoothness_wheel": 0.0,
+    "flat_orientation_y_v": 0.0,
+    "flat_orientation_y_exp": 0.0,
+    "flat_orientation_x_v": 0.0,
+    "flat_orientation_x_exp": 0.0,
+    "track_lin_vel_xy": 9.313225746154785e-10,
+    "track_lin_vel_xy_square": 9.313225746154785e-10,
+    "track_ang_vel_z": 0.0,
+    "track_ang_vel_z_square": 0.0,
+    "stand_still_lin_vel": 0.0,
+    "track_height_exp_tight": 0.0,
+    "track_height_square": 0.0,
+    "no_fork": 0.0,
+    "no_fork_square": 0.0,
+    "undesired_contact": 0.0
+  },
+  "cpu_max_pin_error_m": 0.0021991773382535242,
+  "cpu_max_joint_speed": 9.767216682434082,
+  "onnx_max_abs_error": 1.043081283569336e-07,
+  "gpu_checked": true,
+  "gpu_max_pin_error_m": 0.0026316966395825148,
+  "scope": "finite math/physics/interface checks; no training or behavior acceptance"
+}

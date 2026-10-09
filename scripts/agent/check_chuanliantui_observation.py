@@ -35,6 +35,7 @@ def load_observation_methods():
         "wheel_legged_gym.envs",
         "wheel_legged_gym.envs.base",
         "wheel_legged_gym.envs.chuanliantui",
+        "wheel_legged_gym.utils",
         "isaacgym",
     )
     saved = {name: sys.modules.get(name) for name in package_names}
@@ -42,15 +43,29 @@ def load_observation_methods():
         "wheel_legged_gym.envs.base.legged_robot"
     )
     saved["isaacgym.torch_utils"] = sys.modules.get("isaacgym.torch_utils")
+    saved["wheel_legged_gym.utils.chuanliantui_gas_spring"] = sys.modules.get(
+        "wheel_legged_gym.utils.chuanliantui_gas_spring"
+    )
     try:
         for name in package_names:
             module = types.ModuleType(name)
             module.__path__ = []
             sys.modules[name] = module
+        sys.modules["wheel_legged_gym"].WHEEL_LEGGED_GYM_ROOT_DIR = str(REPO_ROOT)
+        sys.modules["isaacgym"].gymapi = types.SimpleNamespace()
+        sys.modules["isaacgym"].gymtorch = types.SimpleNamespace()
+        gas_spec = importlib.util.spec_from_file_location(
+            "wheel_legged_gym.utils.chuanliantui_gas_spring",
+            REPO_ROOT / "wheel_legged_gym/utils/chuanliantui_gas_spring.py",
+        )
+        gas_module = importlib.util.module_from_spec(gas_spec)
+        sys.modules[gas_spec.name] = gas_module
+        gas_spec.loader.exec_module(gas_module)
         legged_robot = types.ModuleType("wheel_legged_gym.envs.base.legged_robot")
         legged_robot.LeggedRobot = type("LeggedRobot", (), {})
         sys.modules[legged_robot.__name__] = legged_robot
         torch_utils = types.ModuleType("isaacgym.torch_utils")
+        torch_utils.quat_rotate = lambda quat, vector: vector
         torch_utils.quat_rotate_inverse = lambda quat, vector: vector
         sys.modules[torch_utils.__name__] = torch_utils
         spec = importlib.util.spec_from_file_location(
@@ -123,7 +138,7 @@ def read_policy_encoder_obs_contract():
         parts.append(node.id)
         return ".".join(reversed(parts))
 
-    return {dotted_name(expression.left), dotted_name(expression.right)}
+    return {dotted_name(expression.right), dotted_name(expression.left)}
 
 
 def main() -> None:
@@ -206,11 +221,11 @@ def main() -> None:
     assert sim.STANDUP_START_HEIGHT == 0.15
     np.testing.assert_allclose(
         sim.STANDUP_INITIAL_DOF_POS,
-        np.array((11.0, 0.0, 0.0, -11.0, 0.0, 0.0)),
+        np.array((-1.566, 0.0, 0.0, 1.566, 0.0, 0.0)),
     )
     np.testing.assert_allclose(
         sim.wrap_to_pi(sim.STANDUP_INITIAL_DOF_POS),
-        np.array((11.0 - 4.0 * np.pi, 0.0, 0.0, -11.0 + 4.0 * np.pi, 0.0, 0.0)),
+        sim.STANDUP_INITIAL_DOF_POS,
     )
 
     legacy_checkpoint = REPO_ROOT / "logs" / "chuanliantui" / "Sep08_12-56-46_new1_train_proxy_v1_resume" / "model_3000.pt"

@@ -12,9 +12,9 @@ chuanliantui 串联腿轮足机器人 sim2sim 部署验证脚本
 串联代理契约（对齐 wheel_legged_gym/envs/base/legged_robot.py）
     - 策略：ActorCriticSequence。action = actor(cat(obs_25, encoder(history_125)))
       导出的 policy_1.pt 只含 actor、缺 encoder，不可用；因此直接加载 model_*.pt 完整权重。
-    - DOF 顺序：[lf0, lf1, lfwheel, rf0, rf1, rfwheel]
+    - DOF 顺序：[rf0, rf1, rfwheel, lf0, lf1, lfwheel]
     - 观测 25 维：[base_ang_vel*0.25(3), projected_gravity(3), cmd*[2.0,0.25,5.0](3),
-                   腿关节 pos [lf0,lf1,rf0,rf1](4), dof_vel*0.05(6), last_action(6)]，裁剪 ±100
+                   腿关节 pos [rf0,rf1,lf0,lf1](4), dof_vel*0.05(6), last_action(6)]，裁剪 ±100
     - 历史 125=25*5：FIFO，最旧在前、最新在末尾；上电用首帧重复 5 次填充
     - 串联代理 dof_vel 用位置差分；闭链默认复现 H7 五连杆解算和反馈速度路径。
       --closed_chain_controller cad 可回到原 CAD 解算与混合差分速度路径。
@@ -66,7 +66,7 @@ from sim2sim.chuanliantui_closed_adapter import ClosedChainAdapter
 # --------------------------------------------------------------------------------------
 # 契约常量（全部已从 config / legged_robot.py 核实）
 # --------------------------------------------------------------------------------------
-JOINT_NAMES = ["lf0", "lf1", "lfwheel", "rf0", "rf1", "rfwheel"]
+JOINT_NAMES = ["rf0", "rf1", "rfwheel", "lf0", "lf1", "lfwheel"]
 ACTUATOR_NAMES = ["{}_motor".format(name) for name in JOINT_NAMES]
 NUM_ACTIONS = 6
 NUM_OBS = 25
@@ -113,8 +113,8 @@ ENCODER_HIDDEN_DIMS = [128, 64]
 DEFAULT_MODEL_XML = os.path.join(_THIS_DIR, "chuanliantui_train_proxy.xml")
 DEFAULT_CLOSED_MODEL_XML = os.path.join(_THIS_DIR, "chuanliantui.xml")
 GAS_SPRING_ACTUATOR_NAMES = (
-    "left_gas_spring_motor",
     "right_gas_spring_motor",
+    "left_gas_spring_motor",
 )
 DEFAULT_GAS_SPRING_FORCE = 150.0
 
@@ -328,7 +328,7 @@ def run(args):
             h7_history = H7PolicyHistory()
         else:
             adapter = ClosedChainAdapter(mujoco, model, data)
-        print("chuanliantui 闭链已启用：lf0/lf00 与 rf0/rf00 是实体电机。")
+        print("chuanliantui 闭链已启用：rf0/rf00 与 lf0/lf00 是实体电机。")
         print("闭链控制路径：{}".format(args.closed_chain_controller))
         if h7_adapter is not None:
             print("H7：五连杆 0.21/0.25 m、反馈速度、角差环绕、轮目标限幅={} rad/s、预热 10 拍。".format(args.wheel_vel_limit))
@@ -473,10 +473,10 @@ def run(args):
             dof_pos[i] = data.qpos[qpos_adr[i]]
         if adapter is None:
             return dof_pos, None
-        # 闭链观测只用前/后实体电机状态反算虚拟膝；不读被动 lf1/rf1 的 qpos/qvel。
+        # 闭链观测只用前/后实体电机状态反算虚拟膝；不读被动 rf1/lf1 的 qpos/qvel。
         knees = adapter.read_virtual_leg_state()
-        dof_pos[1], dof_pos[4] = knees["left"][0], knees["right"][0]
-        return dof_pos, np.array((knees["left"][1], knees["right"][1]))
+        dof_pos[1], dof_pos[4] = knees["right"][0], knees["left"][0]
+        return dof_pos, np.array((knees["right"][1], knees["left"][1]))
 
     def control_outputs(action):
         if h7_adapter is not None:
@@ -501,8 +501,8 @@ def run(args):
         if not math.isclose(push_schedule.to_dict()["physics_dt_s"], SIM_DT, abs_tol=1e-8):
             raise ValueError("推力计划的物理步长与MuJoCo不一致")
     wheel_bids = {
-        mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "lfwheel"),
         mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "rfwheel"),
+        mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "lfwheel"),
     }
 
     def read_base_state():
@@ -550,8 +550,8 @@ def run(args):
             if args.gas_spring_view:
                 with viewer.lock():
                     # 只改变渲染：加粗气弹簧，突出端点，并透视显示机构。
-                    for side, color in (("left", [0.0, 0.9, 1.0, 1.0]),
-                                        ("right", [1.0, 0.35, 0.05, 1.0])):
+                    for side, color in (("right", [0.0, 0.9, 1.0, 1.0]),
+                                        ("left", [1.0, 0.35, 0.05, 1.0])):
                         tid = mujoco.mj_name2id(
                             model, mujoco.mjtObj.mjOBJ_TENDON, side + "_gas_spring_tendon")
                         if tid < 0:
@@ -834,7 +834,7 @@ def run(args):
                 "scheduled_push_impulse_world_ns": push_impulse.tolist(),
                 "scheduled_push_force_sampling": "策略步起点的计划力；冲量按实际提交的每2ms力累计",
                 "gas_spring_actuator_names": GAS_SPRING_ACTUATOR_NAMES,
-                "gas_spring_knee_joint_names": ["lf1", "rf1"],
+                "gas_spring_knee_joint_names": ["rf1", "lf1"],
                 "closed_chain_controller": args.closed_chain_controller if args.closed_chain else None,
                 "h7_rear_zero_override": args.h7_rear_zero,
                 "h7_front_zero": h7_adapter.front_zero.tolist() if h7_adapter is not None else None,
@@ -907,8 +907,8 @@ def main():
                    help="覆盖所有 geom 的滑动摩擦系数（默认用 XML 里的 0.5；训练等效均值约 0.75）")
     p.add_argument("--init_height", type=float, default=0.33, help="串联代理复位时的初始基座高度 [m]")
     p.add_argument("--initial_dof_pos", type=float, nargs=NUM_ACTIONS,
-                   default=DEFAULT_DOF_POS.tolist(), metavar=("LF0", "LF1", "LWHEEL", "RF0", "RF1", "RWHEEL"),
-                   help="复位训练 DOF [lf0, lf1, lfwheel, rf0, rf1, rfwheel] [rad]；"
+                   default=DEFAULT_DOF_POS.tolist(), metavar=("RF0", "RF1", "RWHEEL", "LF0", "LF1", "LWHEEL"),
+                   help="复位训练 DOF [rf0, rf1, rfwheel, lf0, lf1, lfwheel] [rad]；"
                         "不用 --standup 时，策略从第一个控制步开始接管")
     p.add_argument("--ground_start", action="store_true",
                    help="按当前 initial_dof_pos 的碰撞网格最低点自动贴地；不能与 --standup 同用")
