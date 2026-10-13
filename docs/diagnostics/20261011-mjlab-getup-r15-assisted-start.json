@@ -1,0 +1,174 @@
+{
+  "job_id": "20261011T054119Z-getup-r15-assisted",
+  "launch_utc": "2026-10-11T05:41:19Z",
+  "source_release": "/root/gpufree-data/wheelleg-remote/releases/20261011T054119Z-getup-r15-assisted",
+  "verified_source": "/root/gpufree-data/wheelleg-remote/releases/20261011-getup-r15-assist-check",
+  "job_dir": "/root/gpufree-data/wheelleg-remote/jobs/20261011T054119Z-getup-r15-assisted",
+  "wrapper_pid": 9527,
+  "command": [
+    "/root/gpufree-data/wheelleg-remote/runtime/mjlab/bin/python",
+    "-u",
+    "-m",
+    "ct_mjlab.cli",
+    "train",
+    "--training-profile",
+    "getup-r15",
+    "--num-envs",
+    "4096",
+    "--iterations",
+    "1000",
+    "--seed",
+    "42",
+    "--device",
+    "cuda:0",
+    "--run-name",
+    "assisted"
+  ],
+  "environment": {
+    "PYTHONPATH": "/root/gpufree-data/wheelleg-remote/releases/20261011T054119Z-getup-r15-assisted/mjlab_training/src",
+    "MUJOCO_GL": "disable"
+  },
+  "initialization": "random",
+  "seed": 42,
+  "num_envs": 4096,
+  "iterations": 1000,
+  "profile": "chuanliantui-mjlab-getup-curriculum-r15-assisted-v1",
+  "source_sha256": {
+    "mjlab_training/src/ct_mjlab/experiments/getup_curriculum.py": "edc3b8ef35a7c6624913fdd1727777f2b50540d040c167b02fc762667023efac",
+    "mjlab_training/src/ct_mjlab/experiments/pull_up_assistance.py": "2ba8700fdd9b13e029b9c660e51f9f2823fd78383db0cabe5be90a6c30b5f719",
+    "mjlab_training/src/ct_mjlab/cli.py": "19d10c037bab1f9b82f395aada615cd9dc7146ce46ce895ca52311cafd2a0a7c",
+    "scripts/agent/check_chuanliantui_getup_curriculum.py": "69f3aa96f7cedba465f347364c8e79a436b0dae87d9ad6f864d9401694f14c9a"
+  },
+  "run_directory": "/root/gpufree-data/wheelleg-remote/logs/mjlab/chuanliantui/20261011_134150_495971_getup_r15_assisted",
+  "training_pid": 9528,
+  "initial_completed_updates": 0,
+  "initial_curriculum": {
+    "stage": 0,
+    "ready_steps": 0,
+    "stage_steps": 0,
+    "history": []
+  },
+  "initial_interface": "chuanliantui-mjlab-getup-curriculum-r15-assisted-v1",
+  "first_saved_completed_updates": 1,
+  "actor_changed_after_update": true,
+  "checkpoint_tensors_finite": true,
+  "optimizer_initialized": true,
+  "latest_logged_iteration": 60,
+  "console_tail": " 60/1000                            \n\n                               Run name: getup_r15\n                            Total steps: 5996544 \n                       Steps per second: 81866 \n                        Collection time: 1.116s \n                          Learning time: 0.085s \n                        Mean value loss: 2.1400\n                    Mean surrogate loss: -0.0074\n                      Mean entropy loss: 8.2548\n                            Mean reward: -244.45\n                    Mean episode length: 1000.00\n                        Mean action std: 0.96\n--------------------------------------------------------------------------------\n                         Iteration time: 1.20s\n                           Time elapsed: 0:01:11\n                                    ETA: 0:18:14\n\n",
+  "gpu": "NVIDIA GeForce RTX 4090, 2610 MiB, 81 %",
+  "exit_code_file_exists": false,
+  "latest_metrics": {
+    "Metrics/standup/pull_up_force_n": {
+      "step": 41,
+      "value": 43.39026641845703
+    },
+    "Episode_Reward/action_smoothness": {
+      "step": 41,
+      "value": 0.0
+    },
+    "Metrics/standup/height_error": {
+      "step": 41,
+      "value": 0.07368110865354538
+    },
+    "Episode_Reward/torque_limits": {
+      "step": 41,
+      "value": 0.0
+    },
+    "Metrics/standup/pull_up_budget_ratio": {
+      "step": 41,
+      "value": 0.9861249923706055
+    },
+    "Episode_Reward/power": {
+      "step": 41,
+      "value": 0.0
+    },
+    "Episode_Reward/no_fly": {
+      "step": 41,
+      "value": -2.0000267028808594
+    },
+    "Episode_Reward/pose_bias": {
+      "step": 41,
+      "value": 0.0
+    },
+    "Episode_Reward/acceleration": {
+      "step": 41,
+      "value": -0.05293607339262962
+    },
+    "Episode_Reward/termination": {
+      "step": 41,
+      "value": 0.0
+    },
+    "Episode_Reward/linear_tracking": {
+      "step": 41,
+      "value": 0.0
+    },
+    "Episode_Reward/inverted": {
+      "step": 41,
+      "value": -0.35653194785118103
+    },
+    "Episode_Reward/wheel_distance": {
+      "step": 41,
+      "value": 0.0
+    },
+    "Metrics/standup/getup_ready_fraction": {
+      "step": 41,
+      "value": 0.0
+    },
+    "Episode_Reward/torque": {
+      "step": 41,
+      "value": 0.0
+    },
+    "Episode_Reward/motor_limits": {
+      "step": 41,
+      "value": 0.0
+    },
+    "Episode_Reward/yaw_tracking": {
+      "step": 41,
+      "value": 0.0
+    },
+    "Metrics/standup/numerical_failure": {
+      "step": 41,
+      "value": 0.0
+    },
+    "Episode_Reward/action_rate": {
+      "step": 41,
+      "value": -0.6983135938644409
+    },
+    "Episode_Reward/wheel_load": {
+      "step": 41,
+      "value": 0.05790521577000618
+    },
+    "Episode_Reward/orientation": {
+      "step": 41,
+      "value": -11.707050323486328
+    },
+    "Episode_Reward/velocity_band": {
+      "step": 41,
+      "value": 0.0
+    },
+    "Episode_Reward/height": {
+      "step": 41,
+      "value": 2.366713285446167
+    },
+    "Episode_Reward/leg_velocity": {
+      "step": 41,
+      "value": 0.0
+    },
+    "Metrics/standup/getup_stage": {
+      "step": 41,
+      "value": 0.0
+    },
+    "Episode_Reward/symmetry": {
+      "step": 41,
+      "value": -0.005205720663070679
+    },
+    "Train/mean_reward": {
+      "step": 62,
+      "value": -244.45404052734375
+    },
+    "Train/mean_reward/time": {
+      "step": 73,
+      "value": -244.45404052734375
+    }
+  }
+}

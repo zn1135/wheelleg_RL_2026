@@ -1,0 +1,80 @@
+import json,sys,hashlib
+from pathlib import Path
+sys.path.insert(0,str(Path.cwd()/'mjlab_training/src'))
+import torch
+from ct_mjlab.policy import load_actor,checkpoint_reset_config,checkpoint_policy_joint_order,checkpoint_knee_limit_weight,checkpoint_uses_constant_modes
+from ct_mjlab.reference_training.entry import RecoverVecEnv
+cfg=json.loads(Path('/tmp/ct-r11-cloud-eval-path.json').read_text())
+checkpoint=Path(cfg['checkpoint'])
+actor=load_actor(checkpoint,'cuda:0')
+report=dict(checkpoint=str(checkpoint),checkpoint_sha256=hashlib.sha256(checkpoint.read_bytes()).hexdigest(),groups={})
+for randomize in (False,True):
+ env=RecoverVecEnv(num_envs=32,device='cuda:0',randomize=randomize,seed=42,auto_reset=False,
+                   reset_config=checkpoint_reset_config(checkpoint),
+                   dynamic_modes=not checkpoint_uses_constant_modes(checkpoint),
+                   policy_joint_order=checkpoint_policy_joint_order(checkpoint),
+                   knee_limit_weight=checkpoint_knee_limit_weight(checkpoint))
+ raw=env.unwrapped;state=raw.command_manager.get_term('standup');robot=raw.scene['robot']
+ initial_ground=state.ground_start.clone();active=torch.ones(32,dtype=torch.bool,device=raw.device)
+ recovered=torch.zeros_like(active);numerical=torch.zeros_like(active);survived=torch.zeros_like(active)
+ first_recover=torch.full((32,),-1,dtype=torch.long,device=raw.device)
+ window_seen=torch.zeros(32,dtype=torch.long,device=raw.device);window_ok=window_seen.clone()
+ failures=[None]*32;last=[None]*32;trajectory=[]
+ tail_count=torch.zeros(32,device=raw.device);tail_height=tail_count.clone();tail_error=tail_count.clone();tail_speed=tail_count.clone();tail_leg_contact=tail_count.clone()
+ try:
+  for i in range(1000):
+   with torch.inference_mode():actions=actor(env.obs)
+   _,_,done,_=env.step(actions)
+   d=robot.data;g=d.projected_gravity_b
+   base=raw.scene['base_contact'].data.force.norm(dim=-1).amax(-1)
+   roll=torch.atan2(-g[:,1],-g[:,2]).abs()*180/torch.pi
+   pitch=torch.asin(g[:,0].clamp(-1,1)).abs()*180/torch.pi
+   height=d.root_link_pos_w[:,2]-raw.scene.env_origins[:,2]
+   error=(height-state.command[:,2]).abs();speed=d.root_link_lin_vel_b[:,:2].norm(dim=-1)
+   wheel_force=raw.scene['wheel_contact'].data.force_history.norm(dim=-1).amax(-1)
+   strict=(base<=1.)&(roll<=15.)&(pitch<=15.)&(error<=.03)&(wheel_force>5.).all(-1)&~raw.reset_terminated&~state.numerical_failure
+   new=state.strict_recovered&active&(first_recover<0);first_recover[new]=i
+   window=active&(first_recover>=0)&(window_seen<750)
+   stationary=strict&(speed<=.15)&(d.root_link_ang_vel_b[:,2].abs()<=.30)
+   window_seen+=window.long();window_ok+=(window&stationary).long()
+   recovered|=state.strict_recovered&active;numerical|=state.numerical_failure&active
+   if i>=750:
+    tail_count+=active.float();tail_height+=height*active;tail_error+=error*active;tail_speed+=speed*active
+    leg_contact=raw.scene['undesired_contact'].data.force.norm(dim=-1).amax(-1)>1.
+    tail_leg_contact+=(leg_contact&(base<=1.)&active).float()
+   rows=torch.stack((height,state.command[:,2],roll,pitch,base,speed),-1).cpu().tolist()
+   current=[]
+   for j in range(32):
+    if not bool(active[j]):current.append(None);continue
+    h,c,r,p,f,v=rows[j]
+    last[j]=dict(time=(i+1)*raw.step_dt,height=h,command_height=c,roll_abs_deg=r,pitch_abs_deg=p,base_contact_force_n=f,planar_speed_m_s=v)
+    current.append(h)
+   trajectory.append(dict(time=(i+1)*raw.step_dt,height_m=current))
+   for j in torch.nonzero(active&raw.reset_terminated).flatten().cpu().tolist():failures[j]=last[j]
+   if i==999:survived.copy_(active&~raw.reset_terminated&~state.numerical_failure)
+   active&=~done.bool()
+   if not bool(active.any()):break
+   if bool(done.any()):
+    raw.reset(env_ids=torch.nonzero(done).flatten());env.obs=env.get_observations()
+  sustained=survived&(window_seen>=750)&(window_ok.float()/window_seen.clamp_min(1)>=.95)
+  groups={}
+  for label,mask in (('all',torch.ones_like(active)),('ground_start',initial_ground),('normal_start',~initial_ground)):
+   tail=mask&survived&(tail_count==250)
+   groups[label]=dict(count=int(mask.sum()),strict_recovered=int((recovered&mask).sum()),survived_20s=int((survived&mask).sum()),
+    sustained_stationary_15s=int((sustained&mask).sum()),physical_failures=sum(failures[j] is not None for j in torch.nonzero(mask).flatten().cpu().tolist()),
+    numerical_failures=int((numerical&mask).sum()),tail_env_count=int(tail.sum()),
+    mean_last5s_height_m=float((tail_height[tail]/tail_count[tail]).mean()) if bool(tail.any()) else None,
+    mean_last5s_abs_height_error_m=float((tail_error[tail]/tail_count[tail]).mean()) if bool(tail.any()) else None,
+    mean_last5s_planar_speed_m_s=float((tail_speed[tail]/tail_count[tail]).mean()) if bool(tail.any()) else None,
+    mean_last5s_leg_contact_without_base_fraction=float((tail_leg_contact[tail]/tail_count[tail]).mean()) if bool(tail.any()) else None)
+  summary=dict(randomization=randomize,num_envs=32,seed=42,requested_seconds=20,steps_executed=i+1,autoreset=False,
+   finished_envs_reset_then_excluded=True,policy='deterministic',learning=False,by_initial_pose=groups,
+   initial_ground=initial_ground.cpu().tolist(),first_failure_per_env=failures,last_active_sample_per_env=last,
+   first_strict_recovery_time_s=[None if n<0 else (n+1)*raw.step_dt for n in first_recover.cpu().tolist()],
+   stationary_window_samples=window_seen.cpu().tolist(),stationary_window_good_samples=window_ok.cpu().tolist(),trajectory=trajectory,
+   survival_acceptance='physical/numerical failure excluded; 20s timeout counts as survival',
+   tail_scope='full15-20s window, only20s survivors',stationary_acceptance='strict recovered; 15s observation window >=95% strict+planar speed <=.15m/s+yaw speed <=.30rad/s; survived20s')
+  report['groups']['training_randomization' if randomize else 'nominal']=summary
+  Path('/tmp/ct-r11-cloud-gpu-eval.json').write_text(json.dumps(report,indent=2)+'\n')
+  print('RESULT',json.dumps(groups),flush=True)
+ finally:env.close()

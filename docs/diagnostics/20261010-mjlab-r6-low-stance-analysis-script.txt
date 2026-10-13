@@ -1,0 +1,61 @@
+import json,sys,time
+from pathlib import Path
+sys.path.insert(0,str(Path.cwd()/'mjlab_training/src'))
+import torch
+from ct_mjlab.policy import load_actor
+from ct_mjlab.reference_training.entry import RecoverVecEnv
+from ct_mjlab.reference_training.huananhu_rewards import REWARD_WEIGHTS
+checkpoint=Path('logs/mjlab/chuanliantui/20261010_003055_713431_wheelleg_recover_r6_4096_1000/model_999.pt')
+actor=load_actor(checkpoint,'cuda:0')
+results=json.loads(Path("/tmp/chuanliantui-r6-batch-analysis-20261010.json").read_text()) if "--baseline-only" in sys.argv else {}
+for label,randomize,use_actor in [('policy_nominal',False,True),('policy_training_randomization',True,True),('zero_requested_action_nominal',False,False)]:
+ if "--baseline-only" in sys.argv and use_actor:continue
+ t=time.monotonic();env=RecoverVecEnv(num_envs=32,device='cuda:0',randomize=randomize,seed=42,auto_reset=False,dynamic_modes=False)
+ raw=env.unwrapped;state=raw.command_manager.get_term('standup');pd=raw.action_manager.get_term('pd');robot=raw.scene['robot']
+ active=torch.ones(32,dtype=torch.bool,device='cuda:0');first_failure=torch.full((32,),float('nan'),device='cuda:0')
+ snapshots=[];rewards=[];contacts=[];cur_contacts=[];torques=[];positions=[];actions=[];valid=[]
+ for i in range(1000):
+  with torch.inference_mode():a=actor(env.obs) if use_actor else torch.zeros(32,6,device='cuda:0')
+  _,_,done,_=env.step(a)
+  d=robot.data;gravity=d.projected_gravity_b
+  row=torch.stack((d.root_link_pos_w[:,2],state.command[:,2],d.root_link_lin_vel_b[:,:2].norm(dim=-1),
+   torch.atan2(-gravity[:,1],-gravity[:,2]).abs()*180/torch.pi,torch.asin(gravity[:,0].clamp(-1,1)).abs()*180/torch.pi,
+   state.strict_recovered.float(),state.numerical_failure.float()),-1)
+  snapshots.append(row.clone());valid.append(active.clone())
+  rewards.append(torch.stack([raw._huananhu_rewards.values[k]*v for k,v in REWARD_WEIGHTS.items()],-1))
+  s=raw.scene['undesired_contact'];contacts.append(s.data.force_history.norm(dim=-1).amax(1).clone());cur_contacts.append(s.data.force.norm(dim=-1).clone())
+  torques.append(pd.torques.clone());positions.append(raw.sim.data.qpos[:,pd._motor_q_adr].clone());actions.append(a.clone())
+  failed=raw.reset_terminated & active;first_failure[failed]=(i+1)*raw.step_dt
+  active&=~done.bool()
+  if not bool(active.any()):break
+  if i<999 and bool(done.any()):
+   raw.reset(env_ids=torch.nonzero(done,as_tuple=False).flatten())
+   env.obs=env.get_observations()
+ rows=torch.stack(snapshots).cpu();mask=torch.stack(valid).cpu();rw=torch.stack(rewards).cpu();con=torch.stack(contacts).cpu();cur=torch.stack(cur_contacts).cpu();tau=torch.stack(torques).cpu();q=torch.stack(positions).cpu();a=torch.stack(actions).cpu()
+ tail=mask.clone();tail[:500]=False
+ flat=rows[tail];qt=q[tail];at=a[tail];tt=tau[tail]
+ if not bool(tail.any()):
+  summary=dict(kind='No active samples remain at 10s; report first failures only',randomization=randomize,
+   first_failure_s=[None if not torch.isfinite(x) else float(x) for x in first_failure.cpu()],
+   failure_envs=int(torch.isfinite(first_failure).sum()),steps_recorded=len(rows),tail_samples=0,
+   recovered_envs=int((rows[:,:,5].bool() & mask).any(0).sum()),elapsed_s=time.monotonic()-t)
+  results[label]=summary
+  print('RESULT',label,json.dumps(summary),flush=True)
+  Path('/tmp/chuanliantui-r6-batch-analysis-20261010.json').write_text(json.dumps(results,indent=2)+'\n')
+  env.close();continue
+ names=s.primary_names
+ summary=dict(kind='diagnostic deterministic-policy rollout; no learning, 32 ground resets, seed42, 20s, manual reset of finished environments, excluded from subsequent samples',randomization=randomize,
+  first_failure_s=[None if not torch.isfinite(x) else float(x) for x in first_failure.cpu()],
+  tail_samples=int(tail.sum()),mean_height=float(flat[:,0].mean()),mean_command_height=float(flat[:,1].mean()),mean_abs_height_error=float((flat[:,0]-flat[:,1]).abs().mean()),
+  mean_speed=float(flat[:,2].mean()),max_roll_deg=float(flat[:,3].max()),max_pitch_deg=float(flat[:,4].max()),
+  recovered_envs=int((rows[:,:,5].bool() & mask).any(0).sum()),numerical_failure_envs=int((rows[:,:,6].bool() & mask).any(0).sum()),
+  undesired_contact_fraction=float((con[tail].amax(-1)>3).float().mean()),
+  contact_per_body={name:dict(fraction_gt3=float((cur[tail][:,j]>3).float().mean()),mean_force_n=float(cur[tail][:,j].mean())) for j,name in enumerate(names)},
+  weighted_rewards_per_s={k:float(rw[tail][:,j].mean()) for j,k in enumerate(REWARD_WEIGHTS)},
+  motor_order=['lf0','lf00','lfwheel','rf0','rf00','rfwheel'],mean_action=at.mean(0).tolist(),mean_qpos=qt.mean(0).tolist(),mean_abs_torque=tt.abs().mean(0).tolist(),
+  saturated_fraction=(tt.abs()>=pd._effort_limits.cpu()-.001).float().mean(0).tolist(),
+  final_height=rows[-1,:,0].tolist(),final_command_height=rows[-1,:,1].tolist(),elapsed_s=time.monotonic()-t)
+ results[label]=summary
+ print('RESULT',label,json.dumps(summary),flush=True)
+ Path('/tmp/chuanliantui-r6-batch-analysis-20261010.json').write_text(json.dumps(results,indent=2)+'\n')
+ env.close()

@@ -17,13 +17,14 @@ from mjlab.terrains import TerrainEntityCfg
 from mjlab.utils.lab_api.math import quat_apply, quat_apply_inverse, euler_xyz_from_quat
 from mjlab.managers.event_manager import RecomputeLevel
 from .asset import robot_spec, POSES
-from .config import JOINTS, DT, DECIMATION, STEP_DT, manifest
+from .config import JOINTS, DT, DECIMATION, STEP_DT, KP, KD, legacy_manifest as manifest
 from .recipe import Recipe
+from .gas_spring import SPRING_JOINTS, gas_spring_force
 
 class ChuanliantuiEnv(VecEnv):
     num_actions=6
     max_episode_length=1000
-    def __init__(self,num_envs=32,device='cuda:0',seed=42,randomize=True):
+    def __init__(self,num_envs=32,device='cuda:0',seed=42,randomize=True,random_initial_pose=None):
         self.num_envs=num_envs;self.device=torch.device(device);self.randomize=randomize
         torch.manual_seed(seed)
         self.cfg=dict(manifest(),num_envs=num_envs,seed=seed,randomize=randomize)
@@ -31,7 +32,7 @@ class ChuanliantuiEnv(VecEnv):
             joint_pos={f'^{name}$':value for name,value in POSES['reset'].items()},joint_vel={'.*':0.0}),sort_actuators=False,
             articulation=EntityArticulationInfoCfg(actuators=(
                 XmlActuatorCfg(target_names_expr=JOINTS),
-                XmlActuatorCfg(target_names_expr=('left_gas_spring_tendon','right_gas_spring_tendon'),transmission_type='tendon'),)))
+                XmlActuatorCfg(target_names_expr=SPRING_JOINTS),)))
         sensor=ContactSensorCfg(name='contacts',primary=ContactMatch(mode='body',pattern='.*',entity='robot'),
                                 fields=('force',),reduce='netforce',history_length=3)
         self.scene=Scene(SceneCfg(num_envs=num_envs,entities={'robot':robot},
@@ -41,9 +42,15 @@ class ChuanliantuiEnv(VecEnv):
             spec=self.scene.spec,device=device)
         self.scene.initialize(self.sim.mj_model,self.sim.model,self.sim.data)
         self.robot=self.scene['robot'];m=self.sim.mj_model;names=self.robot.joint_names
+        from .reset import RandomReset
+        self.random_initial_pose=randomize if random_initial_pose is None else random_initial_pose
+        self.reset_sampler=RandomReset(names,device) if self.random_initial_pose else None
+        self.ground_start=torch.zeros(num_envs,dtype=torch.bool,device=device)
         self.jids=[names.index(n) for n in JOINTS]
         self.ctrl=[m.actuator('robot/'+n+'_motor').id for n in JOINTS]
         self.gas=[m.actuator('robot/'+side+'_gas_spring_motor').id for side in ('left','right')]
+        self.spring_q=[m.jnt_qposadr[m.joint('robot/'+name).id] for name in SPRING_JOINTS]
+        self.spring_v=[m.jnt_dofadr[m.joint('robot/'+name).id] for name in SPRING_JOINTS]
         self.wheel=[self.robot.body_names.index(n) for n in JOINTS[4:]]
         self.base=self.robot.body_names.index('base_link')
         self.base_id=m.body('robot/base_link').id
@@ -74,6 +81,7 @@ class ChuanliantuiEnv(VecEnv):
         uniform=lambda shape,lo,hi:torch.empty(shape,device=self.device).uniform_(lo,hi)
         bids=self.robot.indexing.body_ids
         for i,name in enumerate(self.robot.body_names):
+            if name.startswith(('left_spring','right_spring')):continue
             lo,hi=(.9,1.3) if name=='base_link' else (.9,1.1)
             factor=uniform((n,),lo,hi);bid=int(bids[i]);model.body_mass[:,bid]*=factor
             # IsaacLab mass event recomputes inertia at the same density ratio.
@@ -96,6 +104,7 @@ class ChuanliantuiEnv(VecEnv):
                     # ground contacts instead of making sampled e cause bounce.
                     model.geom_solref[:,gid,0]=.02;model.geom_solref[:,gid,1]=1.
         for name in self.robot.joint_names:
+            if name.startswith(('left_spring','right_spring')):continue
             jid=m.joint('robot/'+name).id;vid=m.jnt_dofadr[jid]
             if name in JOINTS[:4]:fr,vis=(.25,1.),(.05,.2)
             elif name in JOINTS[4:]:fr,vis=(.05,.25),(0,.01)
@@ -109,9 +118,17 @@ class ChuanliantuiEnv(VecEnv):
         d=self.robot.data
         root=d.default_root_state[ids].clone()
         root[:,:3]+=self.scene.env_origins[ids]
+        positions,velocities=d.default_joint_pos[ids],d.default_joint_vel[ids]
+        # The deterministic 0.15 m playback pose is also a ground start.
+        self.ground_start[ids]=True
+        if self.reset_sampler is not None:
+            positions,velocities,z,quat,ground=self.reset_sampler.sample(len(ids))
+            root[:,2]=self.scene.env_origins[ids,2]+z
+            root[:,3:7]=quat;root[:,7:13]=0
+            self.ground_start[ids]=ground
         d.write_root_state(root,ids)
-        d.write_joint_state(d.default_joint_pos[ids],d.default_joint_vel[ids],env_ids=ids)
-        self.episode_length_buf[ids]=0;self.duration[ids]=0;self.recipe.reset(ids)
+        d.write_joint_state(positions,velocities,env_ids=ids)
+        self.episode_length_buf[ids]=0;self.duration[ids]=0;self.recipe.reset(ids,self.ground_start[ids])
         self.acc[ids]=0
         self.sim.data.xfrc_applied[ids]=0
         self.external_wrench_b[ids]=0
@@ -119,12 +136,14 @@ class ChuanliantuiEnv(VecEnv):
         self.wrench_timer[ids]=torch.empty(len(ids),device=self.device).uniform_(5,10)
         eligible=ids[self.common_step_counter-self.last_gain_sample[ids]>=720]
         if self.randomize and len(eligible):
-            self.recipe.kp[eligible,:4]=10*torch.empty(len(eligible),4,device=self.device).uniform_(.75,1.25)
-            self.recipe.kd[eligible]=torch.empty(len(eligible),6,device=self.device).uniform_(.75,1.25)*torch.tensor([1]*4+[.1]*2,device=self.device)
+            self.recipe.kp[eligible,:4]=torch.empty(len(eligible),4,device=self.device).uniform_(.75,1.25)*torch.tensor(KP[:4],device=self.device)
+            self.recipe.kd[eligible]=torch.empty(len(eligible),6,device=self.device).uniform_(.75,1.25)*torch.tensor(KD,device=self.device)
             self.recipe.effort_scale[eligible,:4]=torch.empty(len(eligible),4,device=self.device).uniform_(.8,1.1)
             self.recipe.effort_scale[eligible,4:]=torch.empty(len(eligible),2,device=self.device).uniform_(.9,1.1)
             self.last_gain_sample[eligible]=self.common_step_counter
         for value in self.term_sums.values():value[ids]=0
+        self.sim.data.ctrl[ids[:,None],torch.tensor(self.gas,device=self.device)]=gas_spring_force(
+            self.sim.data.qpos[ids][:,self.spring_q],self.sim.data.qvel[ids][:,self.spring_v])
         self.sim.forward()
     def state(self):
         d=self.robot.data;q=d.root_link_quat_w
@@ -170,7 +189,8 @@ class ChuanliantuiEnv(VecEnv):
             d=self.robot.data
             previous_vel=d.joint_vel[:,self.jids].clone()
             self.sim.data.ctrl[:,self.ctrl]=self.recipe.torque(d.joint_pos[:,self.jids],d.joint_vel[:,self.jids],self.episode_length_buf)
-            self.sim.data.ctrl[:,self.gas]=150
+            self.sim.data.ctrl[:,self.gas]=gas_spring_force(
+                self.sim.data.qpos[:,self.spring_q],self.sim.data.qvel[:,self.spring_v])
             self._write_external_wrench()
             self.sim.step();self.scene.update(DT)
             self.acc=(d.joint_vel[:,self.jids]-previous_vel)/DT
@@ -178,6 +198,7 @@ class ChuanliantuiEnv(VecEnv):
             self.recipe.observe_substep(self.state())
         self.sim.forward();self.episode_length_buf+=1;self.common_step_counter+=1
         s=self.state()
+        self.recipe.mode.advance(dict(s,height=s['height']-self.scene.env_origins[:,2]))
         immediate=(~torch.isfinite(torch.cat((s['vel'],s['lin'],s['ang']),-1)).all(-1)
                    |(s['vel'].abs().amax(-1)>500)|(s['lin'].abs().amax(-1)>100)|(s['ang'].abs().amax(-1)>200))
         if self.common_step_counter>10:
@@ -190,9 +211,12 @@ class ChuanliantuiEnv(VecEnv):
         reward=sum(terms.values());reward=torch.where(immediate,0,reward)
         for k,v in terms.items():self.term_sums[k]+=v
         done=terminated|timeout;ids=done.nonzero().flatten()
-        extras={'time_outs':timeout}
+        extras={'time_outs':timeout, 'log':{
+            'Mode/recover_fraction':self.recipe.mode.recover.float().mean(),
+            'Mode/recovered_fraction':self.recipe.mode.recovered.float().mean()}}
         if len(ids):
-            extras['log']={f'Reward/{k}':v[ids].mean()/20 for k,v in self.term_sums.items()}
+            extras['log'].update({f'Reward/{k}':v[ids].mean()/20 for k,v in self.term_sums.items()})
+            extras['log']['Mode/completed_recovered_fraction']=self.recipe.mode.recovered[ids].float().mean()
             self.reset(ids)
             self.recipe.observe_substep(self.state(),ids)
         self._events();self.sim.forward();self.obs=self._observations(advance=False)

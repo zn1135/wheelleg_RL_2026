@@ -4,7 +4,11 @@
 
 ## 项目是什么
 
-串联腿的新训练入口为独立的 `mjlab_training/` Python 3.12 / mjlab 环境，采用华南虎 V14 flat v0 普通 PPO；迁移范围、实体关节接口、命令和验证见 [mjlab 串联腿说明](docs/mjlab-chuanliantui.md)。下文 Isaac Gym / Python 3.8 约定仍适用于旧环境、旧模型和旧检查脚本；不得把新依赖装进旧环境。新任务无需 `import isaacgym`，其普通 actor 没有旧 encoder，旧 `policy_1.pt` 禁令不适用于新接口的独立 ONNX 导出。历史 `logs/` 保护和默认不启动训练／TensorBoard仍适用于两个入口。
+当前状态（2026-10-13）：串联腿训练使用 `mjlab_training/` 的 Python 3.12 / mjlab 环境，默认新训练配方为 `huananhu-v14`。现有最好的平衡模型是 A2500（`chuanliantui-mjlab-recovery-factors-v1:baseline`，SHA256 `706c8387cba4815b491be3f5914a5951881c2966edabbd5fbb90d0da9c9d3dbd`），普通64/64、地面60/64，但停在约0.20 m低位、膝压限位，0.30 m高度跟踪0/64，不是部署合格模型。验收按[双轮平衡验收v2](docs/interfaces/chuanliantui-wheel-balance-acceptance-v2.md)：原成功样本任一失效即判退化。训练只在用户逐次授权的预算内进行，不得因检查通过或轮数增加自行追加。
+
+逐日训练、评估与配方演变记录见[项目实验记录](docs/ai/project-log.md)，新记录写在该文件顶部，不再追加到本文件。
+
+串联腿的新训练入口为独立的 `mjlab_training/` Python 3.12 / mjlab 环境。显式 r14 训练在 `ct_mjlab/reference_training/`，沿用本机 wheelleg_RL 的 recover_pose_v2 普通 PPO 与原生 mjlab 管理器，按用户要求恢复动态 normal/recover 模式和四腿两轮动作顺序，r14加入前进速度±2.7 m/s、偏航速度±2π rad/s和50%航向控制，速度奖励高度门控为5～10 cm，knee_limit奖励权重保持0；r6～r13回放保留原命令和门控，当前拒绝隐式跨版本续训；初态沿用r10的50%普通／50%地面、地面机体零姿态；旧 direct 实现仅保留 r5 回放。动作输出与观测关节顺序均为四腿在前、两轮在后，迁移范围、实体接口、命令和验证见 [mjlab 串联腿说明](docs/mjlab-chuanliantui.md)。下文 Isaac Gym / Python 3.8 约定仍适用于旧环境、旧模型和旧检查脚本；不得把新依赖装进旧环境。新任务无需 `import isaacgym`，其普通 actor 没有旧 encoder，旧 `policy_1.pt` 禁令不适用于新接口的独立 ONNX 导出。历史 `logs/` 保护和默认不启动训练／TensorBoard仍适用于两个入口。
 
 轮足机器人强化学习训练仓，fork 自 legged_gym 并内嵌 rsl_rl。在 Isaac Gym 里训练策略，经 MuJoCo sim2sim 验证后通向真机部署。训练仓为纯 Python，无编译步骤，Linux + NVIDIA GPU；H7 部署仓有独立的固件构建流程。
 
@@ -92,3 +96,4 @@ python sim2sim/eval_isaac.py --load_run <run> --checkpoint <n> --cmd_vx 0.5
 
 - Git 提交信息（标题和正文）必须使用中文，团队提交与 PR 规则见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 - 每次实际执行 `git commit` 前，必须先向用户展示暂存文件范围和拟用的中文提交信息，并等待用户明确确认；未确认时不得提交、amend、推送或创建 PR。
+- 推送目标按 [CONTRIBUTING.md](CONTRIBUTING.md) 的分支规则：训练侧日常改动经用户确认后直接推送到当前维护分支（如 `26_wheelleg`）；改到观测、动作、坐标、控制频率、默认姿态、关节映射、模型格式或 `deployment/H7_RL/` 等影响 H7 的内容时，推到 `codex/<简短主题>` 远端分支并创建 PR，由合作者复查。用户确认这次推送，即视为授权创建该远端分支。推送前检查提交内容中是否有服务器地址、凭据等不宜公开的信息。

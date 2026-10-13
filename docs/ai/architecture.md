@@ -1,5 +1,7 @@
 # 架构与数据流
 
+串联腿当前训练使用独立 `mjlab_training/`：r14 的 `ct_mjlab/reference_training/` 原生 mjlab 管理器负责控制、子步观测、奖励、终止、随机化和复位，外部 RSL-RL 普通 PPO 负责学习；完整配置与数据槽见 [r14接口](../interfaces/chuanliantui-mjlab-wheelleg-recover-r14.md)。同目录旧 direct 实现保留r5回放。下文 Isaac 数据流只描述历史入口。
+
 ## 来源
 
 本仓库 fork 自 [legged_gym](https://github.com/leggedrobotics/legged_gym)，并把 [rsl_rl](https://github.com/leggedrobotics/rsl_rl) **内嵌**为 `wheel_legged_gym/rsl_rl/`（不是 pip 依赖）。改 RL 算法直接改这个目录，不要去装外部 rsl_rl。

@@ -1,6 +1,6 @@
 # 模块职责
 
-新串联腿训练入口 `mjlab_training/src/ct_mjlab/` 基于 mjlab Scene/Simulation 的 direct VecEnv，`ct-mjlab` 注册独立 `chuanliantui` 任务；配置、回放及ONNX接口见 [mjlab说明](../mjlab-chuanliantui.md)。旧 `wheel_legged_gym` 任务和内嵌算法继续服务历史模型。
+新串联腿训练入口 `mjlab_training/src/ct_mjlab/reference_training/` 使用 mjlab ManagerBasedRlEnv，沿用 wheelleg_RL recover 配方，r14加入前进速度±2.7 m/s、偏航速度±2π rad/s和50%航向控制，使用50%普通／50%地面初态、knee_limit权重0，速度奖励采用5～10 cm高度门控；历史回放按原命令和门控，隐式跨版本续训会拒绝；`ct-mjlab` 默认独立 `chuanliantui` 任务。旧direct VecEnv仅保留r5回放。配置、动作／观测不同顺序及ONNX接口见 [mjlab说明](../mjlab-chuanliantui.md)。旧 `wheel_legged_gym` 任务和内嵌算法继续服务历史模型。
 
 以下任务和目录索引以 `26_wheelleg` 代码为基准；其他维护线的差异见下文。开始工作时以实际检出的分支与任务配置为准。
 

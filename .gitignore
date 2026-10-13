@@ -63,6 +63,14 @@ docs/reference/
 # 每位协作者的本机路径；公共示例 .env.example 保留在 Git 中。
 /.env.local
 /mjlab_training/.venv/
+# 本机可能是指向 WSL venv 的符号链接，上一条只匹配目录
+/mjlab_training/.venv
+/.claude/settings.local.json
+
+# 评估产物（原始数组、场景快照、证据包、视频）只留本机；仅提交 models/ 下的模型
+/artifacts/**
+!/artifacts/**/
+!/artifacts/*/models/**/*.pt
 
 # 内置 H7 工程配置；编译输出由子目录的 .gitignore 管理。
 !/deployment/H7_RL/.vscode/

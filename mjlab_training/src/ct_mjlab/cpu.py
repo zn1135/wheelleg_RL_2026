@@ -8,6 +8,7 @@ from tensordict import TensorDict
 from .asset import cpu_model, POSES
 from .config import JOINTS, DT, DECIMATION, STEP_DT
 from .recipe import Recipe
+from .gas_spring import SPRING_JOINTS, gas_spring_force
 
 def rotation(quat):
     m=np.zeros(9);mujoco.mju_quat2Mat(m,quat);return m.reshape(3,3)
@@ -20,6 +21,8 @@ class CpuPlayback:
         self.v=[m.jnt_dofadr[m.joint(n).id] for n in JOINTS]
         self.ctrl=[m.actuator(n+'_motor').id for n in JOINTS]
         self.gas=[m.actuator(s+'_gas_spring_motor').id for s in ('left','right')]
+        self.spring_q=[m.jnt_qposadr[m.joint(name).id] for name in SPRING_JOINTS]
+        self.spring_v=[m.jnt_dofadr[m.joint(name).id] for name in SPRING_JOINTS]
         self.base=m.body('base_link').id;self.wheel=[m.body(n).id for n in JOINTS[4:]]
         nominal=torch.tensor([POSES['nominal'][n] for n in JOINTS],dtype=torch.float32)
         self.recipe=Recipe(1,'cpu',nominal,randomize=False)
@@ -28,10 +31,10 @@ class CpuPlayback:
         m,d=self.model,self.data;mujoco.mj_resetData(m,d)
         d.qpos[:7]=(0,0,.15,1,0,0,0)
         for name,value in POSES['reset'].items():d.qpos[m.jnt_qposadr[m.joint(name).id]]=value
-        d.ctrl[self.gas]=150;mujoco.mj_forward(m,d)
+        d.ctrl[self.gas]=gas_spring_force(d.qpos[self.spring_q],d.qvel[self.spring_v]);mujoco.mj_forward(m,d)
         self.steps=0;self.counter=0;self.contact_history=np.zeros((3,m.nbody))
         self.acc=np.zeros(6)
-        self.recipe.reset(torch.tensor([0]));self.obs=self.observations()
+        self.recipe.reset(torch.tensor([0]),torch.tensor([True]));self.obs=self.observations()
     def contacts(self):
         forces=np.zeros((self.model.nbody,3));f=np.zeros(6)
         for i in range(self.data.ncon):
@@ -66,12 +69,14 @@ class CpuPlayback:
             previous_vel=d.qvel[self.v].copy()
             tau=self.recipe.torque(torch.tensor(d.qpos[self.q],dtype=torch.float32)[None],
                 torch.tensor(d.qvel[self.v],dtype=torch.float32)[None],torch.tensor([self.steps]))
-            d.ctrl[self.ctrl]=tau.numpy()[0];d.ctrl[self.gas]=150
+            d.ctrl[self.ctrl]=tau.numpy()[0]
+            d.ctrl[self.gas]=gas_spring_force(d.qpos[self.spring_q],d.qvel[self.spring_v])
             mujoco.mj_step(self.model,d);self.contacts()
             self.acc=(d.qvel[self.v]-previous_vel)/DT
             mujoco.mj_forward(self.model,d)
             self.recipe.observe_substep(self.state())
         mujoco.mj_forward(self.model,d);self.steps+=1;s=self.state()
+        self.recipe.mode.advance(s)
         immediate=not torch.isfinite(torch.cat((s['vel'],s['lin'],s['ang']),-1)).all()
         immediate|=bool((s['vel'].abs()>500).any()|(s['lin'].abs()>100).any()|(s['ang'].abs()>200).any())
         if self.steps>10:immediate|=bool(self.recipe.bad_obs[0]|(self.recipe.raw_obs_max[0]>120))
@@ -93,7 +98,9 @@ def evaluate(actor,seconds=30,render=False,report=None):
             with torch.inference_mode():action=actor(env.obs) if actor else torch.zeros(1,6)
             s,done,_=env.step(action)
             rows.append(dict(time=(i+1)*STEP_DT,height=float(s['height'][0]),pitch=float(s['pitch'][0]),
-                speed=float(torch.linalg.vector_norm(s['lin'][0,:2])),x=float(env.data.qpos[0]),y=float(env.data.qpos[1])))
+                speed=float(torch.linalg.vector_norm(s['lin'][0,:2])),x=float(env.data.qpos[0]),y=float(env.data.qpos[1]),
+                mode='recover' if env.recipe.mode.recover[0] else 'normal',
+                state_time=float(env.recipe.mode.observation()[0,6])))
             if done and first_failure is None:first_failure=(i+1)*STEP_DT
             if not np.isfinite(env.data.qpos).all():break
             if viewer:

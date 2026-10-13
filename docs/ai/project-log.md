@@ -1,0 +1,45 @@
+# 项目实验记录
+
+自 [AGENTS.md](../../AGENTS.md) 迁出的逐日训练与评估记录，最新在前。新记录追加到本文件顶部，AGENTS.md 只保留当前状态摘要。
+
+2026-10-13按用户新任务直接回放wheelleg v11（SHA256 `62efa60cf3c0884d0abf4a2378d778371135a49c475ed3453ebec08136d22366`），替代旧两组1000轮训练意图，高位初态诊断取消。旧两组已于14:26左右保存最终模型，本次未重启／追加训练。35维观测与固定NORMAL逐项一致、最大差0，六维单位动作映射通过；源码表明动作是左腿左轮右腿右轮，观测三组关节通道原本均为四腿两轮，不能一并重排。模型只读复制，既有实验／参考内核／评估脚本／机器人资产与源仓src/assets共262份指纹保持，未动logs或H7。六高度×普通／地面各64环境20秒本机RTX4060回放：0.30m跟踪／平衡普通64/64、地面58/64，整批平均0.310539／0.296481m；六命令斜率1.058486／0.962749，共同平衡集合斜率1.058486／1.058435。与A2500配对仅作跨模型对照：地面丢失原成功4、6、7、10、14、16，新增20、42、53、57。源环境复现0.27／0.30／0.34m为0.272507／0.308471／0.350191m，均0/64摔倒、±3cm时间100%，匹配存档。触发256环境训练级随机化：三高度5s前摔倒1／4／2、5s起均0，末5s±3cm比例99.227%／98.828%／99.219%，数值失败0；首尝试因mjlab手动reset门禁退出1，保留失败日志，新增脚本仅监测原失败判据以保持无复位连续回放后完成。两份样本0叠加实际／目标高度视频各200帧、10fps、20秒，12项原始数组与视频时长复核通过。非零速度／H7部署未评估。完整表格、命令、源码执行版本、日志与视频见[回放报告](../diagnostics/20261013-mjlab-v11-replay.md)；交付后Claude复跑待执行。
+
+2026-10-13用户授权A2500膝限位两组独立续训：`chuanliantui-mjlab-height-knee-v1:knee_gate/knee_only`，源A baseline `model_2499.pt`（SHA256 `706c8387cba4815b491be3f5914a5951881c2966edabbd5fbb90d0da9c9d3dbd`），各4096环境、seed42、远端并行追加1000次PPO更新，预算止于累计3500，不追加、不扩组。16／4096有限、奖励隔离、完整actor／critic／Adam迁移及两组初始模型A普通64／地面60配对复现通过。176文件冻结，13:45:26在新远端RTX4090启动；两组model_3499均验证累计3500、iter3499，最终保存时间14:26:26／14:26:08。knee_only训练退出0；原协调器在读取稀疏回合日志时索引2599失败，未收集到knee_gate退出码，保持未能获取，不伪造0。14:31:31启动仅评估调度，原失败记录与冻结源码保留，没有重启或追加学习。两组最低100倍数保存点均为2600，评估2600／3000／3500；原A命令、随机化及3000轮spin_low逻辑保留。结果待评估完成，详见[训练与评估记录](../diagnostics/20261013-mjlab-height-knee-training.md)。
+
+2026-10-13收尾核对A2500高度课程两组各500轮：训练均于2026-10-12 23:37结束、累计3000，四个检查点评估及视频于23:58:53全部完成，协调器退出0。`curriculum`2601/3000轮普通均64、地面59/58，分别丢失A原成功29／27、29；`curriculum_knee`2601轮普通31/地面23，3000轮均0/64。0.30m高度跟踪全为0，课程最终L均0.24，两组四个检查点均按验收v2判退化、不通过，不得替代A作为合格模型。48项原始数组、完整迁移、checkpoint指纹、127文件冻结哈希及8份20秒视频复核通过；仅补齐报告，未追加训练。详见[训练与评估记录](../../docs/diagnostics/20261012-mjlab-height-curriculum-training.md)。
+
+2026-10-12用户授权A2500高度课程两组独立续训：`chuanliantui-mjlab-height-curriculum-v1:curriculum/curriculum_knee`，源为A baseline `model_2499.pt`（SHA256 `706c8387cba4815b491be3f5914a5951881c2966edabbd5fbb90d0da9c9d3dbd`）。两组零速度、高度课程与宽高度奖励，第二组另启用原膝限位惩罚−0.5；其余冻结内核保持。16/4096环境各64步有限、逐项奖励隔离、完整actor/critic/Adam迁移和A普通64/地面60配对复现通过。北京时间23:18:10在远端RTX4090并行启动，每组4096环境、seed42、独立追加500次更新，预算止于累计3000轮，不扩组、不追加；L从0.21起，按实际等级结束。发布`releases/20261012-height-curriculum-v1`、campaign `jobs/20261012-height-curriculum-500-v1`；完成后评估2601/3000轮并用验收v2逐样本退化否决。结果状态见[训练与评估记录](../../docs/diagnostics/20261012-mjlab-height-curriculum-training.md)，接口见[高度课程说明](../../docs/interfaces/chuanliantui-mjlab-height-curriculum-v1.md)。尚未以启动或检查通过宣称训练效果，未启动TensorBoard。
+
+2026-10-12用户指出E组明显退化，双轮平衡评估补充`wheel-balance-paired-acceptance-v2`：轮端真实对地承重、机身近水平且静止稳定；逐条件报告承重/平衡/高度，不约束腿角。原成功初态任意失效即判退化、验收不通过，新增成功不得抵消丢失；仅保留原成功集合不能称全初态或部署合格。E组地面丢失0、55明确退化，56/64仅为统计。详见[双轮平衡验收](../../docs/interfaces/chuanliantui-wheel-balance-acceptance-v2.md)。本次修改评估与汇总，不改冻结训练内核或启动新训练。
+
+2026-10-12六组单项对照均已完成各500轮、累计2500轮，全部回放/视频/分析于13:37:52结束，协调器退出0。原height基线地面平衡60/64，原recovery/跳过扶正/保留高度/强化承重各58/64，保留扶正接触惩罚56/64且丢失原成功样本0、55；普通均64/64，0.30m高度跟踪均0/64。基线保留原58个成功样本并新增27、29，但仍约0.20m低位平衡，不能作为高度目标合格模型。六组同屏样本0视频和接触力见[视频记录](../../docs/diagnostics/20261012-mjlab-recovery-factors-videos.md)，完整分组见[训练记录](../../docs/diagnostics/20261012-mjlab-recovery-factors-training.md)。本批预算已完成，未启动额外训练；单个seed/64初态不支持普遍因果结论。
+
+2026-10-12用户明确将六组500轮单项对照改为同时训练。原协调器仅暂停/终止调度，baseline原训练进度保留；并行协调器`parallel_chuanliantui_recovery_factors.py`在北京时间12:39:38启动，其余5组并行，仍4096环境/组、各从2000轮独立追加500轮。冻结`20261012-recovery-factors-v4-parallel`仅增加调度脚本，原训练与评估源码不变。进度读取`jobs/20261012-recovery-factors-500-v2/parallel-status.json`或更新后的`status.json`，新调度元数据为`parallel-launch.json`；旧launch为历史串行记录。训练并行，回放与汇总由单一协调器执行；不重复baseline或扩大预算。详见[训练记录](../../docs/diagnostics/20261012-mjlab-recovery-factors-training.md)。
+
+2026-10-12用户授权从已评估高度门控组2000轮独立启动多组单项对照，并选择每组追加500轮。实际六组为原height基线、原recovery参照、跳过扶正重启、保留前两阶段高度奖励、保留扶正接触惩罚、仅强化轮承重奖励；4096环境、seed42、完整恢复actor/critic/Adam及1e-5学习率，各组累计2500轮。独立接口`chuanliantui-mjlab-recovery-factors-v1:<case>`，默认V14与历史内核不变。最终冻结`20261012-recovery-factors-v3`，队列`jobs/20261012-recovery-factors-500-v2`，北京时间12:24:39第一组baseline进入学习；六组原生迁移与有限检查通过，其他组串行排队。每组完成后自动同初态回放追加101/500轮模型，评价双轮对地承重与原成功样本保留，不以固定腿角验收。预算仅六组各500轮，不延伸到额外续训。详见[启动记录](../../docs/diagnostics/20261012-mjlab-recovery-factors-training.md)与[接口说明](../../docs/interfaces/chuanliantui-mjlab-recovery-factors-v1.md)。
+
+2026-10-12用户纠正平衡目标：轮端确实对地接触并承担重量，机身近水平，不限制腿关节姿态，不使用normal复位角作为标准。新增显式`huananhu-v14-wheel-support`：每轮至少10%整机重量、双轮总支撑80%～120%、非轮承重≤5%，保留倾角15°与原静止速度阈值。XML0.27/0.30/0.34 m几何与静力均可达，最大静态腿力矩约7.52 N·m；5秒自由机体保持尚未通过，不能混同可达与策略成功。资产未改，16/4096环境有限检查与3000轮无学习迁移通过，没有启动新训练。旧recovery模型按原配置回放，首次转新配方须`--resume-v14-wheel-support`，只接受已评估recovery model2999。详见[轮端与XML报告](../../docs/diagnostics/20261012-mjlab-wheel-support-xml-height-audit.md)。
+
+2026-10-12 `huananhu-v14-recovery`累计3000轮已正常结束，退出码0；最终课程仍为双轮平衡，未进入高度跟踪，两项高度奖励全程为0。独立20秒回放普通/地面各64份：双轮平衡64/64、56/64，0.30 m高度跟踪均0/64，数值异常0。不得将这1000轮称为已训练高度课程，未授权额外训练或擅自放宽课程门槛。详见[3000轮结果](../../docs/diagnostics/20261012-mjlab-recovery-height-model2999-evaluation.md)。
+
+2026-10-12用户已授权`huananhu-v14-recovery`从高度门控组2000轮追加1000轮、累计3000轮，4096环境，无辅助力，课程重启扶正，完整恢复actor/critic/Adam及1e-5初始学习率。训练北京时间00:13启动，实际入口和模型迁移已核验；启动修复仅补`ROOT`导入，冻结到`20261012-v14-recovery-height-launchfix`。训练产物与失败启动日志独立保留，详见[续训启动记录](../../docs/diagnostics/20261012-mjlab-recovery-height-resume-2000-to-3000.md)。效果尚待完成后独立评估；此授权不延伸到额外轮数或另一组训练。
+
+2026-10-12用户澄清“站起”为倒地扶正、恢复双轮平衡，并最终跟踪高度命令；不能把旧固定0.30 m严格指标单独等同所有恢复能力。新增显式`huananhu-v14-recovery`整批扶正→双轮平衡→高度跟踪配置，前两阶段成功不依赖高度，最终命令0.27～0.34 m；动态recover在双轮平衡后退出。允许20秒恢复，数值异常立即失败，期末当前阶段未完成判失败；无辅助力、膝限位、默认角惩罚。历史默认和冻结内核保留，首次迁移仅接受已评估2000轮高度门控组并须`--resume-v14-recovery-fix`。详见[恢复与高度说明](../../docs/interfaces/chuanliantui-mjlab-v14-recovery-height-v1.md)。本次只修改与检查，未授权新训练。
+
+2026-10-11实测 `huananhu-v14-stand` 累计3000轮发生地面恢复退化，作为失败试验保留；不得将轮数更多等同更好，后续默认对照/修复起点回到高度门控组 `model_1999.pt`（累计2000轮，SHA256 `1c3487a7da8d1fe74c418466ec4068f621c162e36406c14786c972a2839e7027`）。2000轮也未通过30 cm严格站起验收，不能当作部署合格模型。用户未重新授权前，不因本条启动训练。原因审计见 [退化复核](../../docs/diagnostics/20261011-mjlab-v14-stand-regression-review.md)。历史模型/冻结配置不可覆盖，3000轮继续用于对照诊断。
+
+2026-10-11另增显式 `huananhu-v14-stand`：从已评估高度门控组2000轮追加1000轮，4096环境，固定0.30 m/零速度、关闭后期特殊命令；高度指数sigma0.01/权重+3，高度平方权重−3，固定学习率5e-5。完整恢复actor/critic/Adam与累计轮数，首次须 `--resume-v14-stand-fix`；本次无辅助力、无膝限位/默认角惩罚。原V14默认和历史配方保持原接口，禁止隐式迁移。详见 [站起专项说明](../../docs/interfaces/chuanliantui-mjlab-scut-v14-stand-v1.md)。
+
+2026-10-11另增显式 `huananhu-v14-height` 续训配方：高度命令0.27～0.34 m，四项速度跟踪奖励乘5～10 cm高度门控；其他V14训练参数保留。用户已授权从原V14 `model_999.pt` 的1000轮追加1000轮，4096环境，独立run。首次迁移须 `--resume-v14-height-fix`，核对源模型指纹并完整恢复actor/critic/Adam和累计轮数，禁止隐式跨版本加载；原V14默认与历史回放不变。详见 [高度门控说明](../../docs/interfaces/chuanliantui-mjlab-scut-v14-height-v1.md)。
+
+2026-10-11按用户选择，默认新训练切回最早 `wheeled-legged_RL-main_huananhu` 的 V14 Flat-v0 配方，CLI配置为 `huananhu-v14`，入口 `ct_mjlab/experiments/huananhu_v14.py`。来源为已审计的 `scut_v14.json`（提交868467c），恢复26项非零奖励、指数速度跟踪、无高度门控、0.20～0.42 m高度命令、原普通和后期特殊速度采样、固定normal模式、原PPO。没有三阶段课程或向上辅助力；机器人实体闭链、四腿两轮映射、气弹簧、合法姿态缓存及2 ms物理步长继续使用本仓适配。详见 [V14恢复说明](../../docs/interfaces/chuanliantui-mjlab-scut-v14-flat-v1.md)。已有r14/r15模型按自身版本回放／续训，禁止隐式跨版本加载。默认不启动训练／TensorBoard，运行中的冻结任务不会因默认配置切换而改变。
+
+以下段落记录显式选择的r15及历史演变，默认配方以上述V14为准。
+
+2026-10-11新训练的向上辅助力上限降为整机重量50%，高度缺口缩放与累计3000轮衰减保留。CLI新建 `getup-r15` / `getup-r15-orientation` 训练自动使用 `getup_half_assistance.py` 的独立模型标识；历史完整模型续训继续其原配置与累计进度，5000轮之后辅助力为零。历史奖励、辅助力内核和旧模型不可直接改写为新标识。
+
+2026-10-11另增显式选择的 `getup-r15-orientation` 续训配置：三个阶段orientation权重由-2.6/-2/-15改为-30/-30/-30，复用原r15 v3姿态公式；显式选择的 `getup-r15` 和历史回放保持原配置。实现见 `ct_mjlab/experiments/getup_orientation.py`；从已知v3完整模型迁移须显式 `--resume-orientation-weight`，保留actor/critic/Adam、课程和累计辅助力进度。此配置没有15°额外惩罚、没有修改失败条件或恢复pose_bias，不能因权重加大声称已满足姿态行为验收。
+
+2026-10-11 r15开发接口为 `chuanliantui-mjlab-getup-curriculum-r15-assisted-v3`：按用户要求，扶正/站起/行走三个阶段均移除 `pose_bias` 默认角惩罚，左右腿对称奖励保留。历史4000轮模型为v2，继续用原冻结源码回放；v3已启动从头2000轮和4000→5000轮续训，尚未验证学习效果。已知v2源码需显式 `--resume-pose-bias-fix` 才可迁移，仅允许删除该奖励项，完整保留优化器、课程和累计辅助力进度；v1接触修复标志仅在历史v2源码使用。双轮奖励和课程判定保持 `clamp(-Fz, min=0)`。
+
+历史上新训练默认曾改为r15整批扶正→站起→行走课程，入口 `ct_mjlab/experiments/getup_curriculum.py`，具体来源、三组完整奖励、阶段门槛和检查证据见 [r15说明](../../docs/interfaces/chuanliantui-mjlab-getup-curriculum-r15.md)。高度课程0.27→0.30→0.30 m；前两阶段零速度命令，允许20秒触地恢复；最终行走沿用r14速度／航向采样和物理失败条件。保留动态normal/recover和四腿两轮动作顺序，课程按整批推进，不按个体模式切换；被动knee_limit未启用；扶正／站起阶段施加世界向上质心辅助力，按整机重量缩放并在累计3000次PPO更新内退为零，行走和回放关闭辅助力。历史 `reference_training/` 内核保留，以下r14描述属于可通过 `--training-profile recover-r14` 选择的历史配方；r15拒绝隐式跨版本续训。默认不启动训练／TensorBoard、历史logs保护继续适用。

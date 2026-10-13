@@ -1,0 +1,47 @@
+{
+  "kind": "finite physics/interface check; no training",
+  "steps": 32,
+  "interface": "chuanliantui-mjlab-wheelleg-recover-r14",
+  "actor_dim": 35,
+  "critic_dim": 78,
+  "action_dim": 6,
+  "num_envs": 20,
+  "device": "cuda:0",
+  "seed": 42,
+  "exit_code": 0,
+  "command": "scripts/mjlab.sh check --num-envs 20 --steps 32 --device cuda:0",
+  "commands": {
+    "resampling_time_range": [
+      5.0,
+      15.0
+    ],
+    "debug_vis": false,
+    "training_stage": "recover_mixed_reset_r10",
+    "ground_start_probability": 0.5,
+    "zero_velocity_commands": false,
+    "linear_velocity_range": [
+      -2.7,
+      2.7
+    ],
+    "yaw_velocity_range": [
+      -6.283185307179586,
+      6.283185307179586
+    ],
+    "heading_probability": 0.5,
+    "heading_control_stiffness": 5.0,
+    "special_modes_enabled": false,
+    "height_range": [
+      0.27,
+      0.34
+    ],
+    "strict_recovery_metrics": true,
+    "ground_randomization_probability": 0.0,
+    "ground_tilt_max_rad": 0.0,
+    "ground_yaw_max_rad": 0.0,
+    "ground_height_offset_range": [
+      0.0,
+      0.0
+    ],
+    "dynamic_modes": true
+  }
+}

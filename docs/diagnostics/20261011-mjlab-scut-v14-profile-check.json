@@ -1,0 +1,958 @@
+{
+  "profile": "chuanliantui-mjlab-scut-v14-flat-v1",
+  "weights": {
+    "termination": -200.0,
+    "leg_joint_acc": -5e-07,
+    "leg_joint_vel": -0.005,
+    "joint_torque": -0.0001,
+    "wheel_acc": -1e-08,
+    "wheel_vel": -1e-05,
+    "wheel_power": -0.0001,
+    "lin_vel_z": -0.5,
+    "ang_vel_xy": -0.05,
+    "action_smoothness_leg": -0.05,
+    "action_rate": -0.01,
+    "action_smoothness_wheel": -0.01,
+    "flat_orientation_y_v": -2.0,
+    "flat_orientation_y_exp": 1.0,
+    "flat_orientation_x_v": -2.0,
+    "flat_orientation_x_exp": 1.0,
+    "track_lin_vel_xy": 1.0,
+    "track_lin_vel_xy_square": -1.0,
+    "track_ang_vel_z": 1.0,
+    "track_ang_vel_z_square": -1.0,
+    "stand_still_lin_vel": -1.0,
+    "track_height_exp_tight": 1.0,
+    "track_height_square": -1.0,
+    "no_fork": -1.0,
+    "no_fork_square": -1.0,
+    "undesired_contact": -2.0
+  },
+  "ppo": {
+    "seed": 42,
+    "num_steps_per_env": 24,
+    "max_iterations": 20000,
+    "obs_groups": {
+      "actor": [
+        "actor"
+      ],
+      "critic": [
+        "critic"
+      ]
+    },
+    "save_interval": 500,
+    "experiment_name": "chuanliantui_scut_v14_flat",
+    "run_name": "",
+    "logger": "tensorboard",
+    "wandb_project": "mjlab",
+    "wandb_tags": [],
+    "resume": false,
+    "load_run": ".*",
+    "load_checkpoint": "model_.*.pt",
+    "clip_actions": null,
+    "upload_model": false,
+    "class_name": "OnPolicyRunner",
+    "actor": {
+      "hidden_dims": [
+        256,
+        128,
+        64
+      ],
+      "activation": "elu",
+      "obs_normalization": false,
+      "distribution_cfg": {
+        "init_std": 1.0,
+        "std_type": "scalar"
+      }
+    },
+    "critic": {
+      "hidden_dims": [
+        256,
+        128,
+        64
+      ],
+      "activation": "elu",
+      "obs_normalization": false
+    },
+    "algorithm": {
+      "num_learning_epochs": 5,
+      "num_mini_batches": 4,
+      "learning_rate": 0.0001,
+      "schedule": "adaptive",
+      "gamma": 0.99,
+      "lam": 0.95,
+      "entropy_coef": 0.005,
+      "desired_kl": 0.01,
+      "max_grad_norm": 1.0,
+      "value_loss_coef": 4.0,
+      "use_clipped_value_loss": true,
+      "clip_param": 0.2,
+      "normalize_advantage_per_mini_batch": false,
+      "optimizer": "adam",
+      "rnd_cfg": null,
+      "symmetry_cfg": null
+    },
+    "multi_gpu": null
+  },
+  "environment": {
+    "decimation": 10,
+    "scene": {
+      "num_envs": 4096,
+      "env_spacing": 3.0,
+      "terrain": {
+        "init_state": {
+          "pos": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rot": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "lin_vel": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "ang_vel": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "joint_pos": {
+            ".*": 0.0
+          },
+          "joint_vel": {
+            ".*": 0.0
+          }
+        },
+        "spec_fn": "mjlab.entity.entity.EntityCfg.<lambda>.<locals>.<lambda>",
+        "articulation": null,
+        "sort_actuators": false,
+        "lights": [
+          {
+            "name": "sun",
+            "body": "world",
+            "mode": "fixed",
+            "target": null,
+            "type": "directional",
+            "castshadow": true,
+            "pos": [
+              0.0,
+              0.0,
+              1.5
+            ],
+            "dir": [
+              0.0,
+              0.0,
+              -1.0
+            ],
+            "cutoff": 45.0,
+            "exponent": 10.0,
+            "diffuse": null,
+            "specular": null,
+            "ambient": null,
+            "active": true,
+            "attenuation": [
+              1.0,
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "cameras": [],
+        "textures": [
+          {
+            "name": "groundplane",
+            "type": "2d",
+            "builtin": "checker",
+            "rgb1": [
+              0.2,
+              0.3,
+              0.4
+            ],
+            "rgb2": [
+              0.1,
+              0.2,
+              0.3
+            ],
+            "width": 300,
+            "height": 300,
+            "mark": "edge",
+            "markrgb": [
+              0.8,
+              0.8,
+              0.8
+            ],
+            "random": 0.01,
+            "file": null,
+            "cubefiles": null,
+            "gridsize": null,
+            "gridlayout": null,
+            "nchannel": 3,
+            "hflip": false,
+            "vflip": false
+          }
+        ],
+        "materials": [
+          {
+            "name": "groundplane",
+            "rgba": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "texuniform": true,
+            "texrepeat": [
+              4.0,
+              4.0
+            ],
+            "reflectance": 0.2,
+            "texture": "groundplane",
+            "geom_names_expr": [
+              "terrain$"
+            ]
+          }
+        ],
+        "meshes": [],
+        "geoms": [
+          {
+            "geom_names_expr": [
+              "^terrain$"
+            ],
+            "group": null,
+            "contype": null,
+            "conaffinity": null,
+            "condim": null,
+            "priority": null,
+            "friction": [
+              1.0,
+              0.005,
+              0.0001
+            ],
+            "solref": null,
+            "solimp": null,
+            "margin": null,
+            "gap": null,
+            "solmix": null
+          }
+        ],
+        "collisions": [],
+        "terrain_type": "plane",
+        "terrain_generator": null,
+        "env_spacing": 2.0,
+        "max_init_terrain_level": null,
+        "num_envs": 1,
+        "debug_vis": false
+      },
+      "entities": {
+        "robot": {
+          "init_state": {
+            "pos": [
+              0.0,
+              0.0,
+              0.38
+            ],
+            "rot": [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "lin_vel": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "ang_vel": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "joint_pos": {
+              "^lf0$": -0.6047205544565015,
+              "^lf1$": -0.1,
+              "^lfwheel$": 0,
+              "^lf00$": 0.6083241726212976,
+              "^lf01$": 0.1000000000061177,
+              "^lf02$": -0.08072959108330684,
+              "^lf03$": 0.09999999999830635,
+              "^rf0$": 0.6047205544560037,
+              "^rf1$": 0.1,
+              "^rfwheel$": 0,
+              "^rf00$": -0.6083241726229305,
+              "^rf01$": -0.100000000005281,
+              "^rf02$": 0.08072959108283861,
+              "^rf03$": -0.09999999999830585,
+              "^left_spring1_joint$": -0.004671622233715311,
+              "^left_spring2_joint$": -0.004754278245986315,
+              "^right_spring1_joint$": -0.004671622234014183,
+              "^right_spring2_joint$": -0.004754278245958976
+            },
+            "joint_vel": {
+              ".*": 0.0
+            }
+          },
+          "spec_fn": "ct_mjlab.asset.robot_spec",
+          "articulation": {
+            "actuators": [
+              {
+                "target_names_expr": [
+                  "lf0",
+                  "lf00",
+                  "lfwheel",
+                  "rf0",
+                  "rf00",
+                  "rfwheel"
+                ],
+                "transmission_type": "joint",
+                "armature": null,
+                "frictionloss": null,
+                "viscous_damping": null,
+                "delay_min_lag": 0,
+                "delay_max_lag": 0,
+                "delay_hold_prob": 0.0,
+                "delay_update_period": 0,
+                "delay_per_env_phase": true,
+                "command_field": null
+              }
+            ],
+            "soft_joint_pos_limit_factor": 1.0
+          },
+          "sort_actuators": false,
+          "lights": [],
+          "cameras": [],
+          "textures": [],
+          "materials": [],
+          "meshes": [],
+          "geoms": [
+            {
+              "geom_names_expr": [
+                ".*"
+              ],
+              "group": null,
+              "contype": null,
+              "conaffinity": null,
+              "condim": null,
+              "priority": 1,
+              "friction": null,
+              "solref": null,
+              "solimp": null,
+              "margin": null,
+              "gap": null,
+              "solmix": null
+            }
+          ],
+          "collisions": []
+        }
+      },
+      "sensors": [
+        {
+          "name": "wheel_contact",
+          "primary": {
+            "mode": "body",
+            "pattern": "^(lfwheel|rfwheel)$",
+            "entity": "robot",
+            "exclude": []
+          },
+          "secondary": null,
+          "fields": [
+            "found",
+            "force"
+          ],
+          "reduce": "netforce",
+          "num_slots": 1,
+          "secondary_policy": "first",
+          "track_air_time": false,
+          "global_frame": false,
+          "history_length": 8,
+          "debug": false
+        },
+        {
+          "name": "base_contact",
+          "primary": {
+            "mode": "body",
+            "pattern": "^base_link$",
+            "entity": "robot",
+            "exclude": []
+          },
+          "secondary": null,
+          "fields": [
+            "found",
+            "force"
+          ],
+          "reduce": "netforce",
+          "num_slots": 1,
+          "secondary_policy": "first",
+          "track_air_time": false,
+          "global_frame": false,
+          "history_length": 8,
+          "debug": false
+        },
+        {
+          "name": "undesired_contact",
+          "primary": {
+            "mode": "body",
+            "pattern": "^(base_link|[lr]f(0|1|00|01|02|03))$",
+            "entity": "robot",
+            "exclude": []
+          },
+          "secondary": null,
+          "fields": [
+            "found",
+            "force"
+          ],
+          "reduce": "netforce",
+          "num_slots": 1,
+          "secondary_policy": "first",
+          "track_air_time": false,
+          "global_frame": false,
+          "history_length": 8,
+          "debug": false
+        }
+      ],
+      "extent": null,
+      "spec_fn": null
+    },
+    "observations": {
+      "actor": {
+        "terms": {
+          "proprioception": {
+            "func": "ct_mjlab.reference_training.huananhu_observations.actor_observation",
+            "params": {
+              "cfg": {
+                "noise": true,
+                "delay": true,
+                "delay_seconds": [
+                  0.005,
+                  0.01,
+                  0.015
+                ]
+              }
+            },
+            "noise": null,
+            "clip": null,
+            "scale": null,
+            "delay_min_lag": 0,
+            "delay_max_lag": 0,
+            "delay_per_env": true,
+            "delay_hold_prob": 0.0,
+            "delay_update_period": 0,
+            "delay_per_env_phase": true,
+            "history_length": 0,
+            "flatten_history_dim": true
+          }
+        },
+        "concatenate_terms": true,
+        "concatenate_dim": -1,
+        "enable_corruption": false,
+        "history_length": null,
+        "flatten_history_dim": true,
+        "nan_policy": "error",
+        "nan_check_per_term": true
+      },
+      "critic": {
+        "terms": {
+          "proprioception": {
+            "func": "ct_mjlab.reference_training.huananhu_observations.critic_observation",
+            "params": {
+              "cfg": {
+                "noise": true,
+                "delay": true,
+                "delay_seconds": [
+                  0.005,
+                  0.01,
+                  0.015
+                ]
+              }
+            },
+            "noise": null,
+            "clip": null,
+            "scale": null,
+            "delay_min_lag": 0,
+            "delay_max_lag": 0,
+            "delay_per_env": true,
+            "delay_hold_prob": 0.0,
+            "delay_update_period": 0,
+            "delay_per_env_phase": true,
+            "history_length": 0,
+            "flatten_history_dim": true
+          }
+        },
+        "concatenate_terms": true,
+        "concatenate_dim": -1,
+        "enable_corruption": false,
+        "history_length": null,
+        "flatten_history_dim": true,
+        "nan_policy": "error",
+        "nan_check_per_term": true
+      }
+    },
+    "actions": {
+      "pd": {
+        "entity_name": "robot",
+        "clip": null,
+        "policy_joint_order": [
+          "lf0",
+          "lf00",
+          "rf0",
+          "rf00",
+          "lfwheel",
+          "rfwheel"
+        ],
+        "leg_position_scale": 0.5,
+        "wheel_velocity_scale": 10.0,
+        "max_wheel_velocity": 100.0,
+        "leg_stiffness": 60.0,
+        "leg_damping": 2.0,
+        "wheel_stiffness": 0.1,
+        "wheel_damping": 0.0,
+        "standup_landing_gate": false,
+        "nominal_leg_positions": [
+          -0.6047205544565015,
+          0.6083241726212976,
+          0.6047205544560037,
+          -0.6083241726229305
+        ],
+        "spring_force_bias_range": [
+          -50.0,
+          50.0
+        ],
+        "motor_randomization": true,
+        "standup_pushes": false,
+        "class_type": "ct_mjlab.reference_training.huananhu_action.HuananhuPdAction",
+        "randomize_delays": true,
+        "ground_start_hold_s": 0.2,
+        "parameter_reset_interval_steps": 720
+      }
+    },
+    "events": {
+      "huananhu_domain_randomization": {
+        "func": "ct_mjlab.reference_training.huananhu_randomization.randomize_at_startup",
+        "params": {},
+        "mode": "startup",
+        "interval_range_s": null,
+        "is_global_time": false,
+        "min_step_count_between_reset": 0
+      },
+      "huananhu_reset_disturbances": {
+        "func": "ct_mjlab.reference_training.huananhu_randomization.reset_disturbances",
+        "params": {},
+        "mode": "reset",
+        "interval_range_s": null,
+        "is_global_time": false,
+        "min_step_count_between_reset": 0
+      },
+      "huananhu_velocity_push": {
+        "func": "ct_mjlab.reference_training.huananhu_randomization.push_root_velocity",
+        "params": {},
+        "mode": "interval",
+        "interval_range_s": [
+          5.0,
+          10.0
+        ],
+        "is_global_time": false,
+        "min_step_count_between_reset": 0
+      },
+      "huananhu_local_wrench": {
+        "func": "ct_mjlab.reference_training.huananhu_randomization.sample_local_wrench",
+        "params": {},
+        "mode": "interval",
+        "interval_range_s": [
+          5.0,
+          10.0
+        ],
+        "is_global_time": false,
+        "min_step_count_between_reset": 0
+      },
+      "reset_pose": {
+        "func": "ct_mjlab.reference_training.huananhu_mdp.reset_pose",
+        "params": {},
+        "mode": "reset",
+        "interval_range_s": null,
+        "is_global_time": false,
+        "min_step_count_between_reset": 0
+      },
+      "reset_observations": {
+        "func": "ct_mjlab.reference_training.huananhu_observations.reset_observations",
+        "params": {},
+        "mode": "reset",
+        "interval_range_s": null,
+        "is_global_time": false,
+        "min_step_count_between_reset": 0
+      }
+    },
+    "seed": 42,
+    "sim": {
+      "nconmax": 128,
+      "njmax": 2000,
+      "contact_sensor_maxmatch": 64,
+      "broadphase": null,
+      "broadphase_filter": null,
+      "ls_parallel": null,
+      "mujoco": {
+        "timestep": 0.002,
+        "integrator": "implicitfast",
+        "impratio": 10.0,
+        "cone": "elliptic",
+        "jacobian": "auto",
+        "solver": "newton",
+        "iterations": 100,
+        "tolerance": 1e-10,
+        "ls_iterations": 20,
+        "ls_tolerance": 0.01,
+        "ccd_iterations": 50,
+        "gravity": [
+          0.0,
+          0.0,
+          -9.81
+        ],
+        "disableflags": [],
+        "enableflags": []
+      },
+      "nan_guard": {
+        "enabled": false,
+        "buffer_size": 100,
+        "output_dir": "/tmp/mjlab/nan_dumps",
+        "max_envs_to_dump": 5
+      }
+    },
+    "viewer": {
+      "origin_type": "OriginType.ASSET_BODY",
+      "height": 240,
+      "width": 320,
+      "enable_reflections": true,
+      "enable_shadows": true,
+      "geom_group": [
+        1,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "site_group": [
+        1,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "env_idx": 0,
+      "max_extra_envs": 2,
+      "reward_bar_max_terms": 20,
+      "distance": 2.0,
+      "elevation": -15.0,
+      "azimuth": 90.0,
+      "fovy": null,
+      "lookat": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "entity_name": "robot",
+      "body_name": "base_link"
+    },
+    "episode_length_s": 20.0,
+    "rewards": {
+      "termination": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "termination"
+        },
+        "weight": -200.0
+      },
+      "leg_joint_acc": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "leg_joint_acc"
+        },
+        "weight": -5e-07
+      },
+      "leg_joint_vel": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "leg_joint_vel"
+        },
+        "weight": -0.005
+      },
+      "joint_torque": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "joint_torque"
+        },
+        "weight": -0.0001
+      },
+      "wheel_acc": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "wheel_acc"
+        },
+        "weight": -1e-08
+      },
+      "wheel_vel": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "wheel_vel"
+        },
+        "weight": -1e-05
+      },
+      "wheel_power": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "wheel_power"
+        },
+        "weight": -0.0001
+      },
+      "lin_vel_z": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "lin_vel_z"
+        },
+        "weight": -0.5
+      },
+      "ang_vel_xy": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "ang_vel_xy"
+        },
+        "weight": -0.05
+      },
+      "action_smoothness_leg": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "action_smoothness_leg"
+        },
+        "weight": -0.05
+      },
+      "action_rate": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "action_rate"
+        },
+        "weight": -0.01
+      },
+      "action_smoothness_wheel": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "action_smoothness_wheel"
+        },
+        "weight": -0.01
+      },
+      "flat_orientation_y_v": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "flat_orientation_y_v"
+        },
+        "weight": -2.0
+      },
+      "flat_orientation_y_exp": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "flat_orientation_y_exp"
+        },
+        "weight": 1.0
+      },
+      "flat_orientation_x_v": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "flat_orientation_x_v"
+        },
+        "weight": -2.0
+      },
+      "flat_orientation_x_exp": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "flat_orientation_x_exp"
+        },
+        "weight": 1.0
+      },
+      "track_lin_vel_xy": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "track_lin_vel_xy"
+        },
+        "weight": 1.0
+      },
+      "track_lin_vel_xy_square": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "track_lin_vel_xy_square"
+        },
+        "weight": -1.0
+      },
+      "track_ang_vel_z": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "track_ang_vel_z"
+        },
+        "weight": 1.0
+      },
+      "track_ang_vel_z_square": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "track_ang_vel_z_square"
+        },
+        "weight": -1.0
+      },
+      "stand_still_lin_vel": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "stand_still_lin_vel"
+        },
+        "weight": -1.0
+      },
+      "track_height_exp_tight": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "track_height_exp_tight"
+        },
+        "weight": 1.0
+      },
+      "track_height_square": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "track_height_square"
+        },
+        "weight": -1.0
+      },
+      "no_fork": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "no_fork"
+        },
+        "weight": -1.0
+      },
+      "no_fork_square": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "no_fork_square"
+        },
+        "weight": -1.0
+      },
+      "undesired_contact": {
+        "func": "ct_mjlab.experiments.huananhu_v14.reward",
+        "params": {
+          "name": "undesired_contact"
+        },
+        "weight": -2.0
+      }
+    },
+    "terminations": {
+      "failure": {
+        "func": "ct_mjlab.reference_training.huananhu_mdp.failure",
+        "params": {},
+        "time_out": false
+      },
+      "time_out": {
+        "func": "mjlab.envs.mdp.terminations.time_out",
+        "params": {},
+        "time_out": true
+      }
+    },
+    "commands": {
+      "standup": {
+        "resampling_time_range": [
+          5.0,
+          15.0
+        ],
+        "debug_vis": false,
+        "training_stage": "scut_v14_flat",
+        "ground_start_probability": 0.5,
+        "zero_velocity_commands": false,
+        "linear_velocity_range": [
+          -2.7,
+          2.7
+        ],
+        "yaw_velocity_range": [
+          -6.283185307179586,
+          6.283185307179586
+        ],
+        "heading_probability": 0.5,
+        "heading_control_stiffness": 5.0,
+        "special_modes_enabled": true,
+        "height_range": [
+          0.2,
+          0.42
+        ],
+        "strict_recovery_metrics": true,
+        "ground_randomization_probability": 0.0,
+        "ground_tilt_max_rad": 0.0,
+        "ground_yaw_max_rad": 0.0,
+        "ground_height_offset_range": [
+          0.0,
+          0.0
+        ],
+        "dynamic_modes": false
+      }
+    },
+    "curriculum": {},
+    "metrics": {
+      "observation_delay_ms": {
+        "func": "ct_mjlab.reference_training.huananhu_observations.sample_observations",
+        "params": {},
+        "per_substep": true,
+        "reduce": "last"
+      }
+    },
+    "recorders": {},
+    "is_finite_horizon": false,
+    "auto_reset": true,
+    "scale_rewards_by_dt": true
+  },
+  "learning": false,
+  "audited_legacy_reward_comparison": {
+    "terms": 26,
+    "max_abs_error": 4.3655745685100555e-11,
+    "per_term_errors": {
+      "termination": 0.0,
+      "leg_joint_acc": 0.0,
+      "leg_joint_vel": 0.0,
+      "joint_torque": 4.3655745685100555e-11,
+      "wheel_acc": 0.0,
+      "wheel_vel": 0.0,
+      "wheel_power": 0.0,
+      "lin_vel_z": 0.0,
+      "ang_vel_xy": 0.0,
+      "action_smoothness_leg": 0.0,
+      "action_rate": 0.0,
+      "action_smoothness_wheel": 0.0,
+      "flat_orientation_y_v": 0.0,
+      "flat_orientation_y_exp": 0.0,
+      "flat_orientation_x_v": 0.0,
+      "flat_orientation_x_exp": 0.0,
+      "track_lin_vel_xy": 0.0,
+      "track_lin_vel_xy_square": 0.0,
+      "track_ang_vel_z": 0.0,
+      "track_ang_vel_z_square": 0.0,
+      "stand_still_lin_vel": 0.0,
+      "track_height_exp_tight": 0.0,
+      "track_height_square": 0.0,
+      "no_fork": 0.0,
+      "no_fork_square": 0.0,
+      "undesired_contact": 0.0
+    },
+    "commands": [
+      0,
+      0,
+      0.22
+    ],
+    "oracle": "Previously AST-checked V14 Recipe; original source directory is unavailable on Windows"
+  },
+  "nonzero_commands_without_height_gate": true,
+  "zero_update_checkpoint_roundtrip": true,
+  "r15_checkpoint_rejected": true,
+  "num_envs": 20,
+  "steps": 64,
+  "numerical": 0,
+  "finite": true,
+  "source_sha256": {
+    "mjlab_training/src/ct_mjlab/experiments/huananhu_v14.py": "a0f65605edad045e13c06efdd5ee05822a6854cd65c64e5b43e8227b472d66d1",
+    "mjlab_training/src/ct_mjlab/cli.py": "ebcfb3794f1bac557ae362aca3211df838aea2c6885ba05664b4293d3321508c"
+  }
+}

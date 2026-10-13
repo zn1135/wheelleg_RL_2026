@@ -1,4 +1,4 @@
-"""The same CAD sites, connect constraints and native spring tendons in CPU/GPU."""
+"""CAD closed legs and physical hinge/slide springs shared by CPU/GPU."""
 import hashlib
 import json
 from pathlib import Path
