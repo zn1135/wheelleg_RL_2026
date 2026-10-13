@@ -96,3 +96,4 @@ python sim2sim/eval_isaac.py --load_run <run> --checkpoint <n> --cmd_vx 0.5
 
 - Git 提交信息（标题和正文）必须使用中文，团队提交与 PR 规则见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 - 每次实际执行 `git commit` 前，必须先向用户展示暂存文件范围和拟用的中文提交信息，并等待用户明确确认；未确认时不得提交、amend、推送或创建 PR。
+- 推送目标按 [CONTRIBUTING.md](CONTRIBUTING.md) 的分支规则：训练侧日常改动经用户确认后直接推送到当前维护分支（如 `26_wheelleg`）；改到观测、动作、坐标、控制频率、默认姿态、关节映射、模型格式或 `deployment/H7_RL/` 等影响 H7 的内容时，推到 `codex/<简短主题>` 远端分支并创建 PR，由合作者复查。用户确认这次推送，即视为授权创建该远端分支。推送前检查提交内容中是否有服务器地址、凭据等不宜公开的信息。
