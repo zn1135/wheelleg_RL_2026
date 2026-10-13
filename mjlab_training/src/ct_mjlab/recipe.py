@@ -2,7 +2,8 @@
 # Adapted from wheelbipe25_v3/env.py at the commit in scut_v14.json.
 """Backend-independent V14 observation, delay, action and active reward kernels."""
 import torch
-from .config import PARAMS as P, WEIGHTS, STEP_DT, HEIGHT
+from .config import PARAMS as P, WEIGHTS, STEP_DT, HEIGHT, KP, KD, LEG_REFERENCE, LEG_TARGET_LIMIT
+from .modes import ControlMode
 
 class Delay:
     """IsaacLab delay semantics: append current, clamp lookup to oldest available."""
@@ -21,9 +22,10 @@ class Delay:
         self.count[ids]=(self.count[ids]+1).clamp(max=self.buf.shape[1]-1)
         return self.buf[ids,lookup]
 
-def core_obs(ang, gravity, pos, vel, actions):
+def core_obs(ang, gravity, pos, vel, actions, mode=None):
     n=len(pos); zero=pos.new_zeros(n,3); h=pos.new_full((n,1),HEIGHT)
-    mode=pos.new_zeros(n,7);mode[:,0]=1
+    if mode is None:
+        mode=pos.new_zeros(n,7);mode[:,0]=1
     return torch.cat((zero.clamp(-100,100),h.clamp(0,1)*5,
         ang.clamp(-100,100)*.5,gravity.clamp(-100,100),pos.clamp(-100,100),
         vel.clamp(-200,200)*.1,actions.clamp(-100,100),mode),-1)
@@ -31,13 +33,15 @@ def core_obs(ang, gravity, pos, vel, actions):
 class Recipe:
     def __init__(self, n, device, nominal, randomize=True):
         self.n=n; self.device=device;self.nominal=nominal;self.randomize=randomize
+        self.mode=ControlMode(n,device)
         self.actions=torch.zeros(n,6,device=device);self.previous=torch.zeros_like(self.actions)
         self.before=torch.zeros_like(self.actions)
         self.obs_delays=[Delay(n,d,4,device) for d in (3,3,6,6)]
         self.act_delays=[Delay(n,d,3,device) for d in (4,2)]
         self.obs_lags=torch.ones(n,4,device=device);self.act_lags=torch.ones(n,2,device=device)
-        self.kp=torch.ones(n,6,device=device);self.kp[:,:4]*=10;self.kp[:,4:]=0
-        self.kd=torch.ones(n,6,device=device);self.kd[:,4:]=.1
+        self.kp=torch.tensor(KP,device=device).expand(n,-1).clone()
+        self.kd=torch.tensor(KD,device=device).expand(n,-1).clone()
+        self.leg_reference=torch.tensor(LEG_REFERENCE,device=device)
         self.effort=torch.tensor([40]*4+[3.9]*2,device=device).expand(n,-1).clone()
         self.effort_scale=torch.ones(n,6,device=device)
         self.material=torch.tensor([.5,.5,0.]*2,device=device).expand(n,-1).clone()
@@ -45,7 +49,8 @@ class Recipe:
         self.bad_obs=torch.zeros(n,dtype=torch.bool,device=device)
         self.raw_obs_max=torch.zeros(n,device=device)
         self.delayed=[torch.zeros(n,d,device=device) for d in (3,3,6,6)]
-    def reset(self, ids):
+    def reset(self, ids, ground_start=None):
+        self.mode.reset(ids,ground_start)
         self.actions[ids]=0;self.previous[ids]=0;self.before[ids]=0;self.bad_obs[ids]=False
         self.raw_obs_max[ids]=0
         for delay in self.obs_delays: delay.reset(ids,1,4,self.randomize)
@@ -53,7 +58,8 @@ class Recipe:
         self.obs_lags=torch.stack([d.lag for d in self.obs_delays],-1).float()
         self.act_lags=torch.stack([d.lag for d in self.act_delays],-1).float()
     def torque(self, pos, vel, episode_steps):
-        leg=(.5*self.actions[:,:4]+self.nominal[:4]).clamp(-torch.pi,torch.pi)
+        leg=(.5*self.actions[:,:4]+self.nominal[:4]).clamp(
+            self.leg_reference-LEG_TARGET_LIMIT,self.leg_reference+LEG_TARGET_LIMIT)
         wheel=(10*self.actions[:,4:]).clamp(-20,20)
         leg=self.act_delays[0].compute(leg);wheel=self.act_delays[1].compute(wheel)
         result=torch.cat((self.kp[:,:4]*(leg-pos[:,:4])-self.kd[:,:4]*vel[:,:4],
@@ -78,8 +84,9 @@ class Recipe:
             for i,scale in enumerate(scales):
                 if scale is not None:delayed[i]=delayed[i]+(2*torch.rand_like(delayed[i])-1)*scale
             delayed[3]=delayed[3]+(2*torch.rand_like(delayed[3])-1)*delayed[3].new_tensor([.5]*4+[1]*2)
-        actor=core_obs(*delayed,self.actions)
-        clean=core_obs(*values,self.actions)
+        mode=self.mode.observation()
+        actor=core_obs(*delayed,self.actions,mode)
+        clean=core_obs(*values,self.actions,mode)
         extra=torch.cat((self.kp.clamp(-100,100),self.kd.clamp(-100,100),s['torque'].clamp(-100,100)*.05,
             self.obs_lags.clamp(-100,100),self.act_lags.clamp(-100,100),
             s['wheel_vel'].flatten(1).clamp(-100,100), (s['wheel_contact']>5).float(),

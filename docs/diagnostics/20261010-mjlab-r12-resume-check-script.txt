@@ -1,0 +1,400 @@
+#!/usr/bin/env python3
+"""Reference config/oracle/finite physics/checkpoint checks; no PPO learning."""
+import argparse,copy,hashlib,importlib,json,tempfile
+from pathlib import Path
+import numpy as np
+import torch
+from ct_mjlab.reference_training.entry import manifest,runner_cfg,serializable,RecoverVecEnv,runner_class,validate_knee_limit_resume
+from ct_mjlab.reference_training import huananhu_rewards as local
+from ct_mjlab.reference_training.huananhu_env_cfg import make_huananhu_env_cfg,make_huananhu_ppo_cfg,RESET_CONFIG_FIELDS
+from ct_mjlab.policy import load_actor,check_manifest,export,checkpoint_policy_joint_order,checkpoint_knee_limit_weight,checkpoint_reset_config
+
+p=argparse.ArgumentParser(description=__doc__)
+p.add_argument('--reference',type=Path,default=Path('/home/zn/文档/mjlab/wheelleg_RL'))
+p.add_argument('--num-envs',type=int,default=32);p.add_argument('--steps',type=int,default=128)
+p.add_argument('--seed',type=int,default=42);p.add_argument('--out',type=Path,required=True)
+a=p.parse_args()
+# Import a separately loaded reference package, never use it in production.
+import sys
+sys.path.insert(0,str(a.reference/'src'))
+ref=importlib.import_module('wheelleg_rl.chuanliantui.huananhu_env_cfg')
+oracle=importlib.import_module('wheelleg_rl.chuanliantui.huananhu_rewards')
+normalize=lambda x:json.loads(json.dumps(serializable(x)).replace('ct_mjlab.reference_training','wheelleg_rl.chuanliantui'))
+ours=normalize(make_huananhu_env_cfg());theirs=normalize(ref.make_huananhu_env_cfg())
+# The requested mixed resets, robot, dynamic modes, policy order and knee weight differ.
+ours['scene']['entities'].pop('robot');theirs['scene']['entities'].pop('robot')
+assert ours['commands']['standup'].pop('dynamic_modes') is True
+assert ours['actions']['pd'].pop('policy_joint_order') == ['lf0','lf00','rf0','rf00','lfwheel','rfwheel']
+assert ours['rewards']['knee_limit']['weight']==0.
+ours['rewards']['knee_limit']['weight']=theirs['rewards']['knee_limit']['weight']
+expected_reset=dict(training_stage='recover_mixed_reset_r10',ground_start_probability=.5,
+    ground_randomization_probability=0.,ground_tilt_max_rad=0.,ground_yaw_max_rad=0.,
+    ground_height_offset_range=[0.,0.])
+assert {name:ours['commands']['standup'][name] for name in RESET_CONFIG_FIELDS}==expected_reset
+for name in RESET_CONFIG_FIELDS:
+    ours['commands']['standup'][name]=theirs['commands']['standup'][name]
+assert ours==theirs,'non-robot environment configuration drift'
+assert normalize(make_huananhu_ppo_cfg())==normalize(ref.make_huananhu_ppo_cfg()),'PPO config drift'
+assert local.REWARD_WEIGHTS['knee_limit']==0. and oracle.REWARD_WEIGHTS['knee_limit']==-.5
+assert {k:v for k,v in local.REWARD_WEIGHTS.items() if k!='knee_limit'}=={k:v for k,v in oracle.REWARD_WEIGHTS.items() if k!='knee_limit'}
+record=manifest();import_record=record['source']
+for path,digest in import_record['source_files_sha256'].items():
+    assert hashlib.sha256((a.reference/path).read_bytes()).hexdigest()==digest,path
+# Controlled inputs exercise the mode state machine independently of unstable
+# zero-action physics, including command-dependent standing and interrupted holds.
+from ct_mjlab.reference_training.control_modes import ControlMode
+def check_dynamic_modes():
+    mode=ControlMode(2,'cpu');mode.reset(torch.arange(2),torch.tensor([True,False]))
+    target=torch.tensor([.30,.34]);tick=0
+    state=dict(height=target.clone(),roll=torch.zeros(2),pitch=torch.zeros(2),
+        base_contact=torch.zeros(2),wheel_contact=torch.full((2,2),6.),valid=torch.ones(2,dtype=torch.bool))
+    def advance(count=1):
+        nonlocal tick
+        for _ in range(count):
+            tick+=1;mode.advance(state,target,tick)
+    assert torch.equal(mode.observation(target)[0],torch.tensor([0.,0,0,1,0,1.5,0]))
+    advance(24);assert mode.recover[0]
+    # Exactly 5 N is insufficient and resets the required contiguous hold.
+    state['wheel_contact'][0,1]=5.;advance();assert mode.stable_steps[0]==0
+    state['wheel_contact'][0,1]=6.;state['height'][0]=.22
+    advance(25);assert mode.recover[0], 'old fixed .22 m was treated as standing'
+    state['height'][0]=target[0];advance(24);assert mode.recover[0]
+    advance();assert not mode.recover.any() and mode.recovered[0]
+    assert torch.equal(mode.observation(target),torch.tensor([[1.,0,0,0,0,0,0]]).expand(2,-1))
+    # Interrupted failures do not trigger recovery; five consecutive ticks do.
+    state['base_contact'][1]=2.;advance(4);assert not mode.recover[1]
+    state['base_contact'][1]=0.;advance();assert mode.failure_steps[1]==0
+    state['base_contact'][1]=2.;advance(5)
+    assert mode.recover[1] and mode.state_steps[1]==0
+    advance();assert torch.isclose(mode.observation(target)[1,6],torch.tensor(.02))
+    target[1]=.27
+    assert torch.isclose(mode.observation(target)[1,5],torch.tensor(1.35))
+    state['base_contact'][1]=0.;state['height'][1]=.34;advance(25);assert mode.recover[1]
+    state['height'][1]=.27;state['valid'][1]=False;advance(25);assert mode.recover[1]
+    state['valid'][1]=True;advance(25);assert not mode.recover[1]
+    state['height'][1]=.159;advance(5);assert mode.recover[1]
+    # Queries and repeated advancement at the same transition have no effect.
+    slots=mode.observation(target).clone();mode.advance(state,target,tick)
+    assert torch.equal(slots,mode.observation(target))
+    mode.reset(torch.tensor([0]),torch.tensor([True]))
+    assert torch.equal(slots[1],mode.observation(target)[1])
+    assert mode.state_steps[0]==0 and not mode.recovered[0]
+    return dict(recover_on_ground_reset=True,stable_hold_steps=25,failure_hold_steps=5,
+        target_follows_current_height_command=True,actor_critic_equal=True,
+        partial_reset_preserved=True,queries_do_not_advance=True,duplicate_transition_ignored=True)
+mode_checks=check_dynamic_modes()
+# Differential oracle covers commands, action history, knee limits and height gates.
+torch.manual_seed(a.seed);n=64;r=lambda dim:torch.randn(n,dim)
+inputs=dict(command=r(3),linear_velocity=r(3),angular_velocity=r(3),gravity=r(3),pitch=r(1)[:,0],
+    height=r(1)[:,0],wheel_x=r(2),joint_velocity=r(6),joint_acceleration=r(6),torque=r(6),
+    action=r(6),previous_action=r(6),previous_previous_action=r(6),
+    undesired_contact=torch.rand(n)>.5,terminated=torch.rand(n)>.5,knee_limit_distance=r(2))
+left=local.reward_values(**inputs);right=oracle.reward_values(**inputs)
+reward_errors={k:float((left[k]-right[k]).abs().max()) for k in left}
+assert len(left)==27 and max(reward_errors.values())==0
+# An explicit standing-height sweep checks the reference gate boundary behavior.
+inputs={k:torch.zeros_like(v) for k,v in inputs.items()};inputs['command'][:,2]=.30
+height_sweep=torch.tensor([.23,.24,.255,.27,.30,.33,.345,.36,.37])
+inputs['height'][:len(height_sweep)]=height_sweep
+expected=((.06-(height_sweep-.30).abs())/.03).clamp(0,1)
+sweep=local.reward_values(**inputs)
+assert torch.allclose(sweep['track_lin_vel_xy'][:len(height_sweep)],expected,atol=1e-6)
+assert torch.allclose(sweep['track_ang_vel_z'][:len(height_sweep)],expected,atol=1e-6)
+# Check the enabled penalty at the soft-zone boundary, stop and overshoot cap.
+distances=torch.tensor([.30,.15,.075,0.,-.15])
+inputs['knee_limit_distance'].fill_(.30)
+inputs['knee_limit_distance'][:len(distances),0]=distances
+knee_sweep=local.reward_values(**inputs)['knee_limit'][:len(distances)]
+assert torch.allclose(knee_sweep,torch.tensor([0.,0.,.25,1.,2.25]),atol=1e-6)
+env=RecoverVecEnv(num_envs=a.num_envs,device='cuda:0',randomize=True,seed=a.seed)
+raw=env.unwrapped;model=raw.sim.mj_model;state=raw.command_manager.get_term('standup')
+# Exercise repeated actual GPU resets, not only the configured probability.
+sample_count=ground_count=0
+normal_height_min=float('inf');ground_height_error=ground_quat_error=0.
+env_ids=torch.arange(a.num_envs,device=raw.device)
+for batch in range(max(1,2048//a.num_envs)):
+    if batch:raw._reset_idx(env_ids)
+    ground=state.ground_start
+    root=raw.sim.data.qpos[:,:7]
+    height=root[:,2]-raw.scene.env_origins[:,2]
+    sample_count+=a.num_envs;ground_count+=int(ground.sum())
+    assert torch.equal(state.control_mode.recover,ground)
+    if ground.any():
+        ground_height_error=max(ground_height_error,float((height[ground]-.25).abs().max()))
+        identity=root.new_tensor([1.,0.,0.,0.])
+        ground_quat_error=max(ground_quat_error,float((root[ground,3:7]-identity).abs().max()))
+    if (~ground).any():normal_height_min=min(normal_height_min,float(height[~ground].min()))
+assert .45 < ground_count/sample_count < .55,(ground_count,sample_count)
+assert ground_height_error<1e-6 and ground_quat_error<1e-6
+assert normal_height_min>=.38-1e-6,normal_height_min
+reset_checks=dict(samples=sample_count,ground_samples=ground_count,
+    ground_fraction=ground_count/sample_count,normal_root_min_m=normal_height_min,
+    ground_root_height_max_error_m=ground_height_error,ground_identity_quaternion_max_error=ground_quat_error,
+    dynamic_mode_matches_reset_branch=True)
+obs=env.get_observations();assert obs['actor'].shape==(a.num_envs,35) and obs['critic'].shape==(a.num_envs,78)
+assert ((obs['actor'][:,3]>=1.35)&(obs['actor'][:,3]<=1.7)).all()
+assert torch.equal(obs['actor'][:,28],(~state.ground_start).float())
+assert torch.equal(obs['actor'][:,31],state.ground_start.float())
+assert torch.equal(obs['actor'][:,33],obs['actor'][:,3]*state.ground_start)
+assert (obs['actor'][:,34]==0).all()
+assert torch.equal(obs['actor'][:,28:35],obs['critic'][:,32:39])
+mode_before=state.control_mode.observation(state.command[:,2]).clone()
+for _ in range(3):env.get_observations()
+assert torch.equal(mode_before,state.control_mode.observation(state.command[:,2]))
+action=raw.action_manager.get_term('pd');sensor=raw._huananhu_observations
+def check_action_order():
+    expected_names=('lf0','lf00','rf0','rf00','lfwheel','rfwheel')
+    assert action.policy_joint_order==expected_names
+    assert action.policy_to_physical.tolist()==[0,1,4,2,3,5]
+    assert sensor.raw_action_order.tolist()==list(range(6))
+    manager=raw.action_manager
+    tensors=[raw.sim.data.qpos,raw.sim.data.qvel,raw.sim.data.ctrl,
+        raw.episode_length_buf,action._raw_actions,action._control_actions,
+        action._torques,action._action_history,action._entity.data.joint_effort_target,
+        manager.action,manager.prev_action,manager.prev_prev_action]
+    saved=[x.clone() for x in tensors];head=action._history_head
+    had_termination=hasattr(raw,'reset_terminated')
+    if not had_termination:raw.reset_terminated=torch.zeros(a.num_envs,dtype=torch.bool,device=raw.device)
+    ctrl_ids=[model.actuator('robot/'+name+'_motor').id for name in expected_names]
+    try:
+        # No integration of the synthetic motor state: isolate six output slots
+        # and inspect controls by actuator NAME, then restore every buffer.
+        raw.episode_length_buf.fill_(action._ground_hold_steps)
+        raw.sim.data.qpos[:,action._motor_q_adr]=action.nominal_positions
+        raw.sim.data.qvel[:,action._motor_v_adr]=0.
+        for slot,name in enumerate(expected_names):
+            requested=torch.zeros(a.num_envs,6,device=raw.device);requested[:,slot]=.17
+            action.process_actions(requested)
+            action._action_history.copy_(action._control_actions.unsqueeze(0))
+            action.apply_actions();raw.scene.write_data_to_sim()
+            expected=torch.zeros_like(requested)
+            physical_slot=('lf0','lf00','lfwheel','rf0','rf00','rfwheel').index(name)
+            if slot<4:
+                gain=action.cfg.leg_stiffness*action.kp_scale[:,physical_slot]*action.cfg.leg_position_scale
+            else:
+                gain=action.cfg.wheel_stiffness*action.kd_scale[:,physical_slot]*action.cfg.wheel_velocity_scale
+            expected[:,slot]=.17*gain*action.motor_strength[:,physical_slot]
+            assert torch.allclose(raw.sim.data.ctrl[:,ctrl_ids],expected,atol=1e-5),name
+            assert torch.equal(sensor.basic(sensor.raw_sensors())[:,22:28],requested),name
+        # Three unequal histories catch a permutation applied to only one frame.
+        manager.action.copy_(torch.tensor([.1,.2,.3,.4,.5,.6],device=raw.device))
+        manager.prev_action.copy_(torch.tensor([.3,-.1,.5,-.4,.2,-.6],device=raw.device))
+        manager.prev_prev_action.copy_(torch.tensor([-.2,.1,-.3,.4,-.5,.6],device=raw.device))
+        values=local.RewardState(raw).compute(raw)
+        difference=manager.action-2*manager.prev_action+manager.prev_prev_action
+        assert torch.allclose(values['action_smoothness_leg'],difference[:,:4].square().sum(-1))
+        assert torch.allclose(values['action_smoothness_wheel'],difference[:,4:].square().sum(-1))
+    finally:
+        for tensor,previous in zip(tensors,saved):tensor.copy_(previous)
+        action._history_head=head
+        if not had_termination:del raw.reset_terminated
+    return dict(policy_joint_order=list(expected_names),policy_to_physical=[0,1,4,2,3,5],
+        six_named_actuator_pulses=True,requested_history_observation_identity=True,
+        three_frame_leg_wheel_reward_mapping=True)
+action_checks=check_action_order()
+assert set(action.action_delay_steps.tolist())<= {3,5}
+assert set(action.wheel_action_delay_steps.tolist())<= {3,5}
+assert set(sensor.delay.lags.flatten().tolist())<= {3,5,8}
+# Measure every physical substep, before autoreset can hide closure excursions.
+pairs=[(side+'_rear_pin'+index,side+'_front_pin'+index) for side in ('left','right') for index in ('1','2')]
+pairs += [(side+'_spring_tip',side+'_gas_spring_lower') for side in ('left','right')]
+ids=torch.tensor([[model.site('robot/'+u).id,model.site('robot/'+v).id] for u,v in pairs],device='cuda:0')
+maximum=torch.zeros((),device='cuda:0');numerical=0;episode_resets=0
+original=raw.sim.step
+substeps=0
+qpos_samples=torch.empty(a.steps*raw.cfg.decimation+1,a.num_envs,model.nq,device='cuda:0')
+qpos_samples[0].copy_(raw.sim.data.qpos)
+def measured_step():
+    global maximum,substeps
+    original();xyz=raw.sim.data.site_xpos
+    maximum=torch.maximum(maximum,(xyz[:,ids[:,0]]-xyz[:,ids[:,1]]).norm(dim=-1).max())
+    substeps+=1
+    qpos_samples[substeps].copy_(raw.sim.data.qpos)
+raw.sim.step=measured_step
+original_termination=raw.termination_manager.compute
+def measured_termination():
+    global numerical
+    result=original_termination()
+    numerical+=int(state.numerical_failure.sum())
+    return result
+raw.termination_manager.compute=measured_termination
+for _ in range(a.steps):
+    obs,rew,done,extra=env.step(torch.zeros(a.num_envs,6,device='cuda:0'))
+    assert torch.isfinite(obs['actor']).all() and torch.isfinite(obs['critic']).all() and torch.isfinite(rew).all()
+    assert (raw.reward_manager._step_reward[:,raw.reward_manager._term_names.index('knee_limit')]==0).all()
+    episode_resets+=int(done.sum())
+raw.sim.step=original
+raw.termination_manager.compute=original_termination
+# Derived site_xpos is one integration tick stale. Recompute kinematics from
+# every captured integrated qpos on an independent CPU data object, including
+# terminal states that the manager subsequently resets. Do not alter the MDP.
+import mujoco
+kinematics=mujoco.MjData(model);pair_ids=ids.cpu().numpy();integrated_max=0.
+for qpos in qpos_samples.cpu().numpy().reshape(-1,model.nq):
+    kinematics.qpos[:]=qpos;mujoco.mj_kinematics(model,kinematics)
+    xyz=kinematics.site_xpos
+    integrated_max=max(integrated_max,float(np.linalg.norm(xyz[pair_ids[:,0]]-xyz[pair_ids[:,1]],axis=-1).max()))
+assert integrated_max<.005,integrated_max
+assert numerical==0,numerical
+# Freeze one state and verify the removed term is exactly the total-reward delta.
+reward_cfg=raw.reward_manager.get_term_cfg('knee_limit')
+assert reward_cfg.weight==0.
+sums={k:v.clone() for k,v in raw.reward_manager._episode_sums.items()}
+step_reward=raw.reward_manager._step_reward.clone()
+try:
+    without_penalty=raw.reward_manager.compute(raw.step_dt).clone()
+    knee_value=raw._huananhu_rewards.values['knee_limit'].clone()
+    reward_cfg.weight=-.5
+    with_penalty=raw.reward_manager.compute(raw.step_dt).clone()
+    knee_delta_error=float(((without_penalty-with_penalty)-.5*raw.step_dt*knee_value).abs().max())
+    assert knee_delta_error<1e-6,knee_delta_error
+finally:
+    reward_cfg.weight=0.
+    for k,v in sums.items():raw.reward_manager._episode_sums[k].copy_(v)
+    raw.reward_manager._step_reward.copy_(step_reward)
+# Partial resets must leave the other environments' delay histories intact.
+q=raw.sim.data.qpos[1:].clone();history=action._action_history[:,1:].clone();lags=sensor.delay.lags[1:].clone()
+mode_before=state.control_mode.observation(state.command[:,2])[1:].clone()
+raw._reset_idx(torch.tensor([0],device='cuda:0'))
+assert torch.equal(q,raw.sim.data.qpos[1:]) and torch.equal(history,action._action_history[:,1:]) and torch.equal(lags,sensor.delay.lags[1:])
+assert torch.equal(mode_before,state.control_mode.observation(state.command[:,2])[1:])
+assert state.control_mode.recover[0]==state.ground_start[0] and state.control_mode.state_steps[0]==0
+# Initialize/save/load only. No optimizer updates or env learning calls.
+with tempfile.TemporaryDirectory(prefix='ct-r12-check-') as temp:
+    runner=runner_class()(env,runner_cfg(a.seed),None,device='cuda:0')
+    checkpoint=Path(temp)/'finite-check.pt';runner.save(str(checkpoint))
+    saved=torch.load(checkpoint,map_location='cpu',weights_only=False)
+    assert saved['infos']['training_stage_config']['training_stage']=='recover_mixed_reset_r10'
+    assert checkpoint_reset_config(checkpoint)['ground_start_probability']==.5
+    runner.load(str(checkpoint));load_actor(checkpoint)
+    exported=export(checkpoint,Path(temp)/'finite-check.onnx')
+    assert tuple(exported['joints'])==('lf0','lf00','rf0','rf00','lfwheel','rfwheel')
+    assert exported['training_rewards']['knee_limit_weight']==0.
+    # No r7 policy was trained. Build an inference-only fixture with its saved
+    # manifest to exercise old order routing and full-resume rejection.
+    r7_record=json.loads(Path('mjlab_training/src/ct_mjlab/reference_training/r7_interface.json').read_text())
+    r7_saved=copy.deepcopy(saved);r7_saved['infos']['interface']=r7_record
+    r7_checkpoint=Path(temp)/'historical-r7-fixture.pt';torch.save(r7_saved,r7_checkpoint)
+    load_actor(r7_checkpoint)
+    assert checkpoint_knee_limit_weight(r7_checkpoint)==-.5
+    assert checkpoint_policy_joint_order(r7_checkpoint)==('lf0','lf00','lfwheel','rf0','rf00','rfwheel')
+    try:runner.load(str(r7_checkpoint))
+    except ValueError:pass
+    else:raise AssertionError('historical r7 full resume accepted as r8')
+    r8_record=json.loads(Path('mjlab_training/src/ct_mjlab/reference_training/r8_interface.json').read_text())
+    r8_saved=copy.deepcopy(saved);r8_saved['infos']['interface']=r8_record
+    r8_checkpoint=Path(temp)/'historical-r8-fixture.pt';torch.save(r8_saved,r8_checkpoint)
+    load_actor(r8_checkpoint)
+    assert checkpoint_knee_limit_weight(r8_checkpoint)==-.5
+    assert checkpoint_policy_joint_order(r8_checkpoint)==('lf0','lf00','rf0','rf00','lfwheel','rfwheel')
+    historical_cfg=make_huananhu_env_cfg(knee_limit_weight=checkpoint_knee_limit_weight(r8_checkpoint))
+    assert historical_cfg.rewards['knee_limit'].weight==-.5
+    try:runner.load(str(r8_checkpoint))
+    except ValueError:pass
+    else:raise AssertionError('historical r8 full resume accepted as r9')
+    r9=Path('logs/mjlab/chuanliantui/20261010_101723_976809_wheelleg_recover_r9_no_knee_4096_1000/model_999.pt')
+    r9_loaded=r9.exists()
+    if r9_loaded:
+        load_actor(r9)
+        historical_reset=checkpoint_reset_config(r9)
+        assert historical_reset['ground_start_probability']==1.
+        assert historical_reset['ground_randomization_probability']==.5
+        historical_cfg=make_huananhu_env_cfg(reset_config=historical_reset)
+        for name in RESET_CONFIG_FIELDS:
+            assert json.loads(json.dumps(getattr(historical_cfg.commands['standup'],name)))==historical_reset[name]
+        try:runner.load(str(r9))
+        except ValueError:pass
+        else:raise AssertionError('historical r9 full resume accepted as r10')
+    r10=Path('logs/mjlab/chuanliantui/20261010_151622_292362_wheelleg_recover_r10_cloud_4096_1000_download_155320_121485/model_999.pt')
+    r10_loaded=r10.exists()
+    if r10_loaded:
+        load_actor(r10)
+        assert checkpoint_knee_limit_weight(r10)==0.
+        assert checkpoint_policy_joint_order(r10)==('lf0','lf00','rf0','rf00','lfwheel','rfwheel')
+        assert checkpoint_reset_config(r10)['ground_start_probability']==.5
+        historical_cfg=make_huananhu_env_cfg(knee_limit_weight=checkpoint_knee_limit_weight(r10),
+                                          reset_config=checkpoint_reset_config(r10))
+        assert historical_cfg.rewards['knee_limit'].weight==0.
+        try:runner.load(str(r10))
+        except ValueError:pass
+        else:raise AssertionError('historical r10 full resume accepted as r11')
+    # Restore the actual 1000-update r11 actor/critic/Adam state without learning.
+    r11=Path(json.loads(Path('/tmp/ct-r11-cloud-eval-path.json').read_text())['checkpoint'])
+    source=torch.load(r11,map_location='cpu',weights_only=False)
+    load_actor(r11);assert checkpoint_knee_limit_weight(r11)==-.5
+    try:runner.load(str(r11))
+    except ValueError:pass
+    else:raise AssertionError('r11 reward migration accepted without explicit request')
+    validate_knee_limit_resume(source)
+    for field in ('control_contract','observation_contract','experiment_profile_contract'):
+        bad=copy.deepcopy(source);bad['infos'][field]='incompatible'
+        try:validate_knee_limit_resume(bad)
+        except ValueError:pass
+        else:raise AssertionError(f'incompatible {field} accepted')
+    bad=copy.deepcopy(source);bad.pop('optimizer_state_dict')
+    try:validate_knee_limit_resume(bad)
+    except ValueError:pass
+    else:raise AssertionError('weight-only migration accepted as full resume')
+    runner.resume_without_knee_limit(str(r11))
+    def equal_tree(x,y):
+        if torch.is_tensor(x):return torch.equal(x.cpu(),y.cpu())
+        if isinstance(x,dict):return x.keys()==y.keys() and all(equal_tree(x[k],y[k]) for k in x)
+        if isinstance(x,(list,tuple)):return len(x)==len(y) and all(equal_tree(a,b) for a,b in zip(x,y))
+        return x==y
+    restored=runner.alg.save()
+    for key in ('actor_state_dict','critic_state_dict','optimizer_state_dict'):
+        assert equal_tree(restored[key],source[key]),key
+    assert runner.current_learning_iteration==1000
+    assert runner._effective_training_iteration()==1000
+    assert runner.alg.learning_rate==source['optimizer_state_dict']['param_groups'][0]['lr']==1e-5
+    resume_fixture=Path(temp)/'resume_state.pt';runner.save(str(resume_fixture))
+    resumed=torch.load(resume_fixture,map_location='cpu',weights_only=False)
+    assert resumed['infos']['interface']['interface']=='chuanliantui-mjlab-wheelleg-recover-r12'
+    assert resumed['infos']['interface']['training_rewards']['knee_limit_weight']==0.
+    assert resumed['infos']['reward_migration_history'][-1]['completed_updates']==1000
+    runner.load(str(resume_fixture))
+    assert len(runner.reward_migration_history)==1
+    resume_checks=dict(actor_exact=True,critic_exact=True,adam_state_exact=True,
+        learning_rate=runner.alg.learning_rate,next_iteration=runner.current_learning_iteration,
+        effective_completed_updates=runner._effective_training_iteration(),
+        explicit_flag_required=True,foreign_contracts_rejected=True,missing_optimizer_rejected=True,
+        migration_history_roundtrip=True,source_sha256=hashlib.sha256(r11.read_bytes()).hexdigest())
+    altered=copy.deepcopy(saved['infos']['interface']);altered['asset_sha256']='other-robot'
+    try:check_manifest(altered)
+    except ValueError:pass
+    else:raise AssertionError('foreign robot accepted')
+    old=Path('logs/mjlab/chuanliantui/20261009_213808_247780_huananhu_r5_closurefix4096_1000/model_999.pt')
+    if old.exists():
+        load_actor(old)
+        try:runner.load(str(old))
+        except ValueError:pass
+        else:raise AssertionError('r5 resume into r6 accepted')
+    r6=Path('logs/mjlab/chuanliantui/20261010_003055_713431_wheelleg_recover_r6_4096_1000/model_999.pt')
+    r6_loaded=r6.exists()
+    if r6_loaded:
+        load_actor(r6)
+        try:runner.load(str(r6))
+        except ValueError:pass
+        else:raise AssertionError('constant-mode r6 full resume accepted as r7')
+summary=dict(interface=record,source_environment_equal_except_robot_dynamic_modes_policy_order_knee_weight_and_reset=True,source_ppo_equal=True,
+    resume_without_knee_limit_checks=resume_checks,r11_inference_preserved=True,
+    reset_sampling_checks=reset_checks,r9_inference_preserved=r9_loaded,
+    r9_reset_config_preserved=r9_loaded,r9_resume_rejected=r9_loaded,
+    r10_inference_preserved=r10_loaded,r10_knee_weight_preserved=r10_loaded,r10_resume_rejected=r10_loaded,
+    knee_limit_weight=0.,source_knee_limit_weight=-.5,knee_limit_contribution_exact_zero=True,knee_limit_margin_rad=local.KNEE_LIMIT_MARGIN,
+    knee_limit_boundary_values=knee_sweep.tolist(),
+    removed_knee_term_total_reward_delta_error=knee_delta_error,
+    dynamic_mode_checks=mode_checks,action_order_checks=action_checks,
+    r6_inference_preserved=r6_loaded,r6_resume_rejected=r6_loaded,
+    r7_fixture_inference_preserved=True,r7_fixture_resume_rejected=True,
+    r8_fixture_inference_preserved=True,r8_fixture_resume_rejected=True,historical_knee_weight_preserved=True,
+    source_reward_max_abs_error=reward_errors,height_sweep_m=height_sweep.tolist(),height_sweep_gate=expected.tolist(),
+    gpu_num_envs=a.num_envs,gpu_steps=a.steps,physical_substeps=substeps,seed=a.seed,
+    gpu_max_pin_error_m=integrated_max,gpu_lagged_site_pin_error_m=float(maximum),
+    closure_sampling='independent CPU kinematics of each integrated GPU qpos, including before autoreset',
+    gpu_numerical_failures=numerical,ordinary_episode_resets=episode_resets,
+    partial_reset_preserved=True,checkpoint_roundtrip=True,old_r5_inference_loaded=old.exists(),
+    r5_resume_rejected=old.exists(),onnx_max_abs_error=exported['max_abs_error'],
+    scope='configuration/oracle/finite physics/interface checks; no PPO learning or behavior acceptance')
+a.out.write_text(json.dumps(summary,ensure_ascii=False,indent=2)+'\n');env.close()
+print(json.dumps({k:v for k,v in summary.items() if k!='interface'},indent=2))

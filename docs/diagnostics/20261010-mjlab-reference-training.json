@@ -1,0 +1,113 @@
+{
+  "recorded_at": "2026-10-10T00:31:53.843933+08:00",
+  "branch": "26_wheelleg",
+  "head": "58947e8fabc4683b2025d42bda742b06c84dc566",
+  "workspace": "dirty; preserved prior r2-r5 modifications; no commit",
+  "source_files_sha256": {
+    "mjlab_training/src/ct_mjlab/policy.py": "9c7d8991fc85e2adce321be603ae33c0a03fc33f830302b194af4b87a88006d8",
+    "mjlab_training/src/ct_mjlab/training_viewer.py": "e30a2fd02cccdefd7bbda4c769a01afd7a5367be1ca8c3f6e138f2ce3909ea9b",
+    "mjlab_training/src/ct_mjlab/cpu.py": "ef31253dc64ed5b72585d01a2b67446d5214588648ca01c76ac12c65bc525430",
+    "mjlab_training/src/ct_mjlab/modes.py": "bde35021cf83be74212031ad4e5788ac23e219d0ea6aad11ddc9dd12afe34917",
+    "mjlab_training/src/ct_mjlab/asset.py": "7353e109e425801f9c0555a6716da5af12c3f25c5eba205a2c9d2b31bc026713",
+    "mjlab_training/src/ct_mjlab/recipe.py": "c937c7384ffb9b302b88fc335762918f9f3c854f6ab598bbcfb027e613883b24",
+    "mjlab_training/src/ct_mjlab/cli.py": "e1b62aa9eb9dac5c95b03a0801a7e5a9558e84cbbb8ab1c2d5c4f8531d73c79d",
+    "mjlab_training/src/ct_mjlab/reset.py": "6d34cad46e73a542e170fd38b96da943079a039c7551c34881cb629a2a93dccd",
+    "mjlab_training/src/ct_mjlab/environment.py": "222924232dc86b0ac2e2591cf2258791249c2d36771728a2c14c5e46f4ecb7a2",
+    "mjlab_training/src/ct_mjlab/gas_spring.py": "c59c7529b61ba074a6b48afab20125481722ef017194635f41e89f0db816cbc5",
+    "mjlab_training/src/ct_mjlab/config.py": "41edcd9a46bd93fcf9867a32fb962f07cad5619af31a82df52ef502d01f554b4",
+    "mjlab_training/src/ct_mjlab/registry.py": "9cdb3ebe53a1234a114c19c3f07962b7e3ea28993625ff0182b0bda6bb784fd4",
+    "mjlab_training/src/ct_mjlab/__init__.py": "24a01d5d9223340ae8f2a1a6af88f0db69a9cad05355c6367c5c29b45d8b1ae5",
+    "mjlab_training/src/ct_mjlab/reference_training/pd_action.py": "8e87a7dd5c2d2245e2b1b962ca585dd1a9096e3016f48f22b71b2f171692506d",
+    "mjlab_training/src/ct_mjlab/reference_training/huananhu_env_cfg.py": "7b8591cabea438a4197ac4ab320a1258540d33fe29c094f75c4dbf5e89d68a2c",
+    "mjlab_training/src/ct_mjlab/reference_training/model.py": "11f79d9731ff86a7d72f01770a29e6e8f7910056a253524788462671d408c29d",
+    "mjlab_training/src/ct_mjlab/reference_training/velocity_mdp.py": "992dd2767c1d675805e0616e206b4d1c9de4b66c6164cb83feb2f99b9b12c8dc",
+    "mjlab_training/src/ct_mjlab/reference_training/v14_observations.py": "6bd92b796f670aa999144e908f40b4ccef079ceb94fa1290695abc25e62fbb3b",
+    "mjlab_training/src/ct_mjlab/reference_training/runner.py": "9fa68365b2139778fb2ea90f20501141631931002d1d0be7783fdcc4cbd4b3e9",
+    "mjlab_training/src/ct_mjlab/reference_training/huananhu_runner.py": "4549e9bff837e9dc8bce8e49a7047845b2f4bb1a7689a21d54795a185a9660ea",
+    "mjlab_training/src/ct_mjlab/reference_training/huananhu_mdp.py": "24835c7b50421c2b06c602092d3ec6231e7f7e572b0ed005451063f46609aa2b",
+    "mjlab_training/src/ct_mjlab/reference_training/huananhu_poses.py": "93964608b83ef36aba4623b036242a223fec22f5a4323c9db66ec52d5ffa3bd2",
+    "mjlab_training/src/ct_mjlab/reference_training/huananhu_action.py": "03e7858f90f4183f6daa648d08d5dc12e88a0f13323f489ad6f1c1bf7d1b1038",
+    "mjlab_training/src/ct_mjlab/reference_training/huananhu_randomization.py": "d365216ca031847a2d1c13afbd93f11050e3e1d5de12c6901e1dac03d14b6d43",
+    "mjlab_training/src/ct_mjlab/reference_training/evaluate.py": "c3451116a809113f9552c63147765989a9020ccdfa59b9fd448d6af5a4a8e97a",
+    "mjlab_training/src/ct_mjlab/reference_training/gas_spring.py": "e5e104066a12e511ea145dbe74b04357541ec03f9e5919063dfd6ae7f16d787a",
+    "mjlab_training/src/ct_mjlab/reference_training/entry.py": "5af29765c3186c97b98803e3046782bed4d617ef6351cb7946feaf35fd37a92e",
+    "mjlab_training/src/ct_mjlab/reference_training/velocity_env_cfg.py": "5a380a7fcc6e93e7eaff3d93a8df09292ea7dcf036930000d67dc00b1aaca5e6",
+    "mjlab_training/src/ct_mjlab/reference_training/huananhu_observations.py": "cec4d05bd089a5139faade265c2858e2865d23ce54ea28187f20a9a8665e806b",
+    "mjlab_training/src/ct_mjlab/reference_training/__init__.py": "b584658d6b2432362d3ddb4be85182842ba79f5310dd1b6eab939d4b3f6f22d5",
+    "mjlab_training/src/ct_mjlab/reference_training/huananhu_rewards.py": "8ed3b05dc8c47607168a86a01408a9c94711f813c3aa71ef581231fb764c4add",
+    "scripts/agent/check_chuanliantui_reference_training.py": "b16857045c0b3653bd6fa0731b4f9f58bbe419339dfb99d0d473d263f95373a2",
+    "scripts/agent/check_chuanliantui_mjlab.py": "c838adbba6b8073486917cb3ee528b3507dd0e449bf52bffac68a3151d05ca08"
+  },
+  "source_reference": {
+    "repository": "https://github.com/zn1135/mjlab_WL.git",
+    "head": "36d0d2fbf424276e082e7c3b9902b49879d894e4",
+    "task": "Chuanliantui-Huananhu-Flat-v0",
+    "stage": "recover_pose_v2",
+    "source_files_sha256": {
+      "src/wheelleg_rl/chuanliantui/huananhu_env_cfg.py": "7b8591cabea438a4197ac4ab320a1258540d33fe29c094f75c4dbf5e89d68a2c",
+      "src/wheelleg_rl/chuanliantui/huananhu_mdp.py": "24835c7b50421c2b06c602092d3ec6231e7f7e572b0ed005451063f46609aa2b",
+      "src/wheelleg_rl/chuanliantui/huananhu_rewards.py": "8ed3b05dc8c47607168a86a01408a9c94711f813c3aa71ef581231fb764c4add",
+      "src/wheelleg_rl/chuanliantui/huananhu_action.py": "03e7858f90f4183f6daa648d08d5dc12e88a0f13323f489ad6f1c1bf7d1b1038",
+      "src/wheelleg_rl/chuanliantui/huananhu_randomization.py": "d365216ca031847a2d1c13afbd93f11050e3e1d5de12c6901e1dac03d14b6d43",
+      "src/wheelleg_rl/chuanliantui/huananhu_observations.py": "cec4d05bd089a5139faade265c2858e2865d23ce54ea28187f20a9a8665e806b",
+      "src/wheelleg_rl/chuanliantui/v14_observations.py": "02925f120d15ebd06f2531b1e19d654f47bdeb7f61b6573873a57616421bd58a",
+      "src/wheelleg_rl/chuanliantui/pd_action.py": "8e87a7dd5c2d2245e2b1b962ca585dd1a9096e3016f48f22b71b2f171692506d",
+      "src/wheelleg_rl/chuanliantui/velocity_env_cfg.py": "5a380a7fcc6e93e7eaff3d93a8df09292ea7dcf036930000d67dc00b1aaca5e6",
+      "src/wheelleg_rl/chuanliantui/velocity_mdp.py": "992dd2767c1d675805e0616e206b4d1c9de4b66c6164cb83feb2f99b9b12c8dc",
+      "src/wheelleg_rl/chuanliantui/huananhu_runner.py": "4549e9bff837e9dc8bce8e49a7047845b2f4bb1a7689a21d54795a185a9660ea",
+      "src/wheelleg_rl/chuanliantui/runner.py": "9fa68365b2139778fb2ea90f20501141631931002d1d0be7783fdcc4cbd4b3e9",
+      "src/wheelleg_rl/chuanliantui/gas_spring.py": "e5e104066a12e511ea145dbe74b04357541ec03f9e5919063dfd6ae7f16d787a",
+      "src/wheelleg_rl/chuanliantui/huananhu_poses.py": "9af05f4f374d461b68d2fc301780b38f5f1e2e058472e317d2a9981f3ce05615"
+    },
+    "source_dirty_files": [
+      " M AGENTS.md",
+      " M assets/chuanliantui/huananhu_pose_bank.npz",
+      " M docs/ai/huananhu_recover.md",
+      " M docs/ai/index.md",
+      " M scripts/evaluate_huananhu_recover.py",
+      " M src/wheelleg_rl/chuanliantui/huananhu_env_cfg.py",
+      " M src/wheelleg_rl/chuanliantui/huananhu_mdp.py",
+      " M src/wheelleg_rl/chuanliantui/huananhu_poses.py",
+      " M src/wheelleg_rl/chuanliantui/huananhu_runner.py",
+      " M src/wheelleg_rl/chuanliantui/train_cli.py",
+      " M tests/test_huananhu_poses.py",
+      " M tests/test_huananhu_recover_line.py",
+      "?? .claude/",
+      "?? docs/ai/recover_pose_audit.md",
+      "?? docs/ai/training_viewer.md",
+      "?? src/wheelleg_rl/chuanliantui/training_viewer.py",
+      "?? tests/test_recover_evaluation.py",
+      "?? tests/test_training_viewer.py"
+    ],
+    "note": "Imported working tree, not clean HEAD. Robot model and offline pose solving use this repository assets. No source runtime path dependency."
+  },
+  "checks": [
+    {
+      "command": "scripts/mjlab.sh check --num-envs 32 --steps 128",
+      "exit_code": 0,
+      "log": "/tmp/chuanliantui-r6-check-20261010.log"
+    },
+    {
+      "command": "mjlab_training/.venv/bin/python scripts/agent/check_chuanliantui_reference_training.py --out /tmp/chuanliantui-r6-integrated-check-20261010.json",
+      "exit_code": 0,
+      "artifact": "20261010-mjlab-reference-training-check.json"
+    },
+    {
+      "command": "mjlab_training/.venv/bin/python scripts/agent/check_chuanliantui_mjlab.py --out /tmp/chuanliantui-r5-legacy-preservation-20261010.json",
+      "exit_code": 0,
+      "scope": "legacy r5 CPU/interface preservation"
+    },
+    {
+      "command": "scripts/mjlab.sh eval --seconds 1",
+      "exit_code": 0,
+      "log": "/tmp/chuanliantui-r6-cpu-finite-20261010-v2.log",
+      "scope": "no actor, finite CPU manager/eval-path check; fails behavior criteria at 0.84 s"
+    },
+    {
+      "command": "DISPLAY=:0 scripts/mjlab.sh play --num-envs 20 --random-reset --render --seconds 10",
+      "exit_code": 0,
+      "log": "/tmp/chuanliantui-r6-preview20-20261010-display0.log",
+      "scope": "native window program run, zero requested actions/no PPO; no human acceptance assertion"
+    }
+  ]
+}

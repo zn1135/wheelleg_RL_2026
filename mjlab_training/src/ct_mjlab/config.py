@@ -1,35 +1,66 @@
-"""SCUT V14 flat v0 recipe; robot and standup task overrides are explicit."""
+"""Current r14 training factories; r5 constants below support historical replay.
+
+The current configuration lives in reference_training/huananhu_env_cfg.py.
+Legacy constants must not be used to configure new training.
+"""
 from dataclasses import asdict
 import hashlib
 import json
 from pathlib import Path
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[3]
-ASSET = ROOT / 'sim2sim/chuanliantui.xml'
+ASSET = ROOT / 'resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml'
 RECIPE = json.loads(Path(__file__).with_name('scut_v14.json').read_text())
 PARAMS = RECIPE['parameters']
 WEIGHTS = {k: v for k, v in RECIPE['rewards'].items() if v != 0}
 JOINTS = ('lf0', 'lf00', 'rf0', 'rf00', 'lfwheel', 'rfwheel')
-INTERFACE = 'chuanliantui-mjlab-huananhu-v14-flat-standup-r1'
-DT, DECIMATION, HEIGHT = .005, 4, .22
+INTERFACE = 'chuanliantui-mjlab-huananhu-v14-flat-standup-r5'
+DT, DECIMATION, HEIGHT = .002, 10, .22
+KP = (60., 60., 60., 60., 0., 0.)
+KD = (2., 2., 2., 2., .1, .1)
+# MJCF motor coordinates; physical angles are q - ref.
+_JOINT_REFS = {j.attrib['name']: float(j.attrib.get('ref', 0))
+               for j in ET.parse(ASSET).iter('joint') if 'name' in j.attrib}
+LEG_REFERENCE = tuple(_JOINT_REFS[name] for name in JOINTS[:4])
+LEG_TARGET_LIMIT = 3.14
 STEP_DT = DT * DECIMATION
+MODE_PARAMS = dict(stable_hold_s=.5, stable_tilt_deg=15., height_tolerance_m=.03,
+                   wheel_contact_n=5., base_contact_n=1., failure_hold_s=.1,
+                   failure_tilt_deg=40., failure_height_m=.16)
 
-def manifest():
+def legacy_manifest():
     return dict(interface=INTERFACE, source_commit=RECIPE['commit'], source_task=RECIPE['task'],
                 asset_sha256=hashlib.sha256(ASSET.read_bytes()).hexdigest(), joints=JOINTS,
                 actor_dim=35, critic_dim=78, action_dim=6, physics_dt=DT, decimation=DECIMATION,
-                height=HEIGHT, gas_spring_force_n=150, recipe_sha256=hashlib.sha256(
+                height=HEIGHT, modes=dict(layout=['normal','stair','slope','recover','jump','height_target','state_time'],
+                    semantics='normal-recover-standup', parameters=MODE_PARAMS,
+                    height_target='recover: height command * 5; normal: 0',
+                    state_time='recover elapsed seconds; normal: 0',
+                    law_sha256=hashlib.sha256(Path(__file__).with_name('modes.py').read_bytes()).hexdigest()),
+                reset=dict(mode='v14-normal-ground',ground_probability=.5,
+                    ground_positive_per_leg_probability=.6,ground_root_height_m=.25,
+                    normal_root_height_m=.35,normal_roll_pitch_rad=[-.15,.15],normal_yaw_rad=[-3.14,3.14],
+                    leg_speed_rad_s=[-1.5707963267948966,1.5707963267948966],wheel_speed_rad_s=[-50,50],
+                    bank_sha256=hashlib.sha256(Path(__file__).with_name('reset_poses.npz').read_bytes()).hexdigest(),
+                    sampler_sha256=hashlib.sha256(Path(__file__).with_name('reset.py').read_bytes()).hexdigest()),
+                gas_spring=dict(model='physical-hinge-slide',preload_m=.01,
+                    reference_compression_m=.09,force_limit_n=150.,damping_ns_per_m=50.,
+                    law_sha256=hashlib.sha256(Path(__file__).with_name('gas_spring.py').read_bytes()).hexdigest(),
+                    source_sha256=hashlib.sha256((ASSET.parent/'spring-source.json').read_bytes()).hexdigest(),
+                    mesh_sha256={name:hashlib.sha256((ASSET.parent.parent/'meshes'/name).read_bytes()).hexdigest()
+                        for name in ('lf0_physical.STL','rf0_physical.STL')}), recipe_sha256=hashlib.sha256(
                     Path(__file__).with_name('scut_v14.json').read_bytes()).hexdigest(),
                 poses_sha256=hashlib.sha256(Path(__file__).with_name('poses.json').read_bytes()).hexdigest(),
                 control=dict(leg_scale=.5,wheel_scale=10,wheel_speed_limit=20,
-                    leg_target_limit=[-3.141592653589793,3.141592653589793],
-                    kp=[10,10,10,10,0,0],kd=[1,1,1,1,.1,.1],effort=[40,40,40,40,3.9,3.9],
+                    leg_target_limit_relative_to_ref=[-LEG_TARGET_LIMIT,LEG_TARGET_LIMIT],
+                    leg_reference=LEG_REFERENCE, kp=KP,kd=KD,effort=[40,40,40,40,3.9,3.9],
                     effort_scale_before_clip=True,leg_effort_scale_sampling=[.8,1.1],
                     wheel_effort_scale_sampling=[.9,1.1],
                     zero_torque_s=.2,obs_delay_sampling=[1,4],act_delay_sampling=[1,3],
                     delay_sampling_upper_exclusive=True,delay_step_s=DT,clear_delay_on_reset=True))
 
-def runner_cfg(seed=42):
+def legacy_runner_cfg(seed=42):
     from mjlab.rl import RslRlOnPolicyRunnerCfg, RslRlModelCfg, RslRlPpoAlgorithmCfg
     cfg=RslRlOnPolicyRunnerCfg(seed=seed, num_steps_per_env=24, max_iterations=20000,
         save_interval=500, experiment_name='chuanliantui', logger='tensorboard', upload_model=False,
@@ -47,3 +78,13 @@ def runner_cfg(seed=42):
         if result[key]['distribution_cfg'] is None:
             result[key].pop('distribution_cfg')
     return result
+
+
+def manifest():
+    from .reference_training.entry import manifest as current
+    return current()
+
+
+def runner_cfg(seed=42):
+    from .reference_training.entry import runner_cfg as current
+    return current(seed)

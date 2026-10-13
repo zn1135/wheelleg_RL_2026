@@ -1,0 +1,403 @@
+{
+  "time": "2026-10-10T12:44:03.704215+08:00",
+  "task": "Chuanliantui-Huananhu-Flat-v0",
+  "checkpoint": "/home/zn/文档/mjlab/wheelleg_RL/logs/rsl_rl/chuanliantui_huananhu_flat_sourcexml_spring90mm_v11init_velocity_reciprocal_v12/2026-10-08_18-01-01_recover_pose_v2_formal_headless_4096/model_1156.pt",
+  "checkpoint_sha256": "c2fd635796ab4cc7fcf0b096b05faf8cd308d3d74fad16dd1f963d7d20bd3c4c",
+  "script": "/home/zn/文档/mjlab/wheelleg_RL/scripts/evaluate_huananhu_recover.py",
+  "script_sha256": "3e2073244ac80a13d3eb1bdaa926cc0ea1d9cd8d9a8c854f0ddfeb05d617557f",
+  "head": "36d0d2fbf424276e082e7c3b9902b49879d894e4",
+  "working_tree_status": " M AGENTS.md\n M assets/chuanliantui/huananhu_pose_bank.npz\n M docs/ai/huananhu_recover.md\n M docs/ai/index.md\n M scripts/evaluate_huananhu_recover.py\n M src/wheelleg_rl/chuanliantui/huananhu_env_cfg.py\n M src/wheelleg_rl/chuanliantui/huananhu_mdp.py\n M src/wheelleg_rl/chuanliantui/huananhu_poses.py\n M src/wheelleg_rl/chuanliantui/huananhu_runner.py\n M src/wheelleg_rl/chuanliantui/train_cli.py\n M tests/test_huananhu_poses.py\n M tests/test_huananhu_recover_line.py\n?? .claude/\n?? docs/ai/recover_pose_audit.md\n?? docs/ai/training_viewer.md\n?? src/wheelleg_rl/chuanliantui/training_viewer.py\n?? tests/test_recover_evaluation.py\n?? tests/test_training_viewer.py\n",
+  "git_diff_sha256": "a4ea7abfaed6af2deb4dd8754d169726e4ddd8e73deade636745554d95c92531",
+  "config": {
+    "num_envs": 32,
+    "start_mode": "force",
+    "terrain": "flat",
+    "steps": 1000,
+    "max_episode_s": 20.0,
+    "play": true,
+    "domain_randomization": false,
+    "obs_noise_or_delay": false,
+    "interval_pushes": false,
+    "height": null,
+    "pose_probability": 0.5,
+    "tilt_deg": 5.0,
+    "yaw_deg": 180.0,
+    "height_offset": 0.01
+  },
+  "criteria": {
+    "weak": "state.stable_time >= 0.5 (task-native recovered flag)",
+    "strict": "|h - cmd_h| <= 0.03 m and |roll|,|pitch| <= 15 deg and no base contact and both wheels, held >= 0.5 s",
+    "sustained_stand": "strict recovery, complete 15 s window, >=95% stationary strict standing, survive 20 s",
+    "stationary": "body xy speed <= 0.15 m/s, yaw rate <= 0.3 rad/s"
+  },
+  "headline_group": "ground_start_flat",
+  "seeds": [
+    42
+  ],
+  "per_seed": {
+    "42": {
+      "initial_state_signature": "797016854fd20c1a108c979bb9a8a05456d6af0dd3fa53a4314ef929ff317f41",
+      "num_envs": 32,
+      "ground_start_envs": 32,
+      "ground_start_flat_envs": 32,
+      "aggregates": {
+        "all": {
+          "count": 32,
+          "weak_recovered": 32,
+          "weak_recovery_rate": 1.0,
+          "strict_recovered": 32,
+          "strict_recovery_rate": 1.0,
+          "strict_recovery_ci95": [
+            0.8911188393206472,
+            1.0
+          ],
+          "sustained_stand_passes": 32,
+          "sustained_stand_rate": 1.0,
+          "sustained_stand_ci95": [
+            0.8911188393206472,
+            1.0
+          ],
+          "survival_rate": 1.0,
+          "stable_at_t0": 32,
+          "stable_at_t0_rate": 1.0,
+          "mean_recover_mode_seconds": 1.2068744450807571,
+          "median_strict_recover_time_s": 1.2199994325637817,
+          "p90_strict_recover_time_s": 1.2999993562698364,
+          "mean_strict_hold_fraction": 0.9988752957433462,
+          "mean_height_gain_m": 0.07252140529453754,
+          "mean_start_height_m": 0.25253010261803865,
+          "mean_final_height_m": 0.30507053434848785,
+          "both_wheels_at_end": 32,
+          "survived_20s": 32,
+          "numerical_failures": 0,
+          "termination_counts": {
+            "unfinished": 0,
+            "time_out": 32,
+            "physical": 0,
+            "out_of_patch": 0,
+            "numerical": 0
+          }
+        },
+        "ground_start": {
+          "count": 32,
+          "weak_recovered": 32,
+          "weak_recovery_rate": 1.0,
+          "strict_recovered": 32,
+          "strict_recovery_rate": 1.0,
+          "strict_recovery_ci95": [
+            0.8911188393206472,
+            1.0
+          ],
+          "sustained_stand_passes": 32,
+          "sustained_stand_rate": 1.0,
+          "sustained_stand_ci95": [
+            0.8911188393206472,
+            1.0
+          ],
+          "survival_rate": 1.0,
+          "stable_at_t0": 32,
+          "stable_at_t0_rate": 1.0,
+          "mean_recover_mode_seconds": 1.2068744450807571,
+          "median_strict_recover_time_s": 1.2199994325637817,
+          "p90_strict_recover_time_s": 1.2999993562698364,
+          "mean_strict_hold_fraction": 0.9988752957433462,
+          "mean_height_gain_m": 0.07252140529453754,
+          "mean_start_height_m": 0.25253010261803865,
+          "mean_final_height_m": 0.30507053434848785,
+          "both_wheels_at_end": 32,
+          "survived_20s": 32,
+          "numerical_failures": 0,
+          "termination_counts": {
+            "unfinished": 0,
+            "time_out": 32,
+            "physical": 0,
+            "out_of_patch": 0,
+            "numerical": 0
+          }
+        },
+        "ground_start_flat": {
+          "count": 32,
+          "weak_recovered": 32,
+          "weak_recovery_rate": 1.0,
+          "strict_recovered": 32,
+          "strict_recovery_rate": 1.0,
+          "strict_recovery_ci95": [
+            0.8911188393206472,
+            1.0
+          ],
+          "sustained_stand_passes": 32,
+          "sustained_stand_rate": 1.0,
+          "sustained_stand_ci95": [
+            0.8911188393206472,
+            1.0
+          ],
+          "survival_rate": 1.0,
+          "stable_at_t0": 32,
+          "stable_at_t0_rate": 1.0,
+          "mean_recover_mode_seconds": 1.2068744450807571,
+          "median_strict_recover_time_s": 1.2199994325637817,
+          "p90_strict_recover_time_s": 1.2999993562698364,
+          "mean_strict_hold_fraction": 0.9988752957433462,
+          "mean_height_gain_m": 0.07252140529453754,
+          "mean_start_height_m": 0.25253010261803865,
+          "mean_final_height_m": 0.30507053434848785,
+          "both_wheels_at_end": 32,
+          "survived_20s": 32,
+          "numerical_failures": 0,
+          "termination_counts": {
+            "unfinished": 0,
+            "time_out": 32,
+            "physical": 0,
+            "out_of_patch": 0,
+            "numerical": 0
+          }
+        },
+        "by_terrain": {
+          "flat": {
+            "count": 32,
+            "weak_recovered": 32,
+            "weak_recovery_rate": 1.0,
+            "strict_recovered": 32,
+            "strict_recovery_rate": 1.0,
+            "strict_recovery_ci95": [
+              0.8911188393206472,
+              1.0
+            ],
+            "sustained_stand_passes": 32,
+            "sustained_stand_rate": 1.0,
+            "sustained_stand_ci95": [
+              0.8911188393206472,
+              1.0
+            ],
+            "survival_rate": 1.0,
+            "stable_at_t0": 32,
+            "stable_at_t0_rate": 1.0,
+            "mean_recover_mode_seconds": 1.2068744450807571,
+            "median_strict_recover_time_s": 1.2199994325637817,
+            "p90_strict_recover_time_s": 1.2999993562698364,
+            "mean_strict_hold_fraction": 0.9988752957433462,
+            "mean_height_gain_m": 0.07252140529453754,
+            "mean_start_height_m": 0.25253010261803865,
+            "mean_final_height_m": 0.30507053434848785,
+            "both_wheels_at_end": 32,
+            "survived_20s": 32,
+            "numerical_failures": 0,
+            "termination_counts": {
+              "unfinished": 0,
+              "time_out": 32,
+              "physical": 0,
+              "out_of_patch": 0,
+              "numerical": 0
+            }
+          },
+          "slope": {
+            "count": 0
+          },
+          "step": {
+            "count": 0
+          },
+          "stair": {
+            "count": 0
+          }
+        },
+        "by_initial_height_command": {
+          "low": {
+            "count": 8,
+            "weak_recovered": 8,
+            "weak_recovery_rate": 1.0,
+            "strict_recovered": 8,
+            "strict_recovery_rate": 1.0,
+            "strict_recovery_ci95": [
+              0.6305833524471808,
+              1.0
+            ],
+            "sustained_stand_passes": 8,
+            "sustained_stand_rate": 1.0,
+            "sustained_stand_ci95": [
+              0.6305833524471808,
+              1.0
+            ],
+            "survival_rate": 1.0,
+            "stable_at_t0": 8,
+            "stable_at_t0_rate": 1.0,
+            "mean_recover_mode_seconds": 1.2124994397163391,
+            "median_strict_recover_time_s": 1.259999394416809,
+            "p90_strict_recover_time_s": 1.2859993696212768,
+            "mean_strict_hold_fraction": 0.9973345547914505,
+            "mean_height_gain_m": 0.06680304929614067,
+            "mean_start_height_m": 0.25129755586385727,
+            "mean_final_height_m": 0.30504122748970985,
+            "both_wheels_at_end": 8,
+            "survived_20s": 8,
+            "numerical_failures": 0,
+            "termination_counts": {
+              "unfinished": 0,
+              "time_out": 8,
+              "physical": 0,
+              "out_of_patch": 0,
+              "numerical": 0
+            }
+          },
+          "mid": {
+            "count": 18,
+            "weak_recovered": 18,
+            "weak_recovery_rate": 1.0,
+            "strict_recovered": 18,
+            "strict_recovery_rate": 1.0,
+            "strict_recovery_ci95": [
+              0.8146980318621478,
+              1.0
+            ],
+            "sustained_stand_passes": 18,
+            "sustained_stand_rate": 1.0,
+            "sustained_stand_ci95": [
+              0.8146980318621478,
+              1.0
+            ],
+            "survival_rate": 1.0,
+            "stable_at_t0": 18,
+            "stable_at_t0_rate": 1.0,
+            "mean_recover_mode_seconds": 1.1777772506078084,
+            "median_strict_recover_time_s": 1.1899994611740112,
+            "p90_strict_recover_time_s": 1.2999993562698364,
+            "mean_strict_hold_fraction": 0.9993333187368181,
+            "mean_height_gain_m": 0.06821373270617591,
+            "mean_start_height_m": 0.2534342375066545,
+            "mean_final_height_m": 0.30168335802025265,
+            "both_wheels_at_end": 18,
+            "survived_20s": 18,
+            "numerical_failures": 0,
+            "termination_counts": {
+              "unfinished": 0,
+              "time_out": 18,
+              "physical": 0,
+              "out_of_patch": 0,
+              "numerical": 0
+            }
+          },
+          "high": {
+            "count": 6,
+            "weak_recovered": 6,
+            "weak_recovery_rate": 1.0,
+            "strict_recovered": 6,
+            "strict_recovery_rate": 1.0,
+            "strict_recovery_ci95": [
+              0.5407418735600995,
+              1.0
+            ],
+            "sustained_stand_passes": 6,
+            "sustained_stand_rate": 1.0,
+            "sustained_stand_ci95": [
+              0.5407418735600995,
+              1.0
+            ],
+            "survival_rate": 1.0,
+            "stable_at_t0": 6,
+            "stable_at_t0_rate": 1.0,
+            "mean_recover_mode_seconds": 1.2866660356521606,
+            "median_strict_recover_time_s": 1.2199994325637817,
+            "p90_strict_recover_time_s": 1.5399991273880005,
+            "mean_strict_hold_fraction": 0.9995555480321249,
+            "mean_height_gain_m": 0.09306889772415161,
+            "mean_start_height_m": 0.25146109362443286,
+            "mean_final_height_m": 0.31527113914489746,
+            "both_wheels_at_end": 6,
+            "survived_20s": 6,
+            "numerical_failures": 0,
+            "termination_counts": {
+              "unfinished": 0,
+              "time_out": 6,
+              "physical": 0,
+              "out_of_patch": 0,
+              "numerical": 0
+            }
+          }
+        }
+      }
+    }
+  },
+  "cross_seed": {
+    "weak_recovery_rate": {
+      "values": [
+        1.0
+      ],
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0
+    },
+    "strict_recovery_rate": {
+      "values": [
+        1.0
+      ],
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0
+    },
+    "stable_at_t0_rate": {
+      "values": [
+        1.0
+      ],
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0
+    },
+    "sustained_stand_rate": {
+      "values": [
+        1.0
+      ],
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0
+    },
+    "survival_rate": {
+      "values": [
+        1.0
+      ],
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0
+    },
+    "mean_recover_mode_seconds": {
+      "values": [
+        1.2068744450807571
+      ],
+      "mean": 1.2068744450807571,
+      "std": 0.0,
+      "min": 1.2068744450807571,
+      "max": 1.2068744450807571
+    },
+    "median_strict_recover_time_s": {
+      "values": [
+        1.2199994325637817
+      ],
+      "mean": 1.2199994325637817,
+      "std": 0.0,
+      "min": 1.2199994325637817,
+      "max": 1.2199994325637817
+    },
+    "mean_strict_hold_fraction": {
+      "values": [
+        0.9988752957433462
+      ],
+      "mean": 0.9988752957433462,
+      "std": 0.0,
+      "min": 0.9988752957433462,
+      "max": 0.9988752957433462
+    },
+    "survived_20s": {
+      "values": [
+        32
+      ],
+      "mean": 32.0,
+      "std": 0.0,
+      "min": 32.0,
+      "max": 32.0
+    }
+  },
+  "episodes_file_pattern": "chuanliantui-reference-model1156-comparison-20261010_episodes_seed<seed>.json"
+}

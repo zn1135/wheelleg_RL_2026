@@ -1,0 +1,10 @@
+{
+  "samples": 1024,
+  "ground_fraction": 0.5263671875,
+  "root_height_range_m": [
+    0.25,
+    0.420678973197937
+  ],
+  "random_pose_max_closed_gap_m": 5.39102501658199e-08,
+  "seed_repeatable": true
+}

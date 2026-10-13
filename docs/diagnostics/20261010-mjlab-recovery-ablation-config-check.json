@@ -1,0 +1,44 @@
+{
+  "baseline": [],
+  "wide_height": [
+    {
+      "path": ".rewards.track_height_exp_tight.func",
+      "baseline": "ct_mjlab.reference_training.huananhu_rewards.reward",
+      "experiment": "ct_mjlab.experiments.recovery_ablation.wide_height_reward"
+    }
+  ],
+  "mode_reward": [
+    {
+      "path": ".rewards.stand_still_lin_vel.func",
+      "baseline": "ct_mjlab.reference_training.huananhu_rewards.reward",
+      "experiment": "ct_mjlab.experiments.recovery_ablation.mode_reward"
+    },
+    {
+      "path": ".rewards.track_ang_vel_z.func",
+      "baseline": "ct_mjlab.reference_training.huananhu_rewards.reward",
+      "experiment": "ct_mjlab.experiments.recovery_ablation.mode_reward"
+    },
+    {
+      "path": ".rewards.track_ang_vel_z_square.func",
+      "baseline": "ct_mjlab.reference_training.huananhu_rewards.reward",
+      "experiment": "ct_mjlab.experiments.recovery_ablation.mode_reward"
+    },
+    {
+      "path": ".rewards.track_lin_vel_xy.func",
+      "baseline": "ct_mjlab.reference_training.huananhu_rewards.reward",
+      "experiment": "ct_mjlab.experiments.recovery_ablation.mode_reward"
+    },
+    {
+      "path": ".rewards.track_lin_vel_xy_square.func",
+      "baseline": "ct_mjlab.reference_training.huananhu_rewards.reward",
+      "experiment": "ct_mjlab.experiments.recovery_ablation.mode_reward"
+    }
+  ],
+  "recover_timeout": [
+    {
+      "path": ".terminations.failure.func",
+      "baseline": "ct_mjlab.reference_training.huananhu_mdp.failure",
+      "experiment": "ct_mjlab.experiments.recovery_ablation.recover_failure"
+    }
+  ]
+}

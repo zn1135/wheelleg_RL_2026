@@ -1,0 +1,43 @@
+{
+  "repository": "https://github.com/zn1135/mjlab_WL.git",
+  "head": "36d0d2fbf424276e082e7c3b9902b49879d894e4",
+  "task": "Chuanliantui-Huananhu-Flat-v0",
+  "stage": "recover_pose_v2",
+  "source_files_sha256": {
+    "src/wheelleg_rl/chuanliantui/huananhu_env_cfg.py": "7b8591cabea438a4197ac4ab320a1258540d33fe29c094f75c4dbf5e89d68a2c",
+    "src/wheelleg_rl/chuanliantui/huananhu_mdp.py": "24835c7b50421c2b06c602092d3ec6231e7f7e572b0ed005451063f46609aa2b",
+    "src/wheelleg_rl/chuanliantui/huananhu_rewards.py": "8ed3b05dc8c47607168a86a01408a9c94711f813c3aa71ef581231fb764c4add",
+    "src/wheelleg_rl/chuanliantui/huananhu_action.py": "03e7858f90f4183f6daa648d08d5dc12e88a0f13323f489ad6f1c1bf7d1b1038",
+    "src/wheelleg_rl/chuanliantui/huananhu_randomization.py": "d365216ca031847a2d1c13afbd93f11050e3e1d5de12c6901e1dac03d14b6d43",
+    "src/wheelleg_rl/chuanliantui/huananhu_observations.py": "cec4d05bd089a5139faade265c2858e2865d23ce54ea28187f20a9a8665e806b",
+    "src/wheelleg_rl/chuanliantui/v14_observations.py": "02925f120d15ebd06f2531b1e19d654f47bdeb7f61b6573873a57616421bd58a",
+    "src/wheelleg_rl/chuanliantui/pd_action.py": "8e87a7dd5c2d2245e2b1b962ca585dd1a9096e3016f48f22b71b2f171692506d",
+    "src/wheelleg_rl/chuanliantui/velocity_env_cfg.py": "5a380a7fcc6e93e7eaff3d93a8df09292ea7dcf036930000d67dc00b1aaca5e6",
+    "src/wheelleg_rl/chuanliantui/velocity_mdp.py": "992dd2767c1d675805e0616e206b4d1c9de4b66c6164cb83feb2f99b9b12c8dc",
+    "src/wheelleg_rl/chuanliantui/huananhu_runner.py": "4549e9bff837e9dc8bce8e49a7047845b2f4bb1a7689a21d54795a185a9660ea",
+    "src/wheelleg_rl/chuanliantui/runner.py": "9fa68365b2139778fb2ea90f20501141631931002d1d0be7783fdcc4cbd4b3e9",
+    "src/wheelleg_rl/chuanliantui/gas_spring.py": "e5e104066a12e511ea145dbe74b04357541ec03f9e5919063dfd6ae7f16d787a",
+    "src/wheelleg_rl/chuanliantui/huananhu_poses.py": "9af05f4f374d461b68d2fc301780b38f5f1e2e058472e317d2a9981f3ce05615"
+  },
+  "source_dirty_files": [
+    " M AGENTS.md",
+    " M assets/chuanliantui/huananhu_pose_bank.npz",
+    " M docs/ai/huananhu_recover.md",
+    " M docs/ai/index.md",
+    " M scripts/evaluate_huananhu_recover.py",
+    " M src/wheelleg_rl/chuanliantui/huananhu_env_cfg.py",
+    " M src/wheelleg_rl/chuanliantui/huananhu_mdp.py",
+    " M src/wheelleg_rl/chuanliantui/huananhu_poses.py",
+    " M src/wheelleg_rl/chuanliantui/huananhu_runner.py",
+    " M src/wheelleg_rl/chuanliantui/train_cli.py",
+    " M tests/test_huananhu_poses.py",
+    " M tests/test_huananhu_recover_line.py",
+    "?? .claude/",
+    "?? docs/ai/recover_pose_audit.md",
+    "?? docs/ai/training_viewer.md",
+    "?? src/wheelleg_rl/chuanliantui/training_viewer.py",
+    "?? tests/test_recover_evaluation.py",
+    "?? tests/test_training_viewer.py"
+  ],
+  "note": "Imported working tree, not clean HEAD. Robot model and offline pose solving use this repository assets. No source runtime path dependency."
+}

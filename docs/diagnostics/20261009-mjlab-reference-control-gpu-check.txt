@@ -1,0 +1,90 @@
+/home/zn/文档/mjlab/wheelleg_RL/.venv/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 13.2
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 4060 Laptop GPU" (8 GiB, sm_89, mempool enabled)
+   Kernel cache:
+     /home/zn/.cache/warp/1.17.0
+Module mujoco_warp._src.smooth b9cc505 load on device 'cuda:0' took 2.78 ms  (cached)
+Module _nxn_broadphase__locals__kernel_3a0c7ab9 3a0c7ab load on device 'cuda:0' took 0.41 ms  (cached)
+Module _primitive_narrowphase__locals__primitive_narrowphase_be493d84 be493d8 load on device 'cuda:0' took 0.71 ms  (cached)
+Module mujoco_warp._src.constraint 9435a53 load on device 'cuda:0' took 0.30 ms  (cached)
+Module _equality_connect__locals__kernel_eb6d8952 eb6d895 load on device 'cuda:0' took 0.45 ms  (cached)
+Module _friction_dof__locals__kernel_35a89db9 35a89db load on device 'cuda:0' took 0.61 ms  (cached)
+Module _limit_slide_hinge__locals__kernel_6395e840 6395e84 load on device 'cuda:0' took 0.49 ms  (cached)
+Module _efc_contact_init__locals__kernel_a68d1f95 a68d1f9 load on device 'cuda:0' took 0.39 ms  (cached)
+Module _efc_contact_jac_dense__locals__kernel_9a227029 8139c0c load on device 'cuda:0' took 0.55 ms  (cached)
+Module _efc_contact_update__locals__kernel_55bfdad1 55bfdad load on device 'cuda:0' took 0.41 ms  (cached)
+Module mujoco_warp._src.forward f44d3e1 load on device 'cuda:0' took 1.33 ms  (cached)
+Module mujoco_warp._src.passive 80f3681 load on device 'cuda:0' took 1.52 ms  (cached)
+Module mujoco_warp._src.forward 0a75030 load on device 'cuda:0' took 1.00 ms  (cached)
+Module _qfrc_smooth__locals__kernel_2c4e0694 2c4e069 load on device 'cuda:0' took 0.32 ms  (cached)
+Module mujoco_warp._src.support f39c2de load on device 'cuda:0' took 0.37 ms  (cached)
+Module _tile_cholesky_factorize_solve_block__locals__kernel_5d9591a1 8226b79 load on device 'cuda:0' took 34.39 ms  (cached)
+Module _solve_init_dof__locals__kernel_618a11c7 618a11c load on device 'cuda:0' took 0.39 ms  (cached)
+Module mujoco_warp._src.solver c97221b load on device 'cuda:0' took 1.85 ms  (cached)
+Module _solve_init_jaref_kernel__locals__kernel_0b47fb19 0b47fb1 load on device 'cuda:0' took 0.36 ms  (cached)
+Module mul_m_kernel__locals___mul_m_74986a16 74986a1 load on device 'cuda:0' took 0.37 ms  (cached)
+Module _update_constraint_efc__locals__kernel_ed085732 ed08573 load on device 'cuda:0' took 0.35 ms  (cached)
+Module _update_constraint_init_qfrc_constraint_dense__locals__kernel_bd324b86 bd324b8 load on device 'cuda:0' took 0.35 ms  (cached)
+Module _update_gradient_zero_grad_dot__locals__kernel_ada3cc5f ada3cc5 load on device 'cuda:0' took 0.31 ms  (cached)
+Module _update_gradient_grad__locals__kernel_45d59ec9 45d59ec load on device 'cuda:0' took 0.32 ms  (cached)
+Module _update_gradient_JTDAJ_dense_tiled__locals__kernel_1c770d8b 08a2151 load on device 'cuda:0' took 0.86 ms  (cached)
+Module _update_gradient_cholesky__locals__kernel_cdacceb2 9f5fda1 load on device 'cuda:0' took 34.38 ms  (cached)
+Module _linesearch_iterative_kernel__locals__kernel_306e817d 0c7d52d load on device 'cuda:0' took 5.15 ms  (cached)
+Module mujoco_warp._src.sensor 764597f load on device 'cuda:0' took 1.84 ms  (cached)
+Module _contact_sort__locals__contact_sort_adeecb09 788a659 load on device 'cuda:0' took 0.43 ms  (cached)
+Module mujoco_warp._src.derivative 1d93a53 load on device 'cuda:0' took 0.96 ms  (cached)
+Module _next_time_builder__locals___next_time_cc50a46c cc50a46 load on device 'cuda:0' took 0.46 ms  (cached)
+Module reset_data__locals__reset_xfrc_applied_c7eeecfb c7eeecf load on device 'cuda:0' took 0.40 ms  (cached)
+Module reset_data__locals__reset_M_d1ea7a8e d1ea7a8 load on device 'cuda:0' took 0.31 ms  (cached)
+Module reset_data__locals__reset_mocap_b017f38a b017f38 load on device 'cuda:0' took 0.31 ms  (cached)
+Module reset_data__locals__reset_contact_757d9bde 757d9bd load on device 'cuda:0' took 0.32 ms  (cached)
+Module reset_data__locals__reset_sleep_6b3be194 6b3be19 load on device 'cuda:0' took 0.32 ms  (cached)
+Module reset_data__locals__reset_nworld_e471a890 e471a89 load on device 'cuda:0' took 0.39 ms  (cached)
+Module repeat_array_kernel_31f1cdc7 ab09835 load on device 'cuda:0' took 0.40 ms  (cached)
+Module repeat_array_kernel_31f1cdc7 a2cef03 load on device 'cuda:0' took 0.40 ms  (cached)
+Module repeat_array_kernel_31f1cdc7 eb7f276 load on device 'cuda:0' took 0.39 ms  (cached)
+Module mujoco_warp._src.io cb0c74e load on device 'cuda:0' took 1.45 ms  (cached)
+Module _tile_cholesky_factorize_block__locals__kernel_ece6e9b5 3672f0a load on device 'cuda:0' took 24.37 ms  (cached)
+Module _tile_cholesky_solve_block__locals__kernel_7faff87d 53480b4 load on device 'cuda:0' took 23.58 ms  (cached)
+--------------------------------------------------------------------------------
+Resolved observation sets: 
+	 actor :  ('actor',)
+	 critic :  ('critic',)
+--------------------------------------------------------------------------------
+Actor Model: MLPModel(
+  (obs_normalizer): Identity()
+  (distribution): GaussianDistribution()
+  (mlp): MLP(
+    (0): Linear(in_features=35, out_features=256, bias=True)
+    (1): ELU(alpha=1.0)
+    (2): Linear(in_features=256, out_features=128, bias=True)
+    (3): ELU(alpha=1.0)
+    (4): Linear(in_features=128, out_features=64, bias=True)
+    (5): ELU(alpha=1.0)
+    (6): Linear(in_features=64, out_features=6, bias=True)
+  )
+)
+Critic Model: MLPModel(
+  (obs_normalizer): Identity()
+  (mlp): MLP(
+    (0): Linear(in_features=78, out_features=256, bias=True)
+    (1): ELU(alpha=1.0)
+    (2): Linear(in_features=256, out_features=128, bias=True)
+    (3): ELU(alpha=1.0)
+    (4): Linear(in_features=128, out_features=64, bias=True)
+    (5): ELU(alpha=1.0)
+    (6): Linear(in_features=64, out_features=1, bias=True)
+  )
+)
+Traceback (most recent call last):
+  File "/home/zn/文档/Wheel-Legged-Gym/scripts/agent/check_chuanliantui_mjlab.py", line 279, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/zn/文档/Wheel-Legged-Gym/scripts/agent/check_chuanliantui_mjlab.py", line 249, in main
+    assert gpu_max_pin<.005,gpu_max_pin
+           ^^^^^^^^^^^^^^^^
+AssertionError: 0.00618120888248086
