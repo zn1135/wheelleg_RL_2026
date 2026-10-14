@@ -2,6 +2,8 @@
 
 新 mjlab 串联腿任务使用35维actor／78维critic／六个实体电机接口，详见 [独立接口与回放](../mjlab-chuanliantui.md)。本页旧串联／H7策略通道保留历史物理顺序；2026-10-08 左右实体前缀更正后，原 lf 名称对应当前 rf，原 rf 对应当前 lf，数值极性和通道未交换。历史模型不能加载到新 mjlab 接口。
 
+历史华南虎 multimode `model_3023` 例外地使用 39 维 actor／82 维 critic；其独立 CPU MuJoCo 入口为 `sim2sim/mj_sim2sim_huananhu_multimode.py`，导出与使用规则见 [multimode ONNX 说明](../onnx-huananhu-multimode-model3023.md)。它不兼容下文旧 25/125 维 H7 流程。
+
 整机 S2R1 采集的上位机策略复算与闭链 MuJoCo 离线复刻见
 [S2R1 离线对照](s2r-offline.md)。该工具不连接电机；真实数据、关节映射和初态需另行提供。
 

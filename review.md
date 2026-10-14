@@ -1,3 +1,33 @@
+# multimode `model_3023` ONNX 与 CPU sim2sim 复查（2026-10-15）
+
+- 审查基线：`bb6b337725218b7c816dfb0d775cee46996acfb0`（detached HEAD）。
+- 审查范围：本次暂存的 39 维 checkpoint、专用 XML/姿态库、ONNX 导出器、独立 CPU MuJoCo sim2sim、模型交付记录及相关使用说明。
+- 审查方式：主 Agent 汇总；独立只读 Reviewer `multimode_review` 检查最终调用路径、资产依赖、接口、报告和文档。未启动训练、未改动 H7、未触碰根 `logs/`。
+
+## 发现与修复
+
+独立复查先发现三项问题，均已在候选中修复并复验：
+
+1. **P1 / ONNX 验收不完整**：CPU sim2sim 现校验 `obs: float32[1,39]` 与 `actions: float32[1,6]`，并将同观测 ONNX/PyTorch 最大动作差 `≤1e-4` 纳入 `passed`。
+2. **P1 / 交付产物可得性**：ONNX 使用说明和接口记录明确历史 `artifacts/` ONNX、向量和 JSON 被忽略且不随 Git 发布；干净检出应运行版本化导出器，并以新生成 `*_export.json` 为准。
+3. **P2 / 地面起立报告失真**：报告现写入 `initial_pose`；ground 回放额外记录 recover 模式、`ground_start=1`、未激活策略和 0.2 秒激活时刻，不再把整个回放表述为固定 NORMAL。
+
+未发现未修复的 P0/P1 问题。
+
+## 复验
+
+- `py_compile scripts/export_huananhu_multimode_onnx.py sim2sim/mj_sim2sim_huananhu_multimode.py` 通过（mjlab Python 3.12）。
+- 重新导出 opset 13 与 18：固定 `obs: float32[1,39] -> actions: float32[1,6]`；256 个参考输入的最大绝对误差均为 `1.9073486328125e-06`。
+- opset 13 的 normal 平地、零速、20 秒 CPU MuJoCo 回放：951 个稳定窗口样本，高度最大误差 `0.0259852811 m`，最大倾角 `1.809041°`，机身接触 0，双轮接触 951，最大 ONNX/PyTorch 动作差 `8.3446503e-07`，`passed=true`。
+- 随机地面初态 2 秒回放：报告包含 recover 前缀，51 个稳定窗口样本，`passed=true`。
+- 版本化 XML 与冻结物理 XML 的编译结构、质量、惯量、关节范围、摩擦、执行器范围和网格顶点逐项一致；`git diff --check` 通过。
+
+## 未覆盖范围
+
+未在干净克隆中实际执行导出；资产依赖已由当前版本化 XML、姿态库及已跟踪 mesh 路径核对。未执行 GPU/Warp 64 初态回放、Cube.AI 导入、H7 接入或真机测试。上述复查不代表用户已采纳或已提交。
+
+---
+
 # 气弹簧与闭链可视化代码复查
 
 ## 修复回归（2026-09-18）
