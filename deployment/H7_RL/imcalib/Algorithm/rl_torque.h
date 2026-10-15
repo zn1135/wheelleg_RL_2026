@@ -1,37 +1,17 @@
+/* 六实体电机：模型坐标目标/PD/限幅，再还原固件力矩；无虚拟关节或补偿依赖。 */
 #ifndef RL_TORQUE_H
 #define RL_TORQUE_H
-
-#include <stdint.h>
-
-#include "dm.h"
-#include "dji.h"
-#include "leg_solver.h"
-#include "pid.h"
-#include "rl_policy.h"
+#include "rl_types.h"
+#include "machine_config.h"
 #include "torque_output.h"
-
 typedef struct {
-    float dof_pos[6];
-    float p_gains[6];
-    float d_gains[6];
-    float wheel_pid[2][3]; /* [左/右][kp, ki, kd] */
-} rl_torque_param_t;
-
-typedef struct {
-    torque_output_t last_torque;
-    float virtual_torque[RL_ACTION_SIZE];
-    float pos_target[RL_ACTION_SIZE];
-    pid_t controller[RL_ACTION_SIZE];
+    torque_output_t last_torque;    /* 固件坐标力矩请求，尚未经过启动/故障门控 */
+    float motor_torque[RL_ACTION_SIZE]; /* 模型坐标限幅力矩，Nm */
+    float target[RL_ACTION_SIZE];   /* 本次使用的四个角度(rad)/两个轮速(rad/s)目标 */
+    float pos[RL_LEG_MOTOR_NUM];    /* 本次PD当前模型角度，rad */
+    float vel[RL_ACTION_SIZE];     /* 本次PD当前模型速度，rad/s */
 } rl_torque_state_t;
-
-void RL_Torque_Param_Init(rl_torque_param_t *param, rl_model_t model);
-void RL_Torque_State_Init(rl_torque_state_t *state,
-                          const rl_torque_param_t *param);
-uint8_t RL_Torque_Compute(const leg_state_t *leg_l, const leg_state_t *leg_r,
-                          const rl_torque_param_t *param,
-                          const float wheel_vel[2],
-                          const float action[RL_ACTION_SIZE],
-                          rl_torque_state_t *state,
-                          torque_output_t *torque);
-
+/* action保持网络左右两侧顺序；内部目标/诊断为四腿两轮。只求解，最终许可归执行任务。 */
+void RL_Torque_Reset(rl_torque_state_t *state);
+uint8_t RL_Torque_Compute(const rl_motor_state_t *motor, const machine_rl_cfg_t *config, const float action[RL_ACTION_SIZE], rl_torque_state_t *state, torque_output_t *torque);
 #endif

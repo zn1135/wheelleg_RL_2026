@@ -1,6 +1,16 @@
+/*
+ * 文件职责：共享控制状态定义与全机控制初始化（robot_control.c）。
+ * 输入/来源：机器表、各算法初始化接口、TIM6分频节拍。
+ * 输出/去向：初始化几何/LQR/RL/自起/离地与信号量，提供动作清零。
+ * 关键边界：共享变量在这里定义；策略仲裁和发送在task_actuation；不在初始化中重标定物理量。
+ * 阅读入口：md/file-guide.md；参数当前值以源码为准。
+ */
+
 #include "robot_control.h"
+#include "robot_state.h"
 #include "machine_config.h"
 #include "standup.h"
+#include "air_detection.h"
 
 #include <string.h>
 
@@ -9,7 +19,6 @@ motor_state_t motor_state;
 leg_state_t leg_l;
 leg_state_t leg_r;
 action_state_t action_state;
-input_command_t input_command;
 rc_command_t rc_command;
 leg_map_t leg_map_l;
 leg_map_t leg_map_r;
@@ -23,7 +32,7 @@ volatile uint8_t output_debug_dm_sent;
 volatile uint8_t output_debug_dji_sent;
 volatile control_time_debug_t control_time_debug;
 uint8_t torque_output_enabled;
-volatile uint8_t gas_spring_only_enabled = 0u;
+volatile compensation_debug_t compensation_debug;
 
 osSemaphoreDef(ctrl_tick_sem);
 osSemaphoreId ctrl_tick_sem_handle = NULL;
@@ -48,6 +57,7 @@ void Action_State_Clear(void)
     uint32_t primask = __get_PRIMASK();
     __disable_irq();
     memset(action_state.a, 0, sizeof(action_state.a));
+    action_state.reset_count++;
     action_state.last_ok_tick = 0u;
     action_state.updated = 0u;
     action_state.rl_ready = 0u;
@@ -68,57 +78,35 @@ void Robot_Control_Init(void)
         Error_Handler();
     }
     torque_output_enabled = 1u;
+    rc_command.len = machine->rc.len_init;
+    rc_command.mode.strategy = CTRL_STRATEGY_DISABLE;
     Standup_Init(&standup_control);
+    Air_Detection_Reset(&air_detection); /* 参数直接使用固定配置，初始化只清检测历史。 */
 
     Leg_Init(&leg_l);
     Leg_Init(&leg_r);
     leg_l.config.lu = machine->leg_lu;
     leg_l.config.lg = machine->leg_lg;
     leg_l.config.offset_phi0 = machine->leg_off_phi0[0];
-    leg_l.config.configured = 1u;
     leg_r.config.lu = machine->leg_lu;
     leg_r.config.lg = machine->leg_lg;
     leg_r.config.offset_phi0 = machine->leg_off_phi0[1];
-    leg_r.config.configured = 1u;
 
     leg_map_l.dm_front = DM_MOTOR_LEG_F_LFT;
     leg_map_l.dm_rear = DM_MOTOR_LEG_B_LFT;
-    leg_map_l.configured = 1u;
     leg_map_r.dm_front = DM_MOTOR_LEG_F_RGT;
     leg_map_r.dm_rear = DM_MOTOR_LEG_B_RGT;
-    leg_map_r.configured = 1u;
 
     if (machine->rl.configured)
     {
-        RL_Observation_Init(&rl_control.observation);
-        RL_Observation_Param_Init(&rl_control.param);
+        /* 单模型RL39直接读取机器配置；初始化只清观测、推理计数及PD诊断。 */
+        RL_Observation_Reset(&rl_control.observation);
         RL_Policy_Reset(&rl_control.policy);
-        RL_Torque_Param_Init(&rl_control.torque_param[RL_MODEL_STANDUP], RL_MODEL_STANDUP);
-        RL_Torque_State_Init(&rl_control.torque_state, &rl_control.torque_param[RL_MODEL_STANDUP]);
+        RL_Torque_Reset(&rl_control.torque_state);
     }
     Action_State_Clear();
 
-    if (LQR_Gain_Compatible())
-    {
-        LQR_Init(&lqr_state);
-        Leg_Balance_Init(&leg_balance);
-    }
+    LQR_Init(&lqr_state);
+    Leg_Balance_Init(&leg_balance);
     ctrl_strategy = CTRL_STRATEGY_DISABLE;
-}
-
-/* 切换模型 */
-uint8_t RL_Control_Select_Model(rl_model_t model)
-{
-    if (!machine->rl.configured)
-    {
-        return 0u;
-    }
-    if (!RL_Policy_Select(&rl_control.policy, model))
-    {
-        return 0u;
-    }
-    RL_Observation_Reset(&rl_control.observation);
-    RL_Torque_State_Init(&rl_control.torque_state, &rl_control.torque_param[model]);
-    Action_State_Clear();
-    return 1u;
 }

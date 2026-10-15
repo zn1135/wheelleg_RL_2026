@@ -1,4 +1,13 @@
+/*
+ * 文件职责：IMU任务的单周期测量处理（task_imu.c）。
+ * 输入/来源：HI229接收缓存/协议快照与machine->imu轴映射。
+ * 输出/去向：去重、取轴/乘符号、单位换算、姿态归一化/补角后发布IMU反馈。
+ * 关键边界：断流发布online=0和补角无效；不在这里计算电机力矩或替控制器改姿态。
+ * 阅读入口：md/file-guide.md；参数当前值以源码为准。
+ */
+
 #include "robot_control.h"
+#include "robot_state.h"
 #include "hi229.h"
 #include "Attitude_Algorithm.h"
 #include "machine_config.h"
@@ -12,23 +21,24 @@ void imu_task_init(void)
 }
 
 /* 读取 + 按机器表取轴/乘符号 + 单位换算 */
+/*
+ * HI229解析/在线检查 → 模块时间戳去重 → 按机器表取轴/符号 → 角速度单位换算 → 姿态/补角 → 发布。
+ * 离线或无效时发布对应有效性；四元数和欧拉角的原约定保持，不在此补偿控制误差。
+ */
 void imu_task_body(void)
 {
     hi229_data_t sample;
     imu_state_t next = imu_state;
     const imu_cfg_t *cfg;
-    uint32_t primask;
-    uint8_t i;
+    feedback_sample_t received = {0u, 0u};
 
     HI229_Process();
     if (!HI229_Online())
     {
-        primask = __get_PRIMASK();
-        __disable_irq();
-        imu_state.online = 0u;
-        imu_state.pitch_world = 0.0f;
-        imu_state.pitch_world_valid = 0u;
-        __set_PRIMASK(primask);
+        next.online = 0u;
+        next.pitch_world = 0.0f;
+        next.pitch_world_valid = 0u;
+        Robot_Feedback_Publish_Imu(&next, received);
         return;
     }
     sample = HI229_Snapshot();
@@ -44,27 +54,24 @@ void imu_task_body(void)
     /* 姿态和惯性量各按来源通道与极性映射 */
     cfg = &machine->imu;
     next.quat[0] = sample.quat[0];
-    for (i = 0u; i < 3u; i++)
+    for (uint8_t i = 0u; i < 3u; i++)
     {
-        next.quat[i + 1u]        = (float)cfg->quat_sign[i]
-                                 * sample.quat[cfg->quat_src[i] + 1u];
+        next.quat[i + 1u]        = (float)cfg->quat_sign[i] * sample.quat[cfg->quat_src[i] + 1u];
         next.euler_deg[i]        = (float)cfg->eul_sign[i] * sample.eul[cfg->eul_src[i]];
         next.gyro_rad_s[i]       = (float)cfg->gyr_sign[i] * sample.gyr[cfg->gyr_src[i]] * 0.01745329251994f;
         next.acc_g[i]            = (float)cfg->acc_sign[i] * sample.acc[cfg->acc_src[i]];
     }
 
-    /* 四元数归一化 + deg→rad */
+    /* 完整反馈校验 */
     next.online = Attitude_Update(&next) ? 1u : 0u;
     next.pitch_world = 0.0f;
     next.pitch_world_valid = 0u;
     if (next.online)
     {
-        next.pitch_world_valid = Pitch_World_Calc(next.euler_rad[IMU_PITCH_WORLD_IDX],
-                                                 next.quat, &next.pitch_world) ? 1u : 0u;
+        next.pitch_world_valid = Pitch_World_Calc(next.euler_rad[IMU_PITCH_WORLD_IDX], next.quat, &next.pitch_world) ? 1u : 0u;
     }
     next.last_timestamp_ms = sample.ts;
-    primask = __get_PRIMASK();
-    __disable_irq();
-    imu_state = next;
-    __set_PRIMASK(primask);
+    received.received_ns = sample.received_ns;
+    received.seen = 1u;
+    Robot_Feedback_Publish_Imu(&next, received);
 }

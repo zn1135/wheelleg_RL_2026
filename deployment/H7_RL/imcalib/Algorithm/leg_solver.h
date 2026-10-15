@@ -1,27 +1,28 @@
+/*
+ * 文件职责：五连杆运动学、速度和力映射（leg_solver.h）。
+ * 本头文件声明本模块的数据结构、常量和调用接口；实现及实际流程见对应源文件。
+ * 输入/来源：机器表几何与左右腿前/后髋角度、角速度。
+ * 输出/去向：求虚拟腿长/腿角、关节速度、雅可比，并在轴向力/摆矩和两髋力矩间转换。
+ * 关键边界：几何有效与力映射有效分开；奇异/非有限输入拒绝映射；实体极性和零点在驱动/配置层处理。
+ * 阅读入口：md/file-guide.md；参数当前值以源码为准。
+ */
+
 #ifndef LEG_SOLVER_H
 #define LEG_SOLVER_H
 
 #include <stdint.h>
+#include "math_utils.h"
 
 /* 数学常量 */
 #define LEG_PI       3.14159265358979f
 #define LEG_2PI      6.28318530717959f
 #define LEG_HALF_PI  1.57079632679490f
 
-/* 通用限幅 */
-static inline float clampf(float value, float min, float max)
-{
-    if (value > max) return max;
-    if (value < min) return min;
-    return value;
-}
-
 /* 几何参数 */
 typedef struct {
     float lu;           /* 上杆长 */
     float lg;           /* 下杆长 */
     float offset_phi0;  /* 摆角零位偏置 */
-    uint8_t configured;
 } leg_config_t;
 
 /* 髋关节输入 */
@@ -46,8 +47,8 @@ typedef struct {
     float leg_jac[2][2];            /* 腿雅可比 */
     float force_map[2][2];          /* 力矩映射 */
     float force_det;
-    uint8_t force_valid;
-    uint8_t valid;
+    uint8_t force_valid; /* 映射可用 */
+    uint8_t valid;       /* 数值有效 */
 } leg_output_t;
 
 /* 求解中间量 */
@@ -56,10 +57,10 @@ typedef struct {
     float qb;           /* 后髋角 */
     float vf;           /* 前髋速度 */
     float vb;           /* 后髋速度 */
-    float lu;
-    float lg;
-    float phi_a;        /* 前杆角度 */
-    float phi_b;        /* 后杆角度 */
+    float lu;           /* 上杆长 */
+    float lg;           /* 下杆长 */
+    float phi_a;        /* 前下杆AP角 */
+    float phi_b;        /* 后下杆BP角 */
     float virtual_leg_angle_abs;    /* 虚拟腿摆角绝对值 */
 } leg_solver_cache_t;
 
@@ -74,5 +75,7 @@ void Leg_Init(leg_state_t *leg);
 uint8_t Leg_Solve(leg_state_t *leg);
 uint8_t Leg_Force_Map_Forward(const leg_state_t *leg, float force,
                               float torque, float output[2]);
+uint8_t Leg_Force_Map_Inverse(const leg_state_t *leg, const float input[2],
+                              float *force, float *torque);
 
 #endif
