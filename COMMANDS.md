@@ -1,10 +1,8 @@
 # 常用命令速查
 
-当前串联腿新训练默认采用 [华南虎原始V14 Flat-v0配方](docs/interfaces/chuanliantui-mjlab-scut-v14-flat-v1.md)，配置名 `huananhu-v14`。r15课程需显式添加 `--training-profile getup-r15` 或 `getup-r15-orientation`；r14需添加 `--training-profile recover-r14`。旧模型回放按检查点识别配置。
+串联腿 mjlab 只保留华南虎 multimode（39/82 维）一条训练线，基线 `model_3023.pt`。安装、检查、训练／TensorBoard、回放、地面起立评估和 ONNX 导出命令见 [mjlab 命令](docs/mjlab-chuanliantui.md#可执行命令)；独立 CPU MuJoCo sim2sim 见 [ONNX 使用说明](docs/onnx-huananhu-multimode-model3023.md)。39 维模型不兼容下文旧 25/125 维 H7 命令。
 
-历史华南虎 multimode `model_3023` 的 39 维 ONNX 导出、GPU/Warp 验证及独立 CPU MuJoCo sim2sim 命令见 [ONNX 使用说明](docs/onnx-huananhu-multimode-model3023.md)。它不兼容本文件其余旧 25/125 维 H7 命令。
-
-串联腿 mjlab 新任务的独立 Python 3.12 安装、可视预检、训练／TensorBoard、CPU回放和ONNX导出命令见 [mjlab命令](docs/mjlab-chuanliantui.md#可执行命令)。下文命令仍属于旧 Isaac 环境，不混装依赖。
+下文命令属于旧 Isaac 环境，不混装依赖。
 
 先按 [协作指南](CONTRIBUTING.md) 创建并填写 `.env.local`。在仓库根目录执行以下准备，完整激活对应 Python 3.8 conda 环境（`conda` 命令需已在 PATH 中）：
 

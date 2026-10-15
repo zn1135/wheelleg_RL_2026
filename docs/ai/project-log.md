@@ -1,8 +1,32 @@
 # 项目实验记录
 
-自 [AGENTS.md](../../AGENTS.md) 迁出的逐日训练与评估记录，最新在前。新记录追加到本文件顶部，AGENTS.md 只保留当前状态摘要。
+自 [AGENTS.md](../../AGENTS.md) 迁出的逐日训练与评估记录，最新在前。新记录追加到下方记录区顶部；“当前状态”随结论变化就地更新，AGENTS.md 不记录实验状态。
+
+## 当前状态（2026-10-15）
+
+mjlab 训练侧只保留华南虎 multimode（39/82 维）一条线，基线 `model_3023.pt`（SHA256 `624ded63…`）：64 个强制地面初态严格起立 64/64，平地 31/31 存活；固定 NORMAL 静站 CPU sim2sim 通过限定判据。它不是部署合格模型，H7 对 39 维接口、50 Hz 调度和板端数值对齐的核对待确认。命令见 [mjlab 说明](../mjlab-chuanliantui.md)。
+
+下方记录里引用的 V14、r5～r15、recover、V11、A2500 等代码、脚本与诊断文档已在 2026-10-15 删除，可从分支 `backup/gpt-structure-20261015`（`e451b3d`）或提交 `109da6d` 找回；`logs/` 下的模型未动。
+
+## 记录
+
+## 2026-10-15 单线结构下从 model_3023 续训 300 轮：判为退化
+
+用户授权从 `model_3023.pt` 完整恢复 actor、critic、Adam 和课程进度，2048 环境、seed 42、原混合地形，追加 300 轮。17:27～17:42 正常完成，原生迭代 3023→3322，课程进度 7525→7825。输出 `logs/mjlab/chuanliantui_huananhu_multimode_v1/2026-10-15_17-27-23_resume300-2048-oneline/model_3322.pt`，SHA256 `5f521b3f298fb61451d948daf96eb23c728e6208e914d341d0ce8403d2a96b81`。
+
+用同一 64 个强制地面初态（签名 `458f15a3…`）、20 秒评估：严格起立 63/64，存活 62/64，数值失败 0；平地 31/31 严格起立且全部存活，平地保持率没有样本下降超过 2%。但 37 号坡面样本在基线中严格起立并撑满 20 秒，这次 0.74 s 物理终止，没有起立。按“原成功样本任一失效即判退化”，本候选判为退化，不替代 `model_3023`。原仓上次同配置续训的 `model_3322`（SHA256 `5adff998…`）在同一集合上 64/64 通过，两次权重不同，符合 Warp／TF32 下不严格确定的边界。未改 H7。
+
+## 2026-10-15 mjlab 改为 multimode 单线
+
+按用户要求只保留 39 维 multimode 训练线。删除 `ct_mjlab` 下全部旧配方（experiments、reference_training、profiles 分流等）、42 个依赖它们的 `scripts/agent` 脚本、`sim2sim/mj_sim2sim_v11.py`、旧 V14 训练 XML，以及 191 份旧配方的诊断／接口／交付文档。删除前的完整工作区已提交到分支 `backup/gpt-structure-20261015`（`e451b3d`）。新 `ct_mjlab` 按 Isaac 结构组织：`envs/` 注册任务，`envs/chuanliantui/` 是 model_3023 冻结快照的 23 个模块（逐字节，仅 `model.py` 改资源路径），`utils/task_registry.py`，`scripts/` train/play/eval/export/check。训练 XML 与姿态库取自快照，放在 `resources/robots/chuanliantui_new_1/mjlab/`，姿态库缓存签名校验通过。复核：`check` 严格加载 model_3023，39/82/6 有限；`eval` 64 地面初态初态签名与原基线一致，严格起立 64/64，平地 31/31，存活 61/64（原 62/64，56 号楼梯样本 19.16 s 越出地块，非跌倒）。未训练，未改 H7。
+
+## 2026-10-15 V11 线路已放弃
+
+用户明确放弃 V11 作为训练、修复和部署候选。原因是原地静站持续抖腿，且平滑、正则化、恢复历史 XML／配方和续训均不能同时保留原成功初态与改善腿部平稳性，部分候选还在平地或独立 CPU 后端退化。现有 V11 模型、日志、诊断、脚本和资产仅作为失败诊断证据保留：不得删除、覆盖、续训、下发真机或宣称部署通过。后续主线改为 `model_3023` multimode 的39维接口、50 Hz调度、板端数值对齐和限定静站实物验证；H7负责人核对状态仍为待确认。
 
 ## 2026-10-15 multimode `model_3023` ONNX 与独立 CPU sim2sim 已纳入正式代码
+
+历史 `model_3023.pt`（39维 actor／82维 critic）已作为独立交付纳入：固定 batch=1 的 ONNX 导出器、专用 XML／地面姿态库和 CPU MuJoCo sim2sim 入口均不再依赖被忽略的源码快照。导出器校验 checkpoint SHA256，并导出 `obs: float32[1,39] -> actions: float32[1,6]` 的 opset13／18 图；256个固定参考输入最大差均 `1.91e-6`。normal 平地、零速、0.30m目标高度的20秒 CPU ONNX 回放在1秒后951个控制步中高度最大误差2.60cm、最大倾角1.81°、机身接触0、双轮接触951，ONNX/PyTorch最大动作差`8.34e-7`，通过限定静站判据。地面随机初态回放保留 recover 前缀和0.2秒策略激活记录。未训练、未改H7或下发真机命令；39维接口、50Hz调度和板端数值对齐由H7负责人待确认。详见[ONNX使用说明](../onnx-huananhu-multimode-model3023.md)、[接口记录](../interfaces/chuanliantui-huananhu-multimode-replay-v1.md)、[模型交付记录](../model-deliveries/20261014-huananhu-multimode-model3023-replay.md)。
 
 2026-10-13用户反馈V11可视sim2sim持续抖腿，新增同权重/同nominal初态/零速度0.30m的三方20秒诊断：当前原生CPU四腿峰峰值7.23～10.01°，本仓mjlab6.89～8.94°，当前wheelleg源环境7.40～9.75°，主频约1.6～1.8Hz，目标角也持续摆动。高度/倾角稳定不代表腿部平稳，上一轮短测结论补充此限制。六组运行时动力学字段替换不支持单参数直接修复，未修改XML、PD、策略或交互窗口，无新训练。详见[摆腿诊断](../diagnostics/20261013-v11-leg-jitter.md)。
 

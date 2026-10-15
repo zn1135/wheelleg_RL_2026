@@ -1,6 +1,6 @@
 # sim2sim 与部署契约
 
-新 mjlab 串联腿任务使用35维actor／78维critic／六个实体电机接口，详见 [独立接口与回放](../mjlab-chuanliantui.md)。本页旧串联／H7策略通道保留历史物理顺序；2026-10-08 左右实体前缀更正后，原 lf 名称对应当前 rf，原 rf 对应当前 lf，数值极性和通道未交换。历史模型不能加载到新 mjlab 接口。
+mjlab 串联腿只保留华南虎 multimode 一条线：39维actor／82维critic／六个实体电机，详见 [mjlab 串联腿训练](../mjlab-chuanliantui.md)。本页旧串联／H7策略通道保留历史物理顺序，只适用于 Isaac 旧任务。
 
 历史华南虎 multimode `model_3023` 例外地使用 39 维 actor／82 维 critic；其独立 CPU MuJoCo 入口为 `sim2sim/mj_sim2sim_huananhu_multimode.py`，导出与使用规则见 [multimode ONNX 说明](../onnx-huananhu-multimode-model3023.md)。它不兼容下文旧 25/125 维 H7 流程。
 

@@ -2,6 +2,30 @@
 
 串联腿新任务使用独立 Python 3.12 / mjlab 环境，入口、有限检查及待训练行为验收见 [mjlab 串联腿迁移](../mjlab-chuanliantui.md)。下文 Python 3.8 / Isaac Gym 约定适用于旧任务；新包不得安装进旧环境。
 
+## mjlab 检查
+
+在仓库根运行，不启动训练或 TensorBoard，不写根 `logs/`：
+
+```bash
+# 有限检查：加载 checkpoint，核对 actor 39／critic 82／动作 6，数值有限
+scripts/mjlab.sh check --num-envs 2 --steps 16 \
+  --checkpoint artifacts/multimode-v1-replay-20261014/models/model_3023.pt
+# 基线回放：64 个强制地面初态、20 秒
+scripts/mjlab.sh eval --checkpoint artifacts/multimode-v1-replay-20261014/models/model_3023.pt \
+  --num-envs 64 --seeds 42 --start-mode force --terrain flat --output /tmp/mjlab-eval/result.json
+```
+
+迁移一致性检查（需要冻结快照目录；`--gpu` 会加载并完整续训读取 model_3023，但不调用 learn）：
+
+```bash
+PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python scripts/agent/check_mjlab_multimode.py \
+  --snapshot <.../multimode-v1-replay-20261014/source_snapshot> --gpu --out /tmp/mjlab-multimode-check.json
+```
+
+它检查：23 个模块与快照逐字节一致（`model.py` 只有两行路径不同）、XML 与姿态库哈希及缓存签名、环境和 PPO 配置与快照工厂的输出相同、没有代码再引用已删除的模块；另外检查续训课程进度 7525、保存后读回参数不变、导出用 actor 与 runner 策略输出一致、39/82 维、有限步进。
+
+`eval` 结果与 `model_3023` 基线对照：初态签名 `458f15a3…`，严格起立 64/64，平地存活 31/31。以上不等于行为验收，不替代双轮平衡验收v2或真机验证。
+
 ## 环境
 
 项目源码为纯 Python 包，`pip install -e .` 一次即可；Isaac Gym 依赖的

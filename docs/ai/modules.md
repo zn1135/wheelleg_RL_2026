@@ -1,8 +1,12 @@
 # 模块职责
 
-新串联腿训练入口 `mjlab_training/src/ct_mjlab/reference_training/` 使用 mjlab ManagerBasedRlEnv，沿用 wheelleg_RL recover 配方，r14加入前进速度±2.7 m/s、偏航速度±2π rad/s和50%航向控制，使用50%普通／50%地面初态、knee_limit权重0，速度奖励采用5～10 cm高度门控；历史回放按原命令和门控，隐式跨版本续训会拒绝；`ct-mjlab` 默认独立 `chuanliantui` 任务。旧direct VecEnv仅保留r5回放。配置、动作／观测不同顺序及ONNX接口见 [mjlab说明](../mjlab-chuanliantui.md)。旧 `wheel_legged_gym` 任务和内嵌算法继续服务历史模型。
+串联腿 mjlab 训练只保留华南虎 multimode（39/82 维）一条线，代码在 `mjlab_training/src/ct_mjlab/`，见 [mjlab说明](../mjlab-chuanliantui.md)。旧 `wheel_legged_gym` 任务和内嵌算法继续服务 Isaac 历史模型。
 
 以下任务和目录索引以 `26_wheelleg` 代码为基准；其他维护线的差异见下文。开始工作时以实际检出的分支与任务配置为准。
+
+## mjlab 任务入口
+
+`mjlab_training/src/ct_mjlab/` 按与 Isaac 侧相同的职责划分：`envs/__init__.py` 注册 `chuanliantui`；`envs/chuanliantui/` 放 model_3023 冻结快照里的 23 个模块；`utils/task_registry.py` 提供 `get_cfgs`、`make_env`、`make_alg_runner`；`scripts/` 提供 train、play、eval、export、check；`cli.py` 与 `scripts/mjlab.sh` 只负责把子命令转发到对应脚本。详见 [mjlab README](../../mjlab_training/README.md)。
 
 ## 顶层
 
@@ -87,6 +91,4 @@ imcawl 关键参数（`mini_wheel_legged_config.py`）：
 | `logs/`（仓库根） | 训练产物：`model_*.pt` 权重 + tensorboard 记录，按 `<experiment_name>/<日期时间_run_name>/` 组织 | **只读。不可删、不可移动、不可覆盖** |
 | `wheel_legged_gym/logs/` | `envs/` 的陈旧 `.py` 代码副本（2026-01-13 快照），不含任何训练产物 | 不要 import、不要改、不要参考 |
 
-根 `logs/` 是不可再生资产：历史权重用于回放旧策略、与新训练结果做效果对比。它被 `.gitignore` 忽略，因此**没有 Git 兜底，删了就找不回来**。需要腾空间时先问用户，不要自行判断哪个 run「没用了」。
-
-`wheel_legged_gym/logs/` 则是另一回事——它之所以也没进 Git，是因为 `.gitignore` 里 `logs` 那条规则不带路径前缀，把它一起连带忽略了。它是 `envs/` 在 2026-01-13 的快照，与当前 `envs/` 已分叉（`legged_robot_config.py` 差 162 行、`legged_robot.py` 差 18 行）且缺 `mini_wheel_legged`。全仓搜索确认**没有任何代码 import 它**，但它自带 `__init__.py` 并在其中调 `task_registry.register`，误 import 会注册出一套过时配置。真实环境代码只在 `wheel_legged_gym/envs/`。
+`wheel_legged_gym/logs/` 不是训练产物目录：它之所以没进 Git，是因为 `.gitignore` 里 `logs` 那条规则不带路径前缀，把它一起连带忽略了。它是 `envs/` 在 2026-01-13 的快照，与当前 `envs/` 已分叉（`legged_robot_config.py` 差 162 行、`legged_robot.py` 差 18 行）且缺 `mini_wheel_legged`。全仓搜索确认**没有任何代码 import 它**，但它自带 `__init__.py` 并在其中调 `task_registry.register`，误 import 会注册出一套过时配置。真实环境代码只在 `wheel_legged_gym/envs/`。

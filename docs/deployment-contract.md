@@ -4,7 +4,7 @@ H7 部署工程已作为普通目录纳入 [deployment/H7_RL](../deployment/H7_R
 
 ## 新 mjlab 实体关节接口
 
-当前 `chuanliantui-mjlab-wheelleg-recover-r13` 沿用wheelleg_RL recover配方，初态为50%普通／50%地面且地面机体零姿态，actor35／critic78／action6、50 Hz；动作顺序 `[lf0,lf00,rf0,rf00,lfwheel,rfwheel]`，观测关节和历史动作顺序 `[lf0,lf00,rf0,rf00,lfwheel,rfwheel]`；动态normal/recover模式槽、随机0.27～0.34 m高度命令；knee_limit奖励权重0，速度奖励高度门控5～10 cm；历史模型回放保留原门控，当前拒绝隐式跨版本续训。当前奖励与兼容性见 [r13接口](interfaces/chuanliantui-mjlab-wheelleg-recover-r13.md)，初态见 [r10接口](interfaces/chuanliantui-mjlab-wheelleg-recover-r10.md)，动作与模式见 [r8接口](interfaces/chuanliantui-mjlab-wheelleg-recover-r8.md)，其余参数见 [r6接口](interfaces/chuanliantui-mjlab-wheelleg-recover-r6.md)及 [mjlab说明](mjlab-chuanliantui.md)。旧 [r5接口](interfaces/chuanliantui-mjlab-huananhu-v14-flat-standup-r5.md)保留供旧模型回放。r10训练及行为结果见 [评估记录](diagnostics/20261010-mjlab-r10-cloud-model999-evaluation.md)；r11已完成1000轮，r12已从其完整状态追加2000轮，见 [运行记录](diagnostics/20261010-mjlab-r12-cloud-training.md)，r12回放已确认退化；r13未启动训练，行为验收／模型交付／H7适配与真机验收待执行，不能把新ONNX直接替换内置旧模型。
+mjlab 训练侧只保留华南虎 multimode：actor39／critic82／action6，2 ms 物理、20 ms／50 Hz 策略，动作顺序 `[lf0,lf00,lfwheel,rf0,rf00,rfwheel]`，模式槽 `28:35`、标志槽 `35:39`。观测打包与固定 NORMAL 静站 ONNX 契约见 [multimode 接口](interfaces/chuanliantui-huananhu-multimode-replay-v1.md) 与 [ONNX 使用说明](onnx-huananhu-multimode-model3023.md)。H7 负责人对 39 维接口、50 Hz 调度和板端数值对齐的核对状态仍为待确认，不能把新 ONNX 直接替换内置旧模型。
 
 2026-10-08 更正CAD左右命名：原 rf→当前 lf（+y实际左），原 lf→当前 rf（−y实际右）。旧Isaac／H7数字通道及极性保留，当前名称分别为 `[rf0, rf1, rfwheel, lf0, lf1, lfwheel]` 和 `[rf0, rf00, rfwheel, lf0, lf00, lfwheel]`；下面历史版本中的名称按其记录版本解释。
 

@@ -44,7 +44,7 @@ E组`keep_contact`的56/64是统计值，不能作为组级合格判定。它丢
 
 ## 实现与历史兼容
 
-评估逻辑见[wheel_balance_assessment.py](../../mjlab_training/src/ct_mjlab/wheel_balance_assessment.py)，接入[原生回放](../../scripts/agent/eval_chuanliantui_recovery_factors.py)与[协调器汇总](../../scripts/agent/launch_chuanliantui_recovery_factors.py)。独立[验收报告入口](../../scripts/agent/report_chuanliantui_balance_acceptance.py)支持`--source <源evaluation.json> --candidate <名称=候选evaluation.json>`，可重复传候选；`--output`须为新目录。
+原实现 `ct_mjlab/wheel_balance_assessment.py` 及其回放／汇总／报告脚本已随旧配方于 2026-10-15 删除，可从分支 `backup/gpt-structure-20261015` 找回；multimode 线需要按本标准验收时要重新接入。判据本身仍然有效。
 
 物理和时间门槛沿用既有轮端承重判据；本次修正逐条件可解释报告及组级退化否决，未改变冻结训练奖励、课程、模型接口、资产或历史文件。历史报告没有逐条件轨迹时可做原成功样本保留判定，但不能补造失败原因；新报告用独立标准标识，与同版源回放比较。
 
