@@ -1,8 +1,22 @@
 # 项目实验记录
 
-自 [AGENTS.md](../../AGENTS.md) 迁出的逐日训练与评估记录，最新在前。新记录追加到本文件顶部，AGENTS.md 只保留当前状态摘要。
+自 [AGENTS.md](../../AGENTS.md) 迁出的逐日训练与评估记录，最新在前。新记录追加到下方记录区顶部；“当前状态”随结论变化就地更新，AGENTS.md 不记录实验状态。
+
+## 当前状态（2026-10-13）
+
+现有最好的平衡模型是 A2500（`chuanliantui-mjlab-recovery-factors-v1:baseline`，SHA256 `706c8387cba4815b491be3f5914a5951881c2966edabbd5fbb90d0da9c9d3dbd`），普通64/64、地面60/64，但停在约0.20 m低位、膝压限位，0.30 m高度跟踪0/64，不是部署合格模型。
+
+mjlab 显式 r14 训练在 `ct_mjlab/reference_training/`：动态 normal/recover 模式，四腿两轮动作与观测顺序，前进±2.7 m/s、偏航±2π rad/s、50%航向控制，速度奖励高度门控5～10 cm，knee_limit 权重0；r6～r13 回放保留原命令和门控，拒绝隐式跨版本续训；初态沿用 r10 的50%普通／50%地面；旧 direct 实现仅保留 r5 回放。
+
+## 记录
+
+## 2026-10-15 V11 线路已放弃
+
+用户明确放弃 V11 作为训练、修复和部署候选。原因是原地静站持续抖腿，且平滑、正则化、恢复历史 XML／配方和续训均不能同时保留原成功初态与改善腿部平稳性，部分候选还在平地或独立 CPU 后端退化。现有 V11 模型、日志、诊断、脚本和资产仅作为失败诊断证据保留：不得删除、覆盖、续训、下发真机或宣称部署通过。后续主线改为 `model_3023` multimode 的39维接口、50 Hz调度、板端数值对齐和限定静站实物验证；H7负责人核对状态仍为待确认。
 
 ## 2026-10-15 multimode `model_3023` ONNX 与独立 CPU sim2sim 已纳入正式代码
+
+历史 `model_3023.pt`（39维 actor／82维 critic）已作为独立交付纳入：固定 batch=1 的 ONNX 导出器、专用 XML／地面姿态库和 CPU MuJoCo sim2sim 入口均不再依赖被忽略的源码快照。导出器校验 checkpoint SHA256，并导出 `obs: float32[1,39] -> actions: float32[1,6]` 的 opset13／18 图；256个固定参考输入最大差均 `1.91e-6`。normal 平地、零速、0.30m目标高度的20秒 CPU ONNX 回放在1秒后951个控制步中高度最大误差2.60cm、最大倾角1.81°、机身接触0、双轮接触951，ONNX/PyTorch最大动作差`8.34e-7`，通过限定静站判据。地面随机初态回放保留 recover 前缀和0.2秒策略激活记录。未训练、未改H7或下发真机命令；39维接口、50Hz调度和板端数值对齐由H7负责人待确认。详见[ONNX使用说明](../onnx-huananhu-multimode-model3023.md)、[接口记录](../interfaces/chuanliantui-huananhu-multimode-replay-v1.md)、[模型交付记录](../model-deliveries/20261014-huananhu-multimode-model3023-replay.md)。
 
 2026-10-13用户反馈V11可视sim2sim持续抖腿，新增同权重/同nominal初态/零速度0.30m的三方20秒诊断：当前原生CPU四腿峰峰值7.23～10.01°，本仓mjlab6.89～8.94°，当前wheelleg源环境7.40～9.75°，主频约1.6～1.8Hz，目标角也持续摆动。高度/倾角稳定不代表腿部平稳，上一轮短测结论补充此限制。六组运行时动力学字段替换不支持单参数直接修复，未修改XML、PD、策略或交互窗口，无新训练。详见[摆腿诊断](../diagnostics/20261013-v11-leg-jitter.md)。
 

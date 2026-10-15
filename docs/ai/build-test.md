@@ -2,6 +2,45 @@
 
 串联腿新任务使用独立 Python 3.12 / mjlab 环境，入口、有限检查及待训练行为验收见 [mjlab 串联腿迁移](../mjlab-chuanliantui.md)。下文 Python 3.8 / Isaac Gym 约定适用于旧任务；新包不得安装进旧环境。
 
+## mjlab 结构与入口检查
+
+mjlab 的 `envs/`、`scripts/`、`utils/` 分工见 [目录说明](../../mjlab_training/README.md#代码结构)。
+以下命令在仓库根运行，不启动训练或 TensorBoard，不改写历史日志：
+
+```bash
+PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python \
+    scripts/agent/check_mjlab_structure.py --out /tmp/mjlab-structure.json
+
+# 可选：从统一注册表创建环境和 runner，做零动作有限张量/物理检查。
+PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python \
+    scripts/agent/check_mjlab_structure.py --physics --steps 8 \
+    --out /tmp/mjlab-structure-physics.json
+```
+
+检查覆盖脚本转发、配方/历史接口分流、错误参数拒绝、checkpoint 元数据单次读取、
+配置与原实现的一致性、配置对象隔离及远端源码快照。
+注册表检查还覆盖 runner 自动沿用环境配方、显式任务/配方不匹配时提前拒绝，
+以及外部环境必须指定配方；自定义 PPO 配置不能绕过这些检查。
+可添加 `--baseline-cli <重构前cli.py副本>`，对照旧入口的参数默认值、分流和报错；
+该选项只支持重构前的单文件入口，实验执行均被替换，不执行学习。
+`--physics` 另覆盖 V14、recover-r14、r15 的环境创建、runner 自动选择和有限步观测/奖励。
+这些检查不等于策略行为验收，不替代双轮平衡验收v2或真机验证。
+
+recover 命令的资源清理使用以下检查：
+
+```bash
+PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python \
+    scripts/agent/check_mjlab_cleanup.py --out /tmp/mjlab-cleanup.json
+# 同进程连续两次实际 GPU 有限 check，核对环境和 recorder 的 close 调用。
+PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python \
+    scripts/agent/check_mjlab_cleanup.py --real-check --out /tmp/mjlab-cleanup-gpu.json
+```
+
+默认检查用替身环境/runner/viewer 执行实际命令分支，覆盖正常返回、初始化/运行异常、
+KeyboardInterrupt，以及 viewer.close 失败后仍关闭环境；不会实际学习或打开窗口。
+临时输出写到系统临时目录，不写根 logs。`--real-check` 也不学习，不证明真实 GUI
+线程退出、驱动显存缓存清空或完整训练资源释放。
+
 ## 环境
 
 项目源码为纯 Python 包，`pip install -e .` 一次即可；Isaac Gym 依赖的

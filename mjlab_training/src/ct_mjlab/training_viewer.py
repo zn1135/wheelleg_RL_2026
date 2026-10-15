@@ -293,13 +293,15 @@ def learn_with_viewer(runner, learn, options, *args, viewer_factory=NativeTraini
                 runner.logger.stop_logging_writer()
 
 
-def viewer_runner_class(base_runner, options):
+def viewer_runner_class(base_runner, options, *, close_env_on_error=True):
+    """Keep legacy cleanup unless the caller already owns environment teardown."""
     class ViewerRunner(base_runner):
         def learn(self, *args, **kwargs):
             try:
                 return learn_with_viewer(self, super().learn, options, *args, **kwargs)
             except BaseException:
-                self.env.close()
+                if close_env_on_error:
+                    self.env.close()
                 raise
 
     return ViewerRunner

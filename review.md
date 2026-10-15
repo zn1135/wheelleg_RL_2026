@@ -1,3 +1,152 @@
+# E1 资源释放修复与复查（2026-10-15）
+
+**E1 已修复，独立复查未发现新增缺陷。** 下方原始复查和候选哈希保留为历史记录，
+其中“已有 P2 风险未修复”描述不再代表当前候选。
+
+- 更新时间：`2026-10-15T15:50:33+08:00`。
+- review_commit / HEAD 仍为 `109da6d636ce7b55bc58264da534f3745c0156d4`，当前 `26_wheelleg` 未提交工作区。
+- 用户明确要求修复 E1；本轮修改范围为 recover 命令清理、viewer runner 清理归属、检查脚本及验证文档。
+- 独立 Reviewer `/root/mjlab_independent_review` 只读复核最终控制流；主 Agent 汇总。未创建分支/worktree，未提交/推送。
+
+## 修复与独立证据
+
+- `commands.py:58-59` 在环境构造成功后立即登记 close，统一覆盖 train/check/play 的返回、异常和中断。
+- `commands.py:106-113` 在 grid viewer.open/draw 前及 passive viewer 取得句柄后登记 close，
+  ExitStack 按 viewer→env 关闭；前一项关闭抛异常也继续清理环境。
+- `training_viewer.py:296-308` 增加仅关键字 `close_env_on_error=True`；旧调用行为不变，
+  recover 使用 False 由外层统一关闭环境，避免同一异常重复关闭。
+- grid viewer 构造阶段不启动 GUI 线程，实际打开在 open，登记清理的位置已核对。
+
+## 回归检查
+
+- 主 Agent 和独立 Reviewer 分别运行 `check_mjlab_cleanup.py`：32 组替身资源场景通过，退出码 0。
+- 主 Agent 另以 `--real-check` 同进程执行两次 recover-r14 GPU check，各 2 环境/8 步；
+  两次环境 close 计数 `[1,1]`，recorder close 计数 `[1,1]`，退出码 0。
+- 主 Agent 重跑正式结构检查与 2251 组入口对照，通过；35 个兼容模块哈希仍与重构前相同。
+- `git diff --check` 通过。任务开始前已有工作区修改和暂存删除保持不变。
+
+正式可复执行命令与结果位置见 [修复记录](docs/diagnostics/20261015-mjlab-structure.md#后续修复recover-命令资源释放)
+及 [构建与测试](docs/ai/build-test.md#mjlab-结构与入口检查)。
+
+## 验证边界
+
+替身渲染训练检查替换 learn_with_viewer，只验证真实 wrapper 的环境释放归属，不验证实际 GUI/logger 清理。
+单窗口正常分支模拟窗口已关闭，未执行真实 viewer.sync。真实 GPU 检查只验证有限步和实际 close 链的调用，
+不证明驱动显存缓存清空。环境构造失败或 passive launch 未返回句柄时，内部半初始化资源仍由对应构造方负责。
+本轮未启动真实学习、TensorBoard、GUI、行为验收或真机测试。
+
+## 修复后文件指纹
+
+| 文件 | SHA-256 |
+|---|---|
+| `mjlab_training/src/ct_mjlab/envs/chuanliantui/commands.py` | `0331b8a234e38f1adceedb6ea5702e67e7034ff79f1f010fdb26f79f5107e761` |
+| `mjlab_training/src/ct_mjlab/training_viewer.py` | `66846a0cbf58a5815121d8044588647ed7015b09b5bce062d22b65dc481e4ff6` |
+| `scripts/agent/check_mjlab_cleanup.py` | `557faef047ea6df6adf566c297c02fd6e38205e97f06d43478ead05bbdca0ab2` |
+| `docs/ai/build-test.md` | `0c44636f69bf46ef2c93c25aded16ba41264daa3cf4fc50a3ab7a5fe08abf5e2` |
+| `docs/diagnostics/20261015-mjlab-structure.md` | `b5c0f9bf02d2a2997053b3ed31228c535efb80217a0c489878b3b0c6dc1d3bc1` |
+
+---
+
+# mjlab 结构重构独立代码复查（2026-10-15）
+
+## 结论
+
+独立只读复查完成，**未发现需要修复的本次新增缺陷**。保留一项原入口已有的资源释放问题，见下方 E1。
+本结论限于配置、调用关系、分流与有限检查，不表示完整训练或策略行为验收已通过，也不代表用户已采纳。
+本轮仅写审查报告，没有修改候选源码、启动训练、提交或推送。
+
+## 版本、人员与范围
+
+- 汇总时间：`2026-10-15T15:42:40+08:00`。
+- `base_commit` / `review_commit`：`109da6d636ce7b55bc58264da534f3745c0156d4`，分支 `26_wheelleg`。
+- 审查对象是上述 HEAD 加当前未提交/未跟踪候选，不是纯提交审查；HEAD 不能单独表示候选版本。
+- 独立 Reviewer：`/root/mjlab_independent_review`，只读检查最终实现与依赖调用链；主 Agent 另行复核并汇总。
+- 范围：`mjlab_training/src/ct_mjlab/cli.py`、新增 `envs/`、`scripts/`、`utils/` 全部 Python 文件，
+  `scripts/agent/check_mjlab_structure.py`、mjlab README、`docs/ai/build-test.md`、`docs/ai/modules.md`、
+  `docs/diagnostics/20261015-mjlab-structure.md`，共 23 个候选文件。
+- 比较 HEAD diff 并直接读取未跟踪文件，同时核查原实验、管理器、模型合同和安装版 RSL-RL/mjlab runner/logger。
+- 本次没有对应的任务 manifest、tests.md。已检查现有私有任务目录，相关记录属于旧项目/旧任务；
+  不复用它们的任务身份。验证依据为本次诊断记录与正式结构检查脚本。
+- 按本仓约定不创建任务注册、私有任务目录、资源锁、分支或 worktree；报告放在既有根 `review.md`，旧内容完整保留。
+- 排除任务开始前已有 `.gitignore`、`AGENTS.md`、`CONTRIBUTING.md`、`docs/ai/project-log.md` 的修改，
+  以及 `MJDATA.TXT`、`MUJOCO_LOG.TXT` 暂存删除；未覆盖或重新暂存这些内容。
+
+## 逐项结论与证据
+
+| 审查项 | 结论与证据 |
+|---|---|
+| 功能正确性 | 统一入口注册、8 个配方工厂、r15 orientation/阶段零与 r14 play/randomize 参数映射已核对原实现。2251 组新旧分流/参数默认值/报错对照通过。 |
+| 配方与参数边界 | 默认/非默认配方绑定、显式匹配、任务/配方冲突、外部环境缺少显式配方均检查；失败发生在配置/runner 工厂前，自定义 PPO 配置不能绕过。 |
+| 配置对象生命周期 | 8 个配方均重新创建配置，修改一次返回的环境数和 PPO 网络配置不会污染后续调用。checkpoint 元数据缓存只在一次分流调用内有效。 |
+| 架构一致性 | scripts→注册表→任务→版本实现的调用链成立；新配置/runner 工厂服务新环境，历史恢复仍由原版本 run 处理，未把恢复逻辑与新配置混用。 |
+| 历史兼容 | experiments/reference_training 共 35 个 Python 文件与基线字节/哈希一致；未改变奖励、控制、资产及历史导入路径。 |
+| 线程与资源 | 新注册表不引入线程或调用 learn；核查安装版构造链，log_dir=None 不创建日志 writer。程序化环境由调用方关闭，README 示例使用 finally。已有 recover 分支清理问题见 E1。 |
+| 检查覆盖 | 正式结构检查覆盖分流、工厂隔离、配方绑定、远端源码快照；GPU 自动选 runner 的结果来自实现阶段记录，本轮不冒充独立复跑。 |
+| 注释与文档 | 目录、工厂用途、默认配方、外部环境责任及历史恢复边界与代码一致；未发现需要单独修正的无效或重复解释代码的注释。 |
+| 范围外改动 | 候选之外的既有工作区与暂存内容保留；无 H7/Isaac 源码、机器人资产或历史 logs 变更。 |
+| Git/PR 文案 | 未提供待审提交信息或 PR 正文，不适用；本轮无 commit/amend/push/PR 操作。 |
+
+## E1 / 已有 P2 风险：recover train/check 未统一关闭环境
+
+- 位置：`mjlab_training/src/ct_mjlab/envs/chuanliantui/commands.py:86`、`:92`，回放窗口初始化发生在 `:99-108`，清理在 `:124-127`。
+- 触发：同一 Python 进程多次调用 recover 的 train/check，或环境创建后、进入回放 try/finally 之前出现异常。
+- 影响：相关路径不调用 env.close；资源释放依赖进程退出或底层对象回收。独立脚本退出通常会回收进程资源，嵌入式重复调用则可能保留资源。
+- 归属：从基线 cli.py 原样迁入，不是本次新增回归；本轮没有据此修改历史执行逻辑。
+- 最小后续建议：环境创建成功后用统一 try/finally 覆盖全部分支和 viewer 初始化，并增加异常路径清理检查；修复应单独验证。
+
+## 实际验证与限制
+
+主 Agent 使用 mjlab Python 3.12 执行以下正式检查，退出码 0：
+
+```bash
+PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python \
+  scripts/agent/check_mjlab_structure.py \
+  --baseline-cli /tmp/mjlab-structure-d02KRz/cli_before.py \
+  --out /tmp/mjlab-structure-d02KRz/review-structure.json
+```
+
+独立 Reviewer 使用项目解释器，通过 runpy 调用同脚本的 routes/configs/runner_binding/provenance 检查；
+并直接从 `git show HEAD:mjlab_training/src/ct_mjlab/cli.py` 读取内存基线完成 2251 组对照，均通过。
+双方的 `git diff --check` 通过；主 Agent 再次核对实现前记录的 35 个兼容模块哈希，独立 Reviewer 另与 HEAD 字节比较，均一致。
+
+未执行：完整学习、历史 checkpoint 实际续训/长时间回放、GUI、ONNX 实际导出、行为验收、真机测试。
+本轮未重跑 GPU；实现阶段三类 GPU 环境各 2 环境/8 步的结果见
+[重构诊断](docs/diagnostics/20261015-mjlab-structure.md)，只证明当时的有限张量路径。
+配方拒绝检查使用替代工厂，不能据此声称所有异常情况下的真实 GPU 清理均已验证。
+
+## 候选文件指纹
+
+以下有序路径→SHA-256 映射以 `json.dumps(records, sort_keys=True)` 编码后的 SHA-256 为
+`a43fe7ee93289851056aa42b9bb52bd07329225cb3f5db50446b707bce1e3eb4`。报告自身不属于候选源码指纹。
+
+| 文件 | SHA-256 |
+|---|---|
+| `docs/ai/build-test.md` | `69fd3558f4ea92957b50f57767b9f72373e6fa74370b493d6d9ce256dfc170ca` |
+| `docs/ai/modules.md` | `ebac1fa26ad895e8d704b7554b99ddab9dcfa5ad398a56ffd6b4cea4347b1c7c` |
+| `docs/diagnostics/20261015-mjlab-structure.md` | `059db0ccc7829f05e7d6cbf9d1ea407eedc78e0e22b3a9df1b7668de07b68f98` |
+| `mjlab_training/README.md` | `b5c8b59b71b27e073cf5794c1209fd5ef132b87b0061e23d2056d1078197ef41` |
+| `mjlab_training/src/ct_mjlab/cli.py` | `c7dead3a96d69b5910801789d5ef1f294c4dc11960f83a47f06eab4f96f26252` |
+| `mjlab_training/src/ct_mjlab/envs/__init__.py` | `3428a479cd38d3367748abb85ec03bbe0298c42c496236ebbe4c49280670052e` |
+| `mjlab_training/src/ct_mjlab/envs/chuanliantui/__init__.py` | `48a398968579cebf31920dcf5d5ea4e096c1541d83a26b41f612fad6dfc70216` |
+| `mjlab_training/src/ct_mjlab/envs/chuanliantui/chuanliantui.py` | `5ec17661d4ed5eb1a9c9ab07a0252f5bff4ddfaae70d7eac06d6fb2b77d6193a` |
+| `mjlab_training/src/ct_mjlab/envs/chuanliantui/chuanliantui_config.py` | `a9291f573a79727f3b16abd12f2ea30751cfcd01d538db361350e26f7b289b9e` |
+| `mjlab_training/src/ct_mjlab/envs/chuanliantui/commands.py` | `371be214110dd808157bf7ffa873d5ab6bedcbb1413f43972831239b5bf520a8` |
+| `mjlab_training/src/ct_mjlab/envs/chuanliantui/profiles.py` | `1717e5886c4a229d4207bd9b91aeef6e77709444c9714b8a83d99dfdbd6c190f` |
+| `mjlab_training/src/ct_mjlab/scripts/__init__.py` | `4f695356a9589039a8269b131b703cb1f4ae66897cdf885d4ab4bf366bd8130a` |
+| `mjlab_training/src/ct_mjlab/scripts/_entry.py` | `d5fdb5fff01ec7a1248f1e06196a66dbefdead2fd5c613bb3e8284e576504a02` |
+| `mjlab_training/src/ct_mjlab/scripts/check.py` | `bfbec769f1af31ff642d387dae392a603585e8b96e7ae1d777707d65ea86a78b` |
+| `mjlab_training/src/ct_mjlab/scripts/eval.py` | `4207be28615418cf55123d54f6398c4ab57327b003fc9baa7271431918a0df5f` |
+| `mjlab_training/src/ct_mjlab/scripts/export.py` | `8383a48ba441dcdcbf7ef40ebc744bfe037dce2b614727b382d4becc4c940a29` |
+| `mjlab_training/src/ct_mjlab/scripts/play.py` | `fbb802e637099a9796047c1108053352a9afe9b3faea66a056acece17830837a` |
+| `mjlab_training/src/ct_mjlab/scripts/train.py` | `27547860671b98ee4ef879f3ba51138ef1b5aab06b6cc0e8cd7563de16cb1a78` |
+| `mjlab_training/src/ct_mjlab/utils/__init__.py` | `ac6b0eebf7afa978f02df52f1a7270499640f48bcd212cd001cf078643db8e1d` |
+| `mjlab_training/src/ct_mjlab/utils/helpers.py` | `29c57cc97efd65f064a54eb748c9bfad3ad4da57d06dddce0b34324b8b7a1847` |
+| `mjlab_training/src/ct_mjlab/utils/provenance.py` | `22eabb593fb7b281afdfb8c37506901346dbb2528310832acd6ab8aacf47b6ec` |
+| `mjlab_training/src/ct_mjlab/utils/task_registry.py` | `c686e56d85942ee738ab3d440efa1688624c2a8b25fb2ee916425bad66a53442` |
+| `scripts/agent/check_mjlab_structure.py` | `6995c4f5a4a03c50581f190434aad48f8f9b7844cefc2bbb28b8c44184dabc11` |
+
+---
+
 # multimode `model_3023` ONNX 与 CPU sim2sim 复查（2026-10-15）
 
 - 审查基线：`bb6b337725218b7c816dfb0d775cee46996acfb0`（detached HEAD）。

@@ -77,3 +77,7 @@ docs/reference/
 !/deployment/H7_RL/.vscode/settings.json
 !/deployment/H7_RL/.vscode/tasks.json
 /deployment/H7_RL/MDK-ARM/CtrBoard-H7_ALL/
+
+# MuJoCo 每次运行自动改写的日志与数据转储
+/MUJOCO_LOG.TXT
+/MJDATA.TXT

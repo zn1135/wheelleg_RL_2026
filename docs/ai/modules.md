@@ -4,6 +4,19 @@
 
 以下任务和目录索引以 `26_wheelleg` 代码为基准；其他维护线的差异见下文。开始工作时以实际检出的分支与任务配置为准。
 
+## mjlab 任务入口
+
+`mjlab_training/src/ct_mjlab/` 按与 Isaac 侧相同的职责拆分：
+`scripts/` 提供 train/play/eval/export/check，`envs/__init__.py` 注册任务，
+`envs/chuanliantui/chuanliantui.py` 提供环境与 runner 工厂，
+`chuanliantui_config.py` 提供环境/PPO 配置工厂，`utils/task_registry.py` 统一调度。
+原 `cli.py` 与 `scripts/mjlab.sh` 保留兼容；配方与 checkpoint 分流集中在
+`envs/chuanliantui/profiles.py`。完整目录与扩展方法见 [mjlab README](../../mjlab_training/README.md#代码结构)。
+
+`experiments/` 和 `reference_training/` 的旧导入路径及文件哈希参与模型校验，
+因此保留原实现，由新入口调用。根级 `registry.py` 的旧 `make_task` 继续专用于
+recover/r5 工厂兼容；新代码使用 `from ct_mjlab.envs import task_registry`。
+
 ## 顶层
 
 | 路径 | 职责 |
