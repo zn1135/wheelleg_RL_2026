@@ -8,10 +8,14 @@ from mjlab.managers.termination_manager import TerminationTermCfg
 from mjlab.sensor import GridPatternCfg, ObjRef, RayCastSensorCfg, TerrainHeightSensorCfg
 from mjlab.terrains import BoxFlatTerrainCfg, BoxPyramidStairsTerrainCfg, TerrainGeneratorCfg
 
-from . import multimode_mdp, multimode_observations, multimode_rewards
+from . import huananhu_randomization, multimode_mdp, multimode_observations, multimode_rewards
 from .huananhu_env_cfg import make_huananhu_env_cfg, make_huananhu_ppo_cfg
 from .v14_observations import V14ObservationCfg
 from .multimode_terrains import BoxSlopeTerrainCfg
+
+
+# Explicit play/check knockdowns only; training does not register this event.
+KNOCKDOWN_ANGULAR_SPEED_RANGE = (18., 28.)
 
 
 def make_multimode_env_cfg(*, play=False):
@@ -53,8 +57,20 @@ def make_multimode_env_cfg(*, play=False):
         for name, func in (("actor", multimode_observations.actor_observation),
                            ("critic", multimode_observations.critic_observation))
     }
-    cfg.commands["standup"] = multimode_mdp.MultimodeCommandCfg()
-    cfg.events["reset_pose"] = EventTermCfg(func=multimode_mdp.reset_pose, mode="reset")
+    standup_cfg = multimode_mdp.MultimodeCommandCfg()
+    cfg.commands["standup"] = standup_cfg
+    cfg.events["reset_pose"] = EventTermCfg(
+        func=multimode_mdp.reset_pose, mode="reset",
+        params={"ground_probability": standup_cfg.ground_start_probability})
+    if not play:
+        # Keep ordinary training disturbances; recovery handles naturally occurring falls.
+        cfg.events["huananhu_velocity_push"] = EventTermCfg(
+            func=huananhu_randomization.push_root_velocity, mode="interval",
+            interval_range_s=(5., 10.), params={"linear_range": (-.6, .6)})
+        cfg.events["huananhu_local_wrench"] = EventTermCfg(
+            func=huananhu_randomization.sample_local_wrench, mode="interval",
+            interval_range_s=(5., 10.),
+            params={"force_range": (-20., 20.), "torque_range": (-2., 2.)})
     cfg.events["reset_observations"] = EventTermCfg(func=multimode_observations.reset_observations, mode="reset")
     cfg.metrics["observation_delay_ms"] = MetricsTermCfg(
         func=multimode_observations.sample_observations, per_substep=True, reduce="last")

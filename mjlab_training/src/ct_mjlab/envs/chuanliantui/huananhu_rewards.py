@@ -151,6 +151,15 @@ class RewardState:
                          'track_lin_vel_xy', 'track_lin_vel_xy_square',
                          'track_ang_vel_z', 'track_ang_vel_z_square'):
                 self.values[name] = torch.where(jumping, 0., self.values[name])
+        if getattr(state.cfg, 'recovery_window_s', None) is not None:
+            # Standing up necessarily loads the base and legs on the ground, so
+            # the contact penalty is suspended while the robot is actually down
+            # (base contact or >40 deg tilt) and returns the instant it is
+            # upright. Gating on `fallen` rather than on the whole recover mode
+            # keeps the penalty for the failure mode the 2026-10-12 audit found:
+            # upright but propped on non-wheel parts is not `fallen`.
+            self.values['undesired_contact'] = torch.where(
+                state.fallen, 0., self.values['undesired_contact'])
         self.values = {name: torch.nan_to_num(value, nan=0., posinf=0., neginf=0.).masked_fill(
             state.numerical_failure, 0.) for name, value in self.values.items()}
         self.step = env.common_step_counter

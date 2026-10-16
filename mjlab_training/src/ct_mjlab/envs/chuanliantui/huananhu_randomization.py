@@ -10,6 +10,8 @@ Robot contact geoms must have priority=1 (floor priority=0), to retain low frict
 
 from __future__ import annotations
 
+import math
+
 import torch
 
 from mjlab.managers.event_manager import EventTermCfg, RecomputeLevel, requires_model_fields
@@ -112,22 +114,54 @@ def reset_disturbances(env, env_ids):
     env.sim.data.xfrc_applied[ids, state.base_id] = 0.
 
 
-def push_root_velocity(env, env_ids):
+def push_root_velocity(env, env_ids, linear_range=(-.25, .25)):
     robot = env.scene["robot"]
     ids = torch.arange(env.num_envs, device=env.device) if env_ids is None else env_ids
     velocity = robot.data.root_link_vel_w[ids].clone()
-    velocity[:, :2].uniform_(-.25, .25)
+    velocity[:, :2].uniform_(*linear_range)
     robot.write_root_link_velocity_to_sim(velocity, env_ids=ids)
 
 
-def sample_local_wrench(env, env_ids):
+def sample_local_wrench(env, env_ids, force_range=(-10., 10.), torque_range=(-1., 1.)):
     state = get_state(env)
     ids = torch.arange(env.num_envs, device=env.device) if env_ids is None else env_ids
     wrench = torch.empty(len(ids), 6, device=env.device)
-    wrench[:, :3].uniform_(-10., 10.)
-    wrench[:, 3:].uniform_(-1., 1.)
+    wrench[:, :3].uniform_(*force_range)
+    wrench[:, 3:].uniform_(*torque_range)
     state.local_wrench[ids] = wrench
     state.apply_local_wrench()
+
+
+def knockdown_root_velocity(env, env_ids, angular_speed_range):
+    """Tip a standing robot over for an explicit play or recovery-mechanism check.
+
+    A world-frame angular-velocity impulse at the root. A linear shove
+    (``push_root_velocity``) leaves the balance controller able to skate out of
+    it; tipping needs angular momentum. Only robots that are already up and have
+    held stable for 0.5 s are hit: a knockdown during the stand-up itself would
+    keep the robot from ever learning to stand.
+
+    ``angular_speed_range`` deliberately has no default. Too weak an impulse is a
+    silent no-op -- a wheeled robot rolls it away instead of falling over -- so an
+    omitted argument used to look like a working knockdown while tipping nothing
+    over (measured hit rate on standing robots: 2-3.5 rad/s 0/32, 12-16 24/32).
+    Callers pass the test range explicitly; ``multimode_env_cfg`` holds it as
+    ``KNOCKDOWN_ANGULAR_SPEED_RANGE`` so explicit checks and ``play`` cannot
+    drift apart.
+    """
+    state = env.command_manager.get_term("standup")
+    robot = env.scene["robot"]
+    ids = torch.arange(env.num_envs, device=env.device) if env_ids is None else env_ids
+    eligible = (~state.fallen[ids]) & (state.stable_time[ids] >= .5)
+    if not bool(eligible.any()):
+        return
+    hit = ids[eligible]
+    velocity = robot.data.root_link_vel_w[hit].clone()
+    speed = torch.empty(len(hit), device=env.device).uniform_(*angular_speed_range)
+    angle = torch.rand(len(hit), device=env.device) * (2 * math.pi)
+    velocity[:, 3] = speed * angle.cos()
+    velocity[:, 4] = speed * angle.sin()
+    robot.write_root_link_velocity_to_sim(velocity, env_ids=hit)
 
 
 def make_huananhu_events(play: bool = False) -> dict[str, EventTermCfg]:

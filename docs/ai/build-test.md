@@ -4,6 +4,28 @@
 
 ## mjlab 检查
 
+倒地恢复机制检查（不训练）：训练配置不主动施加绕轴击倒，手动冲量只在机制检查中使用。
+
+```bash
+# 未注册主动击倒事件，恢复窗口仍存在；12秒有限步进
+mjlab_training/.venv/bin/python scripts/agent/check_multimode_recovery.py --training-config
+# 手动击倒后恢复通道重启、恢复期接触奖励门控与窗口内不提前终止
+mjlab_training/.venv/bin/python scripts/agent/check_multimode_recovery.py
+```
+
+最终平衡 v3 的判据检查及既有轨迹离线重算（不运行物理、不重跑策略、不改旧产物）：
+
+```bash
+# NumPy / Torch 数值路径，覆盖倾角、承重、接触、角速度、时长及提前终止
+mjlab_training/.venv/bin/python scripts/agent/check_multimode_final_balance.py
+# 仅重算已录下的 7 个样本；输出目录须使用新名称
+mjlab_training/.venv/bin/python scripts/agent/check_multimode_final_balance.py \
+  --recording-dir logs/mjlab/evaluation/kd-failure-videos-4850 \
+  --output artifacts/<新重算名>/result.json
+```
+
+新判据看结束前连续 1 秒平衡，允许滚动、转向与少量腿部接触，仍检查双轮主要承重、机身不撑地与横滚/俯仰稳定；历史 `last5_*` 保留原义。离线重算仅覆盖已录制样本，不替代完整模型配对、独立 sim2sim 或真机验收，标准见[当前验收 v3](../interfaces/chuanliantui-wheel-balance-acceptance-v2.md)。
+
 在仓库根运行，不启动训练或 TensorBoard，不写根 `logs/`：
 
 ```bash

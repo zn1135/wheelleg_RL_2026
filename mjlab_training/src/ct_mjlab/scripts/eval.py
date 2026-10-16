@@ -17,9 +17,20 @@ strict criterion that additionally requires both wheels to carry the robot and
 the height to track the command, plus a ``stable_at_t0`` diagnostic that shows
 whether the loose criterion is satisfied by the start pose itself.
 
+Mid-episode recover path
+------------------------
+``--knockdown-at S`` tips every live env over at S seconds with the same angular
+impulse the training knockdown uses, then reports ``knockdown_hits`` (impulses
+delivered), ``knocked_down`` (robots that actually went down) and the strict
+recovery that follows each one. Delivery and knockdown are counted separately
+because a wheeled robot rolls weak impulses away instead of falling over.
+
 Usage:
   scripts/mjlab.sh eval --checkpoint <model.pt> --num-envs 64 --seeds 42 \
     --start-mode force --terrain all --output logs/mjlab/evaluation/<name>/result.json
+  scripts/mjlab.sh eval --checkpoint <model.pt> --num-envs 64 --seeds 42 \
+    --start-mode force --terrain all --knockdown-at 5 \
+    --output logs/mjlab/evaluation/<name>/result.json
 """
 
 from __future__ import annotations
@@ -40,6 +51,7 @@ from mjlab.utils.torch import configure_torch_backends
 from ct_mjlab.envs import task_registry
 from ct_mjlab.envs.chuanliantui.huananhu_poses import sample_reset_state
 from ct_mjlab.envs.chuanliantui.multimode_mdp import MODE_NAMES, TERRAIN_NAMES
+from ct_mjlab.envs.chuanliantui.multimode_env_cfg import KNOCKDOWN_ANGULAR_SPEED_RANGE
 
 MULTIMODE_TASK_ID = "chuanliantui"
 
@@ -71,6 +83,33 @@ def force_ground_reset(env, env_ids):
     sample_reset_state(env, env_ids, ground)
     if hasattr(env, "_huananhu_rewards"):
         env._huananhu_rewards.step = -1
+
+
+def force_knockdown(env, env_ids, speed_range=KNOCKDOWN_ANGULAR_SPEED_RANGE):
+    """Tip the selected envs over with a world-frame angular-velocity impulse.
+
+    Mirrors ``huananhu_randomization.knockdown_root_velocity`` without its
+    "already standing" gate, so an evaluation can put every live env on the
+    ground at a fixed time and measure the mid-episode recover path. The default
+    range is the training recipe's own (``KNOCKDOWN_ANGULAR_SPEED_RANGE``), shared
+    with the training event and ``play`` so the three cannot drift apart; a
+    wheeled robot rolls weaker impulses away instead of falling over, so sweep
+    upward rather than downward. It used to be a stale (12., 16.) that the recipe
+    no longer uses -- a default that under-tests is worse than no default.
+    """
+    if env_ids is None:
+        env_ids = torch.arange(env.num_envs, device=env.device)
+    else:
+        env_ids = torch.as_tensor(env_ids, device=env.device, dtype=torch.long)
+    if len(env_ids) == 0:
+        return
+    robot = env.scene["robot"]
+    velocity = robot.data.root_link_vel_w[env_ids].clone()
+    speed = torch.empty(len(env_ids), device=env.device).uniform_(*speed_range)
+    angle = torch.rand(len(env_ids), device=env.device) * (2 * torch.pi)
+    velocity[:, 3] = speed * angle.cos()
+    velocity[:, 4] = speed * angle.sin()
+    robot.write_root_link_velocity_to_sim(velocity, env_ids=env_ids)
 
 
 def git_state() -> dict:
@@ -138,13 +177,27 @@ def evaluate_seed(args, seed: int) -> tuple[dict, list[dict], dict]:
         survived = torch.zeros(n, device=env.device, dtype=torch.bool)
         numerical = torch.zeros(n, device=env.device, dtype=torch.bool)
         terminal = torch.full((n,), -1, device=env.device, dtype=torch.long)
+        # Mid-episode recover path: set when an env is tipped over, then measured
+        # independently of the reset-time strict criterion above.
+        hit = torch.zeros(n, device=env.device, dtype=torch.bool)
+        knocked = torch.zeros(n, device=env.device, dtype=torch.bool)
+        knock_strict_run = torch.zeros(n, device=env.device)
+        knock_strict = torch.zeros(n, device=env.device, dtype=torch.bool)
+        knock_time = torch.full((n,), float("nan"), device=env.device)
 
         captured, capture_trace = [], []
         first = True
+        knockdown_step = None if args.knockdown_at is None else round(args.knockdown_at / dt)
         with torch.inference_mode():
             for step in range(args.steps):
                 active = live.clone()
+                if knockdown_step is not None and step == knockdown_step:
+                    force_knockdown(env, live.nonzero().flatten(), tuple(args.knockdown_speed))
+                    hit |= live
                 obs, _, terminated, timeout, _ = env.step(policy(obs))
+                # `knocked` means the robot actually went down, not merely that an
+                # impulse was delivered; a wheeled robot rolls weak impulses away.
+                knocked |= hit & state.fallen
 
                 height = state.height_above_ground
                 cmd_height = state.command[:, 2]
@@ -174,6 +227,18 @@ def evaluate_seed(args, seed: int) -> tuple[dict, list[dict], dict]:
                 newly_strict = active & ~strict & (strict_run >= STABLE_DURATION_S)
                 strict_time = torch.where(newly_strict, duration, strict_time)
                 strict |= active & (strict_run >= STABLE_DURATION_S)
+                in_knock = knocked & active
+                knock_strict_run = torch.where(in_knock & strict_ok, knock_strict_run + dt,
+                                               torch.where(in_knock, 0., knock_strict_run))
+                newly_knock = in_knock & ~knock_strict & (knock_strict_run >= STABLE_DURATION_S)
+                # Only the knockdown path has a time origin to subtract. Without
+                # --knockdown-at this line used to raise
+                # TypeError: unsupported operand type(s) for -: 'Tensor' and 'NoneType',
+                # which took down the whole plain (non-knockdown) evaluation.
+                if args.knockdown_at is not None:
+                    knock_time = torch.where(newly_knock,
+                                             duration - args.knockdown_at, knock_time)
+                knock_strict |= in_knock & (knock_strict_run >= STABLE_DURATION_S)
                 # Fraction of the 15 s window after the first strict success.
                 in_window = active & strict & (hold_elapsed < HOLD_WINDOW_S)
                 hold_ok += (in_window & strict_ok).float() * dt
@@ -212,6 +277,9 @@ def evaluate_seed(args, seed: int) -> tuple[dict, list[dict], dict]:
         terrain_cpu, ground_cpu, command_cpu = terrain.cpu().tolist(), ground.cpu().tolist(), command.cpu().tolist()
         weak_cpu, strict_cpu = weak.cpu().tolist(), strict.cpu().tolist()
         weak_t, strict_t = weak_time.cpu().tolist(), strict_time.cpu().tolist()
+        hit_cpu = hit.cpu().tolist()
+        knocked_cpu, knock_cpu = knocked.cpu().tolist(), knock_strict.cpu().tolist()
+        knock_t = knock_time.cpu().tolist()
         rows = []
         for i in range(n):
             rows.append({
@@ -229,6 +297,10 @@ def evaluate_seed(args, seed: int) -> tuple[dict, list[dict], dict]:
                 "start_knee_rad": start_knee[i].cpu().tolist(), "final_knee_rad": final_knee[i].cpu().tolist(),
                 "both_wheels_at_end": bool(wheels_at_end[i]),
                 "survived_20s": bool(survived[i]), "numerical_failure": bool(numerical[i]),
+                "knockdown_hit": bool(hit_cpu[i]),
+                "knocked_down": bool(knocked_cpu[i]),
+                "knockdown_recovered": bool(knock_cpu[i]),
+                "knockdown_recover_time_s": knock_t[i],
             })
 
         def aggregate(subset: list[dict]) -> dict:
@@ -237,8 +309,18 @@ def evaluate_seed(args, seed: int) -> tuple[dict, list[dict], dict]:
             def rate(key):
                 return sum(row[key] for row in subset) / len(subset)
             times = sorted(row["strict_recover_time_s"] for row in subset if row["strict_recovered"])
+            knocked_rows = [row for row in subset if row["knocked_down"]]
+            knock_times = sorted(row["knockdown_recover_time_s"] for row in knocked_rows
+                                 if row["knockdown_recovered"])
+            knock_ok = sum(row["knockdown_recovered"] for row in knocked_rows)
             return {
                 "count": len(subset),
+                "knockdown_hits": sum(row["knockdown_hit"] for row in subset),
+                "knocked_down": len(knocked_rows),
+                "knockdown_recovered": knock_ok,
+                "knockdown_recovery_rate": knock_ok / len(knocked_rows) if knocked_rows else None,
+                "median_knockdown_recover_time_s": (
+                    float(np.median(knock_times)) if knock_times else None),
                 "weak_recovered": sum(row["weak_recovered"] for row in subset),
                 "weak_recovery_rate": rate("weak_recovered"),
                 "strict_recovered": sum(row["strict_recovered"] for row in subset),
@@ -275,7 +357,9 @@ def evaluate_seed(args, seed: int) -> tuple[dict, list[dict], dict]:
                            for name in TERRAIN_NAMES},
         }
         extras = {"initial_state_signature": signature, "num_envs": n,
-                  "ground_start_envs": len(ground_rows), "ground_start_flat_envs": len(flat_ground)}
+                  "ground_start_envs": len(ground_rows), "ground_start_flat_envs": len(flat_ground),
+                  "knockdown_at_s": args.knockdown_at,
+                  "knockdown_speed_range": list(args.knockdown_speed)}
         if args.capture:
             extras["capture_env"] = 0
         return {"aggregates": aggregates, "extras": extras}, rows, {"captured": captured,
@@ -291,9 +375,17 @@ def main() -> None:
     parser.add_argument("--num-envs", type=int, default=256)
     parser.add_argument("--seeds", default="42", help="comma-separated seeds, e.g. 42,43,44")
     parser.add_argument("--start-mode", choices=("force", "sample"), default="force",
-                        help="force: every env starts on the ground; sample: the task's 50/50 draw")
+                        help="force: every env starts on the ground; sample: the task's configured draw")
     parser.add_argument("--terrain", choices=("flat", "all"), default="flat",
                         help="which terrain the headline numbers are taken from")
+    parser.add_argument("--knockdown-at", type=float, default=None,
+                        help="seconds into the episode to tip every live env over, then "
+                             "measure the mid-episode recover path (default: off)")
+    parser.add_argument("--knockdown-speed", type=float, nargs=2,
+                        default=KNOCKDOWN_ANGULAR_SPEED_RANGE,
+                        metavar=("MIN", "MAX"),
+                        help="root angular-velocity impulse range in rad/s for "
+                             "--knockdown-at (default: the training range)")
     parser.add_argument("--steps", type=int, default=1000, help="max control steps (1000 = 20 s)")
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--capture", action="store_true", help="save env 0's first-episode qpos")

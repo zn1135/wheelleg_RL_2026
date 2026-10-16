@@ -22,6 +22,25 @@ WHEEL_RADIUS = .06
 
 @dataclass(kw_only=True)
 class MultimodeCommandCfg(HuananhuCommandCfg):
+    # Ground-start share of resets. The source recipe drew 50/50; raising it
+    # trains the recover (stand-up) phase on most episodes and keeps the
+    # ordinary pose distribution on the rest. Recorded per run in
+    # params/env.yaml, so a resume cannot silently inherit the wrong ratio.
+    ground_start_probability: float = .8
+    # Continuous fallen time allowed before a fall ends the episode. The 0.4 s
+    # contact/tilt gate is far shorter than a stand-up takes, so a knocked-down
+    # robot is given this window instead and the recover mode re-arms. The
+    # original 1.0 s was justified by pose-bank ground starts (the recover
+    # channel held 0.72-0.98 s), but those are legal lying poses, not a 180 deg
+    # flip. Measured at the impulse itself (384 episodes, seed 43), get-ups from
+    # a real knockdown take a median of 1.12-2.30 s depending on magnitude, p90
+    # 2.32 s, up to 3.98 s, so 1.0 s cut real stand-ups off mid-way. 2.0 s also
+    # matches the recovery deadline the acceptance criterion already grants. The
+    # timer counts *continuous* fallen time and clears whenever the base is off
+    # the ground with tilt under 40 deg, so it is more permissive than 2 s spent
+    # trying. Recorded per run in params/env.yaml.
+    recovery_window_s: float = 2.0
+
     def build(self, env):
         return MultimodeCommand(self, env)
 
@@ -56,10 +75,20 @@ class MultimodeCommand(HuananhuCommand):
         self.jump_peak = torch.zeros(n, device=device)
         self.jump_cooldown = torch.zeros(n, device=device)
         self.recovered = torch.zeros(n, device=device, dtype=torch.bool)
+        # Latched from a mid-episode fall until the robot is stably back up, so
+        # the recover channel spans the whole stand-up in a normal-start episode
+        # exactly as ground_start does in a ground-start one. Gating recover on
+        # `fallen` alone would drop the channel the moment the robot stopped
+        # touching the ground, i.e. before it had actually stood.
+        self.getting_up = torch.zeros(n, device=device, dtype=torch.bool)
         self.trigger_counts = {name: torch.zeros(n, device=device) for name in
-                               ("airborne", "jump", "step", "stair")}
+                               ("airborne", "jump", "step", "stair", "knockdown")}
         for name in self.trigger_counts:
             self.metrics[f"mode_{name}"] = self.trigger_counts[name]
+        # Share of finished episodes that spent longer than recovery_window_s on
+        # the ground. Written by huananhu_mdp.failure; a value near 1 means the
+        # window, not the policy, is what ends the get-up attempts.
+        self.metrics["recovery_timeout"] = torch.zeros(n, device=device)
         self._last_mode_step = -1
 
     @property
@@ -68,7 +97,17 @@ class MultimodeCommand(HuananhuCommand):
 
     @property
     def recover(self):
-        return self.ground_start & ~self.recovered
+        """Ground starts before the first stand, plus every mid-episode fall.
+
+        ``recovered`` is cleared while the robot is down, so a knockdown after
+        standing re-arms this mode and the actor sees the same recover channel it
+        was trained with at reset. ``getting_up`` carries the channel across the
+        whole stand-up rather than only while the robot is literally down, so a
+        normal-start recovery spans the same phase that a ground-start one does.
+        The actor can tell the two apart through the ground_start flag in
+        extra_flags(), so the 39-dim contract is unchanged.
+        """
+        return (self.ground_start | self.getting_up) & ~self.recovered
 
     @property
     def step_active(self):
@@ -93,7 +132,7 @@ class MultimodeCommand(HuananhuCommand):
         for name in ("airborne_time", "step_hold", "stair_time", "jump_time", "jump_target",
                      "jump_peak", "jump_cooldown"):
             getattr(self, name)[env_ids] = 0
-        for name in ("airborne", "stair_active", "recovered", "obstacle_seen"):
+        for name in ("airborne", "stair_active", "recovered", "getting_up", "obstacle_seen"):
             getattr(self, name)[env_ids] = False
         self.jump_phase[env_ids] = 0
         terrain = self._env.scene.terrain
@@ -135,7 +174,14 @@ class MultimodeCommand(HuananhuCommand):
         entered_air = ~self.airborne & (self.airborne_time >= .02)
         self.airborne = self.airborne_time >= .02
         self.trigger_counts["airborne"] += entered_air.float()
-        self.recovered |= self.stable_time >= .5
+        self.trigger_counts["knockdown"] += self.knockdown.float()
+        # Clearing the latch while the robot is down is what lets recover re-arm
+        # after a mid-episode knockdown; it returns once the robot has been stable
+        # for 0.5 s again. failure() wrote `fallen`/`knockdown` earlier in this
+        # same step (termination runs before the command update), so there is no
+        # one-step lag here.
+        self.recovered = (self.recovered | (self.stable_time >= .5)) & ~self.fallen
+        self.getting_up = (self.getting_up | self.fallen) & ~self.recovered
 
         rise = ahead - center
         can_step = (rise >= .035) & (rise <= .09) & (self.terrain_kind >= 2)
@@ -181,11 +227,11 @@ class MultimodeCommand(HuananhuCommand):
         self.jump_peak = torch.where(done, 0., self.jump_peak)
 
 
-def reset_pose(env, env_ids):
+def reset_pose(env, env_ids, ground_probability):
     if env_ids is None:
         env_ids = torch.arange(env.num_envs, device=env.device)
     state = env.command_manager.get_term("standup")
-    ground = torch.rand(len(env_ids), device=env.device) < .5
+    ground = torch.rand(len(env_ids), device=env.device) < ground_probability
     state.ground_start[env_ids] = ground
     # Existing closed-chain pose bank is retained; the generated terrain origin
     # is applied by sample_reset_state. No joints are reset to zero.

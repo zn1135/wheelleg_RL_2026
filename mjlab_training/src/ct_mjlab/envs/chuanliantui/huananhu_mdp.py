@@ -24,6 +24,10 @@ def consecutive_failure(counter, failed, steps=20):
 @dataclass(kw_only=True)
 class HuananhuCommandCfg(CommandTermCfg):
     resampling_time_range: tuple[float, float] = (5., 15.)
+    # Continuous fallen time allowed before a fall ends the episode, or None to
+    # keep the 0.4 s contact/tilt gate. MultimodeCommandCfg sets a window so a
+    # knocked-down robot can stand back up; recorded per run in params/env.yaml.
+    recovery_window_s: float | None = None
 
     def build(self, env):
         return HuananhuCommand(self, env)
@@ -44,6 +48,9 @@ class HuananhuCommand(CommandTerm):
         self.special_mode = torch.full((n,), -1, dtype=torch.long, device=device)
         self.failure_count = torch.zeros(n, dtype=torch.long, device=device)
         self.stable_time = torch.zeros(n, device=device)
+        self.fallen = self.heading.clone()
+        self.fallen_time = torch.zeros(n, device=device)
+        self.knockdown = self.heading.clone()
         self.training_iteration = 0  # offset; runner restores it on resume
         self._resetting = False
         self.metrics = {name: torch.zeros(n, device=device) for name in (
@@ -61,6 +68,9 @@ class HuananhuCommand(CommandTerm):
         self.failure_count[env_ids] = 0
         self.numerical_failure[env_ids] = False
         self.stable_time[env_ids] = 0
+        self.fallen[env_ids] = False
+        self.fallen_time[env_ids] = 0
+        self.knockdown[env_ids] = False
         self.ground_command[env_ids] = torch.empty(len(env_ids), 2, device=self.device).uniform_(-1., 1.)
         return result
 
@@ -133,7 +143,8 @@ def failure(env):
     pitch = torch.asin(gravity[:, 0].clamp(-1., 1.))
     contact = env.scene['base_contact'].data.force.norm(dim=-1).amax(-1) > 1.
     tilted = (roll.abs() > math.radians(40)) | (pitch.abs() > math.radians(40))
-    state.failure_count, delayed = consecutive_failure(state.failure_count, (contact | tilted) & ~numerical)
+    down = (contact | tilted) & ~numerical
+    state.failure_count, delayed = consecutive_failure(state.failure_count, down)
     height = getattr(state, 'height_above_ground', robot.data.root_link_pos_w[:, 2])
     stable = ~contact & ~tilted & (height > .20)
     state.stable_time = torch.where(stable, state.stable_time + env.step_dt, 0.)
@@ -143,7 +154,25 @@ def failure(env):
     state.metrics['upright_fraction'] += stable.float() * env.step_dt / env.cfg.episode_length_s
     state.metrics['height_error'] += (height - state.command[:, 2]).abs() * env.step_dt / env.cfg.episode_length_s
     state.metrics['velocity_error'] += (linear[:, 0] - state.command[:, 0]).abs() * env.step_dt / env.cfg.episode_length_s
-    return delayed | numerical
+    # Mid-episode fall recovery. With a window configured, a robot that is down
+    # gets recovery_window_s of *continuous* fallen time instead of the 0.4 s
+    # gate so it can push itself back up. The timer clears as soon as the robot
+    # is neither in base contact nor tilted past 40 deg -- not merely when the
+    # base lifts off -- so a robot that keeps making progress is never cut off,
+    # while one that thrashes back and forth across that threshold can keep
+    # postponing the timeout. `expired` implies `delayed`, so this is strictly
+    # more permissive than the gate it replaces, and numerical failures still
+    # terminate immediately.
+    window = state.cfg.recovery_window_s
+    if window is None:
+        return delayed | numerical
+    state.knockdown.copy_(down & ~state.fallen)
+    state.fallen.copy_(down)
+    state.fallen_time = torch.where(down, state.fallen_time + env.step_dt, 0.)
+    expired = state.fallen_time > window
+    if 'recovery_timeout' in state.metrics:
+        state.metrics['recovery_timeout'] += expired.float()
+    return expired | numerical
 
 
 def reset_pose(env, env_ids):
