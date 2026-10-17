@@ -39,9 +39,11 @@ ONNX 图检查、固定输入输出形状检查通过。256 组固定随机输�
 | 阶段 | 状态 | 结果与证据 |
 |---|---|---|
 | ONNX 图检查与数值比较 | 通过 | 256 组，最大绝对误差 `3.814697265625e-06`；[导出日志](../../artifacts/model5849-onnx-20261017/export.log)、[可移植交付副本](../../exports/chuanliantui_multimode/model5849-h7-20261017/model_5849_opset13_export.json)、[板端核对参考向量](../../exports/chuanliantui_multimode/model5849-h7-20261017/model_5849_opset13_reference_vectors.npz) |
-| CPU MuJoCo 零速静站 20 s | 通过 | 1 秒后高度最大误差 0.0042 m、最大倾角 1.45°、双轮接触 951/951、ONNX／PyTorch 最大动作差 `1.0e-06`；[报告](../../artifacts/model5849-onnx-20261017/zero-command-report-opset13.json) |
-| CPU MuJoCo vx=1.5 m/s 20 s | 通过 | mean |vx 误差| 0.178 m/s、最大倾角 1.50°、行进约 25.2 m；[报告](../../artifacts/model5849-onnx-20261017/vx1p5-report-opset13.json) |
+| CPU MuJoCo 零速静站 20 s（入口摩擦口径 1.0） | 通过 | 1 秒后高度最大误差 0.0042 m、最大倾角 1.45°、双轮接触 951/951、ONNX／PyTorch 最大动作差 `1.0e-06`；[报告](../../artifacts/model5849-onnx-20261017/zero-command-report-opset13.json) |
+| CPU MuJoCo vx=1.5 m/s 20 s（入口摩擦口径 1.0） | 通过（2026-10-17 晚更正为引擎相关，见下） | mean |vx 误差| 0.178 m/s、最大倾角 1.50°、行进约 25.2 m；[报告](../../artifacts/model5849-onnx-20261017/vx1p5-report-opset13.json) |
 | GPU 训练后端／eval | 已有历史证据 | 跟踪 98/98、64 强制地面初态 63/64，见[项目记录](../ai/project-log.md)；本次未重跑 |
 | Cube.AI 导入、板端数值／时序、真机 | 未执行 | H7 部署负责人核对状态为待确认 |
+
+**2026-10-17 晚更正**：独立审计发现入口未镜像训练场景的机器人 geom `priority=1` 补丁（机器人-地面滑动摩擦实际 1.0，为训练值 0.5 的两倍，见接口记录 2026-10-17 晚节）。入口对齐后用同一份交付文件复测：零速静站 20 s 仍通过（1 秒后高度最大误差 0.0110 m、最大倾角 2.083°、双轮接触 951/951）；vx=1.5 m/s 由通过改为在原生 CPU 引擎自约 16.7 s 起失稳（PyTorch 控制器 15.2 s；训练引擎 warp 同条件 20 s 通过）。该判据属引擎相关边界，不再作为「通过」项引用；ONNX 图、参考向量、CSV 与 256 组数值检查不受影响。证据：`artifacts/stand-leg-motion-20261017/trainfric-rerun/`（本机）。
 
 交付的 ONNX 与本次已验证导出文件逐字节一致（直接复制，未重新导出）。本次未运行训练、Cube.AI 导入或真机验证；H7 的 39 维观测、50 Hz 调度及数值对齐仍由部署负责人待确认；未修改 `deployment/H7_RL`。

@@ -24,6 +24,9 @@ Scope (no learning, no long simulation, no GPU):
            cone/impratio) equal the multimodal env's MujocoCfg; the vx/yaw command slots
            clamp to +-100 like v14_observations.basic; the ground-start activation flag
            flips on the 11th completed step (the training float32 boundary, not the 10th)
+  contacts every robot geom carries the training scene's priority=1 patch, so robot-floor
+           contact friction equals the training value (0.5 sliding), not the equal-priority
+           elementwise-max mix with the floor's 1.0 (the 2026-10-17 audit finding)
 
 Static + one-step consistency between two implementations of one contract. It is not a
 behavior acceptance and says nothing about policy quality.
@@ -166,7 +169,8 @@ def main() -> None:
 
     # 7. Simulator options equal the multimodal env's MujocoCfg (the training settings).
     from ct_mjlab.envs.chuanliantui.multimode_env_cfg import make_multimode_env_cfg
-    mujoco_cfg = make_multimode_env_cfg(play=True).sim.mujoco
+    multimode_cfg = make_multimode_env_cfg(play=True)
+    mujoco_cfg = multimode_cfg.sim.mujoco
     integrators = {"euler": mujoco.mjtIntegrator.mjINT_EULER,
                    "implicit": mujoco.mjtIntegrator.mjINT_IMPLICIT,
                    "implicitfast": mujoco.mjtIntegrator.mjINT_IMPLICITFAST}
@@ -185,6 +189,45 @@ def main() -> None:
     results["simulator_options"] = {name: bool(ok) for name, ok in option_pairs.items()}
     failures = sorted(name for name, ok in option_pairs.items() if not ok)
     assert not failures, f"simulator options differ from the training MujocoCfg: {failures}"
+
+    # 8. Contact parameters mirror the training scene's robot-geom priority patch
+    #    (huananhu_env_cfg: GeomCfg(geom_names_expr=('.*',), priority=1)): robot-floor
+    #    contacts take the robot's own friction, not the equal-priority max with the
+    #    floor's 1.0. This is the assertion that would have caught the 2026-10-17
+    #    audit finding (entry ran at twice the training sliding friction).
+    train_priority = int(multimode_cfg.scene.entities["robot"].geoms[0].priority)
+    train_terrain_friction = tuple(float(v) for v in multimode_cfg.scene.terrain.geoms[0].friction)
+    floor_id = env.model.geom("sim2sim_flat_floor").id
+    assert int(env.model.geom_priority[floor_id]) == 0, "floor geom priority is not 0"
+    robot_priorities = {int(env.model.geom_priority[i]) for i in range(env.model.ngeom)
+                        if i != floor_id}
+    assert robot_priorities == {train_priority}, \
+        f"robot geom priority {sorted(robot_priorities)} != training {train_priority}"
+    assert np.allclose(env.model.geom_friction[floor_id], train_terrain_friction), \
+        f"floor friction {env.model.geom_friction[floor_id]} != training terrain {train_terrain_friction}"
+    robot_frictions = {tuple(round(float(v), 6) for v in row) for row in training.geom_friction}
+    assert len(robot_frictions) == 1, f"unexpected robot geom frictions: {robot_frictions}"
+    slide, spin, roll = next(iter(robot_frictions))
+    expected_contact = (slide, slide, spin, roll, roll)
+    probe = mujoco.MjData(env.model)
+    mujoco.mj_forward(env.model, probe)
+    floor_contacts = [i for i in range(probe.ncon)
+                      if floor_id in (probe.contact[i].geom1, probe.contact[i].geom2)]
+    assert floor_contacts, "no robot-floor contacts at the qpos0 stance"
+    contacts = {}
+    for contact_id in floor_contacts:
+        contact = probe.contact[contact_id]
+        robot_id = contact.geom2 if contact.geom1 == floor_id else contact.geom1
+        measured = tuple(round(float(v), 6) for v in contact.friction)
+        assert measured == expected_contact, \
+            f"robot-floor contact geom {robot_id} friction {measured} != training {expected_contact}"
+        geom_name = mujoco.mj_id2name(env.model, mujoco.mjtObj.mjOBJ_GEOM, robot_id) or f"geom{robot_id}"
+        contacts[geom_name] = list(measured)
+    results["contact_parameters"] = {
+        "robot_geom_priority": train_priority,
+        "floor_friction": list(train_terrain_friction),
+        "robot_floor_contacts": contacts,
+    }
 
     summary = {"ok": True, "script": str(Path(__file__).resolve()),
                "scope": "static + one-step entry-vs-training consistency; not a behavior acceptance",

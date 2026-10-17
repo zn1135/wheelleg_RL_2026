@@ -13,7 +13,9 @@ non-airborne / non-step:
 Observation and PD targets keep the training action term's centres: the actor sees
 leg angles relative to the solved closed standing nominal (XML qpos0 plus the
 micro-squat targets) and the leg PD target is built around the same nominal, while
-raw XML qpos0 stays only the soft-limit clamp centre.
+raw XML qpos0 stays only the soft-limit clamp centre.  Contact
+parameters mirror the training scene's robot-geom priority patch (play friction:
+0.5 sliding on robot-floor contacts).
 
 Scope is flat ground.  `--cmd-vx/--cmd-yaw/--cmd-height` hold a constant command,
 so one entry point covers both the historical zero-speed 0.30 m static standing
@@ -215,6 +217,16 @@ def build_model():
     )
     floor.rgba = (.16, .20, .25, 1.)
     model = spec.compile()
+    # Contact parameters mirror the training scene: huananhu_env_cfg patches every
+    # robot geom with GeomCfg(geom_names_expr=('.*',), priority=1), so robot-floor
+    # contacts take the robot's own friction (0.5 sliding). With both sides left at
+    # priority 0, native MuJoCo mixes equal priorities elementwise (max) and would
+    # use the floor's 1.0, i.e. twice the training sliding friction (2026-10-17
+    # audit finding; regression-asserted in check_multimode_cpu_sim2sim.py).
+    floor_geom_id = model.geom("sim2sim_flat_floor").id
+    for geom_id in range(model.ngeom):
+        if geom_id != floor_geom_id:
+            model.geom_priority[geom_id] = 1
     model.opt.timestep = DT
     model.opt.integrator = mujoco.mjtIntegrator.mjINT_IMPLICITFAST
     model.opt.solver = mujoco.mjtSolver.mjSOL_NEWTON
