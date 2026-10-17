@@ -119,7 +119,7 @@ special-mode 桶与 heading 外环一起限幅到同一包线；观测契约仍�
 
 RTX 4060 Laptop（8 GiB）上 4096 环境曾在创建 Warp CUDA 图时显存不足，本机续训用 2048 环境。
 
-独立 CPU MuJoCo sim2sim 和历史 ONNX 交付见 [ONNX 使用说明](onnx-huananhu-multimode-model3023.md)。
+独立 CPU MuJoCo sim2sim 与 ONNX 交付见 [ONNX 使用说明](onnx-huananhu-multimode-model5849.md)（当前交付 `model_5849`；历史 `model_3023` 说明保留）。
 
 ## 基线复核（2026-10-15）
 

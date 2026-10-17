@@ -1,0 +1,41 @@
+{
+  "created_at": "2026-10-17T18:07:43.915315+08:00",
+  "task": "Chuanliantui-Huananhu-Multimode-v0",
+  "observation_contract": "chuanliantui-huananhu-multimode-39-82-v1",
+  "checkpoint": "artifacts/flat-track-20261017-trained/models/model_5849.pt",
+  "checkpoint_sha256": "d4be0bc98c20348911b7e43a6f52f5e3719cb78d74f5764f485b4bce82bb71ca7",
+  "onnx": "exports/chuanliantui_multimode/model5849-h7-20261017/model_5849_opset13.onnx",
+  "onnx_sha256": "9143bc7ad8aabac05831dee9203f42f81c77d94e7616eccea9cc004c1f5616b4",
+  "onnx_bytes": 208039,
+  "opset": 13,
+  "input": {
+    "name": "obs",
+    "shape": [1, 39],
+    "dtype": "float32"
+  },
+  "output": {
+    "name": "actions",
+    "shape": [1, 6],
+    "dtype": "float32",
+    "order": ["lf0", "lf00", "lfwheel", "rf0", "rf00", "rfwheel"]
+  },
+  "fixed_batch": true,
+  "weights_embedded": true,
+  "numeric_check": {
+    "samples": 256,
+    "max_abs_diff": 3.814697265625e-06,
+    "atol": 0.0001
+  },
+  "reference_vectors": "exports/chuanliantui_multimode/model5849-h7-20261017/model_5849_opset13_reference_vectors.npz",
+  "graph_scope": "deterministic actor only; no observation construction, PD, torque clipping or motor mapping",
+  "path_base": "repository_root",
+  "source_code_commit": "6e24617e3c7c8dafbfed36472c0ccc68502ae406",
+  "tool_versions": {
+    "python": "3.12.3",
+    "pytorch": "2.14.0+cu130",
+    "onnx": "1.22.0",
+    "numpy": "2.5.3"
+  },
+  "h7_review_status": "待确认；未执行 Cube.AI 导入、板端数值/时序或真机验证",
+  "source_export_record": "artifacts/model5849-onnx-20261017/model_5849_opset13_export.json"
+}

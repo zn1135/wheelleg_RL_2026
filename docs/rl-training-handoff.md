@@ -28,7 +28,7 @@
 
 ## 4. H7 必须对齐的策略接口
 
-接口 `chuanliantui-huananhu-multimode-39-82-v1`。ONNX float32 `[1,39]→[1,6]`，opset 13，图内只有 actor，观测打包、PD 和调度都在图外。动作顺序 `[lf0,lf00,lfwheel,rf0,rf00,rfwheel]`。槽位与固定 NORMAL 静站契约见 [multimode 接口](interfaces/chuanliantui-huananhu-multimode-replay-v1.md) 与 [ONNX 使用说明](onnx-huananhu-multimode-model3023.md)。H7 负责人的核对状态为待确认。
+接口 `chuanliantui-huananhu-multimode-39-82-v1`。ONNX float32 `[1,39]→[1,6]`，opset 13，图内只有 actor，观测打包、PD 和调度都在图外。动作顺序 `[lf0,lf00,lfwheel,rf0,rf00,rfwheel]`。槽位与交付契约见 [multimode 接口](interfaces/chuanliantui-huananhu-multimode-replay-v1.md) 与 [ONNX 使用说明](onnx-huananhu-multimode-model5849.md)（当前交付 `model_5849`）。H7 负责人的核对状态为待确认。
 
 ## 5. 双方交付清单
 

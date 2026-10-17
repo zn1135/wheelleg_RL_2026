@@ -1,6 +1,6 @@
 # 常用命令速查
 
-串联腿 mjlab 只保留华南虎 multimode（39/82 维）一条训练线，基线 `model_3023.pt`。安装、检查、训练／TensorBoard、回放、地面起立评估和 ONNX 导出命令见 [mjlab 命令](docs/mjlab-chuanliantui.md#可执行命令)；独立 CPU MuJoCo sim2sim 见 [ONNX 使用说明](docs/onnx-huananhu-multimode-model3023.md)。39 维模型不兼容下文旧 25/125 维 H7 命令。
+串联腿 mjlab 只保留华南虎 multimode（39/82 维）一条训练线，基线 `model_3023.pt`。安装、检查、训练／TensorBoard、回放、地面起立评估和 ONNX 导出命令见 [mjlab 命令](docs/mjlab-chuanliantui.md#可执行命令)；独立 CPU MuJoCo sim2sim 见 [ONNX 使用说明](docs/onnx-huananhu-multimode-model5849.md)。39 维模型不兼容下文旧 25/125 维 H7 命令。
 
 下文命令属于旧 Isaac 环境，不混装依赖。
 

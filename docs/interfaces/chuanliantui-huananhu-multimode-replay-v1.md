@@ -1,5 +1,11 @@
 # 华南虎 multimode 历史模型独立回放接口
 
+## 2026-10-17 `model_5849` H7 交付补充
+
+用户本次指定将当前最新 checkpoint `model_5849`（平地跟踪续训终态，SHA-256 `d4be0bc98c20348911b7e43a6f52f5e3719cb78d74f5764f485b4bce82bb71ca7`，训练来源见 [项目记录](../ai/project-log.md)）导出 ONNX 交 H7 协作者适配；文件已整理到 [H7 适配交付包](../../exports/chuanliantui_multimode/model5849-h7-20261017/README.md)，含固定 batch=1、opset 13 ONNX、256 组参考向量、CSV 和校验清单。接口仍为 39 维输入／6 维输出、50 Hz，不因模型更新或打包发生改变；该 checkpoint 训练域为无限平地，命令包线 vx ±1.5 m/s、yaw ±1.5 rad/s。
+
+RL 侧已完成图检查和 256 组数值对比（最大绝对误差 `3.814697265625e-06`），并用交付的 opset 13 文件在独立 CPU MuJoCo 入口复测零速静站与 vx=1.5 跟踪（均通过，读数见[交付记录](../model-deliveries/20261017-model5849-onnx-export.md)）。H7 部署负责人仍须核对 39 维观测、输出与上一拍动作重排、实体关节坐标及默认角、模式／状态标志、图外控制、50 Hz 调度和板端数值；图外控制以 2026-10-17 修正后的训练语义为准（见 [ONNX 使用说明](../onnx-huananhu-multimode-model5849.md)）。核对状态为**待确认**；固件未修改，Cube.AI 导入、板端时序及真机验证未执行。
+
 ## 2026-10-15 H7 适配交付补充
 
 当前训练主线已切换为本 multimode 接口；下文关于默认 V11 的描述保留为历史回放阶段背景。用户本次指定将 `model_3023` 交给 H7 协作者适配，文件已整理到 [H7 适配交付包](../../exports/chuanliantui_multimode/model3023-h7-20261015/README.md)，含固定 batch=1、opset 13 ONNX、256 组参考向量、CSV 和校验清单。接口仍为 39 维输入／6 维输出、50 Hz，不因打包发生改变。

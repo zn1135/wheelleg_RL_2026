@@ -8,7 +8,7 @@ mjlab 串联腿只保留华南虎 multimode 一条线：39维actor／82维critic
 `mj_objectVelocity(mjOBJ_XBODY, flg_local=1)` 读取，该 API 返回**角速度在前、线速度在后**（`result[3:]` 才是线速度）。
 观测腿槽与腿 PD 目标以训练动作项的站立标称角 `q_nominal`（`qpos0` 加微蹲目标解闭链）为中心、限幅以 XML `qpos0` 为中心，
 轮速回路增益 0.1／0（2026-10-17 修正，见 [multimode 接口记录](../interfaces/chuanliantui-huananhu-multimode-replay-v1.md)）。
-导出与使用规则见 [multimode ONNX 说明](../onnx-huananhu-multimode-model3023.md)。它不兼容下文旧 25/125 维 H7 流程。
+导出与使用规则见 [multimode ONNX 使用说明](../onnx-huananhu-multimode-model5849.md)（当前交付模型 `model_5849`；`model_3023` 为历史基线）。它不兼容下文旧 25/125 维 H7 流程。
 
 整机 S2R1 采集的上位机策略复算与闭链 MuJoCo 离线复刻见
 [S2R1 离线对照](s2r-offline.md)。该工具不连接电机；真实数据、关节映射和初态需另行提供。

@@ -1,6 +1,6 @@
 # chuanliantui 策略导出 ONNX
 
-本文对应 `26_wheelleg` 分支现有的 [导出脚本](scripts/agent/export_chuanliantui_onnx.py)，适用于 `chuanliantui` / `chuanliantui_standup` 的 **25 维观测版本** checkpoint。不是 imcawl / `mini_wheel_legged` 的通用导出说明。历史华南虎 multimode `model_3023` 使用 39 维接口，须改看[它的独立 ONNX 使用说明](docs/onnx-huananhu-multimode-model3023.md)。
+本文对应 `26_wheelleg` 分支现有的 [导出脚本](scripts/agent/export_chuanliantui_onnx.py)，适用于 `chuanliantui` / `chuanliantui_standup` 的 **25 维观测版本** checkpoint。不是 imcawl / `mini_wheel_legged` 的通用导出说明。华南虎 multimode 使用 39 维接口，当前交付 `model_5849`，见[独立 ONNX 使用说明](docs/onnx-huananhu-multimode-model5849.md)（历史 `model_3023` 说明保留）。
 
 ## 1. 准备输入和环境
 
