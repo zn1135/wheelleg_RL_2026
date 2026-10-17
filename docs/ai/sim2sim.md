@@ -6,6 +6,8 @@ mjlab 串联腿只保留华南虎 multimode 一条线：39维actor／82维critic
 `sim2sim/mj_sim2sim_huananhu_multimode.py`：按契约元数据接受任何 39 维 checkpoint（可用 `--expect-sha256` 钉哈希），
 `--cmd-vx/--cmd-yaw/--cmd-height` 给定常值命令，报告新增 `tracking` 块；`--teleop`（需 `--render`，与 `--report` 互斥）把三个命令通道交给键盘：↑/↓ 前进速度 ±0.1 m/s、←/→ 偏航角速度 ±0.2 rad/s、PgUp/PgDn 或 `,`/`.` 高度 ±0.02 m、空格/回车 停车、Home 或 Backspace 复位（无 Home 的键盘可用 Backspace／Insert／Delete／End）、F1 暂停，限幅取训练包线（vx ±1.5 m/s、yaw ±1.5 rad/s、高度 0.27～0.34 m）。机体系速度经
 `mj_objectVelocity(mjOBJ_XBODY, flg_local=1)` 读取，该 API 返回**角速度在前、线速度在后**（`result[3:]` 才是线速度）。
+观测腿槽与腿 PD 目标以训练动作项的站立标称角 `q_nominal`（`qpos0` 加微蹲目标解闭链）为中心、限幅以 XML `qpos0` 为中心，
+轮速回路增益 0.1／0（2026-10-17 修正，见 [multimode 接口记录](../interfaces/chuanliantui-huananhu-multimode-replay-v1.md)）。
 导出与使用规则见 [multimode ONNX 说明](../onnx-huananhu-multimode-model3023.md)。它不兼容下文旧 25/125 维 H7 流程。
 
 整机 S2R1 采集的上位机策略复算与闭链 MuJoCo 离线复刻见

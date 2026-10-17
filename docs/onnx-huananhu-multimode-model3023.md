@@ -169,16 +169,16 @@ obs[22:28] = np.clip(last_action[[0, 1, 3, 4, 2, 5]], -100.0, 100.0)
 
 动作是无量纲原始网络输出，可能超过 `[-1, 1]`，不能自行加上该限幅。调用端每 20 ms（50 Hz）构造一次观测并推理，每个动作保持十个 2 ms 控制步。
 
-PD 控制是根据目标与实际状态的偏差计算电机力矩。现有独立 CPU sim2sim 使用以下图外控制；这里的 `q_reference` 来自专用 XML 的 `qpos0`，不是实机编码器零点：
+PD 控制是根据目标与实际状态的偏差计算电机力矩。腿目标中心与观测减去的默认角都是训练控制器的 `q_nominal`（站立微蹲标称姿态），限幅中心才是专用 XML 的 `qpos0`（`q_reference`）；两者不是同一个角，混用会引入约 0.06 rad 的常量偏差（2026-10-17 修正，实现见 `sim2sim/mj_sim2sim_huananhu_multimode.py`）：
 
 ```text
-腿角目标 = clip(q_reference + 0.5 × action, q_reference - 3.14, q_reference + 3.14)
+腿角目标 = clip(q_nominal + 0.5 × action, q_reference - 3.14, q_reference + 3.14)
 腿力矩   = clip(60 × (腿角目标 - 当前角度) - 2 × 当前角速度, -40, 40) N·m
 轮速目标 = clip(10 × action, -150, 150) rad/s
-轮力矩   = clip(0.12 × (轮速目标 - 当前轮速) - 0.02 × 当前轮速, -3.9, 3.9) N·m
+轮力矩   = clip(0.1 × (轮速目标 - 当前轮速), -3.9, 3.9) N·m
 ```
 
-训练侧腿目标使用 `q_nominal + 0.5 × action`，`q_nominal` 由任务默认姿态配置决定，限幅中心是 XML 的 `q_reference`；对接时须同时核对观测减去的默认角和控制目标使用的默认角。上述参数说明已有仿真实现，不是实机零点或极性标定。气弹簧、闭链映射、力矩限幅和策略激活门控都在 ONNX 图外。
+`q_nominal` 由任务默认姿态配置决定（`model.standing_motor_positions()`，即 `qpos0` 加前髋／膝微蹲目标后解闭链）。按本 XML 求解，四个腿电机上 `q_nominal − qpos0` = `[+0.060000, −0.059270, −0.060000, +0.059270]` rad（顺序 `lf0, lf00, rf0, rf00`），即 `q_nominal` ≈ `[−0.604721, +0.608324, +0.604721, −0.608324]` rad。轮速回路按 `huananhu_env_cfg` 的 `wheel_stiffness=0.1、wheel_damping=0`；旧文案的 `0.12／0.02` 属于 chuanliantui 旧任务，已一并修正。`q_reference` 不是实机编码器零点；对接时须同时核对观测减去的默认角和控制目标使用的默认角。上述参数说明已有仿真实现，不是实机零点或极性标定。气弹簧、闭链映射、力矩限幅和策略激活门控都在 ONNX 图外。
 
 ### Python 推理调用示例
 

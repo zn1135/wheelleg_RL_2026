@@ -48,6 +48,27 @@ mjlab_training/.venv/bin/python scripts/agent/assess_multimode_tracking.py \
   --checkpoint <model_*.pt> --output artifacts/<新名称>/result.json
 ```
 
+静止站立腿角运动测量与 CPU 入口一致性检查（不训练；2026-10-17 站立腿摆修复的证据工具）：
+
+```bash
+# 入口与训练语义的一致性检查（静态 + 单步力矩探针，不跑物理循环；不一致即非零退出）
+mjlab_training/.venv/bin/python scripts/agent/check_multimode_cpu_sim2sim.py \
+  --out artifacts/<新名称>/check-cpu-entry.json
+# 静止站立腿角运动测量（50 Hz 控制拍；诊断性测量，不设通过阈值）
+# --backend cpu 用独立 CPU sim2sim 入口；--backend mjlab 用训练后端（play 配置、GPU），
+# --reset stance 复刻 CPU 入口初态，--reset bank 用训练姿态库初态
+mjlab_training/.venv/bin/python scripts/agent/measure_multimode_leg_motion.py \
+  --backend cpu --checkpoint <model_*.pt> --output artifacts/<新名称>/leg-motion-cpu.json
+mjlab_training/.venv/bin/python scripts/agent/measure_multimode_leg_motion.py \
+  --backend mjlab --checkpoint <model_*.pt> --device cuda:0 --output artifacts/<新名称>/leg-motion-mjlab.json
+```
+
+一致性检查覆盖：入口与训练模型 qpos0 及闭链站立解一致；观测腿槽与腿 PD 目标以 `q_nominal` 为中心、
+限幅以 `qpos0` 为中心（q＝nominal、零动作时腿力矩为零）；腿增益 0.5／60／2、轮增益 0.1／0、
+轮速 `clip(10a, ±150)`、力矩限幅 40／3.9；气弹簧逐点一致；动作顺序与观测排列、NORMAL 模式／标志、
+报告容差与跟踪测量脚本一致。腿角运动测量记录六电机 q／qd、原始动作、观测腿槽与机身状态，并给出
+腿摆峰峰值、主导频率与观测偏置；它只覆盖单模型、单命令、单次运行的读数，不是验收。
+
 迁移一致性检查（用冻结快照；`--snapshot` 缺省时逐候选目录核对 23 个模块哈希后自动选定；
 `--gpu` 会加载并完整续训读取 model_3023，但不调用 learn）：
 

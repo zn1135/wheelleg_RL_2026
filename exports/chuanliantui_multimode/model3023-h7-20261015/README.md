@@ -46,4 +46,6 @@ CSV 的第 n 行输入对应第 n 行期望输出，每行是一次 batch=1 推�
 
 ## 当前验证状态
 
+2026-10-17：图外控制的腿目标中心与轮速回路增益修正 — 腿目标中心为训练站立标称角 `q_nominal`（非 XML `qpos0`），轮力矩 `0.1 × (轮速目标 − 当前轮速)`；详见 [完整 ONNX 说明](../../../docs/onnx-huananhu-multimode-model3023.md)与[接口记录](../../../docs/interfaces/chuanliantui-huananhu-multimode-replay-v1.md)。本次修正不影响交付的 ONNX 与参考向量。
+
 ONNX 图检查和 256 组 PyTorch／ONNX 数值对比已通过。交付 ONNX 与本次已验证导出文件逐字节一致，未重新训练。Cube.AI 实际导入、H7 网络数值、传感器观测、板端时序和真机行为均待验证；H7 部署负责人尚未签认。本包不是可直接烧录的固件。

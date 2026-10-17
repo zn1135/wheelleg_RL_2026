@@ -10,6 +10,11 @@ non-airborne / non-step:
     mode[28:35]  = [1, 0, 0, 0, 0, 0, 0]
     flags[35:39] = [0, 1, 0, 0]
 
+Observation and PD targets keep the training action term's centres: the actor sees
+leg angles relative to the solved closed standing nominal (XML qpos0 plus the
+micro-squat targets) and the leg PD target is built around the same nominal, while
+raw XML qpos0 stays only the soft-limit clamp centre.
+
 Scope is flat ground.  `--cmd-vx/--cmd-yaw/--cmd-height` hold a constant command,
 so one entry point covers both the historical zero-speed 0.30 m static standing
 check and the flat velocity/yaw-rate tracking check; the report carries the
@@ -217,6 +222,10 @@ def build_model():
     model.opt.tolerance = 1e-10
     model.opt.cone = mujoco.mjtCone.mjCONE_ELLIPTIC
     model.opt.impratio = 10.
+    # Constraint line-search budget: the training MujocoCfg (velocity_env_cfg.py) lowers
+    # it from the mjlab default 50 to 20 and mjlab writes that value into the compiled
+    # model (sim.py:138); keep the two reference implementations equal.
+    model.opt.ls_iterations = 20
     return model
 
 
@@ -238,6 +247,16 @@ class Playback:
         self.base_body = self.model.body("base_link").id
         self.wheel_bodies = tuple(self.model.body(name).id for name in ("lfwheel", "rfwheel"))
         self.reference = self.model.qpos0[self.q].astype(np.float32)
+        # Observation and PD-target centre: the training action term keeps the four leg
+        # motors centred on the solved closed standing pose (nominal_leg_positions =
+        # model.standing_motor_positions(), i.e. XML qpos0 plus the micro-squat targets),
+        # and the actor observation subtracts that same nominal
+        # (v14_observations.raw_sensors). Raw XML qpos0 stays only the soft-limit clamp
+        # centre (pd_action._reference_pos). Using qpos0 for both, as this entry first
+        # did, feeds the actor a constant ~0.06 rad leg-angle bias and holds a wrong
+        # stance; the two centres must stay split exactly like the training side.
+        self.stance = self._solve_standing_joint_positions(self.model)
+        self.nominal = np.array([self.stance[name] for name in MOTORS], dtype=np.float32)
         self.command = np.asarray(command, dtype=np.float32)
         if self.command.shape != (3,):
             raise ValueError(f"Command must have three entries, got {self.command.shape}")
@@ -261,7 +280,7 @@ class Playback:
             # closed-chain solver for every passive coordinate rather than setting
             # a six-motor approximation.
             self.data.qpos[:7] = (0., 0., .38, 1., 0., 0., 0.)
-            for name, value in self._solve_standing_joint_positions(self.model).items():
+            for name, value in self.stance.items():
                 self.data.qpos[self.model.joint(name).qposadr[0]] = value
         else:
             # Independently sample each leg's historical ground-reset branch:
@@ -290,7 +309,13 @@ class Playback:
 
     def mode_and_flags(self) -> tuple[np.ndarray, np.ndarray]:
         """Match the historical ground-start recovery gate at the control rate."""
-        policy_active = not self.ground_start or self.steps >= 10  # 0.20 s at 50 Hz
+        # Ground-start activation at 0.20 s, computed in float32 exactly like
+        # MultimodeCommand.policy_active (episode_length_buf * step_dt >= .2): the float32
+        # product leaves 10 * .02 just below .2, so the flag flips on the 11th completed
+        # step, not the 10th. The torque hold in controls() stays the integer 10-step
+        # gate (`steps < 10`), matching huananhu_action._ground_hold.
+        policy_active = bool(not self.ground_start) or bool(
+            np.float32(self.steps) * np.float32(DT * DECIMATION) >= np.float32(.2))
         mode = GROUND_RECOVER_MODE if self.ground_start and not self.recovered else NORMAL_MODE
         return mode, np.array((self.ground_start, policy_active, 0., 0.), dtype=np.float32)
 
@@ -298,10 +323,11 @@ class Playback:
         rotation = np.empty(9, dtype=np.float64)
         mujoco.mju_quat2Mat(rotation, self.data.qpos[3:7])
         gravity = rotation.reshape(3, 3).T @ np.array((0., 0., -1.))
-        q = self.data.qpos[self.q].astype(np.float32) - self.reference
+        q = self.data.qpos[self.q].astype(np.float32) - self.nominal
         q[WHEELS] = 0.
         obs = np.concatenate((
-            (self.command[0], 0., self.command[1], np.clip(self.command[2], 0., 1.) * 5.),
+            (np.clip(self.command[0], -100., 100.), 0., np.clip(self.command[1], -100., 100.),
+             np.clip(self.command[2], 0., 1.) * 5.),  # v14_observations.basic clamps vx/yaw to +-100
             np.clip(self.data.qvel[3:6], -100., 100.) * .5,
             np.clip(gravity, -100., 100.),
             np.clip(q[OBS_ORDER], -100., 100.),
@@ -315,12 +341,14 @@ class Playback:
 
     def controls(self, action: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         q, velocity = self.data.qpos[self.q], self.data.qvel[self.v]
-        target = np.clip(self.reference[LEGS] + .5 * action[LEGS],
+        target = np.clip(self.nominal[LEGS] + .5 * action[LEGS],
                          self.reference[LEGS] - 3.14, self.reference[LEGS] + 3.14)
         torque = np.zeros(6, dtype=np.float64)
         torque[LEGS] = 60. * (target - q[LEGS]) - 2. * velocity[LEGS]
         target_velocity = np.clip(10. * action[WHEELS], -150., 150.)
-        torque[WHEELS] = .12 * (target_velocity - velocity[WHEELS]) - .02 * velocity[WHEELS]
+        # Wheel velocity loop with the gains huananhu_env_cfg configures: wheel_stiffness=.1,
+        # wheel_damping=0. The 0.12/0.02 pair belongs to the older chuanliantui task.
+        torque[WHEELS] = .1 * (target_velocity - velocity[WHEELS])
         torque = np.clip(torque, (-40., -40., -3.9, -40., -40., -3.9), (40., 40., 3.9, 40., 40., 3.9))
         if self.ground_start and self.steps < 10:
             torque.fill(0.)
@@ -534,6 +562,10 @@ def main() -> None:
                     f"{args.checkpoint.name} CPU sim2sim | {'PAUSED' if paused else 'RUNNING'}\n"
                     f"cmd vx {env.command[0]:+.1f} m/s | yaw {env.command[1]:+.1f} rad/s | "
                     f"height {env.command[2]:.3f} m\n"
+                    # Measured body-frame velocity from the same mjOBJ_XBODY read the report uses.
+                    f"vel vx {row['vx_m_s']:+.2f} m/s | vy {row['vy_m_s']:+.2f} m/s | "
+                    f"wz {row['yaw_rate_rad_s']:+.2f} rad/s | "
+                    f"|v| {np.hypot(row['vx_m_s'], row['vy_m_s']):.2f} m/s\n"
                     f"height {row['height_m']:.3f} m\n"
                     f"{TELEOP_HUD if args.teleop else HELP}", "")])
                 viewer.sync()

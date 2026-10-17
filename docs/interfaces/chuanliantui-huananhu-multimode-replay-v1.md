@@ -71,3 +71,30 @@ opset 18 是电脑回放参考版，opset 13 是 Cube.AI 优先导入版。历�
 ```
 
 20 秒 headless ONNX 结果在 `artifacts/multimode-v1-replay-20261014/normal-static-20261015/cpu-sim2sim-onnx13/result.json`：1 秒后951个策略步最大高度误差 2.60 cm、最大倾角 1.81°、机身接触0、双轮接触951、ONNX/PyTorch 最大动作差 `8.34e-7`，通过本次 normal 静站条件。末态高度约0.324m，高于冻结 GPU MuJoCo/Warp 回放约0.308m，仍在3cm门限内；该差异是独立物理后端差异，不能据此推断真机高度误差。
+
+## 静止站立腿角摆动修正（2026-10-17）
+
+独立 CPU 入口的观测腿槽与腿 PD 目标中心原用 XML `qpos0`，与训练动作项不符：训练以闭链站立标称角
+`q_nominal = solve_standing_joint_positions()`（`qpos0` 加微蹲目标解闭链；四个腿电机差
+`[+0.060000, −0.059270, −0.060000, +0.059270]` rad）为观测腿槽与 PD 目标中心，`qpos0` 只作限幅中心
+（`huananhu_env_cfg.nominal_leg_positions`、`pd_action._nominal_pos/_reference_pos`、
+`v14_observations.raw_sensors`）；轮速回路配置为 `wheel_stiffness=0.1、wheel_damping=0`。入口三处与之
+不符（观测与腿目标中心都用 `qpos0`、轮增益写作 `0.12/0.02`，后者属于 chuanliantui 旧任务），
+已按训练语义修正，实现见 `sim2sim/mj_sim2sim_huananhu_multimode.py`（2026-10-17）。随后对齐三处细节：
+观测命令槽按训练 `v14_observations.basic` 夹取 ±100；地面起立的 `policy_active` 按训练 float32 表达式在
+第 11 个完成步翻转（力矩保持仍为整数 10 步门）；求解器 `ls_iterations` 由库默认 50 对齐到训练 `MujocoCfg`
+的 20（mjlab 将其写入编译模型）。
+
+`model_5849` 零速静站 20 s（50 Hz、窗口 t≥2 s、两后端同口径测量）：腿角峰峰由 0.25–0.27 rad 降至 0.064–0.072 rad（约 3.7–4.1°）；GPU 训练后端同初态为 0.10–0.12 rad，修复后入口的静止姿态、观测腿槽均值与机身高度与
+训练后端一致至 ≤5e-4。残余摆动主频与训练后端一致（1.776／1.778 Hz）、幅值 0.06–0.12 rad，为策略自身行为（训练后端两套初态同样复现），
+不在本次范围。入口 ONNX opset18 报告：零速验收通过（1 s 后高度最大误差 0.0042 m、最大倾角 1.45°，
+修复前同口径 0.0182 m／2.47°）、vx=1.5 跟踪通过（mean |vx 误差| 0.178 m/s）。一致性检查
+`scripts/agent/check_multimode_cpu_sim2sim.py` 通过（qpos0 与闭链解零差、q＝nominal 零动作零力矩、
+腿增益 0.5／60／2 与轮增益 0.1／0、轮速与力矩限幅、气弹簧逐点一致、命令槽 ±100 夹取、地面激活边界、
+求解器选项、NORMAL 尾部与共享容差一致）。
+
+**边界与对接**：本修正只改变 CPU 回放入口，不改 39 维接口、ONNX 图、训练代码与 H7，也不构成行为验收；
+本入口在 2026-10-15 节记录的读数（高度 2.60 cm 等）与历史腿部指标表出自修正前的入口语义（或更早后端），
+未在本轮重测。入口的复位与命令约定是回放协议选择（确定性微蹲初态、地面起立期间常数命令、不触发跳跃、
+不实现倒地中途 recover re-arm、不含训练期随机化），只对标 play／eval 条件。H7 侧图外控制须按修正后的中心与轮增益实现（见 [ONNX 使用说明](../onnx-huananhu-multimode-model3023.md)）；
+39 维接口、50 Hz 调度与板端数值对齐的核对状态仍为**待确认**。证据见 `artifacts/stand-leg-motion-20261017/`（本机）。
