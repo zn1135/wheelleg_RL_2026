@@ -19,6 +19,16 @@ TERRAIN_NAMES = ("flat", "slope", "step", "stair")
 MODE_NAMES = ("normal", "stair", "slope", "recover", "jump")
 WHEEL_RADIUS = .06
 
+# Flat-phase travel allowance. On the infinite plane this is the only bound on how far
+# an env may wander, and it exists to end a runaway episode rather than to keep
+# environments apart: mjlab gives every env its own physics world (the Warp bridge is
+# built with nworld=num_envs), so robots in different envs cannot touch each other even
+# with close origins. The radius must clear the worst legitimate excursion of one episode
+# -- 20 s at the top of the envelope is 30 m, a policy that runs ~25% fast reaches ~37 m, and
+# command resampling does not reset the position -- so the bound sits above both rather than
+# exactly at 30 m. It is a Chebyshev bound, so the effective allowance is a square.
+OUT_OF_PATCH_RADIUS_M = 45.
+
 
 @dataclass(kw_only=True)
 class MultimodeCommandCfg(HuananhuCommandCfg):
@@ -136,7 +146,11 @@ class MultimodeCommand(HuananhuCommand):
             getattr(self, name)[env_ids] = False
         self.jump_phase[env_ids] = 0
         terrain = self._env.scene.terrain
-        self.terrain_kind[env_ids] = terrain.terrain_types[env_ids]
+        # `terrain_type="plane"` has no terrain columns, so every env is family 0
+        # (flat). Read the generator's column types when they exist so a future
+        # mixed-terrain recipe keeps working unchanged.
+        kinds = getattr(terrain, "terrain_types", None)
+        self.terrain_kind[env_ids] = 0 if kinds is None else kinds[env_ids]
         self.ground_height[env_ids] = self._env.scene.env_origins[env_ids, 2]
         root_z_adr = self._env.scene["robot"].indexing.free_joint_q_adr[2]
         self.height_above_ground[env_ids] = (
@@ -209,7 +223,17 @@ class MultimodeCommand(HuananhuCommand):
         can_jump = ((self.terrain_kind == 0) & (self.jump_phase == 0)
                     & (self.jump_cooldown <= 0) & (episode_t >= 2.)
                     & (self.stable_time >= .5) & ~self.ground_start)
-        request = can_jump & (torch.rand(self.num_envs, device=self.device) < dt * .08)
+        # Jump eligibility is `~ground_start` x terrain_kind == 0: the recipe being
+        # resumed has ground starts at 0.8 and only the flat column at 50%, so the
+        # eligible share was 0.2 x 0.5 = 10% of envs; flat-only terrain makes it
+        # 0.2 x 1.0 = 20% and would double the expected number of airborne env-steps
+        # at an unchanged per-env rate. Halve the rate to keep that expectation, since
+        # a jump zeroes the velocity/height tracking rewards. This preserves the
+        # population count, not the per-eligible-env probability of ever jumping
+        # (cooldown, jump duration and early terminations shift both). `mode_jump` counts
+        # requests rather than airborne time, so an airborne-share check must read
+        # `mode_airborne` or the jump timing; this halving is a reasoned approximation.
+        request = can_jump & (torch.rand(self.num_envs, device=self.device) < dt * .04)
         self.jump_phase = torch.where(request, 1, self.jump_phase)
         self.jump_target = torch.where(request,
                                        torch.empty_like(self.jump_target).uniform_(.40, .46),
@@ -244,5 +268,5 @@ def failure(env):
     failed = huananhu_mdp.failure(env)
     robot_xy = env.scene["robot"].data.root_link_pos_w[:, :2]
     origin_xy = env.scene.env_origins[:, :2]
-    out_of_patch = (robot_xy - origin_xy).abs().amax(dim=-1) > 2.5
+    out_of_patch = (robot_xy - origin_xy).abs().amax(dim=-1) > OUT_OF_PATCH_RADIUS_M
     return failed | out_of_patch

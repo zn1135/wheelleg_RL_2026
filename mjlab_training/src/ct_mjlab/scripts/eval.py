@@ -50,7 +50,8 @@ from mjlab.rl import RslRlVecEnvWrapper
 from mjlab.utils.torch import configure_torch_backends
 from ct_mjlab.envs import task_registry
 from ct_mjlab.envs.chuanliantui.huananhu_poses import sample_reset_state
-from ct_mjlab.envs.chuanliantui.multimode_mdp import MODE_NAMES, TERRAIN_NAMES
+from ct_mjlab.envs.chuanliantui.multimode_mdp import (MODE_NAMES, OUT_OF_PATCH_RADIUS_M,
+                                                       TERRAIN_NAMES)
 from ct_mjlab.envs.chuanliantui.multimode_env_cfg import KNOCKDOWN_ANGULAR_SPEED_RANGE
 
 MULTIMODE_TASK_ID = "chuanliantui"
@@ -250,7 +251,10 @@ def evaluate_seed(args, seed: int) -> tuple[dict, list[dict], dict]:
                 wheels_at_end = torch.where(active, both_wheels, wheels_at_end)
                 numerical |= active & state.numerical_failure
 
-                out_of_patch = (robot.data.root_link_pos_w[:, :2] - env.scene.env_origins[:, :2]).abs().amax(-1) > 2.5
+                # Read the task's own bound: the classification must not call a real
+                # physical failure "out_of_patch" because the radius was hardcoded here
+                # (the comparison tools exclude that label from the regression veto).
+                out_of_patch = (robot.data.root_link_pos_w[:, :2] - env.scene.env_origins[:, :2]).abs().amax(-1) > OUT_OF_PATCH_RADIUS_M
                 ended = active & (terminated | timeout)
                 terminal = torch.where(ended & state.numerical_failure, 3, terminal)
                 terminal = torch.where(ended & ~state.numerical_failure & out_of_patch, 2, terminal)

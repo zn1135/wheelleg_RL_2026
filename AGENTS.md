@@ -9,7 +9,7 @@
 - **mjlab 新任务（当前串联腿主线）**：`mjlab_training/` 的 Python 3.12 / mjlab 环境，入口 `scripts/mjlab.sh`，只保留华南虎 multimode（39/82 维）一条训练线，基线 `model_3023.pt`；旧 V14／r5～r15／recover／V11 配方已于 2026-10-15 删除，可从分支 `backup/gpt-structure-20261015` 找回。接口、命令与验证见 [mjlab 串联腿说明](docs/mjlab-chuanliantui.md)。
 - **Isaac 旧任务**：Isaac Gym / Python 3.8 环境，用于 imcawl、旧串联腿任务、旧模型和旧检查脚本。
 
-当前最好模型、验收结论与逐日实验记录只写在[项目实验记录](docs/ai/project-log.md)顶部，本文件不记录实验状态。串联腿验收按[双轮平衡验收（当前v3，保留历史v2）](docs/interfaces/chuanliantui-wheel-balance-acceptance-v2.md)：原成功样本任一失效即判退化。训练只在用户逐次授权的预算内进行，不得因检查通过或轮数增加自行追加。
+当前最好模型、验收结论与逐日实验记录只写在[项目实验记录](docs/ai/project-log.md)顶部，本文件不记录实验状态。串联腿验收按[双轮平衡验收（当前v3，保留历史v2）](docs/interfaces/chuanliantui-wheel-balance-acceptance-v2.md)：原成功样本任一失效即判退化；平地上的速度／角度跟踪按[平地速度与角度跟踪测量](docs/interfaces/chuanliantui-huananhu-multimode-tracking-v1.md)测量，两者互不替代。训练只在用户逐次授权的预算内进行，不得因检查通过或轮数增加自行追加。
 
 轮足机器人强化学习训练仓，fork 自 legged_gym 并内嵌 rsl_rl。在 mjlab（当前串联腿主线）或 Isaac Gym（旧任务）里训练策略，经 MuJoCo sim2sim 验证后通向真机部署。训练仓为纯 Python，无编译步骤，Linux + NVIDIA GPU；H7 部署仓有独立的固件构建流程。
 

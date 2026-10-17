@@ -37,16 +37,35 @@ scripts/mjlab.sh eval --checkpoint artifacts/multimode-v1-replay-20261014/models
   --num-envs 64 --seeds 42 --start-mode force --terrain flat --output /tmp/mjlab-eval/result.json
 ```
 
-迁移一致性检查（需要冻结快照目录；`--gpu` 会加载并完整续训读取 model_3023，但不调用 learn）：
+平地速度／角度跟踪测量与判据检查（不训练；口径见[跟踪测量](interfaces/chuanliantui-huananhu-multimode-tracking-v1.md)）：
+
+```bash
+# 判据算术、边界与容差一致性的离线检查（不建环境、不加载模型、不跑物理）
+mjlab_training/.venv/bin/python scripts/agent/check_multimode_tracking.py
+# 平地固定命令网格的跟踪测量（play 配置、每环境单回合、12 s、前 2 s 为稳定窗口）
+# 脚本每步断言 actor 命令槽等于网格：中途抛 AssertionError 表示命令未被钉住，不是策略结论
+mjlab_training/.venv/bin/python scripts/agent/assess_multimode_tracking.py \
+  --checkpoint <model_*.pt> --output artifacts/<新名称>/result.json
+```
+
+迁移一致性检查（用冻结快照；`--snapshot` 缺省时逐候选目录核对 23 个模块哈希后自动选定；
+`--gpu` 会加载并完整续训读取 model_3023，但不调用 learn）：
 
 ```bash
 PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python scripts/agent/check_mjlab_multimode.py \
-  --snapshot <.../multimode-v1-replay-20261014/source_snapshot> --gpu --out /tmp/mjlab-multimode-check.json
+  --gpu --out /tmp/mjlab-multimode-check.json
 ```
 
-它检查：23 个模块与快照逐字节一致（`model.py` 只有两行路径不同）、XML 与姿态库哈希及缓存签名、环境和 PPO 配置与快照工厂的输出相同、没有代码再引用已删除的模块；另外检查续训课程进度 7525、保存后读回参数不变、导出用 actor 与 runner 策略输出一致、39/82 维、有限步进。
+它检查：每个模块等于「冻结快照 + 已记录偏离」逐字节重构的结果（未记录的差异一律失败），偏离表在
+`scripts/agent/multimode_snapshot_deviations.json`（源偏离 6 个模块；配置偏离 train 0、play=False 8、
+play=True 5，均来自 2026-10-15/16 恢复工作与 2026-10-17 平地跟踪阶段）；XML 与姿态库哈希及缓存签名；
+环境和 PPO 配置与快照工厂的输出在该偏离表之外完全相同；没有代码再引用已删除的模块；另外检查续训
+课程进度 7525、保存后读回参数不变、导出用 actor 与 runner 策略输出一致、39/82 维、有限步进。
 
-`eval` 结果与 `model_3023` 基线对照：初态签名 `458f15a3…`，严格起立 64/64，平地存活 31/31。以上不等于行为验收，不替代双轮平衡验收v2或真机验证。
+`eval` 在**平地协议**下的新参考基线：`model_3023` 与 `model_4850` 签名同为 `4a0b867588ff…`，
+严格起立 64/64、存活 64/64、末态双轮承重 64/64、数值失败 0（`logs/mjlab/evaluation/model3023-flat-gpu64/`、`model4850-flat-gpu64/`）；
+平地跟踪续训产物 `model_5849`（SHA256 `d4be0bc9…`）在同一套初态上严格起立 63/64、存活 63/64（`env 27` 在 2.64 s 物理终止），产物在 `logs/mjlab/evaluation/model5849-flat-gpu64/`。历史混合地形基线 `458f15a3…`（平子集 31/64）只作历史记录，不能与新签名配对。以上不等于行为验收，
+不替代双轮平衡验收 v3、平地跟踪测量或真机验证。
 
 ## 环境
 

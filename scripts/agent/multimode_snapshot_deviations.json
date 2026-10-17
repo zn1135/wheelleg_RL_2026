@@ -1,0 +1,396 @@
+{
+ "snapshot": "/home/zn/文档/mjlab/wheelleg_RL/logs/validation/multimode_v1/formal_3000_20261006-213223/source_snapshot",
+ "source": {
+  "huananhu_mdp": [
+   [
+    "HEIGHT_COMMAND_RANGE = (.27, .34)\n\n\n",
+    "HEIGHT_COMMAND_RANGE = (.27, .34)\n\n# Deployable tracking envelope for the flat phase. The source V14 recipe sampled\n# -2.7..2.7 m/s and -2pi..2pi rad/s, which a 6 cm wheel cannot realise, so the\n# tracking phase samples this band instead. The special-mode buckets and the\n# heading outer loop are clamped into the same band: the observation slots must\n# never carry a command the envelope does not contain.\nVELOCITY_COMMAND_RANGE = (-1.5, 1.5)   # body +x, m/s\nYAW_RATE_COMMAND_RANGE = (-1.5, 1.5)   # rad/s\n\n\n"
+   ],
+   [
+    "    resampling_time_range: tuple[float, float] = (5., 15.)\n",
+    "    resampling_time_range: tuple[float, float] = (5., 15.)\n    # Continuous fallen time allowed before a fall ends the episode, or None to\n    # keep the 0.4 s contact/tilt gate. MultimodeCommandCfg sets a window so a\n    # knocked-down robot can stand back up; recorded per run in params/env.yaml.\n    recovery_window_s: float | None = None\n"
+   ],
+   [
+    "        self.stable_time = torch.zeros(n, device=device)\n",
+    "        self.stable_time = torch.zeros(n, device=device)\n        self.fallen = self.heading.clone()\n        self.fallen_time = torch.zeros(n, device=device)\n        self.knockdown = self.heading.clone()\n"
+   ],
+   [
+    "            'height_error', 'velocity_error')}\n",
+    "            'height_error', 'velocity_error', 'yaw_error')}\n"
+   ],
+   [
+    "        self.stable_time[env_ids] = 0\n",
+    "        self.stable_time[env_ids] = 0\n        self.fallen[env_ids] = False\n        self.fallen_time[env_ids] = 0\n        self.knockdown[env_ids] = False\n"
+   ],
+   [
+    "        self.sampled[env_ids, 0] = draw(-2.7, 2.7)\n        self.sampled[env_ids, 1] = draw(-2*math.pi, 2*math.pi)\n",
+    "        self.sampled[env_ids, 0] = draw(*VELOCITY_COMMAND_RANGE)\n        self.sampled[env_ids, 1] = draw(*YAW_RATE_COMMAND_RANGE)\n"
+   ],
+   [
+    "                self.sampled[selected, 0] = (draw(2., 3.) * torch.where(draw(0., 1.) < .5, -1., 1.))[mask]\n",
+    "                # Fast forward band inside the envelope (source: 2-3 m/s). The yaw\n                # rate keeps its base draw, so this is not a straight-line command.\n                low, high = (1., 1.5)\n                self.sampled[selected, 0] = (draw(low, high) * torch.where(draw(0., 1.) < .5, -1., 1.))[mask]\n"
+   ],
+   [
+    "                low, high = ((2., 3.25), (3.25, 4.5))[mode]\n",
+    "                # Two hard-turn bands inside the envelope (source: 2-3.25 pi and\n                # 3.25-4.5 pi rad/s), with the source's near-zero forward speed.\n                low, high = ((.8, 1.15), (1.15, 1.5))[mode]\n"
+   ],
+   [
+    "                self.sampled[selected, 1] = (draw(low*math.pi, high*math.pi) * torch.where(draw(0., 1.) < .5, -1., 1.))[mask]\n",
+    "                self.sampled[selected, 1] = (draw(low, high) * torch.where(draw(0., 1.) < .5, -1., 1.))[mask]\n"
+   ],
+   [
+    "        heading_command = (5. * wrap_to_pi(self.heading_target[ids] - yaw)).clamp(-2*math.pi, 2*math.pi)\n",
+    "        # The heading outer loop saturates at the envelope turn-rate limit (the\n        # source clamped at 2 pi rad/s), so a heading episode never asks for a\n        # yaw rate outside the commanded band.\n        heading_command = (5. * wrap_to_pi(self.heading_target[ids] - yaw)).clamp(*YAW_RATE_COMMAND_RANGE)\n"
+   ],
+   [
+    "    state.failure_count, delayed = consecutive_failure(state.failure_count, (contact | tilted) & ~numerical)\n",
+    "    down = (contact | tilted) & ~numerical\n    state.failure_count, delayed = consecutive_failure(state.failure_count, down)\n"
+   ],
+   [
+    "    return delayed | numerical\n",
+    "    # Same definition as velocity_error (whole-episode time-fraction average,\n    # including recover and standing steps) so the two are comparable on\n    # TensorBoard; the acceptance measurement is scripts/agent/assess_multimode_tracking.py.\n    state.metrics['yaw_error'] += (angular[:, 2] - state.command[:, 1]).abs() * env.step_dt / env.cfg.episode_length_s\n    # Mid-episode fall recovery. With a window configured, a robot that is down\n    # gets recovery_window_s of *continuous* fallen time instead of the 0.4 s\n    # gate so it can push itself back up. The timer clears as soon as the robot\n    # is neither in base contact nor tilted past 40 deg -- not merely when the\n    # base lifts off -- so a robot that keeps making progress is never cut off,\n    # while one that thrashes back and forth across that threshold can keep\n    # postponing the timeout. `expired` implies `delayed`, so this is strictly\n    # more permissive than the gate it replaces, and numerical failures still\n    # terminate immediately.\n    window = state.cfg.recovery_window_s\n    if window is None:\n        return delayed | numerical\n    state.knockdown.copy_(down & ~state.fallen)\n    state.fallen.copy_(down)\n    state.fallen_time = torch.where(down, state.fallen_time + env.step_dt, 0.)\n    expired = state.fallen_time > window\n    if 'recovery_timeout' in state.metrics:\n        state.metrics['recovery_timeout'] += expired.float()\n    return expired | numerical\n"
+   ]
+  ],
+  "huananhu_randomization": [
+   [
+    "from __future__ import annotations\n",
+    "from __future__ import annotations\n\nimport math\n"
+   ],
+   [
+    "def push_root_velocity(env, env_ids):\n",
+    "def push_root_velocity(env, env_ids, linear_range=(-.25, .25)):\n"
+   ],
+   [
+    "    velocity[:, :2].uniform_(-.25, .25)\n",
+    "    velocity[:, :2].uniform_(*linear_range)\n"
+   ],
+   [
+    "def sample_local_wrench(env, env_ids):\n",
+    "def sample_local_wrench(env, env_ids, force_range=(-10., 10.), torque_range=(-1., 1.)):\n"
+   ],
+   [
+    "    wrench[:, :3].uniform_(-10., 10.)\n    wrench[:, 3:].uniform_(-1., 1.)\n",
+    "    wrench[:, :3].uniform_(*force_range)\n    wrench[:, 3:].uniform_(*torque_range)\n"
+   ],
+   [
+    "    state.apply_local_wrench()\n",
+    "    state.apply_local_wrench()\n\n\ndef knockdown_root_velocity(env, env_ids, angular_speed_range):\n    \"\"\"Tip a standing robot over for an explicit play or recovery-mechanism check.\n\n    A world-frame angular-velocity impulse at the root. A linear shove\n    (``push_root_velocity``) leaves the balance controller able to skate out of\n    it; tipping needs angular momentum. Only robots that are already up and have\n    held stable for 0.5 s are hit: a knockdown during the stand-up itself would\n    keep the robot from ever learning to stand.\n\n    ``angular_speed_range`` deliberately has no default. Too weak an impulse is a\n    silent no-op -- a wheeled robot rolls it away instead of falling over -- so an\n    omitted argument used to look like a working knockdown while tipping nothing\n    over (measured hit rate on standing robots: 2-3.5 rad/s 0/32, 12-16 24/32).\n    Callers pass the test range explicitly; ``multimode_env_cfg`` holds it as\n    ``KNOCKDOWN_ANGULAR_SPEED_RANGE`` so explicit checks and ``play`` cannot\n    drift apart.\n    \"\"\"\n    state = env.command_manager.get_term(\"standup\")\n    robot = env.scene[\"robot\"]\n    ids = torch.arange(env.num_envs, device=env.device) if env_ids is None else env_ids\n    eligible = (~state.fallen[ids]) & (state.stable_time[ids] >= .5)\n    if not bool(eligible.any()):\n        return\n    hit = ids[eligible]\n    velocity = robot.data.root_link_vel_w[hit].clone()\n    speed = torch.empty(len(hit), device=env.device).uniform_(*angular_speed_range)\n    angle = torch.rand(len(hit), device=env.device) * (2 * math.pi)\n    velocity[:, 3] = speed * angle.cos()\n    velocity[:, 4] = speed * angle.sin()\n    robot.write_root_link_velocity_to_sim(velocity, env_ids=hit)\n"
+   ]
+  ],
+  "huananhu_rewards": [
+   [
+    "                self.values[name] = torch.where(jumping, 0., self.values[name])\n",
+    "                self.values[name] = torch.where(jumping, 0., self.values[name])\n        if getattr(state.cfg, 'recovery_window_s', None) is not None:\n            # Standing up necessarily loads the base and legs on the ground, so\n            # the contact penalty is suspended while the robot is actually down\n            # (base contact or >40 deg tilt) and returns the instant it is\n            # upright. Gating on `fallen` rather than on the whole recover mode\n            # keeps the penalty for the failure mode the 2026-10-12 audit found:\n            # upright but propped on non-wheel parts is not `fallen`.\n            self.values['undesired_contact'] = torch.where(\n                state.fallen, 0., self.values['undesired_contact'])\n"
+   ]
+  ],
+  "model": [
+   [
+    "_PROJECT_ROOT = Path(__file__).resolve().parents[3]\nMODEL_XML = _PROJECT_ROOT / \"assets\" / \"chuanliantui\" / \"chuanliantui.xml\"\n",
+    "_PROJECT_ROOT = Path(__file__).resolve().parents[5]\nMODEL_XML = _PROJECT_ROOT / \"resources\" / \"robots\" / \"chuanliantui_new_1\" / \"mjlab\" / \"chuanliantui.xml\"\n"
+   ]
+  ],
+  "multimode_env_cfg": [
+   [
+    "\"\"\"Independent mixed-terrain Huananhu task on the validated CAD robot.\"\"\"\n",
+    "\"\"\"Flat-ground Huananhu task on the validated CAD robot.\n\n2026-10-17: the phase goal moved from mixed-terrain stand-up/recovery to\nlinear-velocity and yaw-rate tracking, so the generated flat/slope/step/stair\nterrain is replaced by the infinite ground plane and the command envelope is\nnarrowed to a deployable band (see huananhu_mdp). Mode and flag channels, the\nground-start/recover machinery and the 39/82 contract are unchanged. On a plane\nevery env is terrain family 0 (flat), so the slope/step/stair triggers stay\ndormant; `multimode_terrains.py` is kept for restoring the mixed-terrain recipe.\n\"\"\"\n"
+   ],
+   [
+    "from mjlab.terrains import BoxFlatTerrainCfg, BoxPyramidStairsTerrainCfg, TerrainGeneratorCfg\n",
+    ""
+   ],
+   [
+    "from . import multimode_mdp, multimode_observations, multimode_rewards\n",
+    "from . import huananhu_randomization, multimode_mdp, multimode_observations, multimode_rewards\n"
+   ],
+   [
+    "from .multimode_terrains import BoxSlopeTerrainCfg\n",
+    "\n\n# Explicit play/check knockdowns only; training does not register this event.\nKNOCKDOWN_ANGULAR_SPEED_RANGE = (18., 28.)\n"
+   ],
+   [
+    "    cfg.scene.terrain.terrain_type = \"generator\"\n    cfg.scene.terrain.terrain_generator = TerrainGeneratorCfg(\n        seed=42, curriculum=True, size=(6., 6.), num_rows=3, num_cols=4,\n        difficulty_range=(0., 1.),\n        sub_terrains={\n            \"flat\": BoxFlatTerrainCfg(proportion=.50),\n            \"slope\": BoxSlopeTerrainCfg(proportion=.20),\n            \"step\": BoxPyramidStairsTerrainCfg(\n                proportion=.15, step_height_range=(.04, .08), step_width=2.,\n                platform_width=1., border_width=.5),\n            \"stair\": BoxPyramidStairsTerrainCfg(\n                proportion=.15, step_height_range=(.04, .06), step_width=.45,\n                platform_width=1., border_width=.5),\n        },\n    )\n",
+    "    # Flat phase: the ground is the infinite plane, so the generated terrain is gone and\n    # every env is terrain family 0. Travel is bounded only by\n    # multimode_mdp.OUT_OF_PATCH_RADIUS_M, which ends a runaway episode; it does not need\n    # to separate environments (each env is its own physics world), so env_spacing keeps\n    # the task's own value instead of growing with the radius.\n    cfg.scene.terrain.terrain_type = \"plane\"\n    cfg.scene.terrain.terrain_generator = None\n"
+   ],
+   [
+    "    cfg.commands[\"standup\"] = multimode_mdp.MultimodeCommandCfg()\n    cfg.events[\"reset_pose\"] = EventTermCfg(func=multimode_mdp.reset_pose, mode=\"reset\")\n",
+    "    standup_cfg = multimode_mdp.MultimodeCommandCfg()\n    cfg.commands[\"standup\"] = standup_cfg\n    cfg.events[\"reset_pose\"] = EventTermCfg(\n        func=multimode_mdp.reset_pose, mode=\"reset\",\n        params={\"ground_probability\": standup_cfg.ground_start_probability})\n    if not play:\n        # Keep ordinary training disturbances; recovery handles naturally occurring falls.\n        cfg.events[\"huananhu_velocity_push\"] = EventTermCfg(\n            func=huananhu_randomization.push_root_velocity, mode=\"interval\",\n            interval_range_s=(5., 10.), params={\"linear_range\": (-.6, .6)})\n        cfg.events[\"huananhu_local_wrench\"] = EventTermCfg(\n            func=huananhu_randomization.sample_local_wrench, mode=\"interval\",\n            interval_range_s=(5., 10.),\n            params={\"force_range\": (-20., 20.), \"torque_range\": (-2., 2.)})\n"
+   ]
+  ],
+  "multimode_mdp": [
+   [
+    "WHEEL_RADIUS = .06\n\n\n",
+    "WHEEL_RADIUS = .06\n\n# Flat-phase travel allowance. On the infinite plane this is the only bound on how far\n# an env may wander, and it exists to end a runaway episode rather than to keep\n# environments apart: mjlab gives every env its own physics world (the Warp bridge is\n# built with nworld=num_envs), so robots in different envs cannot touch each other even\n# with close origins. The radius must clear the worst legitimate excursion of one episode\n# -- 20 s at the top of the envelope is 30 m, a policy that runs ~25% fast reaches ~37 m, and\n# command resampling does not reset the position -- so the bound sits above both rather than\n# exactly at 30 m. It is a Chebyshev bound, so the effective allowance is a square.\nOUT_OF_PATCH_RADIUS_M = 45.\n\n\n"
+   ],
+   [
+    "class MultimodeCommandCfg(HuananhuCommandCfg):\n",
+    "class MultimodeCommandCfg(HuananhuCommandCfg):\n    # Ground-start share of resets. The source recipe drew 50/50; raising it\n    # trains the recover (stand-up) phase on most episodes and keeps the\n    # ordinary pose distribution on the rest. Recorded per run in\n    # params/env.yaml, so a resume cannot silently inherit the wrong ratio.\n    ground_start_probability: float = .8\n    # Continuous fallen time allowed before a fall ends the episode. The 0.4 s\n    # contact/tilt gate is far shorter than a stand-up takes, so a knocked-down\n    # robot is given this window instead and the recover mode re-arms. The\n    # original 1.0 s was justified by pose-bank ground starts (the recover\n    # channel held 0.72-0.98 s), but those are legal lying poses, not a 180 deg\n    # flip. Measured at the impulse itself (384 episodes, seed 43), get-ups from\n    # a real knockdown take a median of 1.12-2.30 s depending on magnitude, p90\n    # 2.32 s, up to 3.98 s, so 1.0 s cut real stand-ups off mid-way. 2.0 s also\n    # matches the recovery deadline the acceptance criterion already grants. The\n    # timer counts *continuous* fallen time and clears whenever the base is off\n    # the ground with tilt under 40 deg, so it is more permissive than 2 s spent\n    # trying. Recorded per run in params/env.yaml.\n    recovery_window_s: float = 2.0\n\n"
+   ],
+   [
+    "        self.recovered = torch.zeros(n, device=device, dtype=torch.bool)\n",
+    "        self.recovered = torch.zeros(n, device=device, dtype=torch.bool)\n        # Latched from a mid-episode fall until the robot is stably back up, so\n        # the recover channel spans the whole stand-up in a normal-start episode\n        # exactly as ground_start does in a ground-start one. Gating recover on\n        # `fallen` alone would drop the channel the moment the robot stopped\n        # touching the ground, i.e. before it had actually stood.\n        self.getting_up = torch.zeros(n, device=device, dtype=torch.bool)\n"
+   ],
+   [
+    "                               (\"airborne\", \"jump\", \"step\", \"stair\")}\n",
+    "                               (\"airborne\", \"jump\", \"step\", \"stair\", \"knockdown\")}\n"
+   ],
+   [
+    "            self.metrics[f\"mode_{name}\"] = self.trigger_counts[name]\n",
+    "            self.metrics[f\"mode_{name}\"] = self.trigger_counts[name]\n        # Share of finished episodes that spent longer than recovery_window_s on\n        # the ground. Written by huananhu_mdp.failure; a value near 1 means the\n        # window, not the policy, is what ends the get-up attempts.\n        self.metrics[\"recovery_timeout\"] = torch.zeros(n, device=device)\n"
+   ],
+   [
+    "        return self.ground_start & ~self.recovered\n",
+    "        \"\"\"Ground starts before the first stand, plus every mid-episode fall.\n\n        ``recovered`` is cleared while the robot is down, so a knockdown after\n        standing re-arms this mode and the actor sees the same recover channel it\n        was trained with at reset. ``getting_up`` carries the channel across the\n        whole stand-up rather than only while the robot is literally down, so a\n        normal-start recovery spans the same phase that a ground-start one does.\n        The actor can tell the two apart through the ground_start flag in\n        extra_flags(), so the 39-dim contract is unchanged.\n        \"\"\"\n        return (self.ground_start | self.getting_up) & ~self.recovered\n"
+   ],
+   [
+    "        for name in (\"airborne\", \"stair_active\", \"recovered\", \"obstacle_seen\"):\n",
+    "        for name in (\"airborne\", \"stair_active\", \"recovered\", \"getting_up\", \"obstacle_seen\"):\n"
+   ],
+   [
+    "        self.terrain_kind[env_ids] = terrain.terrain_types[env_ids]\n",
+    "        # `terrain_type=\"plane\"` has no terrain columns, so every env is family 0\n        # (flat). Read the generator's column types when they exist so a future\n        # mixed-terrain recipe keeps working unchanged.\n        kinds = getattr(terrain, \"terrain_types\", None)\n        self.terrain_kind[env_ids] = 0 if kinds is None else kinds[env_ids]\n"
+   ],
+   [
+    "        self.recovered |= self.stable_time >= .5\n",
+    "        self.trigger_counts[\"knockdown\"] += self.knockdown.float()\n        # Clearing the latch while the robot is down is what lets recover re-arm\n        # after a mid-episode knockdown; it returns once the robot has been stable\n        # for 0.5 s again. failure() wrote `fallen`/`knockdown` earlier in this\n        # same step (termination runs before the command update), so there is no\n        # one-step lag here.\n        self.recovered = (self.recovered | (self.stable_time >= .5)) & ~self.fallen\n        self.getting_up = (self.getting_up | self.fallen) & ~self.recovered\n"
+   ],
+   [
+    "        request = can_jump & (torch.rand(self.num_envs, device=self.device) < dt * .08)\n",
+    "        # Jump eligibility is `~ground_start` x terrain_kind == 0: the recipe being\n        # resumed has ground starts at 0.8 and only the flat column at 50%, so the\n        # eligible share was 0.2 x 0.5 = 10% of envs; flat-only terrain makes it\n        # 0.2 x 1.0 = 20% and would double the expected number of airborne env-steps\n        # at an unchanged per-env rate. Halve the rate to keep that expectation, since\n        # a jump zeroes the velocity/height tracking rewards. This preserves the\n        # population count, not the per-eligible-env probability of ever jumping\n        # (cooldown, jump duration and early terminations shift both). `mode_jump` counts\n        # requests rather than airborne time, so an airborne-share check must read\n        # `mode_airborne` or the jump timing; this halving is a reasoned approximation.\n        request = can_jump & (torch.rand(self.num_envs, device=self.device) < dt * .04)\n"
+   ],
+   [
+    "def reset_pose(env, env_ids):\n",
+    "def reset_pose(env, env_ids, ground_probability):\n"
+   ],
+   [
+    "    ground = torch.rand(len(env_ids), device=env.device) < .5\n",
+    "    ground = torch.rand(len(env_ids), device=env.device) < ground_probability\n"
+   ],
+   [
+    "    out_of_patch = (robot_xy - origin_xy).abs().amax(dim=-1) > 2.5\n",
+    "    out_of_patch = (robot_xy - origin_xy).abs().amax(dim=-1) > OUT_OF_PATCH_RADIUS_M\n"
+   ]
+  ]
+ },
+ "config": {
+  "train": [],
+  "env_play_False": [
+   [
+    "commands.standup.ground_start_probability",
+    "__absent__",
+    0.8
+   ],
+   [
+    "commands.standup.recovery_window_s",
+    "__absent__",
+    2.0
+   ],
+   [
+    "events.huananhu_local_wrench.params.force_range",
+    "__absent__",
+    [
+     -20.0,
+     20.0
+    ]
+   ],
+   [
+    "events.huananhu_local_wrench.params.torque_range",
+    "__absent__",
+    [
+     -2.0,
+     2.0
+    ]
+   ],
+   [
+    "events.huananhu_velocity_push.params.linear_range",
+    "__absent__",
+    [
+     -0.6,
+     0.6
+    ]
+   ],
+   [
+    "events.reset_pose.params.ground_probability",
+    "__absent__",
+    0.8
+   ],
+   [
+    "scene.terrain.terrain_generator",
+    {
+     "seed": 42,
+     "curriculum": true,
+     "size": [
+      6.0,
+      6.0
+     ],
+     "border_width": 0.0,
+     "border_height": 1.0,
+     "num_rows": 3,
+     "num_cols": 4,
+     "color_scheme": "height",
+     "sub_terrains": {
+      "flat": {
+       "proportion": 0.5,
+       "size": [
+        10.0,
+        10.0
+       ],
+       "flat_patch_sampling": null
+      },
+      "slope": {
+       "proportion": 0.2,
+       "size": [
+        10.0,
+        10.0
+       ],
+       "flat_patch_sampling": null,
+       "gradient_range": [
+        0.087,
+        0.176
+       ]
+      },
+      "step": {
+       "proportion": 0.15,
+       "size": [
+        10.0,
+        10.0
+       ],
+       "flat_patch_sampling": null,
+       "border_width": 0.5,
+       "step_height_range": [
+        0.04,
+        0.08
+       ],
+       "step_width": 2.0,
+       "platform_width": 1.0,
+       "holes": false
+      },
+      "stair": {
+       "proportion": 0.15,
+       "size": [
+        10.0,
+        10.0
+       ],
+       "flat_patch_sampling": null,
+       "border_width": 0.5,
+       "step_height_range": [
+        0.04,
+        0.06
+       ],
+       "step_width": 0.45,
+       "platform_width": 1.0,
+       "holes": false
+      }
+     },
+     "difficulty_range": [
+      0.0,
+      1.0
+     ],
+     "add_lights": false
+    },
+    null
+   ],
+   [
+    "scene.terrain.terrain_type",
+    "generator",
+    "plane"
+   ]
+  ],
+  "env_play_True": [
+   [
+    "commands.standup.ground_start_probability",
+    "__absent__",
+    0.8
+   ],
+   [
+    "commands.standup.recovery_window_s",
+    "__absent__",
+    2.0
+   ],
+   [
+    "events.reset_pose.params.ground_probability",
+    "__absent__",
+    0.8
+   ],
+   [
+    "scene.terrain.terrain_generator",
+    {
+     "seed": 42,
+     "curriculum": true,
+     "size": [
+      6.0,
+      6.0
+     ],
+     "border_width": 0.0,
+     "border_height": 1.0,
+     "num_rows": 3,
+     "num_cols": 4,
+     "color_scheme": "height",
+     "sub_terrains": {
+      "flat": {
+       "proportion": 0.5,
+       "size": [
+        10.0,
+        10.0
+       ],
+       "flat_patch_sampling": null
+      },
+      "slope": {
+       "proportion": 0.2,
+       "size": [
+        10.0,
+        10.0
+       ],
+       "flat_patch_sampling": null,
+       "gradient_range": [
+        0.087,
+        0.176
+       ]
+      },
+      "step": {
+       "proportion": 0.15,
+       "size": [
+        10.0,
+        10.0
+       ],
+       "flat_patch_sampling": null,
+       "border_width": 0.5,
+       "step_height_range": [
+        0.04,
+        0.08
+       ],
+       "step_width": 2.0,
+       "platform_width": 1.0,
+       "holes": false
+      },
+      "stair": {
+       "proportion": 0.15,
+       "size": [
+        10.0,
+        10.0
+       ],
+       "flat_patch_sampling": null,
+       "border_width": 0.5,
+       "step_height_range": [
+        0.04,
+        0.06
+       ],
+       "step_width": 0.45,
+       "platform_width": 1.0,
+       "holes": false
+      }
+     },
+     "difficulty_range": [
+      0.0,
+      1.0
+     ],
+     "add_lights": false
+    },
+    null
+   ],
+   [
+    "scene.terrain.terrain_type",
+    "generator",
+    "plane"
+   ]
+  ]
+ }
+}

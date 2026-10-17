@@ -36,12 +36,15 @@ from mjlab.utils.torch import configure_torch_backends  # noqa: E402
 from ct_mjlab.envs import task_registry  # noqa: E402
 from ct_mjlab.envs.chuanliantui.huananhu_randomization import (  # noqa: E402
     knockdown_root_velocity)
-from ct_mjlab.envs.chuanliantui.multimode_mdp import MODE_NAMES  # noqa: E402
+from ct_mjlab.envs.chuanliantui.multimode_mdp import (  # noqa: E402
+    MODE_NAMES, OUT_OF_PATCH_RADIUS_M)
 
 TASK = "chuanliantui"
 CHECKPOINT = REPO_ROOT / "artifacts/multimode-v1-replay-20261014/models/model_3023.pt"
 RECOVER_INDEX = MODE_NAMES.index("recover")
-OUT_OF_PATCH_M = 2.5
+# Same bound the task terminates on; a hardcoded 2.5 m would flag a legitimate
+# excursion as a premature termination.
+OUT_OF_PATCH_M = OUT_OF_PATCH_RADIUS_M
 
 
 def parse_args():

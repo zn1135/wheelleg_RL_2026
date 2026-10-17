@@ -1,4 +1,13 @@
-"""Independent mixed-terrain Huananhu task on the validated CAD robot."""
+"""Flat-ground Huananhu task on the validated CAD robot.
+
+2026-10-17: the phase goal moved from mixed-terrain stand-up/recovery to
+linear-velocity and yaw-rate tracking, so the generated flat/slope/step/stair
+terrain is replaced by the infinite ground plane and the command envelope is
+narrowed to a deployable band (see huananhu_mdp). Mode and flag channels, the
+ground-start/recover machinery and the 39/82 contract are unchanged. On a plane
+every env is terrain family 0 (flat), so the slope/step/stair triggers stay
+dormant; `multimode_terrains.py` is kept for restoring the mixed-terrain recipe.
+"""
 
 from mjlab.managers.event_manager import EventTermCfg
 from mjlab.managers.metrics_manager import MetricsTermCfg
@@ -6,12 +15,10 @@ from mjlab.managers.observation_manager import ObservationGroupCfg, ObservationT
 from mjlab.managers.reward_manager import RewardTermCfg
 from mjlab.managers.termination_manager import TerminationTermCfg
 from mjlab.sensor import GridPatternCfg, ObjRef, RayCastSensorCfg, TerrainHeightSensorCfg
-from mjlab.terrains import BoxFlatTerrainCfg, BoxPyramidStairsTerrainCfg, TerrainGeneratorCfg
 
 from . import huananhu_randomization, multimode_mdp, multimode_observations, multimode_rewards
 from .huananhu_env_cfg import make_huananhu_env_cfg, make_huananhu_ppo_cfg
 from .v14_observations import V14ObservationCfg
-from .multimode_terrains import BoxSlopeTerrainCfg
 
 
 # Explicit play/check knockdowns only; training does not register this event.
@@ -20,21 +27,13 @@ KNOCKDOWN_ANGULAR_SPEED_RANGE = (18., 28.)
 
 def make_multimode_env_cfg(*, play=False):
     cfg = make_huananhu_env_cfg(play=play)
-    cfg.scene.terrain.terrain_type = "generator"
-    cfg.scene.terrain.terrain_generator = TerrainGeneratorCfg(
-        seed=42, curriculum=True, size=(6., 6.), num_rows=3, num_cols=4,
-        difficulty_range=(0., 1.),
-        sub_terrains={
-            "flat": BoxFlatTerrainCfg(proportion=.50),
-            "slope": BoxSlopeTerrainCfg(proportion=.20),
-            "step": BoxPyramidStairsTerrainCfg(
-                proportion=.15, step_height_range=(.04, .08), step_width=2.,
-                platform_width=1., border_width=.5),
-            "stair": BoxPyramidStairsTerrainCfg(
-                proportion=.15, step_height_range=(.04, .06), step_width=.45,
-                platform_width=1., border_width=.5),
-        },
-    )
+    # Flat phase: the ground is the infinite plane, so the generated terrain is gone and
+    # every env is terrain family 0. Travel is bounded only by
+    # multimode_mdp.OUT_OF_PATCH_RADIUS_M, which ends a runaway episode; it does not need
+    # to separate environments (each env is its own physics world), so env_spacing keeps
+    # the task's own value instead of growing with the radius.
+    cfg.scene.terrain.terrain_type = "plane"
+    cfg.scene.terrain.terrain_generator = None
     cfg.scene.sensors += (
         RayCastSensorCfg(
             name="terrain_scan", frame=ObjRef(type="body", name="base_link", entity="robot"),

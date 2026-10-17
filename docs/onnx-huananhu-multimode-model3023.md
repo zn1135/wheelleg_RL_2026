@@ -9,7 +9,10 @@ scripts/export_huananhu_multimode_onnx.py
 sim2sim/mj_sim2sim_huananhu_multimode.py
 ```
 
-前者只接受该 checkpoint，并在导出前校验 SHA-256；后者只读取专用 XML 和姿态库，不改写默认训练资产。
+前者只接受该 checkpoint，并在导出前校验 SHA-256（训练侧的 `scripts/mjlab.sh export` 按契约元数据接受任何 39 维 checkpoint，
+新模型的正式导出用它）。后者只读取专用 XML 和姿态库，不改写默认训练资产；它按契约元数据接受任何 39 维 checkpoint
+（`--expect-sha256` 可选钉哈希），`--cmd-vx/--cmd-yaw/--cmd-height` 给定常值命令，`--teleop` 把同一组命令交给键盘（需 `--render`，与 `--report` 互斥），报告含 `tracking` 块
+（机体系速度用 `mj_objectVelocity(mjOBJ_XBODY, local)`，该 API 返回角速度在前、线速度在后）。
 
 ## 本次导出的文件
 
@@ -214,6 +217,13 @@ last_action = actions[0].copy()  # 保存原始动作，供下一策略周期使
 ```bash
 "$MLAB_PYTHON" sim2sim/mj_sim2sim_huananhu_multimode.py \
   --onnx "$OUT_DIR/model_3023_opset13.onnx" --render --seconds 0 --initial-pose ground
+```
+
+要边走边转向，加 `--teleop` 启动键盘遥操作：↑/↓ 前进速度 ±0.1 m/s、←/→ 偏航角速度 ±0.2 rad/s、PgUp/PgDn 或 `,`/`.` 高度 ±0.02 m、空格/回车 停车、`Home`／`Backspace`／`Insert`／`Delete`／`End` 复位（速度清零、高度保留）、`F1` 暂停，限幅为训练包线 vx ±1.5 m/s、yaw ±1.5 rad/s、高度 0.27～0.34 m；字母键是 viewer 内置快捷键，不要用。
+
+```bash
+"$MLAB_PYTHON" sim2sim/mj_sim2sim_huananhu_multimode.py \
+  --onnx "$OUT_DIR/model_3023_opset13.onnx" --render --seconds 0 --teleop
 ```
 
 已完成的行为与数值证据见 [multimode 接口记录](interfaces/chuanliantui-huananhu-multimode-replay-v1.md) 和 [模型交付记录](model-deliveries/20261014-huananhu-multimode-model3023-replay.md)。这些结果仅覆盖仿真，不代表 H7 已适配或真机已验证。

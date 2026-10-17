@@ -15,6 +15,14 @@ from .model import ACTUATED_JOINTS
 # the 10 cm velocity gate.
 HEIGHT_COMMAND_RANGE = (.27, .34)
 
+# Deployable tracking envelope for the flat phase. The source V14 recipe sampled
+# -2.7..2.7 m/s and -2pi..2pi rad/s, which a 6 cm wheel cannot realise, so the
+# tracking phase samples this band instead. The special-mode buckets and the
+# heading outer loop are clamped into the same band: the observation slots must
+# never carry a command the envelope does not contain.
+VELOCITY_COMMAND_RANGE = (-1.5, 1.5)   # body +x, m/s
+YAW_RATE_COMMAND_RANGE = (-1.5, 1.5)   # rad/s
+
 
 def consecutive_failure(counter, failed, steps=20):
     counter = torch.where(failed, (counter + 1).clamp_max(steps), 0)
@@ -55,7 +63,7 @@ class HuananhuCommand(CommandTerm):
         self._resetting = False
         self.metrics = {name: torch.zeros(n, device=device) for name in (
             'ground_start', 'recovered', 'numerical_failure', 'upright_fraction',
-            'height_error', 'velocity_error')}
+            'height_error', 'velocity_error', 'yaw_error')}
 
     @property
     def command(self):
@@ -79,8 +87,8 @@ class HuananhuCommand(CommandTerm):
         if not n:
             return
         draw = lambda low, high: torch.empty(n, device=self.device).uniform_(low, high)
-        self.sampled[env_ids, 0] = draw(-2.7, 2.7)
-        self.sampled[env_ids, 1] = draw(-2*math.pi, 2*math.pi)
+        self.sampled[env_ids, 0] = draw(*VELOCITY_COMMAND_RANGE)
+        self.sampled[env_ids, 1] = draw(*YAW_RATE_COMMAND_RANGE)
         self.sampled[env_ids, 2] = draw(*HEIGHT_COMMAND_RANGE)
         self.heading_target[env_ids] = draw(-math.pi, math.pi)
         self.heading[env_ids] = draw(0., 1.) < .5
@@ -101,11 +109,16 @@ class HuananhuCommand(CommandTerm):
             selected = env_ids[mask]
             self.special_mode[selected] = mode
             if mode == 2:
-                self.sampled[selected, 0] = (draw(2., 3.) * torch.where(draw(0., 1.) < .5, -1., 1.))[mask]
+                # Fast forward band inside the envelope (source: 2-3 m/s). The yaw
+                # rate keeps its base draw, so this is not a straight-line command.
+                low, high = (1., 1.5)
+                self.sampled[selected, 0] = (draw(low, high) * torch.where(draw(0., 1.) < .5, -1., 1.))[mask]
             else:
-                low, high = ((2., 3.25), (3.25, 4.5))[mode]
+                # Two hard-turn bands inside the envelope (source: 2-3.25 pi and
+                # 3.25-4.5 pi rad/s), with the source's near-zero forward speed.
+                low, high = ((.8, 1.15), (1.15, 1.5))[mode]
                 self.sampled[selected, 0] = draw(-.1, .1)[mask]
-                self.sampled[selected, 1] = (draw(low*math.pi, high*math.pi) * torch.where(draw(0., 1.) < .5, -1., 1.))[mask]
+                self.sampled[selected, 1] = (draw(low, high) * torch.where(draw(0., 1.) < .5, -1., 1.))[mask]
         # The source delegates normal envs to UniformVelocityCommand, which also
         # samples its 10% standing flag. Keep that second draw (19% at iteration 0).
         standing |= (self.special_mode[env_ids] < 0) & ~standing & (draw(0., 1.) < .1)
@@ -115,7 +128,10 @@ class HuananhuCommand(CommandTerm):
         ids = slice(None) if env_ids is None else env_ids
         self._command[ids] = self.sampled[ids]
         yaw = self._env.scene['robot'].data.heading_w[ids]
-        heading_command = (5. * wrap_to_pi(self.heading_target[ids] - yaw)).clamp(-2*math.pi, 2*math.pi)
+        # The heading outer loop saturates at the envelope turn-rate limit (the
+        # source clamped at 2 pi rad/s), so a heading episode never asks for a
+        # yaw rate outside the commanded band.
+        heading_command = (5. * wrap_to_pi(self.heading_target[ids] - yaw)).clamp(*YAW_RATE_COMMAND_RANGE)
         use_heading = self.heading[ids] & (self.special_mode[ids] < 0)
         self._command[ids, 1] = torch.where(use_heading, heading_command, self._command[ids, 1])
         self._command[ids, :2] = torch.where(self.standing[ids, None], 0., self._command[ids, :2])
@@ -154,6 +170,10 @@ def failure(env):
     state.metrics['upright_fraction'] += stable.float() * env.step_dt / env.cfg.episode_length_s
     state.metrics['height_error'] += (height - state.command[:, 2]).abs() * env.step_dt / env.cfg.episode_length_s
     state.metrics['velocity_error'] += (linear[:, 0] - state.command[:, 0]).abs() * env.step_dt / env.cfg.episode_length_s
+    # Same definition as velocity_error (whole-episode time-fraction average,
+    # including recover and standing steps) so the two are comparable on
+    # TensorBoard; the acceptance measurement is scripts/agent/assess_multimode_tracking.py.
+    state.metrics['yaw_error'] += (angular[:, 2] - state.command[:, 1]).abs() * env.step_dt / env.cfg.episode_length_s
     # Mid-episode fall recovery. With a window configured, a robot that is down
     # gets recovery_window_s of *continuous* fallen time instead of the 0.4 s
     # gate so it can push itself back up. The timer clears as soon as the robot

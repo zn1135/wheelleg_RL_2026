@@ -2,7 +2,11 @@
 
 mjlab 串联腿只保留华南虎 multimode 一条线：39维actor／82维critic／六个实体电机，详见 [mjlab 串联腿训练](../mjlab-chuanliantui.md)。本页旧串联／H7策略通道保留历史物理顺序，只适用于 Isaac 旧任务。
 
-历史华南虎 multimode `model_3023` 例外地使用 39 维 actor／82 维 critic；其独立 CPU MuJoCo 入口为 `sim2sim/mj_sim2sim_huananhu_multimode.py`，导出与使用规则见 [multimode ONNX 说明](../onnx-huananhu-multimode-model3023.md)。它不兼容下文旧 25/125 维 H7 流程。
+华南虎 multimode 使用 39 维 actor／82 维 critic（`model_3023` 是历史基线）。其独立 CPU MuJoCo 入口为
+`sim2sim/mj_sim2sim_huananhu_multimode.py`：按契约元数据接受任何 39 维 checkpoint（可用 `--expect-sha256` 钉哈希），
+`--cmd-vx/--cmd-yaw/--cmd-height` 给定常值命令，报告新增 `tracking` 块；`--teleop`（需 `--render`，与 `--report` 互斥）把三个命令通道交给键盘：↑/↓ 前进速度 ±0.1 m/s、←/→ 偏航角速度 ±0.2 rad/s、PgUp/PgDn 或 `,`/`.` 高度 ±0.02 m、空格/回车 停车、Home 或 Backspace 复位（无 Home 的键盘可用 Backspace／Insert／Delete／End）、F1 暂停，限幅取训练包线（vx ±1.5 m/s、yaw ±1.5 rad/s、高度 0.27～0.34 m）。机体系速度经
+`mj_objectVelocity(mjOBJ_XBODY, flg_local=1)` 读取，该 API 返回**角速度在前、线速度在后**（`result[3:]` 才是线速度）。
+导出与使用规则见 [multimode ONNX 说明](../onnx-huananhu-multimode-model3023.md)。它不兼容下文旧 25/125 维 H7 流程。
 
 整机 S2R1 采集的上位机策略复算与闭链 MuJoCo 离线复刻见
 [S2R1 离线对照](s2r-offline.md)。该工具不连接电机；真实数据、关节映射和初态需另行提供。

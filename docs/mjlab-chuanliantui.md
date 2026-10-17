@@ -11,7 +11,8 @@ mjlab 训练侧只保留一条线：华南虎 multimode 任务，基线模型 `m
 | Actor／Critic／动作 | 39／82／6 |
 | 动作顺序 | `[lf0, lf00, lfwheel, rf0, rf00, rfwheel]` |
 | 时序 | 2 ms 物理、20 ms／50 Hz 策略 |
-| 地形 | 生成地形 flat 50%、slope 20%、step 15%、stair 15% |
+| 地形 | 无限平地（2026-10-17 起；此前为生成地形 flat 50%、slope 20%、step 15%、stair 15%） |
+| 命令 | 前向速度 ±1.5 m/s、偏航角速度 ±1.5 rad/s、目标高度 0.27～0.34 m（2026-10-17 收窄；此前 ±2.7 m/s、±2π rad/s） |
 | 初态 | 20% 普通／80% 地面（2026-10-15 起，原 50／50），姿态库 `resources/robots/chuanliantui_new_1/mjlab/huananhu_pose_bank.npz` |
 | 基线 checkpoint | `artifacts/multimode-v1-replay-20261014/models/model_3023.pt`，SHA256 `624ded630635f0fb51a7378cdd04a7350eee98ffb305acbe1104c3cc7705a88a` |
 
@@ -64,7 +65,7 @@ scripts/mjlab.sh play --num-envs 1 --checkpoint <model_*.pt>
 # 看中途倒地恢复的动态过程：每 5 秒把站着的机器人掀翻一次
 # 手动冲量默认取 KNOCKDOWN_ANGULAR_SPEED_RANGE（18～28 rad/s），--knockdown-speed MIN MAX 可改
 scripts/mjlab.sh play --num-envs 1 --checkpoint <model_*.pt> --knockdown-every 5
-# 4 个环境恰好各占一种地形（平地/斜坡/台阶/楼梯），适合对比不同地形的恢复
+# 4 个环境一起看恢复；地形对比在平地上已不适用（生成地形配方保留在 multimode_terrains.py，可另行恢复）
 scripts/mjlab.sh play --num-envs 4 --checkpoint <model_*.pt> --knockdown-every 6
 # 无窗口 / 远程：viser 网页查看器（--viewer auto 只在没有任何 DISPLAY 变量时才选 viser；
 # 8080 已被 TensorBoard 占用，viser 默认也是 8080，所以用 --viser-port 显式避开）
@@ -93,7 +94,28 @@ mjlab_training/.venv/bin/python scripts/agent/assess_multimode_knockdown_recover
   --output artifacts/<新评估名>/result.json
 ```
 
+```bash
+# 平地速度/角度跟踪测量（训练前参考或训练后验收证据；口径见接口文档）
+mjlab_training/.venv/bin/python scripts/agent/assess_multimode_tracking.py \
+  --checkpoint <model_*.pt> --output artifacts/<新名称>/result.json
+# 判据离线检查（不建环境）
+mjlab_training/.venv/bin/python scripts/agent/check_multimode_tracking.py
+```
+
 改动初态或复位分布后，训练前先做 20 环境可视预检：`scripts/mjlab.sh play --num-envs 20`。
+
+## 平地速度／角度跟踪阶段（2026-10-17 起）
+
+地形改为无限平地后，生成地形的地形触发（slope／step／stair）自然休眠，jump 请求对全部环境可触发，
+故请求概率减半（`.08`→`.04`）以保持期望的空中环境步数（不是每个可跳环境至少跳一次的概率；`mode_airborne` 才是空中量，
+`mode_jump` 累计的是请求次数）。出界半径由 2.5 m 提到 45 m
+（`multimode_mdp.OUT_OF_PATCH_RADIUS_M`，高于一个 20 s 回合的满速直线位移 30 m 与约 25% 超速时的 37 m），它只用于结束失控回合；
+mjlab 每个环境是独立物理世界（Warp 桥以 `nworld=num_envs` 建立），不同环境的机器人不会相遇，
+因此 `env_spacing` 保持任务原值。`eval.py` 与恢复机制检查改用同一常量，不再各自硬写 2.5 m。命令包线收窄到 vx ±1.5 m/s、yaw ±1.5 rad/s，
+special-mode 桶与 heading 外环一起限幅到同一包线；观测契约仍为 39／82／6。
+测量口径、判据与边界见[平地速度与角度跟踪测量](interfaces/chuanliantui-huananhu-multimode-tracking-v1.md)。
+
+**该阶段续训结果（2026-10-17）**：从 `model_4850` 按本配方续训 2048 环境 × 1000 轮（用户两次主动停止，分三段完成，run 目录 `2026-10-17_03-11-53`／`03-30-24`／`13-22-26_flat-track-vx1p5-yaw1p5`），最终为 `model_5849.pt`（SHA256 `d4be0bc9…`，含优化器与 `env_state`）。同一口径跟踪测量由 10／98 升到 **98／98**（mean |vx 误差| 0.118 m/s、|yaw 误差| 0.058 rad/s，容差 0.30），独立 CPU ONNX 回放在 vx 1.5／vx 1.0+yaw 0.5／零命令下均通过；但同一套 64 强制地面初态的 `eval` 为 **63/64**（`env 27` 在 2.64 s 物理终止），父模型与基线均为 64/64。**未采纳为新基线**，基线仍是 `model_3023`；双轮平衡验收 v3.1 尚未对本模型完整重跑。
 
 RTX 4060 Laptop（8 GiB）上 4096 环境曾在创建 Warp CUDA 图时显存不足，本机续训用 2048 环境。
 

@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
-"""Independent CPU MuJoCo sim2sim for historical multimode model_3023.
+"""Independent CPU MuJoCo sim2sim for multimode 39-D checkpoints.
 
 This is deliberately a new entry point rather than an edit to the V11 35-D
-replay.  It loads the versioned multimode asset and checkpoint, builds the
-39-D actor observation, and fixes the task-only tail to the deployment profile
-NORMAL / active / non-ground / non-airborne / non-step:
+replay.  It loads the versioned multimode asset and any checkpoint that declares
+the 39-D multimode contracts, builds the 39-D actor observation, and fixes the
+task-only tail to the deployment profile NORMAL / active / non-ground /
+non-airborne / non-step:
 
     mode[28:35]  = [1, 0, 0, 0, 0, 0, 0]
     flags[35:39] = [0, 1, 0, 0]
 
-Scope is flat, zero-speed, 0.30 m static standing.  It does not emulate H7,
-perform learning, or claim a hardware result.
+Scope is flat ground.  `--cmd-vx/--cmd-yaw/--cmd-height` hold a constant command,
+so one entry point covers both the historical zero-speed 0.30 m static standing
+check and the flat velocity/yaw-rate tracking check; the report carries the
+tracking errors it measures.  `--teleop` instead hands those three channels to the
+keyboard in the viewer, inside the trained command envelope; it is a viewing mode
+and therefore refuses `--report`, which measures one fixed command.  It does not
+emulate H7, perform learning, or claim a hardware result.
 """
 from __future__ import annotations
 
@@ -30,6 +36,10 @@ from scipy.optimize import least_squares
 ROOT = Path(__file__).resolve().parents[1]
 IMPORT_ROOT = ROOT / "artifacts" / "multimode-v1-replay-20261014"
 CHECKPOINT = IMPORT_ROOT / "models" / "model_3023.pt"
+# The historical model_3023 hash, kept for reference. The check is no longer a hard
+# pin: --expect-sha256 pins a checkpoint when a caller wants that, otherwise the
+# contract metadata below (39-D observation/experiment/control contracts) is what
+# guarantees the graph and the actor body are the multimode ones.
 CHECKPOINT_SHA256 = "624ded630635f0fb51a7378cdd04a7350eee98ffb305acbe1104c3cc7705a88a"
 MODEL_ASSET = ROOT / "resources" / "robots" / "chuanliantui_new_1" / "multimode_model3023" / "chuanliantui.xml"
 POSE_BANK = MODEL_ASSET.with_name("huananhu_pose_bank.npz")
@@ -42,8 +52,32 @@ NORMAL_MODE = np.array((1., 0., 0., 0., 0., 0., 0.), dtype=np.float32)
 NORMAL_FLAGS = np.array((0., 1., 0., 0.), dtype=np.float32)
 GROUND_RECOVER_MODE = np.array((0., 0., 0., 1., 0., 0., 0.), dtype=np.float32)
 DT, DECIMATION = .002, 10
-COMMAND = np.array((0., 0., .30), dtype=np.float32)
-HELP = "Home: reset current pose | R: random ground pose | F1: pause | close window: exit"
+DEFAULT_COMMAND = (0., 0., .30)
+# Tracking tolerances for the motion report. They mirror the single source of truth in
+# scripts/agent/assess_multimode_tracking.py; this script must not import the training
+# package, so the values are repeated here and a CPU single-robot replay is indicative
+# evidence, never the acceptance itself.
+TRACKING_SETTLE_S = 2.0
+VX_TOL, YAW_TOL, HEIGHT_TOL, TILT_TOL_DEG = .30, .30, .03, 25.
+HELP = "Home/Backspace: reset current pose | R: random ground pose | F1: pause | close window: exit"
+# --teleop hands the three command channels to the keyboard. The HUD string stays
+# ASCII because the MuJoCo font has no arrow glyphs; terminal prints may use them.
+# Bounds mirror the trained command envelope in docs/mjlab-chuanliantui.md:
+# body +x velocity ±1.5 m/s, yaw rate ±1.5 rad/s, target height 0.27-0.34 m.
+TELEOP_HUD = ("Up/Down vx +-0.1 | Left/Right yaw +-0.2 | PgUp/PgDn or ,/. height +-0.02 | "
+              "Space stop | Home/Backspace reset | F1 pause")
+TELEOP_PRINT = ("↑/↓ 前进速度 ±0.1 m/s | ←/→ 偏航角速度 ±0.2 rad/s | PgUp/PgDn 或 , / . 高度 ±0.02 m | "
+                "空格/回车 停车 | Home/Backspace/Insert/Delete/End 复位 | F1 暂停 | "
+                "字母键是 viewer 内置快捷键，勿用")
+# Reset aliases: many laptop keyboards have no Home key, so the reset action also sits
+# on Backspace (always present) plus Insert/Delete/End, and height gets , / . as a
+# PgUp/PgDn substitute. Codes are GLFW key numbers.
+TELEOP_RESET_KEYS = (268, 259, 260, 261, 269)   # Home, Backspace, Insert, Delete, End
+TELEOP_HEIGHT_UP_KEYS = (266, 46)               # PgUp, .
+TELEOP_HEIGHT_DOWN_KEYS = (267, 44)             # PgDn, ,
+TELEOP_VX_LIMIT, TELEOP_YAW_LIMIT = 1.5, 1.5
+TELEOP_HEIGHT_MIN, TELEOP_HEIGHT_MAX = .27, .34
+TELEOP_DVX, TELEOP_DYAW, TELEOP_DHEIGHT = .1, .2, .02
 LEFT_JOINTS = ("lf0", "lf1", "lfwheel", "left_spring1_joint", "left_spring2_joint",
                "lf00", "lf01", "lf02", "lf03")
 RIGHT_JOINTS = ("rf0", "rf1", "rfwheel", "right_spring1_joint", "right_spring2_joint",
@@ -141,9 +175,11 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def load_actor(path: Path) -> Actor:
-    if sha256(path) != CHECKPOINT_SHA256:
-        raise ValueError("Checkpoint is not the expected historical model_3023")
+def load_actor(path: Path, expect_sha256: str | None = None) -> Actor:
+    if expect_sha256 is not None and sha256(path) != expect_sha256:
+        raise ValueError("Checkpoint does not match --expect-sha256")
+    if expect_sha256 is None and sha256(path) == CHECKPOINT_SHA256:
+        pass  # historical model_3023
     saved = torch.load(path, map_location="cpu", weights_only=False)
     info = saved.get("infos", {})
     required = {
@@ -185,7 +221,7 @@ def build_model():
 
 
 class Playback:
-    def __init__(self, initial_pose: str = "normal"):
+    def __init__(self, initial_pose: str = "normal", command=DEFAULT_COMMAND):
         self.model = build_model()
         self.data = mujoco.MjData(self.model)
         self._gas_spring_force = gas_spring_force
@@ -202,6 +238,9 @@ class Playback:
         self.base_body = self.model.body("base_link").id
         self.wheel_bodies = tuple(self.model.body(name).id for name in ("lfwheel", "rfwheel"))
         self.reference = self.model.qpos0[self.q].astype(np.float32)
+        self.command = np.asarray(command, dtype=np.float32)
+        if self.command.shape != (3,):
+            raise ValueError(f"Command must have three entries, got {self.command.shape}")
         self.steps = 0
         self.last_action = np.zeros(6, dtype=np.float32)
         self.initial_pose = initial_pose
@@ -262,7 +301,7 @@ class Playback:
         q = self.data.qpos[self.q].astype(np.float32) - self.reference
         q[WHEELS] = 0.
         obs = np.concatenate((
-            (COMMAND[0], 0., COMMAND[1], np.clip(COMMAND[2], 0., 1.) * 5.),
+            (self.command[0], 0., self.command[1], np.clip(self.command[2], 0., 1.) * 5.),
             np.clip(self.data.qvel[3:6], -100., 100.) * .5,
             np.clip(gravity, -100., 100.),
             np.clip(q[OBS_ORDER], -100., 100.),
@@ -313,6 +352,23 @@ class Playback:
             raise FloatingPointError("MuJoCo reported a simulation warning")
         return action, torque
 
+    def body_velocity(self) -> tuple[np.ndarray, np.ndarray]:
+        """Body-frame linear and angular velocity of base_link.
+
+        mjOBJ_XBODY with flg_local=1 gives the body frame; mjOBJ_BODY would return the
+        inertial-principal frame, whose axes are permuted once the base inertia
+        eigenvalues are sorted descending. That trap is recorded in docs/ai/sim2sim.md
+        and must not be reintroduced here.
+        """
+        result = np.zeros(6, dtype=np.float64)
+        mujoco.mj_objectVelocity(self.model, self.data, mujoco.mjtObj.mjOBJ_XBODY,
+                                 self.base_body, result, 1)
+        # MuJoCo orders this result rotational-first: a pure translation (qvel=(1.5,0,0,0,0,0))
+        # returns [0,0,0, 1.5,0,0]. sim2sim/mj_sim2sim.py indexes it the same way. Reading
+        # result[:3] as linear would report the roll rate as vx and the vertical speed as the
+        # yaw rate, which is exactly the bug this comment exists to prevent.
+        return result[3:], result[:3]
+
     def metrics(self, action: np.ndarray | None = None, torque: np.ndarray | None = None) -> dict:
         rotation = np.empty(9, dtype=np.float64)
         mujoco.mju_quat2Mat(rotation, self.data.qpos[3:7])
@@ -325,8 +381,12 @@ class Playback:
                 base_contact = True
             for index, body in enumerate(self.wheel_bodies):
                 wheel_contact[index] |= body in bodies and self.floor_geom in (contact.geom1, contact.geom2)
+        linear, angular = self.body_velocity()
         return {
             "time_s": float(self.data.time), "height_m": float(self.data.qpos[2]),
+            "x_m": float(self.data.qpos[0]), "y_m": float(self.data.qpos[1]),
+            "vx_m_s": float(linear[0]), "vy_m_s": float(linear[1]),
+            "yaw_rate_rad_s": float(angular[2]),
             "roll_pitch_deg": [float(np.degrees(np.arctan2(-gravity[1], -gravity[2]))),
                                float(np.degrees(np.arcsin(np.clip(gravity[0], -1., 1.))))],
             "closed_chain_residual_m": float(self._closed_chain_residual(self.model, self.data)),
@@ -348,6 +408,18 @@ def main() -> None:
                         help="fixed batch=1 ONNX controller produced by the export tool")
     parser.add_argument("--pytorch-controller", action="store_true",
                         help="use the checkpoint actor for control while retaining the same CPU physics")
+    parser.add_argument("--cmd-vx", type=float, default=DEFAULT_COMMAND[0],
+                        help="constant body +x velocity command [m/s]")
+    parser.add_argument("--cmd-yaw", type=float, default=DEFAULT_COMMAND[1],
+                        help="constant yaw-rate command [rad/s]")
+    parser.add_argument("--cmd-height", type=float, default=DEFAULT_COMMAND[2],
+                        help="constant target height [m]")
+    parser.add_argument("--expect-sha256", default=None,
+                        help="pin the checkpoint hash; omit to accept any checkpoint declaring the "
+                             "39-D multimode contracts")
+    parser.add_argument("--teleop", action="store_true",
+                        help="drive vx/yaw-rate/height from the keyboard in the viewer; needs "
+                             "--render and cannot be combined with --report")
     args = parser.parse_args()
     if args.seconds < 0 or not np.isfinite(args.seconds) or (args.seconds == 0 and not args.render):
         parser.error("--seconds must be positive, or 0 together with --render")
@@ -357,8 +429,13 @@ def main() -> None:
         parser.error("--pytorch-controller cannot be combined with --onnx")
     if not args.pytorch_controller and args.onnx is None:
         parser.error("provide --onnx, or use --pytorch-controller for a reference-only replay")
+    if args.teleop and args.report:
+        parser.error("--teleop cannot be combined with --report: the report measures one fixed command")
+    if args.teleop and not args.render:
+        parser.error("--teleop needs --render: keys only reach the process through the viewer")
     torch.set_num_threads(1)
-    actor, env = load_actor(args.checkpoint), Playback(args.initial_pose)
+    actor = load_actor(args.checkpoint, args.expect_sha256)
+    env = Playback(args.initial_pose, (args.cmd_vx, args.cmd_yaw, args.cmd_height))
     onnx_path, evaluator, action_diff = None, None, [0.0]
     if not args.pytorch_controller:
         import onnx
@@ -388,7 +465,14 @@ def main() -> None:
     viewer = None
     paused, completed, rows = False, False, []
     total_steps = 0
-    print(f"multimode model_3023 | independent CPU MuJoCo | {args.initial_pose} start", flush=True)
+    print(f"{args.checkpoint.name} | independent CPU MuJoCo | {args.initial_pose} start"
+          f"{' | TELEOP' if args.teleop else ''}", flush=True)
+    if args.teleop:
+        print("遥操作模式：点击 MuJoCo 窗口获得焦点后按键 —— " + TELEOP_PRINT, flush=True)
+
+    def report_command() -> None:
+        print(f"[teleop] vx {env.command[0]:+.1f} m/s  偏航角速度 {env.command[1]:+.1f} rad/s  "
+              f"高度 {env.command[2]:.2f} m", flush=True)
     try:
         if args.render:
             import mujoco.viewer
@@ -402,12 +486,33 @@ def main() -> None:
                 break
             while events:
                 key = events.popleft()
-                if key == 268:  # Home
+                if key in TELEOP_RESET_KEYS:  # Home / Backspace / Insert / Delete / End
                     env.reset()
+                    if args.teleop:
+                        # A reset lands in a standing pose; keeping a nonzero speed
+                        # command would drive off immediately, so stop. Height is kept.
+                        env.command[0], env.command[1] = 0., 0.
+                        report_command()
                 elif key in (82, 114):  # R/r
                     env.reset("ground")
                 elif key == 290:  # F1
                     paused = not paused
+                elif args.teleop and key in (265, 264, 263, 262, 32, 257) + TELEOP_HEIGHT_UP_KEYS + TELEOP_HEIGHT_DOWN_KEYS:
+                    if key == 265:    # up
+                        env.command[0] = min(env.command[0] + TELEOP_DVX, TELEOP_VX_LIMIT)
+                    elif key == 264:  # down
+                        env.command[0] = max(env.command[0] - TELEOP_DVX, -TELEOP_VX_LIMIT)
+                    elif key == 263:  # left
+                        env.command[1] = min(env.command[1] + TELEOP_DYAW, TELEOP_YAW_LIMIT)
+                    elif key == 262:  # right
+                        env.command[1] = max(env.command[1] - TELEOP_DYAW, -TELEOP_YAW_LIMIT)
+                    elif key in TELEOP_HEIGHT_UP_KEYS:    # PgUp / .
+                        env.command[2] = min(env.command[2] + TELEOP_DHEIGHT, TELEOP_HEIGHT_MAX)
+                    elif key in TELEOP_HEIGHT_DOWN_KEYS:  # PgDn / ,
+                        env.command[2] = max(env.command[2] - TELEOP_DHEIGHT, TELEOP_HEIGHT_MIN)
+                    else:             # space / enter: stop, height command stays
+                        env.command[0], env.command[1] = 0., 0.
+                    report_command()
             if not paused:
                 if viewer:
                     with viewer.lock():
@@ -426,8 +531,11 @@ def main() -> None:
                 row = env.metrics()
                 viewer.set_texts([(mujoco.mjtFontScale.mjFONTSCALE_100.value,
                     mujoco.mjtGridPos.mjGRID_TOPLEFT.value,
-                    f"model_3023 CPU sim2sim | {'PAUSED' if paused else 'RUNNING'}\\n"
-                    f"height {row['height_m']:.3f} / 0.300 m\\n{HELP}", "")])
+                    f"{args.checkpoint.name} CPU sim2sim | {'PAUSED' if paused else 'RUNNING'}\n"
+                    f"cmd vx {env.command[0]:+.1f} m/s | yaw {env.command[1]:+.1f} rad/s | "
+                    f"height {env.command[2]:.3f} m\n"
+                    f"height {row['height_m']:.3f} m\n"
+                    f"{TELEOP_HUD if args.teleop else HELP}", "")])
                 viewer.sync()
                 time.sleep(max(0., DT * DECIMATION - (time.monotonic() - started)))
         completed = args.seconds == 0 or total_steps * DT * DECIMATION >= args.seconds
@@ -437,7 +545,7 @@ def main() -> None:
         if args.report:
             args.report.parent.mkdir(parents=True, exist_ok=True)
             stable = [row for row in rows if row["time_s"] >= 1.0]
-            height_error = [abs(row["height_m"] - float(COMMAND[2])) for row in stable]
+            height_error = [abs(row["height_m"] - float(env.command[2])) for row in stable]
             tilt = [max(abs(value) for value in row["roll_pitch_deg"]) for row in stable]
             acceptance = {
                 "samples_after_1s": len(stable),
@@ -452,6 +560,43 @@ def main() -> None:
                                and all(row["both_wheels_contact"] for row in stable)
                                and (evaluator is None or action_diff[0] <= ONNX_ACTION_ATOL)),
             }
+            settled = [row for row in rows if row["time_s"] >= TRACKING_SETTLE_S]
+
+            def mean(values):
+                return float(np.mean(values)) if values else None
+
+            tracking = {
+                "settle_s": TRACKING_SETTLE_S,
+                "samples_after_settle": len(settled),
+                "command": {"vx_m_s": float(env.command[0]), "yaw_rad_s": float(env.command[1]),
+                            "height_m": float(env.command[2])},
+                "velocity_definition": "body-frame 6D velocity of base_link via mjOBJ_XBODY (local)",
+                "mean_vx_error_m_s": mean([abs(row["vx_m_s"] - env.command[0]) for row in settled]),
+                "mean_vx_bias_m_s": mean([row["vx_m_s"] - env.command[0] for row in settled]),
+                "mean_yaw_rate_error_rad_s": mean([abs(row["yaw_rate_rad_s"] - env.command[1])
+                                                   for row in settled]),
+                "mean_yaw_rate_bias_rad_s": mean([row["yaw_rate_rad_s"] - env.command[1]
+                                                  for row in settled]),
+                "mean_lateral_speed_m_s": mean([abs(row["vy_m_s"]) for row in settled]),
+                "mean_height_error_m": mean([abs(row["height_m"] - env.command[2]) for row in settled]),
+                "max_tilt_deg": max([max(abs(value) for value in row["roll_pitch_deg"]) for row in settled],
+                                    default=None),
+                "base_contact_count": sum(row["base_contact"] for row in settled),
+                "travel_m": (float(np.hypot(rows[-1]["x_m"] - rows[0]["x_m"],
+                                            rows[-1]["y_m"] - rows[0]["y_m"])) if rows else None),
+            }
+            # Same criteria as the GPU measurement, with no zero-command bypass: a zero
+            # command must keep the speed inside the same tolerance rather than skipping the
+            # check. A run that did not complete, or an ONNX graph that disagrees with the
+            # PyTorch actor, cannot pass.
+            tracking["passed"] = bool(
+                completed and settled
+                and (evaluator is None or action_diff[0] <= ONNX_ACTION_ATOL)
+                and tracking["mean_height_error_m"] <= HEIGHT_TOL
+                and tracking["max_tilt_deg"] <= TILT_TOL_DEG
+                and tracking["base_contact_count"] == 0
+                and tracking["mean_vx_error_m_s"] <= VX_TOL
+                and tracking["mean_yaw_rate_error_rad_s"] <= YAW_TOL)
             observation_profile = {
                 "shape": [39],
                 "normal_static": {"mode_28_35": NORMAL_MODE.tolist(), "flags_35_39": NORMAL_FLAGS.tolist()},
@@ -473,6 +618,7 @@ def main() -> None:
                 "model_asset": str(MODEL_ASSET), "model_asset_sha256": sha256(MODEL_ASSET),
                 "observation": observation_profile,
                 "acceptance_after_1s": acceptance,
+                "tracking": tracking,
                 "trajectory": rows,
             }, ensure_ascii=False, indent=2) + "\n")
 

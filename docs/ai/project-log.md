@@ -2,7 +2,9 @@
 
 自 [AGENTS.md](../../AGENTS.md) 迁出的逐日训练与评估记录，最新在前。新记录追加到下方记录区顶部；“当前状态”随结论变化就地更新，AGENTS.md 不记录实验状态。
 
-## 当前状态（2026-10-16）
+## 当前状态（2026-10-17）
+
+**平地速度／角度跟踪阶段（2026-10-17 起）**：地形由生成混合地形改为无限平地，命令包线收窄为 vx ±1.5 m/s、yaw ±1.5 rad/s（原 ±2.7 m/s、±2π rad/s）；观测契约、模式槽、倒地恢复与奖励权重不变。训练前参考测量显示`model_3023` 与 `model_4850` **都不跟踪线速度**（|vx 误差| ≈ 命令幅值），偏航角速度可跟（0.079／0.274 rad/s），详见下方 2026-10-17 记录。**续训已完成**（2048×1000，从 `model_4850` 到 `model_5849`，SHA256 `d4be0bc9…`）：同一口径的通过数由 10／98 升到 **98／98**，mean |vx 误差| 0.847→0.118 m/s、|yaw 误差| 0.272→0.058 rad/s；但同一套 64 强制地面初态的 `eval` 由父模型的 64/64 变为 **63/64**（`env 27` 在 2.64 s 物理终止）。尚未采纳为新基线，基线仍是 `model_3023`；详见下方 2026-10-17 续训记录。
 
 **当前中途击倒验收为最终平衡 v3.1**：预定结束前连续 1 秒双轮主要承重、机身不撑地、倾角≤35°、横滚/俯仰角速度合量≤0.5 rad/s；允许滚动、转向与少量腿部接触，不要求高度与起身用时。下方历史“末 5 秒≥95%”数字保持 v2 原义，不代表新口径结论。已录制 7 条轨迹按 v3.1 重算为 7/7，旧 v3 的5/7为历史结果；尚未对父模型与候选完整重跑配对，基线不变。
 
@@ -15,6 +17,146 @@ mjlab 训练侧只保留华南虎 multimode（39/82 维）一条线，基线 `mo
 `model_4022` 经 64 个初态配对比较未退化，但也没有可测改进，不替代基线。下方记录里引用的 V14、r5～r15、recover、V11、A2500 等代码、脚本与诊断文档已在 2026-10-15 删除，可从分支 `backup/gpt-structure-20261015`（`e451b3d`）或提交 `109da6d` 找回；`logs/` 下的模型未动。
 
 ## 记录
+
+## 2026-10-17 平地跟踪续训完成：同一口径通过数 10／98 → 98／98，64 强制初态出现 1 例摔倒
+
+**授权与执行**：用户授权从 `model_4850`（SHA256 `de492a8a…`）按平地／±1.5 包线续训 2048 环境 × 1000 轮并明确要求开始训练。
+用户两次主动停止（分别停在第 5317、5389 轮，两次都各落了一个 checkpoint），第三段续跑至第 5849 轮正常结束。
+三段各落一个 run 目录：`2026-10-17_03-11-53_flat-track-vx1p5-yaw1p5`（4850→5317，存 `model_5300.pt`）、
+`2026-10-17_03-30-24_flat-track-vx1p5-yaw1p5`（5300→5389，存 `model_5350.pt`）、
+`2026-10-17_13-22-26_flat-track-vx1p5-yaw1p5`（5350→5849，存 **`model_5849.pt`**）。
+`--iterations` 是本次新增轮数（接 checkpoint 的 `iter`），`save_interval` 为 50，末个 checkpoint 按最后完成的轮次命名，
+所以没有 `model_5850.pt`。三段 `params/env.yaml` 与 `params/agent.yaml` 相互逐字节一致，`env.yaml` 记录
+`terrain_type: plane`、`terrain_generator: null`、`recovery_window_s: 2.0`、`ground_start_probability: 0.8`。
+最终模型 SHA256 `d4be0bc98c20348911b7e43a6f52f5e3719cb78d74f5764f4854bce82bb71ca7`，
+含 `actor_state_dict`／`critic_state_dict`／`optimizer_state_dict`／`iter`／`infos`（39/82 契约与 `env_state` 完整可续）。
+
+**预算说明**：三段各自做了 467／89／499 轮 PPO 更新，合计 1055 轮；因两次续训都从最近的 50 轮整数保存点重放，
+其中 56 轮是重复训练，**净推进 999 轮**（原生迭代 4850→5849）。即比授权的 1000 轮少 1 轮净推进、多约 5% 计算量。
+
+**同一口径的跟踪测量**（`scripts/agent/assess_multimode_tracking.py`；三次运行脚本 sha256 前缀 `a71a9418…`、
+git diff `d6d585b3…` 完全相同，容差一致，故三行可直接比较。平地固定网格 vx／yaw ∈ {0,±0.5,±1.0,±1.5} × height ∈ {0.27,0.34}、
+98 环境、12 s、settle 2 s、seed 42、play 配置）：
+
+| 模型 | 通过／全部 | mean \|vx 误差\| | mean \|yaw 误差\| | mean 高度误差 | 最大倾角均值 | 失败项 |
+|---|---:|---:|---:|---:|---:|---|
+| `model_4850`（本轮起点） | 10／98 | 0.847 m/s | 0.272 rad/s | 0.0099 m | 1.6° | tracked_vx、tracked_yaw |
+| `model_3023`（项目基线） | 14／98 | 0.773 m/s | 0.087 rad/s | 0.0082 m | 2.5° | 另含 no_base_contact／survived／tracked_height／upright（1 例摔倒） |
+| **`model_5849`（本轮产物）** | **98／98** | 0.118 m/s | 0.058 rad/s | 0.0026 m | 0.9° | 无 |
+
+基线两行是**本轮重测**得到的：之前那批 10／98、14／98 用的是修缺陷前的脚本（sha256 前缀 `2649cc65…`），
+与训练后不同脚本、不能直接比；重测后三行同脚本同容差。`model_5849` 分组：静止 2/2、运动 96/96、
+|vx| 各档（0.5／1.0／1.5）28/28、|yaw| 各档 28/28；最差单条为 `vx=+1.5 m/s` 的 0.194 m/s，仍在 0.30 m/s 容差内；
+侧向速度均值 0.024 m/s、机身触地 0 拍、98 个环境全部撑满窗口、`failure_checks` 为空。
+
+**独立 CPU MuJoCo 后端**（`sim2sim/mj_sim2sim_huananhu_multimode.py`，ONNX opset18、`--expect-sha256` 钉住同一 checkpoint；
+20 s、目标高度 0.30 m、normal 初态）：
+
+| 命令 | mean \|vx 误差\| | mean \|yaw 误差\| | mean 高度误差 | 最大倾角 | 机身触地 | 净位移 | ONNX／PyTorch 动作差 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| vx 1.5 | 0.206 m/s | 0.030 rad/s | 0.023 m | 0.92° | 0 | 25.04 m | 1.7e-6 |
+| vx 1.0 + yaw 0.5 | 0.137 m/s | 0.108 rad/s | 0.018 m | 0.90° | 0 | 2.94 m（绕圈，取净位移） | 1.7e-6 |
+| vx 0 + yaw 0 | 0.055 m/s | 0.024 rad/s | 0.015 m | 2.35° | 0 | 0.12 m | 1.1e-6 |
+
+三条 `tracking.passed` 均为 true，`acceptance_after_1s` 高度最大误差 ≤ 2.4 cm、倾角 ≤ 2.5°、双轮接触 951/951。
+该后端与训练环境独立，观测构造、执行器映射与物理引擎都不同，结论方向与 GPU 网格测量一致
+（最极端的 `--cmd-vx 1.5` 由训练前的 1.474 m/s 误差降到 0.206 m/s）。
+
+**回归信号：64 强制地面初态 `eval` 为 63/64。** 同一套初态（签名 `4a0b867588ff23aa…`，与两个基线一致）、seed 42、20 s 下，
+严格起立 63/64、存活 63/64、末态双轮承重 63/64、数值失败 0，`termination_counts` 为 63 `time_out` + **1 `physical`**；
+父模型 `model_4850` 与项目基线 `model_3023` 在同一套初态上都是 64/64（终止计数全为 `time_out`）。
+失败者是 `env 27`（地面初态、初始命令 vx −0.877 m/s、yaw −0.313 rad/s、高度 0.301 m）：2.64 s 物理终止，
+峰值高度 0.382 m、末态 0.134 m，即**起立过程中摔倒**。这是本轮唯一的负向变化；单初态单 seed，
+既不能据此判定整体退化，也不能声称起立能力保持；原因未定位。
+
+**未做**：未跑双轮平衡验收 v3.1 完整配对、未跑中途击倒恢复完整评估、未做真机；未改 39/82 观测契约、奖励权重、
+恢复窗口或 H7 接口；`model_5849` **未采纳为新基线**，基线仍是 `model_3023`。
+证据在 `artifacts/flat-track-20261017-trained/`（内含跟踪测量、两个基线的同口径重测、三条 CPU 回放、
+ONNX 与参考向量、控制台日志副本；按仓库 `.gitignore` 约定，该目录里只有 `models/model_5849.pt` 可提交，其余（含原始数组、日志、ONNX、配方）都只留本机）；`eval` 产物在 `logs/mjlab/evaluation/model5849-flat-gpu64/`。
+
+## 2026-10-17 地形改无限平地、命令收窄到 vx ±1.5 m/s 与 yaw ±1.5 rad/s；平地跟踪测量落地
+
+**起因**：用户要求下一步做「速度和角度的跟踪」，先把地形改成平地，并确认四项决定：保留 39 维 multimode 接口、
+只改地形与命令范围；包线 vx ±1.5 m/s、yaw ±1.5 rad/s；预算 2048 环境 × 1000 轮续训；从 `model_4850` 续训。
+
+**改动**（源码，未提交）
+- `multimode_env_cfg.py`：地形 `generator`→`plane`、`terrain_generator=None`（`env_spacing` 保持原值：每个环境是独立物理世界，
+  间距不需要为出界半径放大）；
+  保留 `terrain_scan`/`wheel_height` 两个传感器与全部复位／扰动事件；`multimode_terrains.py` 保留，便于恢复混合地形配方。
+- `huananhu_mdp.py`：新增 `VELOCITY_COMMAND_RANGE`／`YAW_RATE_COMMAND_RANGE = (-1.5, 1.5)`（原 ±2.7 m/s、±2π rad/s），
+  普通采样改用常量；special-mode 桶收进同一包线（mode2 `|vx|∈(1.0,1.5)`，mode0/1 `|yaw|∈(0.8,1.15)`／`(1.15,1.5)` 且前进速度≈0）；
+  heading 外环限幅由 ±2π 改为包线上限；新增 `yaw_error` 指标（与 `velocity_error` 同口径）。
+- `multimode_mdp.py`：`OUT_OF_PATCH_RADIUS_M = 45`（原 2.5 m；高于一个 20 s 回合的满速直线位移 30 m 与约 25% 超速时的 37 m，
+  原值在 ±1.5 m/s 下约 1.7 s 就会终止回合）；
+  `env_spacing` 不再随半径放大——mjlab 每个环境是独立物理世界（`nworld=num_envs`），不存在跨环境碰撞；
+  `eval.py` 与 `check_multimode_recovery.py` 里各自硬写的 2.5 m 也改成读同一常量（否则真实摔倒会被标成 `out_of_patch`，
+  而配对工具又把该标签排除在退化否决之外）；`reset_pose` 在无地形列时 `terrain_kind = 0`（平地没有 `terrain_types`，原代码会 AttributeError）；
+  平地 jump 请求概率 `.08`→`.04`（平地下全部环境可跳，原配方只有平地列 50% 人口能跳，跳跃期跟踪奖励被清零）。
+- 新增 `scripts/agent/assess_multimode_tracking.py`（平地固定命令网格、每环境单回合、测量期抑制 jump）与
+  `scripts/agent/check_multimode_tracking.py`（判据离线检查）；口径见[平地速度与角度跟踪测量](../interfaces/chuanliantui-huananhu-multimode-tracking-v1.md)。
+- `sim2sim/mj_sim2sim_huananhu_multimode.py`：SHA 硬钉改为可选 `--expect-sha256` + 契约元数据校验；新增
+  `--cmd-vx/--cmd-yaw/--cmd-height`；报告新增 `tracking` 块；车体速度改用 `mujoco.mj_objectVelocity(mjOBJ_XBODY, local)`；
+  另加 `--teleop` 键盘遥操作（需 `--render`、与 `--report` 互斥，键位 ↑/↓/←/→/PgUp/PgDn（或 `,`/`.`）/空格/Home 或 Backspace 等复位键/F1，限幅取训练包线），HUD 改为显示 checkpoint 名与当前命令，并修掉 HUD 换行被双重转义的问题。
+- `scripts/agent/check_mjlab_multimode.py` 改为「冻结快照 + 已记录偏离 == 我方文件」，偏离表
+  `scripts/agent/multimode_snapshot_deviations.json`（源偏离 6 个模块；配置偏离 train 0／play=False 9／play=True 6）。
+  该检查自 2026-10-15 起已不可能通过（那两次改动既改了源码也改了配置），本轮一并修好并跑绿。
+
+**训练前参考测量**（平地、固定命令网格 vx/yaw ∈ {0,±0.5,±1.0,±1.5} × height ∈ {0.27,0.34}、12 s、settle 2 s、seed 42、play 配置、98 环境）
+
+| 模型 | 通过／全部 | mean \|vx 误差\| | mean \|yaw 误差\| | mean 高度误差 | 最大倾角均值 | 窗口内终止 |
+|---|---:|---:|---:|---:|---:|---:|
+| `model_3023` | 14／98 | 0.774 m/s | 0.086 rad/s | 0.0083 m | 2.5° | 1 |
+| `model_4850` | 10／98 | 0.847 m/s | 0.272 rad/s | 0.0099 m | 1.6° | 0 |
+
+测量脚本 sha256 前缀 `2649cc65…`：命令期不重采样（并把命令项的 `_resample_command` 换成写网格的实现）、
+每一步断言 actor 命令槽等于网格、已终止环境按 `auto_reset=False` 要求 reset 但累计量冻结、首拍用一步零动作冲洗缓存观测、
+测量期 jump 时长为 0 s。
+
+**结论：两个模型在平地上都不跟踪线速度。** \|vx 误差\| 近乎等于命令幅值（cmd ±1.5 m/s 时实测均速约 0.00–0.03 m/s），
+而**偏航角速度能跟**（3023 误差 0.086 rad/s ≈ 命令幅值的 6%，4850 为 0.272 rad/s）——说明命令确实进了策略，
+缺的是纵向运动能力，不是观测通道不通。静止命令（vx=yaw=0）两个模型都通过（vx 误差 0.015／0.016 m/s）；
+4850 的 98 个环境全部撑满窗口，3023 有 1 个环境在窗口内终止：`env=82`、命令 (vx −1.5, yaw +1.0, height 0.34)，
+在第 102 步（2.04 s，刚过 2 s 稳定窗口）终止，过程最大倾角 174°、机身触地 0.04 s、高度误差 0.21 m——**该回合摔倒**；
+这是 3023 略不如 4850 的一点。独立 CPU MuJoCo 回放给出同样结论（`--cmd-vx 1.5` 15 s 位移 0.35 m、vx 误差 1.474 m/s；
+`--cmd-yaw 1.5` 时 yaw 误差 0.040 rad/s 通过；ONNX 与 PyTorch 动作差 ≤ 1.2e-6），所以不是训练环境或测量脚本的假象。
+
+**过程中自查出并修掉两处缺陷**：① 测量脚本的 `survived` 原要求「回合在窗口末尾超时」，而 12 s 窗口短于
+20 s 回合期限、永不发生，导致所有环境误判未存活；② CPU 回放漏传 `--checkpoint`，把 4850 的 ONNX 输出与
+3023 的 PyTorch actor 对比（差值约 1.0）；③ 测量脚本的「断言 actor 命令槽」暴露了更根本的一层：观测管理器在策略步外重算
+会返回缓存缓冲，且命令项在复位时仍会抽签，所以命令钉住必须同时替换 `_resample_command` 并用一步零动作冲洗观测。
+以上三处修完后重跑，上表为**最终数字**；02:10 与 02:26 两批中间读数已作废。此后只调整了汇总 `by_command` 的字段
+（报告口径，不影响数字）；归档产物的脚本 sha256 前缀为 `2649cc65…`，逐环境原始行在同一目录的 `*_envs_seed42.json`。
+
+**同批有限检查**（平地配置，均通过）：`check`（model_4850、2 环境、16 步，严格加载、39/82/6）；
+`check_mjlab_multimode.py --gpu`（快照+偏离重建、资产哈希、配置、引用、续训课程 7525 读写回、导出 actor 与策略差 0.0）；
+`check_multimode_recovery.py`（训练配置无主动击倒且窗口 2.0 s；手动冲量 27 次倒地、recover 27/27 重新点亮、0 违约、0 提前终止）；
+`check_multimode_ground_ratio.py`（观测 0.8036，仅剩 flat 族）；`assess_multimode_knockdown_recovery.py` 8 环境冒烟（8 送达、7 倒地、4 最终平衡）。
+CPU 回放（model_3023、零命令 20 s）仍通过历史静站判据。
+
+**独立复查（codex，经 agent-bridge，`--model sol --effort high`）**指出并已修正：命令可能在重采样时被覆盖一拍
+（改为测量期不重采样 + 每步断言命令等于网格）；已终止环境在 `auto_reset=False` 下继续步进会抛错
+（改为批次内 reset，但累计量仍冻结）；稳定窗口内结束的环境会让整份报告抛错（改为记为 `no_measured_steps` 失败）；
+23 m 半径会把 20 s 回合的合法 30 m 直线位移截断且是方形边界（改为 35 m）；CPU 回放的 `tracking.passed` 有零命令放行与
+不检查完成度/ONNX 一致性两个缺口（已修）；机身触地只看单拍（改用 8 拍力历史）。它同时确认偏离表仍能挡住表外改动、
+平地化没有其他漏改、训练命令确实进了奖励。
+
+**第二轮复查**又指出三处并已修：① CPU 回放把 `mj_objectVelocity` 的返回值按「线速度在前」读取——实测纯平移
+`qvel=(1.5,0,0,0,0,0)` 返回 `[0,0,0, 1.5,0,0]`（角速度在前），与 `sim2sim/mj_sim2sim.py:320` 的读法一致，
+故此前 CPU 报告里 vx／yaw 两列互换（已改为 `result[3:]`／`result[:3]`；GPU 测量读的是 `root_link_lin_vel_b`，不受影响）；
+② `compare_multimode_eval.py` 对 `out_of_patch` 的无条件豁免在无限平地上不再安全（改为只豁免非平地样本：
+平地没有地块边缘，越过 45 m 即失控，计入退化否决）；③ 测量首拍仍会读到 reset 采样的随机命令、且已退出统计的环境
+再次终止时不会被 reset（改为 pin 后重建观测并断言 actor 命令槽，且对每一次终止都 reset）。修正后的 CPU 证据：
+`--cmd-yaw 1.5` 时 yaw 误差 0.040 rad/s（能跟），`--cmd-vx 1.5` 时 vx 误差 1.474 m/s、15 s 位移 0.35 m（不跟）。
+
+**平地协议的新 `eval` 参考基线（本轮录制）**：同一套 64 强制地面初态（`--start-mode force --terrain flat`、seed 42、20 s）下，
+`model_3023` 与 `model_4850` 的初态签名同为 `4a0b867588ff23aa…`（平地后所有环境都是 flat，旧协议里的「平子集 31/64」不再存在），
+两者均严格起立 64/64、存活 64/64、末态双轮承重 64/64、数值失败 0，末态高度 0.3105／0.2948 m、严格保持率 0.9980／0.9978；
+`compare_multimode_eval.py` 配对两者为「四档均无原成功样本失效」。产物在 `logs/mjlab/evaluation/model3023-flat-gpu64/`、
+`model4850-flat-gpu64/`，副本在 `artifacts/flat-track-20261017/eval-flat/`。旧基线 `model3023-baseline-gpu64`（签名 `458f15a3…`）
+属混合地形协议，不能与新签名配对。
+
+**未做**：训练未启动（本轮只交付命令与测量）；未做真机；未改 39/82 契约、奖励权重、恢复窗口与 H7 接口；
+`eval` 的 64 强制初态**初态签名**因地形列改变而变化，旧 `model3023-baseline-gpu64` 配对协议不可直接沿用，需按平地协议重录参考基线。
 
 ## 2026-10-16 后续训练取消主动绕轴击倒，保留倒地自起机制
 

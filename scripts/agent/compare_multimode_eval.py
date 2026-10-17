@@ -119,8 +119,17 @@ def main():
             # robot is standing the whole time (final height in tolerance, hold
             # fraction ~1.0, no numerical failure). Report these, but do not count
             # them as a lost success.
-            out_of_patch = [i for i in raw_lost if en[i].get('termination') == 'out_of_patch']
+            # Leaving the patch is only excusable where a patch edge exists. The flat protocol
+            # runs on an infinite plane with a 45 m runaway bound, so there is no edge to leave
+            # and a sample that hits the bound has lost control: it counts as a real loss.
+            out_of_patch = [i for i in raw_lost if en[i].get('termination') == 'out_of_patch'
+                            and en[i].get('terrain') != 'flat']
+            runaway = [i for i in raw_lost if en[i].get('termination') == 'out_of_patch'
+                       and en[i].get('terrain') == 'flat']
             lost = [i for i in raw_lost if i not in out_of_patch]
+            if runaway:
+                print(f'      平地越界（无限平面无地块边缘）计入失效 {len(runaway)} 个：'
+                      + '、'.join(f'env={i}' for i in runaway))
             gain = [i for i in common if en[i].get(field) and not eo[i].get(field)]
             if out_of_patch:
                 total_excluded.setdefault(field, []).extend((seed, i) for i in out_of_patch)
