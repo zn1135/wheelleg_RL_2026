@@ -1,10 +1,10 @@
 # 训练与部署接口约定
 
-H7 部署工程已作为普通目录纳入 [deployment/H7_RL](../deployment/H7_RL/README.md)，与训练代码统一提交。导入的是旧25/125维、100Hz策略部署工程，内置网络仍为 `model_15000_h723`；纳入同仓不表示已适配下面的新 mjlab 实体接口。源码指纹及eIDE引用问题见部署目录说明，原有接口历史继续保留。
+H7 部署工程作为普通目录保存在 [deployment/H7_RL](../deployment/H7_RL/md/file-guide.md)，与训练代码统一提交。2026-10-18已同步独立H7仓的`e2a3339519add73805df531e6247233a9540fbf0`，内置网络为`model_5849`，actor39/action6、500Hz实体PD及50Hz推理，并接入平地遥控与倒地恢复。同步范围、LQR整定、构建结果和待复查项见[本次部署同步记录](interfaces/20261018-h7-model5849-deployment-sync.md)；源码纳入及PR创建不表示独立复查或真机验收通过。
 
 ## 新 mjlab 实体关节接口
 
-mjlab 训练侧只保留华南虎 multimode：actor39／critic82／action6，2 ms 物理、20 ms／50 Hz 策略，动作顺序 `[lf0,lf00,lfwheel,rf0,rf00,rfwheel]`，模式槽 `28:35`、标志槽 `35:39`。观测打包与 ONNX 契约见 [multimode 接口](interfaces/chuanliantui-huananhu-multimode-replay-v1.md) 与 [ONNX 使用说明](onnx-huananhu-multimode-model5849.md)（当前交付模型 `model_5849`；`model_3023` 为历史基线）。H7 负责人对 39 维接口、50 Hz 调度和板端数值对齐的核对状态仍为待确认，不能把新 ONNX 直接替换内置旧模型。
+mjlab 训练侧只保留华南虎 multimode：actor39／critic82／action6，2 ms 物理、20 ms／50 Hz 策略，动作顺序 `[lf0,lf00,lfwheel,rf0,rf00,rfwheel]`，模式槽 `28:35`、标志槽 `35:39`。观测打包与 ONNX 契约见 [multimode 接口](interfaces/chuanliantui-huananhu-multimode-replay-v1.md) 与 [ONNX 使用说明](onnx-huananhu-multimode-model5849.md)（当前交付模型 `model_5849`；`model_3023` 为历史基线）。当前H7源码已接入39/6接口；另一方独立复查、板端数值、真实时序和恢复行为仍待确认。更换模型仍须成套核对权重、原生关节坐标、图外控制与模式标志，不能只依据张量维数判断可用。
 
 2026-10-08 更正CAD左右命名：原 rf→当前 lf（+y实际左），原 lf→当前 rf（−y实际右）。旧Isaac／H7数字通道及极性保留，当前名称分别为 `[rf0, rf1, rfwheel, lf0, lf1, lfwheel]` 和 `[rf0, rf00, rfwheel, lf0, lf00, lfwheel]`；下面历史版本中的名称按其记录版本解释。
 
