@@ -4,6 +4,22 @@
 
 ## mjlab 检查
 
+H7→Jetson只读镜像的软件检查（不训练、不连接或控制真机）：
+
+```bash
+# Jetson（~/real2sim，需cc）：实际C打包代码＋损坏流＋模型姿态＋伪串口断线检查
+.venv/bin/python scripts/agent/check_real2sim_huananhu.py --out artifacts/<新名称>/check-software.json
+# 训练仓：从当前eIDE实际存在的来源编译、链接大小机；需要完整ARM GCC/Newlib
+ARM_CC=/usr/bin/arm-none-eabi-gcc mjlab_training/.venv/bin/python \
+  scripts/agent/check_real2sim_huananhu.py --build-only --out artifacts/<新名称>/check-h7-build.json
+```
+
+镜像不依赖PyTorch，单独依赖见`sim2sim/requirements-real2sim.txt`。`--build-h7`可在同时具备宿主C编译器
+和ARM工具链的训练主机合并执行；构建产物全部写到报告目录，不污染eIDE增量构建。过时且不存在的
+虚拟来源列入报告，不修改工程清单。检查覆盖CRC／伪尾／分包、序号回绕、DMA忙、单设备失效、200ms
+断流，以及模型闭链重构；不验证实际串口、物理极性／零点／IMU轴向或装配分支。操作见
+[部署接口](../deployment-contract.md#host-debug-plan)。
+
 倒地恢复机制检查（不训练）：训练配置不主动施加绕轴击倒，手动冲量只在机制检查中使用。
 
 ```bash
@@ -51,7 +67,7 @@ mjlab_training/.venv/bin/python scripts/agent/assess_multimode_tracking.py \
 静止站立腿角运动测量与 CPU 入口一致性检查（不训练；2026-10-17 站立腿摆修复的证据工具）：
 
 ```bash
-# 入口与训练语义的一致性检查（静态 + 单步力矩探针 + 接触参数断言，不跑物理循环；不一致即非零退出）
+# 入口一致性与恢复高度检查（静态 + 有限步力矩／接触／模式探针，不做长时行为验收；不一致即非零退出）
 mjlab_training/.venv/bin/python scripts/agent/check_multimode_cpu_sim2sim.py \
   --out artifacts/<新名称>/check-cpu-entry.json
 # 静止站立腿角运动测量（50 Hz 控制拍；诊断性测量，不设通过阈值）
@@ -68,6 +84,41 @@ mjlab_training/.venv/bin/python scripts/agent/measure_multimode_leg_motion.py \
 轮速 `clip(10a, ±150)`、力矩限幅 40／3.9；气弹簧逐点一致；动作顺序与观测排列、NORMAL 模式／标志、
 报告容差与跟踪测量脚本一致；机器人 geom 优先级（训练场景 `priority=1` 补丁）与机器人-地面接触摩擦等于训练值。腿角运动测量记录六电机 q／qd、原始动作、观测腿槽与机身状态，并给出
 腿摆峰峰值、主导频率与观测偏置；它只覆盖单模型、单命令、单次运行的读数，不是验收。
+
+2026-10-18新增CPU恢复高度检查：使用两腿机体系 `L*cos(theta)` 均值，覆盖整机平移／旋转不变性、
+左右腿不对称，以及抬高机身但保持折腿时不误判恢复。该高度条件有意采用H7量的定义，
+不再与训练的世界坐标高度相同；`height_m` 与原跟踪／静站判据保留原义。
+检查通过不表示H7腿角标定已验证，也不表示完整H7恢复时序或真实恢复行为验收通过。
+
+恢复高度改动前后的CPU配对诊断（相同模型、初态和命令；默认7组normal命令与16个固定seed地面初态，
+每侧20秒；`--before`必须是改动前入口的完整源码快照）：
+
+```bash
+mjlab_training/.venv/bin/python scripts/agent/assess_multimode_recovery_height.py \
+  --before <改动前入口.py> --checkpoint <model_*.pt> \
+  --output artifacts/<新名称>/result.json
+```
+
+输出逐样本模式切换时间、动作／位置／速度的最大差、末段连续1秒双轮平衡及原成功样本是否丢失，
+同时保存初态与逐步轨迹。末段平衡使用v3.1门槛并读取原生MuJoCo接触力；该初态分布和运行流程
+不等于训练侧完整验收，也不代替速度／高度跟踪测量。当前实测结论见[项目实验记录](project-log.md)。
+
+包线边界与引擎差异的审计跟进测量（不训练；2026-10-17 接触参数审计的证据工具）：
+
+```bash
+# 训练引擎（warp）在训练接触材料随机化下的包线复测；--material randomized 复原训练抽签
+# （轮滑动 min(U(.5,1.2), U(.4,1.))、基座 U(.01,.1)、训练 solref），solref/xml 为对照，
+# --material pinned --wheel-slides 为逐环境固定轮摩擦的阈值扫描；--envs-per-combo N 即起点分布扫描
+mjlab_training/.venv/bin/python scripts/agent/assess_multimode_envelope_friction.py \
+  --checkpoint <model_*.pt> --output artifacts/<新名称>/grid-randomized.json \
+  --material randomized --envs-per-combo 8
+# CPU 入口包线诊断：--mode starts 训练姿态库 normal 分支起点分布（--friction training 叠加
+# 训练接触抽签）；--mode sweep 轮滑动摩擦扫描；--mode trace 与训练引擎的 50 Hz 轨迹分叉
+# （--twin-perturb EPS 额外测入口自身对初值扰动的敏感度）
+mjlab_training/.venv/bin/python scripts/agent/assess_multimode_cpu_envelope.py \
+  --mode starts --checkpoint <model_*.pt> --starts 64 \
+  --output artifacts/<新名称>/cpu-starts.json
+```
 
 迁移一致性检查（用冻结快照；`--snapshot` 缺省时逐候选目录核对 23 个模块哈希后自动选定；
 `--gpu` 会加载并完整续训读取 model_3023，但不调用 learn）：

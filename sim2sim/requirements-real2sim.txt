@@ -1,0 +1,5 @@
+# Lightweight Jetson mirror environment (Python 3.12); no training framework.
+mujoco==3.11.0
+numpy==2.5.3
+scipy==1.18.1
+pyserial==3.5

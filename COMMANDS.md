@@ -2,6 +2,8 @@
 
 串联腿 mjlab 只保留华南虎 multimode（39/82 维）一条训练线，基线 `model_3023.pt`。安装、检查、训练／TensorBoard、回放、地面起立评估和 ONNX 导出命令见 [mjlab 命令](docs/mjlab-chuanliantui.md#可执行命令)；独立 CPU MuJoCo sim2sim 见 [ONNX 使用说明](docs/onnx-huananhu-multimode-model5849.md)。39 维模型不兼容下文旧 25/125 维 H7 命令。
 
+H7固件的Linux终端编译与创芯工坊PowerDebugger烧录，见[终端烧录步骤](deployment/H7_RL/md/file-guide.md#terminal-flash)。该流程使用ARM GCC、eIDE构建器和OpenOCD，不使用下文Isaac环境。
+
 下文命令属于旧 Isaac 环境，不混装依赖。
 
 先按 [协作指南](CONTRIBUTING.md) 创建并填写 `.env.local`。在仓库根目录执行以下准备，完整激活对应 Python 3.8 conda 环境（`conda` 命令需已在 PATH 中）：

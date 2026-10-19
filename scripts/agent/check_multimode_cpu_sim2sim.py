@@ -18,18 +18,26 @@ Scope (no learning, no long simulation, no GPU):
   spring   entry gas_spring_force equals ct_mjlab gas_spring.gas_spring_force on a grid
            with identical constants
   tail     action order and observation permutation match v14_observations, a normal
-           start reports mode NORMAL / flags [0,1,0,0], and the report tolerances equal
+           start reports mode NORMAL / flags [0,1,0,0] at the reset instant, and the report tolerances equal
            the single source of truth in scripts/agent/assess_multimode_tracking.py
   options  simulator options (timestep/integrator/iterations/ls_iterations/tolerance/
            cone/impratio) equal the multimodal env's MujocoCfg; the vx/yaw command slots
            clamp to +-100 like v14_observations.basic; the ground-start activation flag
            flips on the 11th completed step (the training float32 boundary, not the 10th)
+  airborne the airborne flag (slot 37) mirrors multimode_mdp.MultimodeCommand.advance:
+           both wheel centers clear of the floor by more than WHEEL_RADIUS + 2 cm with
+           peak wheel contact force below 5 N for one control period; asserted to flip
+           after the first completed step from the 0.38 m stance and to clear after the
+           wheels land (the 2026-10-17 second-audit observation fix)
   contacts every robot geom carries the training scene's priority=1 patch, so robot-floor
            contact friction equals the training value (0.5 sliding), not the equal-priority
            elementwise-max mix with the floor's 1.0 (the 2026-10-17 audit finding)
+  recovery CPU replay intentionally uses body-frame mean L*cos(theta) for recovery
+           height, matching H7's quantity rather than training world base height;
+           check translation/rotation invariance, split legs and the actual mode gate
 
-Static + one-step consistency between two implementations of one contract. It is not a
-behavior acceptance and says nothing about policy quality.
+Static consistency and limited-step probes, including the CPU-only recovery-height
+adaptation. This is not a behavior acceptance and says nothing about policy quality.
 
 Run from the repo root:
   mjlab_training/.venv/bin/python scripts/agent/check_multimode_cpu_sim2sim.py [--out <json>]
@@ -143,6 +151,23 @@ def main() -> None:
             f"{entry_name} != assess.{assess_name}"
     results["normal_start_mode"] = [float(v) for v in mode]
     results["normal_start_flags"] = [float(v) for v in flags]
+
+    # 5b. The airborne flag (slot 37) is not pinned to 0: from the 0.38 m stance the
+    #     wheels leave the floor, so after one full control period it must read 1
+    #     (as the training backend does), and it must clear once the wheels land.
+    airborne_env = entry.Playback()
+    airborne_env.step(lambda obs: np.zeros(6))
+    flags_airborne = airborne_env.mode_and_flags()[1]
+    assert np.array_equal(flags_airborne, np.array((0., 1., 1., 0.), dtype=np.float32)), \
+        f"airborne after one control step: {flags_airborne}"
+    for _ in range(40):
+        airborne_env.step(lambda obs: np.zeros(6))
+    flags_landed = airborne_env.mode_and_flags()[1]
+    assert np.array_equal(flags_landed, np.array((0., 1., 0., 0.), dtype=np.float32)), \
+        f"airborne after landing: {flags_landed}"
+    results["airborne_flag"] = {"reset": [float(v) for v in flags],
+                                "after_one_step": [float(v) for v in flags_airborne],
+                                "after_landing": [float(v) for v in flags_landed]}
     results["shared_tolerances"] = {"vx": entry.VX_TOL, "yaw": entry.YAW_TOL,
                                     "height": entry.HEIGHT_TOL, "tilt_deg": entry.TILT_TOL_DEG,
                                     "settle_s": entry.TRACKING_SETTLE_S}
@@ -229,8 +254,61 @@ def main() -> None:
         "robot_floor_contacts": contacts,
     }
 
+    # 8. Recovery height is geometric and cannot be replaced by world base Z.
+    height_env = entry.Playback()
+    nominal_qpos = height_env.data.qpos.copy()
+    baseline = height_env.hip_wheel_height()
+    height_env.data.qpos[:3] += (2., -3., 4.)
+    quat = np.empty(4)
+    mujoco.mju_axisAngle2Quat(quat, np.array((0., 1., 0.)), .6)
+    height_env.data.qpos[3:7] = quat
+    mujoco.mj_forward(height_env.model, height_env.data)
+    assert abs(height_env.hip_wheel_height() - baseline) < 1e-12, \
+        "hip-wheel estimate depends on root translation/rotation"
+    assert abs(height_env.metrics()["height_m"] - 4.38) < 1e-12, \
+        "world height report changed meaning"
+
+    height_env.rng = np.random.default_rng(42)
+    height_env.reset("ground")
+    folded_qpos = height_env.data.qpos.copy()
+    # One leg extended and one folded: project each leg before averaging.
+    for name in entry.RIGHT_JOINTS:
+        adr = height_env.model.joint(name).qposadr[0]
+        height_env.data.qpos[adr] = nominal_qpos[adr]
+    mujoco.mj_forward(height_env.model, height_env.data)
+    rotation = height_env.data.xmat[height_env.base_body].reshape(3, 3)
+    projected = [float(-(rotation.T @ (height_env.data.xpos[wheel]
+                                       - height_env.data.xanchor[hip]))[2])
+                 for hip, wheel in zip(height_env.hip_joints, height_env.wheel_bodies, strict=True)]
+    assert abs(projected[0] - projected[1]) > .1, "split-leg probe is not asymmetric"
+    assert abs(height_env.hip_wheel_height() - np.mean(projected)) < 1e-12
+
+    # Controlled state probes: restore each pose before stepping so height alone
+    # distinguishes folded/extended legs, without claiming a balancing rollout.
+    recovery_probes = {}
+    for label, qpos, expected in (("folded", folded_qpos, False),
+                                  ("extended", nominal_qpos, True)):
+        height_env.reset("ground")
+        for _ in range(26):
+            height_env.data.qpos[:] = qpos
+            height_env.data.qpos[:3] = (0., 0., 4.)
+            height_env.data.qvel.fill(0.)
+            mujoco.mj_forward(height_env.model, height_env.data)
+            height_env.step(lambda obs: np.zeros(6))
+            row = height_env.metrics()
+            assert not row["base_contact"] and max(map(abs, row["roll_pitch_deg"])) < 40.
+            assert (row["hip_wheel_height_m"] > entry.RECOVERY_HEIGHT_M) == expected
+        assert bool(height_env.recovered) == expected, \
+            f"{label} recovery used world base height instead of hip-wheel projection"
+        assert bool(np.array_equal(height_env.mode_and_flags()[0], entry.NORMAL_MODE)) == expected
+        recovery_probes[label] = {"world_height_m": row["height_m"],
+                                  "hip_wheel_height_m": row["hip_wheel_height_m"],
+                                  "recovered": bool(height_env.recovered)}
+    results["recovery_height"] = {"stance_m": baseline, "split_leg_projections_m": projected,
+                                   "threshold_m": entry.RECOVERY_HEIGHT_M, "probes": recovery_probes}
+
     summary = {"ok": True, "script": str(Path(__file__).resolve()),
-               "scope": "static + one-step entry-vs-training consistency; not a behavior acceptance",
+               "scope": "entry-vs-training consistency + H7 recovery-height probes; not a behavior acceptance",
                "results": results}
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     if args.out:

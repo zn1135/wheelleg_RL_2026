@@ -59,6 +59,9 @@ NORMAL_MODE = np.array((1., 0., 0., 0., 0., 0., 0.), dtype=np.float32)
 NORMAL_FLAGS = np.array((0., 1., 0., 0.), dtype=np.float32)
 GROUND_RECOVER_MODE = np.array((0., 0., 0., 1., 0., 0., 0.), dtype=np.float32)
 DT, DECIMATION = .002, 10
+WHEEL_RADIUS = .06  # multimode_mdp.WHEEL_RADIUS; clearance/airborne tests
+AIRBORNE_TIME_S = .02  # airborne flips after one clear, unloaded control period
+RECOVERY_HEIGHT_M = .20  # H7 uses mean L*cos(theta), not world base height.
 DEFAULT_COMMAND = (0., 0., .30)
 # Tracking tolerances for the motion report. They mirror the single source of truth in
 # scripts/agent/assess_multimode_tracking.py; this script must not import the training
@@ -258,6 +261,7 @@ class Playback:
         self.floor_geom = self.model.geom("sim2sim_flat_floor").id
         self.base_body = self.model.body("base_link").id
         self.wheel_bodies = tuple(self.model.body(name).id for name in ("lfwheel", "rfwheel"))
+        self.hip_joints = tuple(self.model.joint(name).id for name in ("lf0", "rf0"))
         self.reference = self.model.qpos0[self.q].astype(np.float32)
         # Observation and PD-target centre: the training action term keeps the four leg
         # motors centred on the solved closed standing pose (nominal_leg_positions =
@@ -277,6 +281,7 @@ class Playback:
         self.initial_pose = initial_pose
         self.ground_start = False
         self.recovered = False
+        self.airborne_time = 0.
         self.stable_time = 0.
         self._pose_bank = None
         self.rng = np.random.default_rng()
@@ -311,6 +316,7 @@ class Playback:
         self.last_action.fill(0.)
         self.ground_start = pose == "ground"
         self.recovered = False
+        self.airborne_time = 0.
         self.stable_time = 0.
         mujoco.mj_forward(self.model, self.data)
         residual = self._closed_chain_residual(self.model, self.data)
@@ -329,7 +335,11 @@ class Playback:
         policy_active = bool(not self.ground_start) or bool(
             np.float32(self.steps) * np.float32(DT * DECIMATION) >= np.float32(.2))
         mode = GROUND_RECOVER_MODE if self.ground_start and not self.recovered else NORMAL_MODE
-        return mode, np.array((self.ground_start, policy_active, 0., 0.), dtype=np.float32)
+        # The airborne flag (slot 37) follows multimode_mdp.MultimodeCommand.advance
+        # and is not a fixed 0 (2026-10-17 second audit); step() maintains
+        # airborne_time. step_active stays 0 on this flat-only task.
+        return mode, np.array((self.ground_start, policy_active,
+                               self.airborne_time >= AIRBORNE_TIME_S, 0.), dtype=np.float32)
 
     def observation(self) -> np.ndarray:
         rotation = np.empty(9, dtype=np.float64)
@@ -374,16 +384,38 @@ class Playback:
             raise FloatingPointError("Non-finite actor output")
         self.last_action = action.astype(np.float32, copy=True)
         torque = None
+        wheel_forces = np.zeros(2)
+        force_buffer = np.zeros(6)
         for _ in range(DECIMATION):
             torque, spring = self.controls(action)
             self.data.ctrl[self.motor_ids] = torque
             self.data.ctrl[self.spring_ids] = spring
             mujoco.mj_step(self.model, self.data)
+            substep_forces = np.zeros(2)
+            for contact_id in range(self.data.ncon):
+                contact = self.data.contact[contact_id]
+                bodies = (self.model.geom_bodyid[contact.geom1],
+                          self.model.geom_bodyid[contact.geom2])
+                for index, body in enumerate(self.wheel_bodies):
+                    if body in bodies:
+                        mujoco.mj_contactForce(self.model, self.data, contact_id,
+                                               force_buffer)
+                        substep_forces[index] += float(np.linalg.norm(force_buffer[:3]))
+            wheel_forces = np.maximum(wheel_forces, substep_forces)
         mujoco.mj_forward(self.model, self.data)
         self.steps += 1
+        # Training's airborne flag (multimode_mdp.MultimodeCommand.advance): both
+        # wheel centers clear of the flat floor by more than WHEEL_RADIUS + 2 cm
+        # with the peak wheel contact force over the control step below 5 N, held
+        # for at least one control period before the flag flips. The 2026-10-17
+        # second audit found the entry had pinned this flag to 0.
+        clear = all(self.data.xpos[body][2] > WHEEL_RADIUS + .02
+                    for body in self.wheel_bodies)
+        self.airborne_time = (self.airborne_time + DT * DECIMATION
+                              if clear and bool((wheel_forces < 5.).all()) else 0.)
         row = self.metrics()
         stable = (not row["base_contact"] and max(map(abs, row["roll_pitch_deg"])) < 40.
-                  and row["height_m"] > .20)
+                  and row["hip_wheel_height_m"] > RECOVERY_HEIGHT_M)
         self.stable_time = self.stable_time + DT * DECIMATION if stable else 0.
         self.recovered |= self.ground_start and self.stable_time >= .5
         if not np.isfinite(self.data.qpos).all() or not np.isfinite(self.data.qvel).all():
@@ -391,6 +423,21 @@ class Playback:
         if max(self.data.warning.number):
             raise FloatingPointError("MuJoCo reported a simulation warning")
         return action, torque
+
+    def hip_wheel_height(self) -> float:
+        """Mean leg-plane L*cos(theta), in the body frame as in H7's estimate.
+
+        Use each hip pivot and wheel axle, excluding the lateral axle offset.
+        World base height, wheel radius and ground contact do not enter this value.
+        """
+        rotation = self.data.xmat[self.base_body].reshape(3, 3)
+        heights = []
+        for hip, wheel in zip(self.hip_joints, self.wheel_bodies, strict=True):
+            leg = rotation.T @ (self.data.xpos[wheel] - self.data.xanchor[hip])
+            length = np.hypot(leg[0], leg[2])
+            angle = np.arctan2(leg[0], -leg[2])  # Leg angle relative to body-down.
+            heights.append(length * np.cos(angle))
+        return float(np.mean(heights))
 
     def body_velocity(self) -> tuple[np.ndarray, np.ndarray]:
         """Body-frame linear and angular velocity of base_link.
@@ -424,6 +471,7 @@ class Playback:
         linear, angular = self.body_velocity()
         return {
             "time_s": float(self.data.time), "height_m": float(self.data.qpos[2]),
+            "hip_wheel_height_m": self.hip_wheel_height(),
             "x_m": float(self.data.qpos[0]), "y_m": float(self.data.qpos[1]),
             "vx_m_s": float(linear[0]), "vy_m_s": float(linear[1]),
             "yaw_rate_rad_s": float(angular[2]),
@@ -578,7 +626,7 @@ def main() -> None:
                     f"vel vx {row['vx_m_s']:+.2f} m/s | vy {row['vy_m_s']:+.2f} m/s | "
                     f"wz {row['yaw_rate_rad_s']:+.2f} rad/s | "
                     f"|v| {np.hypot(row['vx_m_s'], row['vy_m_s']):.2f} m/s\n"
-                    f"height {row['height_m']:.3f} m\n"
+                    f"base height {row['height_m']:.3f} m | hip-wheel {row['hip_wheel_height_m']:.3f} m\n"
                     f"{TELEOP_HUD if args.teleop else HELP}", "")])
                 viewer.sync()
                 time.sleep(max(0., DT * DECIMATION - (time.monotonic() - started)))
@@ -661,6 +709,11 @@ def main() -> None:
                 "max_onnx_vs_torch_action_diff": None if evaluator is None else action_diff[0],
                 "model_asset": str(MODEL_ASSET), "model_asset_sha256": sha256(MODEL_ASSET),
                 "observation": observation_profile,
+                "recovery_height": {
+                    "quantity": "body-frame mean leg-plane L*cos(theta)",
+                    "threshold_m": RECOVERY_HEIGHT_M,
+                    "scope": "ground-start recovery completion only; contact/tilt gates retained",
+                },
                 "acceptance_after_1s": acceptance,
                 "tracking": tracking,
                 "trajectory": rows,

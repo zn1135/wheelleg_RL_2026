@@ -10,8 +10,18 @@ mjlab 串联腿只保留华南虎 multimode 一条线：39维actor／82维critic
 轮速回路增益 0.1／0，接触参数镜像训练场景的机器人 geom `priority=1` 补丁（机器人-地面滑动摩擦取训练值 0.5，非等优先级 max 的 1.0；2026-10-17 两次修正，见 [multimode 接口记录](../interfaces/chuanliantui-huananhu-multimode-replay-v1.md)）。
 导出与使用规则见 [multimode ONNX 使用说明](../onnx-huananhu-multimode-model5849.md)（当前交付模型 `model_5849`；`model_3023` 为历史基线）。它不兼容下文旧 25/125 维 H7 流程。
 
-整机 S2R1 采集的上位机策略复算与闭链 MuJoCo 离线复刻见
-[S2R1 离线对照](s2r-offline.md)。该工具不连接电机；真实数据、关节映射和初态需另行提供。
+2026-10-18起，独立CPU入口的地面起立“恢复完成”高度条件使用与H7同含义的髋轮投影均值：
+`h = (L_left*cos(theta_left) + L_right*cos(theta_right))/2`，要求 `h > 0.20 m` 连续满足0.5秒。
+每侧取髋关节轴心到轮轴心在机体XZ腿平面内的向量，腿角以机体向下为零；分别投影后取均值，
+不加轮半径，不使用世界坐标机身高度，也不在机身倾斜时改为世界竖直投影。
+报告及窗口新增 `hip_wheel_height_m`；原 `height_m` 仍为真实机身离地高度，目标高度命令、39维观测、
+跟踪／静站验收和mjlab训练不变。本次仅替换恢复的高度条件，原机身无接触与倾角小于40度条件仍保留，
+没有移植H7的完整NORMAL／RECOVER／FAILED状态机或中途恢复重触发，不能称为完整H7仿真。
+
+旧25/125维整机S2R1采集的策略复算与闭链MuJoCo离线复刻见
+[历史S2R1／HPI1说明](s2r-offline.md)。它不适用于当前H7 RL39，当前固件没有匹配旧协议。只读镜像使用
+`sim2sim/real2sim_huananhu.py`，新增196字节镜像帧与电机驱动闭链重构；软件检查通过、真实联机待确认，
+见[部署接口](../deployment-contract.md#host-debug-plan)。它不运行物理步进，也不代替sim2sim或真机控制验收。
 
 关节 USB 台架采集后的固定机身闭链对照使用 `sim2sim/fit_joint_usb.py`，数据协议及安全门见 H7 仓库 `md/joint-usb-sysid.md`。它只拟合实测力矩输入下的模型响应，不修改训练策略、部署物理极性或现有 XML。
 
@@ -244,7 +254,7 @@ python scripts/agent/check_standup_precision_rewards.py
 ```
 
 该检查不创建仿真或训练产物，不能代替正式训练、Isaac 回放和 MuJoCo 行为验收。
-续训命令见 [命令速查](../../COMMANDS.md#当前推荐022-m-站高与-005-rad-膝余量续训)：
+历史续训命令见 [命令速查](../../COMMANDS.md#前一轮022-m-站高与-005-rad-膝余量续训)：
 从 `Oct03_03-28-58_standup_action_delay_0_10ms/model_9000.pt` 额外训练 3000 轮，
 当前叠加下述推扰，使用新的 `standup_h022_knee005_push` run 名及日志目录；保留旧模型做同条件对照。
 恢复该已解锁 checkpoint 后，课程命令按当前配置切换为 0.22 m，成功高度为 0.20 m。

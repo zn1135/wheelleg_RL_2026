@@ -17,11 +17,11 @@
 
 ## 关联部署仓库
 
-- 真机部署代码已纳入 [deployment/H7_RL](deployment/H7_RL/README.md)，与训练代码使用同一 Git 仓库；原始来源为 [H7_RL](https://github.com/zn1135/H7_RL.git)，导入版本及文件哈希见 `deployment/H7_RL/SOURCE_IMPORT.json`。
+- 真机部署代码已纳入 [deployment/H7_RL](deployment/H7_RL/md/file-guide.md)，与训练代码使用同一 Git 仓库；原始来源为 [H7_RL](https://github.com/zn1135/H7_RL.git)，当前来源与同步核对见[部署同步记录](docs/interfaces/20261018-h7-model5849-deployment-sync.md)。
 - 本机代码路径由 `.env.local` 的 `H7_REPO_PATH` 提供，推荐指向本仓 `deployment/H7_RL`；仍可显式使用外部部署克隆。配置方式见 [协作指南](CONTRIBUTING.md)，公共示例见 [.env.example](.env.example)。
 - 本仓库负责强化学习训练与 MuJoCo sim2sim 验证；H7_RL 负责板端策略部署与真机控制。
 - 两人维护：用户本人负责RL训练侧，另一位协作者负责 `deployment/H7_RL/`；接口与模型交付共同核对，具体目录分工见 [协作指南](CONTRIBUTING.md#两人维护分工)。AI按本次任务范围开发，不因同仓管理擅自改动另一侧的控制代码或物理参数。
-- 涉及部署端代码时，先检查实际路径，读取 `deployment/H7_RL/AGENTS.md` 及其引用的固件规范。内置目录核对本仓分支与改动；外部克隆另核对其分支、改动及远程 URL。内置部署代码仍是旧接口，不能直接运行新 mjlab 35维实体关节策略。
+- 涉及部署端代码时，先检查实际路径，读取 [部署协作规则](deployment/H7_RL/md/AGENTS.md) 及其引用的固件规范。内置目录核对本仓分支与改动；外部克隆另核对其分支、改动及远程 URL。内置部署源码已同步model5849的39维观测／6维动作、公共遥控和平地NORMAL／RECOVER，默认大机为50 Hz推理／500 Hz控制；板端数值、真实时序、物理映射与恢复效果仍待确认，以 [H7代码总览](deployment/H7_RL/md/file-guide.md) 为准。
 
 ## 开始任务前先读
 

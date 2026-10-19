@@ -7,9 +7,9 @@
 | 仓库 | 职责 | 位置 |
 |---|---|---|
 | [Wheel-Legged-Gym](https://github.com/zn1135/wheelleg_RL_2026.git) | 训练、导出、Isaac 回放与 MuJoCo sim2sim | 当前克隆的仓库根目录 |
-| [H7_RL 部署工程](deployment/H7_RL/README.md) | 板端推理、控制与真机部署 | 本仓 `deployment/H7_RL`；原始来源 zn1135/H7_RL |
+| [H7_RL 部署工程](deployment/H7_RL/md/file-guide.md) | 板端推理、控制与真机部署 | 本仓 `deployment/H7_RL`；原始来源 zn1135/H7_RL |
 
-训练与内置部署代码统一在本仓提交，`deployment/H7_RL` 是普通目录，无嵌套 `.git` 或子模块。导入版本及逐文件哈希见 `SOURCE_IMPORT.json`。原始目录保留，已有 `.env.local` 不会自动改写；将 `H7_REPO_PATH` 填为本仓部署目录的绝对路径即可使用它。仍使用外部部署克隆时，沿用下文的跨仓版本核对和同步流程。
+训练与内置部署代码统一在本仓提交，`deployment/H7_RL` 是普通目录，无嵌套 `.git` 或子模块。当前来源及同步核对见[部署同步记录](docs/interfaces/20261018-h7-model5849-deployment-sync.md)。原始目录保留，已有 `.env.local` 不会自动改写；将 `H7_REPO_PATH` 填为本仓部署目录的绝对路径即可使用它。仍使用外部部署克隆时，沿用下文的跨仓版本核对和同步流程。
 
 首次在仓库根目录准备个人配置；已有配置时保留原文件：
 
