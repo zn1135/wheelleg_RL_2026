@@ -197,19 +197,13 @@ int main(void)
   MX_UART9_Init();
   MX_TIM6_Init();
   MX_UART8_Init();
+  MX_USART10_UART_Init();
   /* USER CODE BEGIN 2 */
-#if MACHINE_VOFA_PORT == 10u
-  MX_USART10_UART_Init(); /* Jetson串口10硬件先就绪，再启动协议RX DMA。 */
-#endif
   FDCAN_Config();
-  Jetson_Uart_Init(); /* UART RX DMA; probe only. */
   Mono_Ns_Init();   /* 单调 ns 时钟 */
-#if MACHINE_VOFA_PORT != 9u && MACHINE_VOFA_PORT != 7u && MACHINE_VOFA_PORT != 8u
+  Jetson_Uart_Init();
   DR16_Init();
-#endif /* 仅旧UART7/8/9测试保持遥控暂停；UART10恢复DR16。 */
-#if MACHINE_VOFA_PORT != 7u
   HI229_Init();
-#endif /* UART7由Jetson独占，保留IMU离线保护。 */
   Can_Bus_Init();
   // IMU_Init();       // BMI088 板载IMU (SPI2) —— 暂不使用
   Dji_Init();       // DJI电机 CAN回调注册
