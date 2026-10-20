@@ -58,6 +58,11 @@ void MX_UART9_Init(void);
 void MX_USART1_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+extern UART_HandleTypeDef huart10;
+extern DMA_HandleTypeDef hdma_usart10_rx;
+extern DMA_HandleTypeDef hdma_usart10_tx;
+void MX_USART10_UART_Init(void); /* UART10板上接口；当前仅大机选10时定义。 */
+extern DMA_HandleTypeDef hdma_uart9_tx; /* 仅UART9通信测试配置定义和使用。 */
 extern DMA_HandleTypeDef hdma_uart7_tx;
 extern DMA_HandleTypeDef hdma_uart7_rx;
 extern DMA_HandleTypeDef hdma_uart9_rx;

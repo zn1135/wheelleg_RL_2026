@@ -81,6 +81,10 @@ void FDCAN3_IT0_IRQHandler(void);
 void FDCAN3_IT1_IRQHandler(void);
 void TIM23_IRQHandler(void);
 /* USER CODE BEGIN EFP */
+void USART10_IRQHandler(void);
+void DMA2_Stream0_IRQHandler(void);
+void DMA2_Stream1_IRQHandler(void);
+void DMA1_Stream0_IRQHandler(void); /* UART9 test TX DMA; weak default on small machine. */
 
 /* USER CODE END EFP */
 

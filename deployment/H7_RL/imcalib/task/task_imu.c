@@ -32,7 +32,9 @@ void imu_task_body(void)
     const imu_cfg_t *cfg;
     feedback_sample_t received = {0u, 0u};
 
+#if MACHINE_VOFA_PORT != 7u
     HI229_Process();
+#endif /* UART7测试不解析传感器，下面继续发布离线状态。 */
     if (!HI229_Online())
     {
         next.online = 0u;

@@ -30,6 +30,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "uart_idle.h"
+#include "machine_config.h"
+#include "usart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -385,7 +387,12 @@ void OTG_HS_IRQHandler(void)
 void UART7_IRQHandler(void)
 {
   /* USER CODE BEGIN UART7_IRQn 0 */
+#if MACHINE_VOFA_PORT == 7u
+  /* 探测DMA由comm消费，UART错误和发送完成交HAL。 */
+  HAL_UART_IRQHandler(&huart7);
+#else
   UART_Idle_Isr(&huart7, &hi229_rx);
+#endif
   return;
 #if 0
   /* USER CODE END UART7_IRQn 0 */
@@ -415,7 +422,12 @@ void UART8_IRQHandler(void)
 void UART9_IRQHandler(void)
 {
   /* USER CODE BEGIN UART9_IRQn 0 */
+#if MACHINE_VOFA_PORT == 9u
+  /* UART9由Jetson探测独占；HAL处理TX完成及RX错误，不进入DR16的IDLE缓冲。 */
+  HAL_UART_IRQHandler(&huart9);
+#else
   UART_Idle_Isr(&huart9, &dbus_rx);
+#endif
   return;
 #if 0
   /* USER CODE END UART9_IRQn 0 */
@@ -468,5 +480,26 @@ void TIM23_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-
+#if MACHINE_VOFA_PORT == 10u
+/* USART10负责UART错误/发送收尾，两路DMA负责数据搬运。 */
+void USART10_IRQHandler(void)
+{
+  HAL_UART_IRQHandler(&huart10);
+}
+void DMA2_Stream0_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(&hdma_usart10_rx);
+}
+void DMA2_Stream1_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(&hdma_usart10_tx);
+}
+#endif
+#if MACHINE_VOFA_PORT == 9u
+/* UART9发送DMA完成后交HAL收尾，继续由UART9 TC中断释放发送状态。 */
+void DMA1_Stream0_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(&hdma_uart9_tx);
+}
+#endif
 /* USER CODE END 1 */
