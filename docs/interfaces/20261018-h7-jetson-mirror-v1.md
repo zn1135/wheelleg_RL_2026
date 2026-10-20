@@ -153,3 +153,12 @@ H7黑→Jetson绿（TX→RX）、H7黄←Jetson黄（RX←TX），双方电源�
 - 用户要求完成DMA错误恢复板测。工程外eIDE全量编译104个C来源及1个汇编通过，以200kHz写入／校验／复位修复版；HEX SHA256为`2a3d5a3530add09e40dc030f16dfc0bedf6564f9d4ccda97120474ade1c0bf0a`，Jetson常用脚本同步修复版并备份旧版。协议／接线／控制接口不变。
 - Jetson TX BREAK请求20ms连续注入三次，H7内存中的rx_restarts为0→1→2→3；每次错误后3秒均收到300镜像帧、探测26发／26回、超时0，DMA恢复BUSY且TC开启。实际错误恢复通过，见`artifacts/uart10-dma-recovery-20261020/error-recovery.json`、`flash.json`及`firmware-build.json`。调试连接已关闭。
 - 本次只验收BREAK诱发错误后的接收恢复；未验证任意噪声／溢出、长期稳定性、遥控／IMU和策略／电机行为，H7负责人核对仍待确认。
+
+### 2026-10-20：部署副本同步本地H7工程的独立UART10实现（未烧录）
+
+- 用户要求把本地H7工程已完成的Jetson适配同步进`deployment/H7_RL`并提交PR由训练侧复查。范围只含部署副本及配套文档；镜像／探测协议、模型、观测／动作、控制周期和物理标定均不变。
+- 与上方权威实现的结构差异：镜像发送从`Vofa_Debug_Send`移到`jetson_uart.c::Jetson_Mirror_Send`，占用UART10独立发送；VOFA回到UART8原LQR 48路布局，两者不共用端口、缓冲或发送函数。DMA由DMA2 Stream0环形RX／Stream1 NORMAL TX（USER CODE手写、ioc不含USART10）改为CubeMX生成的DMA1 Stream0环形RX、DMA2 Stream0 NORMAL TX，`CtrBoard-H7_ALL.ioc`已含USART10。
+- 协议兼容性：196字节帧、`00 00 80 7F`尾、0～47槽位、CRC16/CCITT-FALSE校验前188字节、14字节`J7P1`探测包与33～38回报槽逐字段一致，Jetson接收端`sim2sim/real2sim_huananhu.py`和`sim2sim/h7_serial.py`无需改动。
+- 编译验证：部署副本按eIDE参数在工程外全量编译链接通过，111个C源加启动汇编，FLASH 605416 B（57.74%）、DTCMRAM 8680 B、AXIRAM 48224 B、USBRAM 6720 B；`jetson_uart.c`另用Keil AC5 `--c99`单文件编译通过。
+- 未验证：未烧录、未接线、未联机；端口电平、频率、往返耗时、板端时序和长期稳定性不因本次同步重新验收，前述UART10十秒实测对应同步前的工程版本。
+- 复查：训练侧待确认；本机适配完成的是编译与协议字段核对，不代表已由训练侧复查。
