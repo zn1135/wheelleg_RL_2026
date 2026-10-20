@@ -78,6 +78,12 @@ docs/reference/
 !/deployment/H7_RL/.vscode/tasks.json
 /deployment/H7_RL/MDK-ARM/CtrBoard-H7_ALL/
 
+# H7 原版备份保留自己的编辑器入口，编译产物不入库。
+!/deployment/H7_RL_ros/.vscode/
+!/deployment/H7_RL_ros/.vscode/settings.json
+!/deployment/H7_RL_ros/.vscode/tasks.json
+/deployment/H7_RL_ros/MDK-ARM/CtrBoard-H7_ALL/
+
 # MuJoCo 每次运行自动改写的日志与数据转储
 /MUJOCO_LOG.TXT
 /MJDATA.TXT
