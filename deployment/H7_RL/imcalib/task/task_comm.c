@@ -14,6 +14,7 @@
 #include "can_bus.h"
 #include "machine_config.h"
 #include "mono_ns.h"
+#include "jetson_uart.h"
 
 #include <math.h>
 #include <string.h>
@@ -89,7 +90,9 @@ static void Remote_Control_Update(void)
     rc_command_t rc_command_temp;
     feedback_sample_t received;
 
+#if MACHINE_VOFA_PORT != 9u && MACHINE_VOFA_PORT != 7u && MACHINE_VOFA_PORT != 8u
     DR16_Process();
+#endif /* UART10恢复DR16解析；离线故障与出力门控不变。 */
     remote = DR16_Snapshot();
     received.received_ns = remote.received_ns;
     received.seen = remote.online;
@@ -213,6 +216,7 @@ void comm_task_body(void)
     motor_state_t motor_state_temp;
     leg_state_t leg_l_temp,leg_r_temp;
 
+    Jetson_Uart_Process(); /* 仅解析串口连通性探测，不发布控制动作。 */
     motor_state_temp = motor_state;
     leg_l_temp = leg_l;
     leg_r_temp = leg_r;

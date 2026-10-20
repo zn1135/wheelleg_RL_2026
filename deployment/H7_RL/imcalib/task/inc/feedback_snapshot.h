@@ -43,7 +43,7 @@ typedef struct {
     uint8_t valid; /* 在线且无故障 */
 } motor_state_t;
 
-/* TODO: 死代码 —— 以下三个类型所属元数据链无消费者，见 feedback_snapshot.c 内标记 */
+/* 镜像复用发布元数据；其余来源接收记录保留。 */
 /* 软件发布元数据：不能代替原传感器/电机样本接收时间。 */
 typedef struct {
     uint32_t sequence; /* 发布次数序号，可以回绕 */
@@ -74,7 +74,7 @@ typedef struct robot_feedback {
     rc_command_t rc;
     float height; /* 与motor/left/right同批发布的公共几何估计。 */
     uint8_t height_valid;
-    /* TODO: 死代码 —— 以下 6 个字段全工程无消费者，见 feedback_snapshot.c 内标记 */
+    /* 镜像读取imu/motor发布元数据与captured_ns；其余来源记录保留。 */
     feedback_meta_t imu_meta;
     feedback_meta_t motor_meta;
     feedback_meta_t rc_meta;

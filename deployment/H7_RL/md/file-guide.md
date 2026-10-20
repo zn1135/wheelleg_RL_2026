@@ -1,6 +1,6 @@
 # 工程代码总览
 
-2026-10-17按回退后的当前工作区源码更新。本文说明职责、调用关系和参数入口；数值以源码为准，编译成功不等于实机标定或控制效果已验证。
+2026-10-18按已同步到本仓的H7源码核对说明。本文说明职责、调用关系和参数入口；数值以源码为准，编译成功不等于实机标定或控制效果已验证。部署来源与同步结果见[部署同步记录](../../../docs/interfaces/20261018-h7-model5849-deployment-sync.md)，训练／实机接口与后续方案见[部署接口约定](../../../docs/deployment-contract.md)。
 
 ## 文档与阅读顺序
 
@@ -8,7 +8,7 @@
 
 先看`main.c → freertos.c → robot_control.c`了解启动，再看`task_comm/task_imu → feedback_snapshot → task_actuation`了解控制主链；处理RL时继续看`task_policy → rl_observation/rl_policy/rl_torque`。
 
-## 本轮修改概要
+## 当前实现概览
 
 2026-10-17在回退后按作者重新确认的方案接入model5849平地命令与倒地恢复：复用公共rc.vel/yaw/len，仅在RL观测入口限制至训练命令包线；公共高度只求两腿L*cos(theta)均值；RL实际投入状态决定NORMAL/RECOVER、ground_start、policy_active和恢复出力。保留作者生成网络、K表、自起参数、IMU与电机标定。完整软件链路已接入并通过下述软件检查，板端站立、估计准确性和恢复效果仍待验证。
 
@@ -16,7 +16,7 @@
 | --- | --- |
 | rl_types、rl_observation C/H | 内部四腿两轮，网络原始action为左右两侧顺序；唯一映射[0,1,3,4,2,5]供目标/历史观测共用；原生q/dq构造obs39，仅保留最新样本，无人为延迟 |
 | rl_policy C/H | 单float32输入39、输出6及独立I/O缓冲；保留SDK接口/返回/输出检查；作者新生成的model5849保留，外围支持平地命令和倒地恢复，板端效果待验证 |
-| rl_torque C/H、machine_config C/H | 跟随训练默认角与参考角、腿60/2及轮0.1速度环；目标与力矩分别限幅，再配对还原固件方向；不使用CPU回放的轮0.12/0.02或装配角目标 |
+| rl_torque C/H、machine_config C/H | 跟随训练默认角与参考角、腿60/2及轮0.1速度环；目标与力矩分别限幅，再配对还原固件方向；当前CPU multimode入口已同步默认角中心与轮0.1速度环，旧差异只按历史记录解释 |
 | dm、feedback_snapshot、task_comm | 新增保留原驱动标定的累计角rad，并经同一快照传到执行；旧pos_zero_rad继续供几何使用，动作停更/持续不可用分开处理 |
 | robot_control、robot_state、task_policy、task_actuation | 大机500Hz采样/PD/正常下发、50Hz推理；普通初态无保持，趴地初态保持200ms；投入/退出/失败清历史，模式切换只撤销旧动作就绪并拒绝在途推理；观测完整发布，统一输出口复查许可 |
 | air_detection、slip、leg_solver、斜坡、DM/DJI初始化 | 删除固定配置/初始参数合法性扫描及无消费者的状态字段；反馈、新运算、奇异性、公共协议/SDK边界、状态机和出力许可仍检查 |
@@ -48,7 +48,7 @@ LQR仍使用原单圈标定角解算几何、原K/增益/限矩/补偿和1kHz周
 
 ## 启动与任务主链
 
-`main`完成外设初始化后调用`FDCAN_Config`、单调时钟及遥控/IMU/电机初始化，再启动RTOS。`FDCAN_Config`会把机器宏的数据段时序套到FDCAN1/3，当前确实生效；FDCAN2仍取其初始化配置。BMI088源文件保留，主初始化未启用它，运行姿态来源为HI229。
+`main`完成外设初始化后调用`FDCAN_Config`、单调时钟及遥控/IMU/电机初始化，再启动RTOS。`FDCAN_Config`会把机器宏的数据段时序套到FDCAN1/3，当前确实生效；FDCAN2仍取其初始化配置。BMI088源文件保留，主初始化未启用它；姿态来源为HI229；当前源码已撤销UART7／8互换，UART7接HI229，Jetson改接UART10，两路接收均启用，IMU离线故障保留。
 
 | 任务入口 | 单周期职责 | 节拍来源 |
 | --- | --- | --- |
@@ -167,7 +167,9 @@ LQR_State_Update已删除无计算用途的dt参数，只检查imu.online/左右
 <a id="rl39"></a>
 ## RL39观测、推理与实体电机执行
 
-2026-10-15按作者批准方案迁移至`chuanliantui-huananhu-multimode-39-82-v1`、model3023；训练仓交付提交773f88e，导出源码记录269ba935eeb3a39fc3fedcb87b554a4f654ffcec。权威源为训练仓`docs/onnx-huananhu-multimode-model3023.md`、`docs/model-deliveries/20261015-model3023-onnx-export.md`及对应v14_observations、huananhu_action/env_cfg、model.py和版本化XML。本轮只改外部H7外围，不改训练源码和生成网络。首轮范围为平地NORMAL静站，不实现跳跃、台阶、坡地和地面恢复状态机。
+当前生成网络对应 `model_5849`，接口仍为 `chuanliantui-huananhu-multimode-39-82-v1`、单输入39／单输出6，采用50Hz策略与500Hz实体控制；已接入公共遥控和平地NORMAL／RECOVER。模型交付见[model5849说明](../../../docs/onnx-huananhu-multimode-model5849.md)，同仓同步及待验收项见[部署同步记录](../../../docs/interfaces/20261018-h7-model5849-deployment-sync.md)。
+
+2026-10-15的model3023迁移、交付提交773f88e与导出源码269ba935eeb3a39fc3fedcb87b554a4f654ffcec只解释历史初版。当前跳跃／台阶／坡地逻辑未实现，机身接触与绝对高度使用实机替代估计，不能把平地恢复接口称为完整multimode实机验收。
 
 模型位置/速度、PD目标/诊断及观测电机段采用`[lf0,lf00,rf0,rf00,lfwheel,rfwheel]`；网络原始action、action_state.a及last_action采用`[lf0,lf00,lfwheel,rf0,rf00,rfwheel]`。RL_Action_Index统一[0,1,3,4,2,5]，供PD目标与上一动作观测共用；这是通道排列，不是左右角色交换或极性变更。
 
@@ -198,7 +200,7 @@ nominal_pos是训练微蹲默认姿态在模型原生坐标下的q_nominal；ref
 
 ### 输出与启动
 
-先按唯一映射取得各实体action。腿目标`clampf(q_nominal+0.5*a,q_reference-3.14,q_reference+3.14)`；轮速目标`clip(10*a,150)`。腿力矩为`60*(target-q)-2*dq`；轮为`0.1*(target-dq)`。采用训练侧定义，不使用独立CPU回放的q_reference目标或轮0.12/0.02公式。位置误差不做最短路径环绕，PD使用当前未缩放的模型原生反馈。先按RL独立40Nm/3.9Nm裁剪，再通过相同motor_sign还原固件电机力矩，进入唯一输出口。
+先按唯一映射取得各实体action。腿目标`clampf(q_nominal+0.5*a,q_reference-3.14,q_reference+3.14)`；轮速目标`clip(10*a,150)`。腿力矩为`60*(target-q)-2*dq`；轮为`0.1*(target-dq)`。采用训练侧定义；训练仓当前CPU multimode回放已同步q_nominal目标与轮0.1速度环，旧q_reference目标／0.12/0.02公式只属于历史差异。位置误差不做最短路径环绕，PD使用当前未缩放的模型原生反馈。先按RL独立40Nm/3.9Nm裁剪，再通过相同motor_sign还原固件电机力矩，进入唯一输出口。
 
 训练腿D项是实际速度阻尼，现有pid_calc的位置式D是两拍误差差分且未除dt，目标变化也会进入D；相同Kd数值不能直接互换。当前直接计算训练公式，不维护多余PID历史或积分；若将来复用PID，必须保证P/D含义和P+D合成后的限幅顺序一致，不能先限P再叠D。RL独立限矩与公共DM/DJI限幅、MIT编码刻度分别维护。
 
@@ -279,7 +281,8 @@ RL不叠加弹簧或重力；地面LQR、自起和补偿台架走弹簧加完整
 <a id="communication"></a>
 ## 通信与输入输出
 
-DR16和HI229分别由驱动从UART IDLE/DMA快照取字节并解析；设备解析在任务内完成，UART中断/BSP只搬运和交付接收批次。[uart_idle.c](../imcalib/bsp/uart_idle.c)提供四参数初始化、ISR及统一带时间快照接口UART_Rx_Take_Timed；不需要时间时传NULL。未调用的普通Take包装、parse回调类型/字段/初始化参数和DR16空回调已清理。DMA接收缓存与发送缓存须保持M7 DCache一致性。
+当前大机源码为UART10接Jetson、UART7接HI229，UART8仅初始化、不承担业务收发；UART9的DR16初始化／接收解析已恢复，IMU／遥控离线保护保留。小机仍使用USART1通信、UART7接HI229、UART9接DR16。
+正常DR16配置与HI229分别由驱动从UART IDLE/DMA快照取字节并解析；设备解析在任务内完成，UART中断/BSP只搬运和交付接收批次。[uart_idle.c](../imcalib/bsp/uart_idle.c)提供四参数初始化、ISR及统一带时间快照接口UART_Rx_Take_Timed；不需要时间时传NULL。未调用的普通Take包装、parse回调类型/字段/初始化参数和DR16空回调已清理。DMA接收缓存与发送缓存须保持M7 DCache一致性。
 
 debug_rx按作者要求保留用于后续VOFA接收；当前只是预留实例，尚未接入初始化、中断和消费端。当前速度融合直接使用Slip_Update_Contact传入接触状态，未使用的默认接地Slip_Update包装已删除。低通/斜坡初始化与复位接口保持，气弹簧模型和补偿路径保持。
 
@@ -288,28 +291,141 @@ debug_rx按作者要求保留用于后续VOFA接收；当前只是预留实例�
 [dm.c](../imcalib/drivers/dm.c)负责MIT量化、反馈换算、极性/零点、在线/使能看门狗及报文；[dji.c](../imcalib/drivers/dji.c)负责编码器/RPM/电流反馈、减速比、轮矩到raw电流及按反馈ID选择电流槽。所有控制者输出逻辑机体量，物理输出极性在驱动边界处理一次。
 
 <a id="vofa"></a>
-## 当前VOFA与调试入口
+## 当前VOFA与只读实机镜像
 
-2026-10-18按作者要求撤销最近两轮临时诊断：删除四髋接收间隔字段与额外发布、恢复原驱动路径，关闭新增开启的周期计时（CONTROL_TIME_VOFA_ENABLE默认0），VOFA恢复下表LQR目标/分项布局，47重新为AIR。Q/R、滤波与其他已有改动保持作者当前版本；调参建议仅在对话讨论，未代为改表。
+2026-10-18按作者批准的方案，当前48路从LQR诊断切为实机镜像。后台在`Vofa_Debug_Send()`内按
+`HAL_GetTick()`经过至少10ms尝试一次，使用静态`Robot_Feedback_Read()`快照；不依赖RL投入，
+不新增任务、不改电机控制、标定或网络。原LQR/RL完整函数保留行注释，手动切回时停用当前镜像函数、
+启用原函数；Jetson镜像接收器会拒绝原LQR布局，不能同时混用两种解释。
 
-后台使用选定UART DMA直接发送48通道JustFloat；忙时跳过，没有新采样队列/独立页面管理或恢复USB电机协议。按作者要求使用源码固定赋值布局；改观测内容时手动注释旧赋值、写入新赋值。当前启用LQR状态/目标、四路输出及左轮/左虚拟髋分项，RL和旧腿部/原始连续角赋值保留注释；最后只有一次Vofa_Send调用。2026-10-18速度低通对照已按作者实测反馈撤销，仍使用原卡尔曼速度路径。
+仍使用JustFloat：48个小端float32加`00 00 80 7F`尾，每帧196字节。`Vofa_Send()`的DMA忙保护、
+缓存清理与单次发送机制不变；提交成功才增加发送序号，忙时跳过，不阻塞。当前大机源码为UART10接Jetson：
+1152000波特、8N1，源码PE3/TX、PE2/RX；HI229恢复UART7 PE8/TX、PE7/RX，921600波特。小机仍为USART1。板上接口与电平须现场确认，板载USB没有接通此协议。
+100Hz发送的理论线占用约17%，不代表测得的端到端延迟。
 
-| 固定布局 | 通道 |
+| 通道 | 镜像v1定义 |
 | --- | --- |
-| 公共 | 0在线掩码；1状态位；2故障位 |
-| 状态与目标 | 3～12=LQR状态x，13～22=目标；4为进入LQR的卡尔曼融合速度 |
-| 四路LQR输出 | 23=左轮，24=右轮，25=左虚拟髋，26=右虚拟髋，N·m；为原LQR限幅后请求 |
-| 左轮十列分项 | 27～36=u_col[0～9]，N·m |
-| 左虚拟髋十列分项 | 37～46=u_hip_col[0～9]，N·m |
-| AIR选择 | 47=air_control，0原地面控制、1选择AIR控制 |
-| 源码注释参考 | 旧腿部量、RL obs39/恢复诊断及原始连续角赋值保留注释，换布局时手动修改 |
+| 0～2 | 在线掩码、状态位、故障位；在线掩码仍为IMU/DR16/四髋/两轮的原0～7位 |
+| 3～5 | 标识7101、版本1、编译机型（0大机／1小机，Jetson首期只接受0） |
+| 6～7 | uint32发送序号的低／高16位；首个成功提交为1，按uint32回绕 |
+| 8～9 | `captured_ns/1000000`的低32位毫秒时间，拆低／高16位 |
+| 10～13 | 四髋`pos_continuous_rad`，左前／左后／右前／右后，rad |
+| 14～17 | 同顺序四髋`vel_rad_s`，rad/s |
+| 18～21 | 左／右轮`angle_total_rad`两路及`vel_rad_s`两路，轮轴侧rad／rad/s |
+| 22～28 | 公共IMU四元数wxyz、角速度xyz，后者rad/s |
+| 29 | 数据有效位：0=IMU，1～4=四髋，5～6=两轮；无效来源报文填0，不回写反馈 |
+| 30～31 | IMU／电机的软件发布年龄ms；-1未发布，超过60000ms饱和；不是物理采样年龄 |
+| 32 | 串口探测扩展版本1；旧固件为0 |
+| 33～34 | 最近合法探测序号，uint32低／高16位 |
+| 35～36 | 主机随机数原样回报，uint32低／高16位 |
+| 37～38 | 合法探测包计数，uint32低／高16位；重复探测也计数 |
+| 39～46 | 保留为0，不上传obs39／action或派生腿长 |
+| 47 | CRC16/CCITT-FALSE数值（float精确表示0～65535），校验前47float的原始188字节 |
 
-状态位仅保留原0～9，新增的模型/观测/动作/选择RL四个状态位已删除。模型就绪、推理次数和耗时从Watch的policy查看；当前CSV不发送RL观测/恢复字段。CSV行数不代表控制/策略调用次数。实际RL下发间隔用control_time_debug.output_period_us（需启用现有计时宏）；基础执行period_us为1ms，稳定RL输出应为2ms，不将二者混淆。
+CRC参数为poly=0x1021、init=0xFFFF、不反射、xorout=0；序号／时间先拆16位再转float。
+Jetson按固定196字节候选窗口、标识／版本／机型及CRC检查，扫描所有候选尾而非遇尾就截包。
+序号缺口表示未观测到已提交序列，不能直接称为CAN丢帧；重启、CRC丢弃和断连分别处理。
 
-两组分项顺序均为[s,ds,phi,dphi,thL,dthL,thR,dthR,pitch,dpitch]；例如28/38为速度项、32/42为左腿角速度项、34/44为右腿角速度项、36/46为俯仰角速度项。LQR状态/目标/输出/分项/AIR在同一短临界区复制，再退出临界区发送；不会在后台推进控制或重复求解。在线/投入/故障位来自原公共读取，退出LQR后的缓存不能当作仍在施加的力矩，分析须结合1的投入位及2的故障位。
+`Robot_Feedback_Read()`保证结构复制完整，IMU和各电机仍异步到达。发布年龄不等于传感器采样年龄，
+不将H7和Jetson的不同主机时钟直接相减作为延迟。状态位仍使用原0～9位；模型就绪／推理耗时从Watch查看。
 
-策略输入按50Hz读取最新500Hz样本，与每个PD子步的反馈时刻仍不同，不能将obs关节速度反缩放后当作同拍PD反馈。执行验证从torque_state读取同次计算的目标、位置、速度和力矩；需要CSV时调整本固定打包字段，不新增通用采样框架。所有实测结果仍待台架。
+Jetson入口为训练仓`sim2sim/real2sim_huananhu.py`，依赖`sim2sim/requirements-real2sim.txt`，
+不需要PyTorch或ROS 2。H7公共角度已经应用驱动极性／零点，轮角已经除减速比；Jetson只追加当前
+`machine_config.c`大机RL的`motor_sign/motor_zero`一次，不重复公共标定，也不从obs反缩放。
+该配置副本须与烧录固件同步交付，修改映射后不能继续使用Jetson上的旧副本。
+程序固定实测lf0/lf00、rf0/rf00解其余被动关节与弹簧，不进行物理步进；连接残差超过1mm或被动关节超出XML行程则回滚该腿。
+机身平移固定且标明非实测；IMU／腿／单轮失效只冻结相应部位并标红，连续200ms无合法新帧标STALE。
+串口仍有新帧时，软件发布年龄达到200ms、未发布或年龄非法的IMU／电机来源也冻结并标记过期。
+姿态镜像程序仍仅read、不回发命令；独立的串口探测程序见下段，策略／控制门控均未改变。
 
+2026-10-19新增双向连通性探测：`imcalib/drivers/jetson_uart.c/h`在main初始化所选UART环形RX DMA，
+comm任务每拍调用`Jetson_Uart_Process()`；不依赖IDLE中断，不新增任务。探测包为`J7P1`＋小端uint32
+序号／随机数＋uint16 CRC16/CCITT-FALSE，共14字节，CRC校验前12字节。只更新通信状态，后台在既有
+短临界区复制到33～38槽并使用原镜像CRC回报；不发布action，不改变RL／LQR／电机许可。
+RX空闲时不刷新缓存；有数据时按DMA写位置消费，跨环尾及分包保留解析状态；噪声／坏CRC逐字节找包头。
+RX只关闭HT半满中断，保留TC完成中断供HAL结束错误后的异步DMA终止；随后在comm任务重启DMA、清半包。
+调试Watch为`jetson_uart_status`的序号、随机数、合法包数、
+CRC错误数和DMA重启数。专用256字节DMA区与原`debug_rx`预留独立，后者仍未接通。
+主机探测最多10Hz且一次只等待一个回报；轮询间不得积压一整圈DMA数据，不用于高速连续输入。
+`sim2sim/h7_serial.py`仅依赖pyserial，10秒检查默认1152000／8N1；旧固件只接收、不发送探测。
+往返耗时包含后台镜像发送等待，不是策略延迟；主机读回后先检查250ms期限，再匹配回报，到期或迟到均计超时。
+断线或探测超时返回失败，不触碰电机状态。2026-10-20修复版已烧录／校验／复位，Jetson常用脚本已更新并保留旧副本。
+通过Jetson TX BREAK连续注入三次接收错误，H7的rx_restarts为0→1→2→3，每次错误后26发／26回、超时0；
+DMA已回到BUSY并保留TC。证据见`artifacts/uart10-dma-recovery-20261020/`；仅覆盖本次错误恢复，不代表长期稳定或控制行为验收。
+与VOFA／姿态镜像二选一占用同一串口。接线和可执行命令见[部署接口](../../../docs/deployment-contract.md#host-debug-plan)。
+MDK已登记新增源，eIDE源目录自动发现；本机固定builder.params若不重新生成，将漏掉新增文件，不能直接沿用旧清单。
+本轮大小机各105来源ARM GCC编译／链接通过，仅旧BMI088 packed告警；实际C解析、镜像打包与模拟串口
+双向／错包／旧固件检查通过。2026-10-19用户授权烧录并确认本次电机动力断开后，助手已更新本机固定
+builder.params的新源清单、用eIDE重新编译并实际烧录H7，日志确认Programming Finished／Verified OK／
+Resetting Target。证据见artifacts/serial-20261019/flash.json。Jetson网线SSH已登录并部署检查脚本。
+实际ttyTHS1十秒检查0帧，ttyTHS1／2各三秒原始字节均为0；Jetson单包发出14字节，H7接收仍为0。
+通过不暂停／不复位的SWD读取确认H7镜像提交计数持续增加，待核对TX／RX／GND线序；详见
+artifacts/serial-20261019/jetson-uart8-diagnostics.json。实际串口／往返时间及H7负责人核对尚未通过。
+
+接线调整后及2026-10-20双方重新上电复测，ttyTHS1十秒均收到1000个有效镜像帧、校验拒绝0，
+39个下行探测均超时。上行约100Hz已实测，下行未通过；本次只读SWD显示RX DMA启用但NDTR仍256、
+缓冲区全0，合法包及CRC错误数均0，需检查Jetson TX→H7 RX路径。证据见artifacts/serial-20261020/；
+本次未重新烧录，H7负责人核对仍待确认。
+
+2026-10-20用户要求改UART9，并确认先暂停遥控、只测通信且保留遥控离线保护。大机选择
+MACHINE_VOFA_PORT=9；UART9 USER CODE区覆盖为1152000／8N1，补空闲DMA1 Stream0用于TX及中断，
+RX沿用Stream4；UART9 IRQ交HAL，避免进入DR16未初始化的IDLE缓存。main／comm跳过DR16_Init／Process，
+DR16_Online、FAULT_RC和出力门控保留，该测试配置不能遥控出力。小机USART1通信与UART9 DR16路径不变。
+Core改动仅在USER CODE区，ioc保留基础DR16配置；后续用CubeMX生成UART9 TX DMA前须处理用户区已有
+同名句柄／IRQ，避免重复定义。正式协议检查、大小机各105来源完整ARM编译／链接和编译后端口／IRQ选择
+检查通过，证据见artifacts/serial-uart9-20261020/。用户本次确认断开电机动力后，UART9版已写入、校验并复位成功；只读SWD确认程序、UART9 DMA与引脚配置运行，遥控离线故障有效。十秒收到1000个镜像帧、校验拒绝0，下行38包均超时；用户已确认黄线接回，双向仍未通过。证据见同目录flash.json及uart9-link-1.json。板端控制时序、行为和H7负责人核对仍待确认。
+
+2026-10-20按用户要求检查Jetson DBG_UART：H7端TX／RX断开、Jetson侧短接后，ttyTCU0／115200
+原始模式回环确认LF由0A变成0D 0A，全字节序列256字节返回257字节；登录服务仅临时停止，测试后已恢复。
+现有二进制协议不能直接迁移，196字节／100Hz亦超过该口115200／8N1带宽；该次检查时H7仍为UART9／1152000，
+尚未修改编码、降频或重新烧录；随后UART7测试见下段。证据见artifacts/serial-20261020/jetson-dbg-binary-loopback.json。
+
+2026-10-20用户确认改用H7 UART7＋Jetson FUNC_UART（ttyTHS1），暂时停用HI229，只测通信。
+大机选7，USER CODE内覆盖UART7波特率为1152000、TX DMA1 Stream1为NORMAL，RX沿用Stream2环形区；
+UART7 IRQ交HAL，避免进入未初始化的HI229 IDLE缓存。main／imu任务跳过HI229初始化／解析，DR16仍暂停；
+HI229_Online／DR16_Online、FAULT_IMU／FAULT_RC和最终出力门控保留，不能用于机器人控制。
+小机USART1通信、HI229与DR16接收路径保持。协议、镜像频率、模型和物理标定未改。
+大小机各105来源ARM GCC编译／链接、现有协议检查、编译后端口／传感器调用选择检查及eIDE完整构建通过，
+仅既有BMI088 packed告警；证据见artifacts/serial-uart7-20261020/。Core生成区与本轮前字节一致。
+用户本次确认电机动力断开后，UART7版已烧录、校验并复位成功；用户确认接线完成后，FUNC_UART十秒收到1000帧、校验拒绝0，92探测全部回报、超时0，平均往返9.98ms。只读镜像确认IMU／DR16离线及对应故障位置位；证据见同目录flash.json、uart7-func-link.json和offline-protection.json。本次双向通信通过，真实控制时序、行为与H7负责人核对仍待确认。
+
+2026-10-20用户要求将H7代码改回UART8复测，Jetson继续FUNC_UART。大机选8，PE1/TX、PE0/RX，
+1152000／8N1，沿用RX DMA1 Stream5环形接收与TX Stream7单帧发送；UART7按已有条件恢复HI229接收。
+DR16继续暂停，离线故障与出力门控保留；小机路径不变。未改协议、镜像频率或物理标定。
+正式协议检查、大小机各105来源编译／链接、编译后串口／HI229／DR16调用选择及eIDE完整构建通过，
+仅既有BMI088 packed告警；证据见artifacts/serial-uart8-retest-20261020/。复测版已按用户本次断电确认及明确重烧要求写入／校验／复位成功：首次1000kHz写入出现外部复位失败，200kHz重烧成功，根因未确定。见同目录flash-attempt-1.json和flash.json；用户确认移线后正式十秒收到1000帧、校验拒绝0，92探测全部回报、超时0，平均往返9.99ms、最大10.13ms；UART8与FUNC_UART本次双向通过，证据见同目录uart8-func-link.json。之前下行失败根因仍未确定，HI229实测、控制时序／行为及H7负责人核对仍待确认。随后作者要求再次测试，同一UART8／FUNC_UART重新打开串口十秒收到1000帧、校验拒绝0，但39探测均无回报并超时；第二轮下行未通过，见同目录uart8-func-link-2.json。与首次通过结果不同，期间物理接线是否变化及根因未确认；本次未修改代码或烧录。第三轮仍为39探测无回报，第四轮恢复为十秒1000有效帧、93探测全部回报、超时0，平均往返10.00ms；证据见同目录uart8-func-link-3.json及uart8-func-link-4.json，通信稳定性仍待确认。
+
+2026-10-20用户要求UART7和UART8互换功能：大机Jetson选7，HI229_Init按该选择改用huart8／DMA1 Stream5；
+UART7为1152000／8N1，TX Stream1保持NORMAL、RX Stream2由Jetson探测轮询；UART8覆盖为921600／8N1，
+RX Stream5由HI229的IDLE缓存交接，UART8 IRQ转到UART_Idle_Isr；UART7 IRQ交HAL。
+main／imu任务恢复无条件初始化／解析HI229，不再沿用先前UART7测试版“暂停IMU”的行为。
+遥控仍暂停、离线保护保留；小机USART1通信、UART7 HI229与UART9 DR16路径不变。协议、控制频率与物理标定未改。
+正式协议检查、大小机各105来源编译／链接、编译后双串口／DMA／中断／HI229启用选择及eIDE完整构建通过，
+仅既有BMI088 packed告警；Core生成区未改，证据见artifacts/serial-uart7-uart8-swap-20261020/。
+互换版尚未烧录或硬件验证，最近烧录仍为UART8接Jetson版；HI229真实输入及H7负责人核对待确认。
+
+2026-10-20用户要求撤销尚未烧录的UART7／8互换，将Jetson链路改到H7 UART10，Jetson端仍为FUNC_UART。
+已核对上一版源码指纹后恢复互换前的HI229、UART7／8初始化及IRQ路径；HI229仍为UART7／921600，UART8无业务收发。
+大机选10；硬件名USART10，PE2/RX必须用AF4，PE3/TX必须用AF11，两脚分别初始化，依据ST DS13313表8。
+用户区MX_USART10_UART_Init配置D2PCLK2、1152000／8N1、空闲DMA2 Stream0环形RX（请求118）／Stream1单次TX（请求119），
+并补USART10、DMA2 Stream0／1中断及启动调用，先完成硬件初始化再启动Jetson协议RX。未复用或改写DMA1资源。
+Core仅修改USER CODE区；ioc仍未登记USART10，后续CubeMX启用它前须迁移用户区的句柄、初始化和IRQ，避免重定义。
+DR16仍暂停，离线保护与出力门控保留；小机USART1、UART7 HI229、UART9 DR16路径不变。协议、频率及物理标定未改。
+现有正式协议检查、大小机各105来源编译／链接、编译后端口／HI229调用及实际中断向量绑定、Core生成区字节核对、
+eIDE完整构建通过，仅既有BMI088 packed告警；证据见artifacts/serial-uart10-20261020/。UART10版尚未烧录／联机，
+按此前“先不烧录”的选择保留板上旧固件，硬件波形、真实时序及H7负责人核对待确认。
+
+2026-10-20用户要求恢复遥控：当前UART10配置重新调用DR16_Init／DR16_Process，UART9仍为100000／8E1，
+PD14/RX、DMA1 Stream4和原IDLE接收路径不变。DR16_Online、FAULT_RC及最终出力门控保留，不绕过遥控许可。
+Jetson UART10、HI229 UART7及其频率／引脚不变；此前UART7／8／9测试配置仍维持各自原暂停条件，小机路径不变。
+大小机各105来源编译／链接、编译后DR16初始化／解析／UART9 DMA与IDLE归属、离线检查调用及eIDE完整构建通过，
+仅既有BMI088 packed告警；证据见artifacts/serial-uart10-rc-20261020/。未重跑未修改的协议／模型数值检查。
+当前恢复遥控版已在用户本次断电及接线确认后写入／校验／复位成功。前两次下载器CMD_INFO失败且未进入写入，重置对应PowerDebugger TX的USB连接后200kHz下载成功；见同目录flash.json。UART10与FUNC_UART十秒收到999有效帧、校验拒绝0，93探测全部回报、超时0，平均往返9.99ms，首次双向通过，见uart10-func-link.json。真实遥控接收／模式切换／控制时序及H7负责人核对仍待确认，长期稳定性未由此证明。
+
+本轮大小机各104来源ARM GCC编译／链接通过，仅原BMI088 packed告警；eIDE清单15条不存在的历史
+虚拟文件被列入构建报告，未修改工程清单。Jetson宿主编译实际C打包代码的硬件替身检查、串口故障检查
+及96个模型姿态检查通过；这些不替代烧录、真实接收节拍、手动方向／零点／姿态和装配分支验收。
+H7负责人及真机核对状态仍为待确认。接口／命令见[部署对接](../../../docs/deployment-contract.md#host-debug-plan)。
 
 <a id="matlab-gain"></a>
 ## MATLAB增益表与模型
@@ -336,6 +452,72 @@ CubeMX的.ioc目标为MDK-ARM，eIDE另用GCC。重生成曾删除Middlewares里
 工具链路径由本机配置提供，工程不写入个人依赖路径。eIDE旧实例可能回写缓存，目录或包含路径变更后先重载，再查源码/编译清单；找不到GCC/Newlib或.NET时核对安装位置、specs、PATH与DOTNET_ROOT。GCC构建通过不代表原任务栈一定足够，USB初始化后的栈余量与节拍信号量应在台架核验。
 
 Python测试/工具和旧tests/Sysid固件已经移除，不再生成额外工程测试文件。旧测试命令、失败记录、源码指纹流程和USB/Sysid操作只保存在历史账本；当前优先使用实际工程编译、MATLAB已有检查和VOFA/Watch台架数据。
+
+<a id="terminal-flash"></a>
+### Linux终端编译与PowerDebugger烧录
+
+当前路径使用创芯工坊 **PowerDebugger TX（电脑端）＋RX（板端）**，通过OpenOCD的CMSIS-DAP接口烧录。工程目标为STM32H723VGTx，内部Flash起始地址`0x08000000`。本节适用于这套设备；PowerWriter的Windows客户端不是本流程的依赖。
+
+**准备构建参数（首次使用或工程配置变化后）**：
+
+- 本机已将当前工程的`builder.params`保存在`$HOME/.local/share/h7-rl-build/`，对象、ELF、HEX、BIN也输出到此处，不污染eIDE的`build/`增量目录。它是本机文件，不纳入Git，也不会随仓库克隆自动出现。
+- 换机器或需要重建参数时，用当前eIDE工程生成`build/CtrBoard-H7_ALL/builder.params`，复制到上述固定目录，并将JSON中的`outDir`、`dumpPath`改为该目录的实际绝对路径。核对`rootDir`指向当前`deployment/H7_RL`，`toolchainLocation`、`toolchainCfgFile`指向本机有效的GCC和eIDE模型文件。eIDE工程入口仍为`CtrBoard-H7_ALL.code-workspace`。
+- `builder.params`保存源文件列表、机型定义、包含目录及编译/链接选项，不会自动重新读取`.eide/eide.yml`。修改已有C/H文件后可直接重新编译；新增、删除源文件，移动仓库，更新eIDE安装路径，或更改机型/编译配置后必须更新参数。现有机型以`imcalib/config/machine_config.h`及实际编译宏为准，不默认替用户切换大小机。
+
+**1. 编译**（以下为2026-10-19本机已验证的目录示例；eIDE版本和.NET路径变化时按实际安装位置替换）：
+
+```bash
+DOTNET_ROOT="$HOME/.local/share/dotnet" \
+  "$HOME/.vscode/extensions/cl.eide-3.27.2/res/tools/linux/unify_builder/unify_builder" \
+  -p "$HOME/.local/share/h7-rl-build/builder.params" \
+  --rebuild
+```
+
+无需`sudo`。最后出现`build successfully`且生成下面的HEX才算编译成功；编译失败时停止，不烧录目录中残留的旧固件：
+
+```text
+$HOME/.local/share/h7-rl-build/CtrBoard-H7_ALL.hex
+```
+
+**2. 连接与烧录**：电脑插TX，板端RX与H7控制板供电，先断开电机动力。`lsusb`应能看到`ICWorkshop PowerDebugger Wireless TX`；这只证明电脑识别到TX，RX链路和目标芯片是否连通以OpenOCD输出为准。
+
+```bash
+sudo openocd \
+  -f interface/cmsis-dap.cfg \
+  -c "transport select swd" \
+  -f target/stm32h7x.cfg \
+  -c "adapter speed 1000" \
+  -c "program {$HOME/.local/share/h7-rl-build/CtrBoard-H7_ALL.hex} verify reset exit"
+```
+
+这里的`sudo`用于访问USB下载器，密码只在用户自己的终端输入。HEX自带地址，无需另填`0x08000000`；若改用BIN，必须明确加载地址。上述命令会擦除所需Flash区段、写入、校验并复位芯片。
+
+**编译＋烧录合并执行**：仅在本次已明确同意执行、并已确认电机动力断开后使用下面整段命令。`&&`保证编译返回成功后才执行烧录；密码在本机终端输入。
+
+```bash
+DOTNET_ROOT="$HOME/.local/share/dotnet" \
+  "$HOME/.vscode/extensions/cl.eide-3.27.2/res/tools/linux/unify_builder/unify_builder" \
+  -p "$HOME/.local/share/h7-rl-build/builder.params" --rebuild &&
+sudo openocd \
+  -f interface/cmsis-dap.cfg \
+  -c "transport select swd" \
+  -f target/stm32h7x.cfg \
+  -c "adapter speed 1000" \
+  -c "program {$HOME/.local/share/h7-rl-build/CtrBoard-H7_ALL.hex} verify reset exit"
+```
+
+个人“烧录”技能（`$shaolu`）已关闭自动触发，只能在用户当次明确调用或同意使用后执行；直接调用时本次范围是编译与烧录，明确说“只编译”或“只给命令”时按该限定执行。每次新的烧录任务，写板前必须提醒“请断开电机动力，保留H7和RX供电；烧录会复位控制板”，并取得本次断电确认，不沿用上次确认。等待确认时可按本次授权检查或编译，但不能连接、暂停、复位或写入目标。若用户本次请求已明确确认断电，提醒后可继续，不重复确认。助手遇到sudo需要密码时，仅在上述授权与断电确认齐备后交付合并命令，并明确烧录尚未执行，不将编译成功报告为烧录完成。
+
+成功判据为`Programming Finished`、`Verified OK`、`Resetting Target`。2026-10-19用户已回传这套TX/RX的完整成功日志：CMSIS-DAPv2、STM32H72x/73x、1MB单Bank Flash；固件写入与校验通过，随后执行复位。该记录只证明烧录成功，未证明程序运行、实际控制周期、物理标定或机器人行为通过。
+
+**定位失败阶段**：
+
+- `unable to find a matching CMSIS-DAP device`：先看`lsusb`是否识别TX，再确认命令是否具有USB访问权限；本机普通用户访问曾失败，用户以`sudo`执行后成功。不要据此直接判定H7损坏。
+- 下载器已初始化，但读不到`SWD DPIDR`或Cortex-M7：检查RX供电、TX/RX连接状态及板端SWD接线，不能只凭指示灯判断连通。
+- 写入或校验失败：保留完整日志，核对最新编译成功的固件路径及实际芯片。不自动全片擦除、改保护位、改电机标定或反复重试。
+- 日志里的`Padding image section`和区段末尾的`Adding extra erase range`是本次成功日志中出现过的写入对齐提示；仍须以最终写入/校验结果判断成功。
+
+构建器命令行用法见[eIDE作者说明](https://github.com/github0null/eide/discussions/285)；PowerDebugger与OpenOCD的配合见[PowerDebugger的VSCode＋STM32示例](https://docs.powerwriter.com/docs/next/powerdebugger_for_arm/applicationnote/makefile/)。
 
 ## 生成物与维护边界
 

@@ -1157,6 +1157,11 @@
               <FilePath>../imcalib/drivers/dr16.c</FilePath>
             </File>
             <File>
+              <FileName>jetson_uart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../imcalib/drivers/jetson_uart.c</FilePath>
+            </File>
+            <File>
               <FileName>hi229.c</FileName>
               <FileType>1</FileType>
               <FilePath>../imcalib/drivers/hi229.c</FilePath>

@@ -29,6 +29,16 @@
 
 /* USER CODE BEGIN 0 */
 #include <stdio.h>
+#include "machine_config.h"
+
+#if MACHINE_VOFA_PORT == 9u
+DMA_HandleTypeDef hdma_uart9_tx; /* UART9探测发送使用空闲DMA1 Stream0。 */
+#endif
+#if MACHINE_VOFA_PORT == 10u
+UART_HandleTypeDef huart10;
+DMA_HandleTypeDef hdma_usart10_rx;
+DMA_HandleTypeDef hdma_usart10_tx;
+#endif
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart7;
@@ -82,7 +92,14 @@ void MX_UART7_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN UART7_Init 2 */
-
+#if MACHINE_VOFA_PORT == 7u
+  /* UART7暂用于Jetson探测；HI229模式仍沿用生成的921600。 */
+  huart7.Init.BaudRate = 1152000;
+  if (HAL_UART_Init(&huart7) != HAL_OK)
+  {
+    Error_Handler();
+  }
+#endif
   /* USER CODE END UART7_Init 2 */
 
 }
@@ -168,7 +185,16 @@ void MX_UART9_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN UART9_Init 2 */
-
+#if MACHINE_VOFA_PORT == 9u
+  /* 大机UART9暂改为Jetson链路；小机仍沿用上面的DR16配置。 */
+  huart9.Init.BaudRate = 1152000;
+  huart9.Init.WordLength = UART_WORDLENGTH_8B;
+  huart9.Init.Parity = UART_PARITY_NONE;
+  if (HAL_UART_Init(&huart9) != HAL_OK)
+  {
+    Error_Handler();
+  }
+#endif
   /* USER CODE END UART9_Init 2 */
 
 }
@@ -293,7 +319,14 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     HAL_NVIC_SetPriority(UART7_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(UART7_IRQn);
   /* USER CODE BEGIN UART7_MspInit 1 */
-
+#if MACHINE_VOFA_PORT == 7u
+    /* 镜像每帧只发一次，不能沿用HI229配置中的循环TX DMA。 */
+    hdma_uart7_tx.Init.Mode = DMA_NORMAL;
+    if (HAL_DMA_Init(&hdma_uart7_tx) != HAL_OK)
+    {
+      Error_Handler();
+    }
+#endif
   /* USER CODE END UART7_MspInit 1 */
   }
   else if(uartHandle->Instance==UART8)
@@ -423,7 +456,25 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     HAL_NVIC_SetPriority(UART9_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(UART9_IRQn);
   /* USER CODE BEGIN UART9_MspInit 1 */
-
+#if MACHINE_VOFA_PORT == 9u
+    hdma_uart9_tx.Instance = DMA1_Stream0;
+    hdma_uart9_tx.Init.Request = DMA_REQUEST_UART9_TX;
+    hdma_uart9_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    hdma_uart9_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_uart9_tx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_uart9_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_uart9_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_uart9_tx.Init.Mode = DMA_NORMAL;
+    hdma_uart9_tx.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_uart9_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    if (HAL_DMA_Init(&hdma_uart9_tx) != HAL_OK)
+    {
+      Error_Handler();
+    }
+    __HAL_LINKDMA(uartHandle, hdmatx, hdma_uart9_tx);
+    HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+#endif
   /* USER CODE END UART9_MspInit 1 */
   }
   else if(uartHandle->Instance==USART1)
@@ -573,7 +624,10 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
     /* UART9 interrupt Deinit */
     HAL_NVIC_DisableIRQ(UART9_IRQn);
   /* USER CODE BEGIN UART9_MspDeInit 1 */
-
+#if MACHINE_VOFA_PORT == 9u
+    HAL_DMA_DeInit(uartHandle->hdmatx);
+    HAL_NVIC_DisableIRQ(DMA1_Stream0_IRQn);
+#endif
   /* USER CODE END UART9_MspDeInit 1 */
   }
   else if(uartHandle->Instance==USART1)
@@ -603,6 +657,94 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 }
 
 /* USER CODE BEGIN 1 */
+#if MACHINE_VOFA_PORT == 10u
+/* UART10接口：PE2/RX用AF4，PE3/TX用AF11；两脚复用编号不同。
+ * 使用空闲DMA2，保留已配置的DMA1与UART7 HI229链路。
+ */
+void MX_USART10_UART_Init(void)
+{
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART10;
+  PeriphClkInitStruct.Usart16ClockSelection = RCC_USART16910CLKSOURCE_D2PCLK2;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  __HAL_RCC_USART10_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  GPIO_InitStruct.Pin = GPIO_PIN_2;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF4_USART10;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = GPIO_PIN_3;
+  GPIO_InitStruct.Alternate = GPIO_AF11_USART10;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  hdma_usart10_rx.Instance = DMA2_Stream0;
+  hdma_usart10_rx.Init.Request = DMA_REQUEST_USART10_RX;
+  hdma_usart10_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
+  hdma_usart10_rx.Init.PeriphInc = DMA_PINC_DISABLE;
+  hdma_usart10_rx.Init.MemInc = DMA_MINC_ENABLE;
+  hdma_usart10_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+  hdma_usart10_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+  hdma_usart10_rx.Init.Mode = DMA_CIRCULAR;
+  hdma_usart10_rx.Init.Priority = DMA_PRIORITY_LOW;
+  hdma_usart10_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+  if (HAL_DMA_Init(&hdma_usart10_rx) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  __HAL_LINKDMA(&huart10, hdmarx, hdma_usart10_rx);
+
+  hdma_usart10_tx.Instance = DMA2_Stream1;
+  hdma_usart10_tx.Init.Request = DMA_REQUEST_USART10_TX;
+  hdma_usart10_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+  hdma_usart10_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+  hdma_usart10_tx.Init.MemInc = DMA_MINC_ENABLE;
+  hdma_usart10_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+  hdma_usart10_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+  hdma_usart10_tx.Init.Mode = DMA_NORMAL;
+  hdma_usart10_tx.Init.Priority = DMA_PRIORITY_LOW;
+  hdma_usart10_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+  if (HAL_DMA_Init(&hdma_usart10_tx) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  __HAL_LINKDMA(&huart10, hdmatx, hdma_usart10_tx);
+
+  huart10.Instance = USART10;
+  huart10.Init.BaudRate = 1152000;
+  huart10.Init.WordLength = UART_WORDLENGTH_8B;
+  huart10.Init.StopBits = UART_STOPBITS_1;
+  huart10.Init.Parity = UART_PARITY_NONE;
+  huart10.Init.Mode = UART_MODE_TX_RX;
+  huart10.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart10.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart10.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart10.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  huart10.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart10) != HAL_OK ||
+      HAL_UARTEx_SetTxFifoThreshold(&huart10, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK ||
+      HAL_UARTEx_SetRxFifoThreshold(&huart10, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK ||
+      HAL_UARTEx_DisableFifoMode(&huart10) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+  HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
+  HAL_NVIC_SetPriority(USART10_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(USART10_IRQn);
+}
+#endif
 int fputc(int ch, FILE *f)
 {
 	HAL_UART_Transmit(&huart7, (uint8_t *)&ch, 1, 100);

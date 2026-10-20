@@ -16,11 +16,13 @@ import os
 from pathlib import Path
 import pty
 import re
+import select
 import shutil
 import struct
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 
 import mujoco
@@ -30,6 +32,7 @@ ROOT = Path(__file__).resolve().parents[2]
 H7 = ROOT / "deployment/H7_RL"
 sys.path.insert(0, str(ROOT / "sim2sim"))
 import real2sim_huananhu as mirror
+import h7_serial as link
 
 STUB = r'''
 #ifndef MIRROR_STUB
@@ -89,6 +92,7 @@ def c_packets(directory: Path):
 #include <string.h>
 #include "robot_state.h"
 #include "''' + str(H7 / "imcalib/task/vofa_debug.c") + r'''"
+jetson_uart_status_t jetson_uart_status = {0xffffffffu, 0x12345678u, 7u, 0u, 0u};
 struct robot_t robot_state = {0,0};
 volatile uint32_t ctrl_fault = 0;
 static robot_feedback_t source;
@@ -147,7 +151,7 @@ int main(int argc,char **argv) {
 }
 ''')
     executable, data = directory / "probe", directory / "h7-frames.bin"
-    subprocess.run(["cc", "-std=c11", "-Wall", "-I", str(stub), str(probe), "-lm", "-o", str(executable)], check=True)
+    subprocess.run([os.environ.get("CC", "cc"), "-std=c11", "-Wall", "-I", str(stub), "-I", str(H7 / "imcalib/drivers"), str(probe), "-lm", "-o", str(executable)], check=True)
     subprocess.run([str(executable), str(data)], check=True)
     raw = data.read_bytes()
     frames = mirror.FrameParser().feed(raw)
@@ -161,7 +165,8 @@ int main(int argc,char **argv) {
     assert frames[2][29] == 95 and frames[2][18] == 0
     assert frames[3][29] == 93 and frames[3][10] == 0
     assert frames[4][29] == 92 and np.all(frames[4][22:29] == 0)
-    assert np.all(frames[0][32:47] == 0)
+    assert np.array_equal(frames[0][32:39], [1, 65535, 65535, 0x5678, 0x1234, 7, 0])
+    assert np.all(frames[0][39:47] == 0)
     return raw[:196], {"actual_c_frames": len(frames), "cadence_busy_wrap_invalid_sources": True,
                       "actual_sender_channel_count_and_tail": True}
 
@@ -358,6 +363,236 @@ def check_serial(raw):
             os.close(master)
 
 
+def check_probe(directory, raw):
+    """Exercise actual H7 RX code, then the pyserial checker through a PTY."""
+    stub = directory / "probe-stub"
+    stub.mkdir()
+    (stub / "Vofa_send.h").write_text(r'''
+#include <stdint.h>
+typedef struct { uint16_t counter; unsigned interrupts, state, locked; } DMA_HandleTypeDef;
+typedef struct { unsigned RxState; DMA_HandleTypeDef *hdmarx; } UART_HandleTypeDef;
+extern UART_HandleTypeDef uart;
+#define VOFA_UART (&uart)
+#define HAL_UART_STATE_BUSY_RX 1u
+#define HAL_OK 0u
+#define DMA_IT_HT 1u
+#define DMA_IT_TC 2u
+#define HAL_DMA_STATE_READY 0u
+#define HAL_DMA_STATE_BUSY 1u
+#define HAL_DMA_STATE_ABORT 2u
+#define __HAL_DMA_DISABLE_IT(dma,bit) ((dma)->interrupts &= ~(bit))
+#define __HAL_DMA_GET_COUNTER(dma) ((dma)->counter)
+unsigned HAL_UART_Receive_DMA(UART_HandleTypeDef *, uint8_t *, uint16_t);
+''')
+    (stub / "dma_cache.h").write_text(r'''
+#define DMA_CACHE_LINE_SIZE 32u
+#define Dma_Cache_Invalidate_Rx(data,size) ((void)0)
+''')
+    packet = link.encode_probe(0xffffffff, 0x12345678)
+    source = directory / "uart-probe.c"
+    source.write_text(r'''
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#include "''' + str(H7 / "imcalib/drivers/jetson_uart.c") + r'''"
+static DMA_HandleTypeDef dma;
+UART_HandleTypeDef uart = {0u, &dma};
+static uint8_t *destination;
+static uint16_t cursor;
+static uint8_t fail_start;
+unsigned HAL_UART_Receive_DMA(UART_HandleTypeDef *handle, uint8_t *data, uint16_t size) {
+    assert(size == 256 && (uintptr_t)data % 32 == 0);
+    if (fail_start || dma.state != HAL_DMA_STATE_READY || dma.locked) { return 1u; }
+    dma.state = HAL_DMA_STATE_BUSY; dma.locked = 1u;
+    dma.interrupts = DMA_IT_HT | DMA_IT_TC;
+    destination = data; cursor = 0; dma.counter = size; handle->RxState = 1u;
+    return 0u;
+}
+/* Model HAL UART blocking-error abort and DMA TC completion, including its lock.
+ * See stm32h7xx_hal_uart.c / stm32h7xx_hal_dma.c; this is not a hardware IRQ test. */
+static void rx_error(void) {
+    assert(dma.state == HAL_DMA_STATE_BUSY && dma.locked);
+    uart.RxState = 0u;
+    dma.state = HAL_DMA_STATE_ABORT;
+}
+static void dma_abort_irq(void) {
+    if ((dma.interrupts & DMA_IT_TC) && dma.state == HAL_DMA_STATE_ABORT) {
+        dma.interrupts = 0u;
+        dma.state = HAL_DMA_STATE_READY;
+        dma.locked = 0u;
+    }
+}
+static void push(const uint8_t *data, unsigned size) {
+    for (unsigned i=0; i<size; i++) {
+        destination[cursor] = data[i]; cursor = (cursor + 1u) % 256u;
+    }
+    dma.counter = 256u - cursor;
+    Jetson_Uart_Process();
+}
+int main(int argc, char **argv) {
+    const uint8_t good[14] = {''' + ",".join(str(v) for v in packet) + r'''};
+    uint8_t damaged[14], noise[250];
+    unsigned accepted;
+    int byte;
+    Jetson_Uart_Init();
+    if (argc == 2 && strcmp(argv[1], "--serve") == 0) {
+        while ((byte = getchar()) != EOF) {
+            uint8_t value = byte;
+            push(&value, 1);
+            assert(fwrite(&jetson_uart_status.sequence, 4, 1, stdout) == 1);
+            assert(fwrite(&jetson_uart_status.token, 4, 1, stdout) == 1);
+            assert(fwrite(&jetson_uart_status.received, 4, 1, stdout) == 1);
+            fflush(stdout);
+        }
+        return 0;
+    }
+    assert(Jetson_Crc16((const uint8_t *)"123456789",9) == 0x29b1);
+    for (unsigned split=1; split<14; split++) {
+        accepted = jetson_uart_status.received;
+        push(good, split); assert(jetson_uart_status.received == accepted);
+        push(good+split, 14-split); assert(jetson_uart_status.received == accepted+1);
+        assert(jetson_uart_status.sequence == 0xffffffffu);
+        assert(jetson_uart_status.token == 0x12345678u);
+    }
+    /* 跨DMA环尾、噪声、坏CRC、连续粘包和计数回绕。 */
+    memset(noise, 0x55, sizeof(noise)); push(noise, sizeof(noise));
+    memcpy(damaged, good, 14); damaged[8] ^= 1;
+    accepted = jetson_uart_status.received;
+    push(damaged, 14); assert(jetson_uart_status.received == accepted);
+    assert(jetson_uart_status.crc_errors == 1);
+    push(good, 14); push(good, 14); assert(jetson_uart_status.received == accepted+2);
+    jetson_uart_status.received = 0xffffffffu;
+    push(good,14); assert(jetson_uart_status.received == 0);
+    /* UART错误后先等待异步终止，再覆盖启动失败及半包丢弃。 */
+    push(good,7); rx_error(); Jetson_Uart_Process();
+    assert(jetson_uart_status.rx_restarts == 1);
+    assert(dma.state == HAL_DMA_STATE_ABORT && dma.locked && uart.RxState == 0u);
+    dma_abort_irq();
+    assert(dma.state == HAL_DMA_STATE_READY && !dma.locked);
+    fail_start=1; Jetson_Uart_Process();
+    assert(jetson_uart_status.rx_restarts == 2);
+    fail_start=0; Jetson_Uart_Process();
+    assert(jetson_uart_status.rx_restarts == 3);
+    assert(dma.state == HAL_DMA_STATE_BUSY && dma.locked && uart.RxState == 1u);
+    push(good+7,7); assert(jetson_uart_status.received == 0);
+    push(good,14); assert(jetson_uart_status.received == 1);
+    puts("actual H7 UART parser checks passed");
+    return 0;
+}
+''')
+    executable = directory / "uart-probe"
+    subprocess.run([os.environ.get("CC", "cc"), "-std=c11", "-Wall", "-Wextra", "-I", str(stub),
+                    str(source), "-o", str(executable)], check=True)
+    subprocess.run([str(executable)], check=True)
+
+    def session(mode):
+        master, slave = pty.openpty()
+        stopped = threading.Event()
+        board_errors = []
+        received_bytes = 0
+        process = subprocess.Popen([str(executable), "--serve"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+        def board():
+            nonlocal received_bytes
+            count = 0
+            status = (0, 0, 0)
+            corrupted = False
+            try:
+                while not stopped.is_set():
+                    if select.select([master], [], [], .005)[0]:
+                        data = os.read(master, 4096)
+                        received_bytes += len(data)
+                        if mode == "bad-first" and not corrupted:
+                            data = bytearray(data)
+                            data[0] ^= 1  # Drop a request; next valid header must resynchronise.
+                            corrupted = True
+                        process.stdin.write(data)
+                        process.stdin.flush()
+                        reply = process.stdout.read(len(data) * 12)
+                        assert len(reply) == len(data) * 12
+                        status = struct.unpack("<III", reply[-12:])
+                    values = list(struct.unpack("<48f", raw[:192]))
+                    count += 1
+                    values[6:10] = (count & 65535, count >> 16, count & 65535, count >> 16)
+                    values[32:39] = [0. if mode == "old" else 1., status[0] & 65535,
+                                    status[0] >> 16, status[1] & 65535, status[1] >> 16,
+                                    status[2] & 65535, status[2] >> 16]
+                    payload = struct.pack("<47f", *values[:47])
+                    frame = payload + struct.pack("<f", binascii.crc_hqx(payload, 0xffff)) + link.TAIL
+                    # Real serial stream fragmentation in both OS reads and writes.
+                    os.write(master, b"noise" + frame[:37])
+                    os.write(master, frame[37:])
+            except BaseException as exc:
+                board_errors.append(repr(exc))
+
+        import serial
+        worker = threading.Thread(target=board, daemon=True)
+        try:
+            with serial.Serial(os.ttyname(slave), 1152000, timeout=.01, write_timeout=.1) as connection:
+                worker.start()
+                report = link.check_link(connection, 1.1)
+        finally:
+            stopped.set()
+            worker.join(timeout=2.)
+            process.stdin.close()
+            process.wait(timeout=2.)
+            process.stdout.close()
+            os.close(master)
+            os.close(slave)
+        assert not worker.is_alive() and not board_errors, board_errors
+        if mode == "normal":
+            assert report["ok"] and report["probe_ack"] >= 5 and report["timeouts"] == 0, report
+        elif mode == "bad-first":
+            assert not report["ok"] and report["timeouts"] == 1 and report["probe_ack"] > 0, report
+        else:
+            assert not report["ok"] and report["probe_sent"] == 0 and received_bytes == 0, report
+        return report
+
+    def deadline_session(delay):
+        # A deterministic read/scheduling delay crosses the deadline in one read.
+        class Clock:
+            now = 0.
+            def monotonic(self):
+                return self.now
+
+        clock = Clock()
+
+        class Connection:
+            in_waiting = link.FRAME_BYTES
+            sequence = token = reads = 0
+            def read(self, size):
+                if self.reads:
+                    clock.now += delay
+                self.reads += 1
+                values = list(struct.unpack("<48f", raw[:192]))
+                values[6:8] = (self.reads, 0)
+                values[32:39] = (1., self.sequence & 65535, self.sequence >> 16,
+                                 self.token & 65535, self.token >> 16, 0, 0)
+                return encode(values)
+
+            def write(self, packet):
+                _, self.sequence, self.token = struct.unpack("<4sII", packet[:12])
+                return len(packet)
+
+        original_time = link.time
+        try:
+            link.time = clock
+            report = link.check_link(Connection(), 1.1)
+        finally:
+            link.time = original_time
+        assert report["probe_sent"] > 0
+        if delay < link.ACK_TIMEOUT_S:
+            assert report["ok"] and report["probe_ack"] == report["probe_sent"] and not report["timeouts"], report
+        else:
+            assert not report["ok"] and report["timeouts"] == report["probe_sent"] and not report["probe_ack"], report
+        return report
+
+    return {"actual_c_parser": "fragmentation, noise, CRC, DMA wrap/restart, uint32 wrap",
+            "dma_error_recovery": "modeled HAL ABORT/TC/READY/lock; actual driver; no hardware fault injection",
+            "pty": {mode: session(mode) for mode in ("normal", "bad-first", "old")},
+            "ack_deadline": {str(delay): deadline_session(delay) for delay in (.249, .25, .3)}}
+
+
 def build_h7(directory):
     import yaml
     config = yaml.safe_load((H7 / ".eide/eide.yml").read_text())
@@ -437,6 +672,7 @@ def main():
             raw, c_result = c_packets(Path(temporary))
             results = {"actual_h7_packer": c_result, "stream": check_stream(raw),
                        "kinematics": check_geometry(), "serial": check_serial(raw)}
+            results["bidirectional_uart"] = check_probe(Path(temporary), raw)
     if args.build_h7 or args.build_only:
         results["h7_builds"] = build_h7(args.out.parent)
     report = {"ok": True, "scope": "software and model checks; no H7 hardware/axis/branch acceptance", "results": results}
