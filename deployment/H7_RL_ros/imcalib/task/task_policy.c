@@ -14,9 +14,20 @@ void ctrl_task_init(void)
 {
     if (machine->rl.configured) { (void)RL_Policy_Init(&rl_control.policy); }
 }
+/* 所有退出路径都保留尝试结果；失败/跨模式丢弃不是成功动作发布。 */
+static void Policy_Timing_End(latency_record_t *record, uint8_t result)
+{
+    record->flags = result;
+    if (record->end_ns == 0u) { record->end_ns = Mono_Ns_Get(); }
+    Latency_Capture_Push(record);
+}
+
 /* 本地构造后完整发布；清零期间仍在途的推理不能覆盖新控制段的动作。 */
 void ctrl_task_body(void)
 {
+    latency_record_t timing = {0};
+    latency_tick_t trigger;
+    uint64_t build_started_ns, read_offset_ns;
     rl_observation_state_t observation;
     rl_observation_sample_t sample;
     rl_recovery_state_t recovery;
@@ -27,17 +38,29 @@ void ctrl_task_body(void)
     uint8_t selected;
     uint8_t sampled;
     uint8_t built;
-    if (!machine->rl.configured) { return; }
+    timing.kind = LATENCY_POLICY;
+    timing.value[3] = UINT32_MAX; /* 未执行/失败SDK不使用陈旧run_us。 */
+    timing.begin_ns = Mono_Ns_Get();
+    trigger = Latency_Tick_Read(1u);
+    timing.value[7] = trigger.sequence;
+    if (!machine->rl.configured) { Policy_Timing_End(&timing, 0u); return; }
     /* 样本缓存由高优先级执行任务推进，先在临界区复制，避免读取半更新帧。 */
     taskENTER_CRITICAL();
     selected = (uint8_t)(rc_command.online && rc_command.mode.strategy == CTRL_STRATEGY_RL);
     reset_count = action_state.reset_count;
+    timing.reset_count = reset_count;
+    timing.value[4] = mirror_policy_snapshot.sequence;
+    timing.value[5] = (uint32_t)rc_command.mode.strategy;
+    timing.value[6] = (uint32_t)rl_control.recovery.phase;
     if (selected)
     {
         recovery = rl_control.recovery;
         command = rc_command;
         sampled = RL_Observation_Read_Sample(&rl_control.observation, &sample);
         sample_tick_ms = rl_observation_sample_tick_ms;
+        timing.value[0] = latency_sample_snapshot.sequence;
+        read_offset_ns = Mono_Ns_Get() - timing.begin_ns;
+        timing.value[1] = read_offset_ns >= UINT32_MAX ? UINT32_MAX : (uint32_t)read_offset_ns;
         memcpy(observation.last_action, rl_control.observation.last_action, sizeof(observation.last_action));
     }
     else
@@ -49,13 +72,17 @@ void ctrl_task_body(void)
     if (!selected)
     {
         Action_State_Clear();
+        Policy_Timing_End(&timing, 0u);
         return;
     }
+    build_started_ns = Mono_Ns_Get();
     built = RL_Observation_Build(&observation, &machine->rl, &sample, &command, &recovery, sampled);
+    timing.value[2] = (uint32_t)((Mono_Ns_Get() - build_started_ns) / 1000u);
     taskENTER_CRITICAL();
     if (reset_count != action_state.reset_count)
     {
         taskEXIT_CRITICAL();
+        Policy_Timing_End(&timing, 3u);
         return;
     }
     memcpy(rl_control.observation.obs, observation.obs, sizeof(observation.obs));
@@ -70,8 +97,10 @@ void ctrl_task_body(void)
             Action_State_Clear();
         }
         taskEXIT_CRITICAL();
+        Policy_Timing_End(&timing, built ? 2u : 1u);
         return;
     }
+    timing.value[3] = rl_control.policy.run_us;
     /* 请求动作不反号、不全局裁剪；观测裁剪与目标裁剪由各自生成端完成。
      * 推理期间可能退出RL，发布前重查模式，防止新动作覆盖退出时的清零。 */
     taskENTER_CRITICAL();
@@ -93,7 +122,12 @@ void ctrl_task_body(void)
         mirror_policy_snapshot.published_tick_ms = (uint32_t)(Mono_Ns_Get() / 1000000u);
         mirror_policy_snapshot.run_us = rl_control.policy.run_us;
         mirror_policy_snapshot.valid = 1u;
+        latency_policy_published_ns = Mono_Ns_Get();
+        timing.correlation = mirror_policy_snapshot.sequence;
+        timing.flags = 4u;
+        timing.end_ns = latency_policy_published_ns;
     }
     /* 不匹配时直接丢弃；不能用旧推理的失败路径清掉新控制段。 */
     taskEXIT_CRITICAL();
+    Policy_Timing_End(&timing, timing.flags == 4u ? 4u : 3u);
 }

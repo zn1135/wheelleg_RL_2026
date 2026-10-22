@@ -1,0 +1,769 @@
+decimation: 10
+scene:
+  num_envs: 2048
+  env_spacing: 3.0
+  terrain:
+    init_state:
+      pos: !!python/tuple
+      - 0.0
+      - 0.0
+      - 0.0
+      rot: !!python/tuple
+      - 1.0
+      - 0.0
+      - 0.0
+      - 0.0
+      lin_vel: !!python/tuple
+      - 0.0
+      - 0.0
+      - 0.0
+      ang_vel: !!python/tuple
+      - 0.0
+      - 0.0
+      - 0.0
+      joint_pos:
+        .*: 0.0
+      joint_vel:
+        .*: 0.0
+    spec_fn: !!python/name:mjlab.entity.entity.%3Clambda%3E ''
+    articulation: null
+    sort_actuators: false
+    lights: !!python/tuple
+    - name: sun
+      body: world
+      mode: fixed
+      target: null
+      type: directional
+      castshadow: true
+      pos: !!python/tuple
+      - 0.0
+      - 0.0
+      - 1.5
+      dir: !!python/tuple
+      - 0.0
+      - 0.0
+      - -1.0
+      cutoff: 45.0
+      exponent: 10.0
+      diffuse: null
+      specular: null
+      ambient: null
+      active: true
+      attenuation: !!python/tuple
+      - 1.0
+      - 0.0
+      - 0.0
+    cameras: !!python/tuple []
+    textures: !!python/tuple
+    - name: groundplane
+      type: 2d
+      builtin: checker
+      rgb1: !!python/tuple
+      - 0.2
+      - 0.3
+      - 0.4
+      rgb2: !!python/tuple
+      - 0.1
+      - 0.2
+      - 0.3
+      width: 300
+      height: 300
+      mark: edge
+      markrgb: !!python/tuple
+      - 0.8
+      - 0.8
+      - 0.8
+      random: 0.01
+      file: null
+      cubefiles: null
+      gridsize: null
+      gridlayout: null
+      nchannel: 3
+      hflip: false
+      vflip: false
+    materials: !!python/tuple
+    - name: groundplane
+      rgba: !!python/tuple
+      - 1.0
+      - 1.0
+      - 1.0
+      - 1.0
+      texuniform: true
+      texrepeat: !!python/tuple
+      - 4.0
+      - 4.0
+      reflectance: 0.2
+      texture: groundplane
+      geom_names_expr: !!python/tuple
+      - terrain$
+    meshes: !!python/tuple []
+    geoms: !!python/tuple
+    - geom_names_expr: !!python/tuple
+      - ^terrain$
+      group: null
+      contype: null
+      conaffinity: null
+      condim: null
+      priority: null
+      friction: !!python/tuple
+      - 1.0
+      - 0.005
+      - 0.0001
+      solref: null
+      solimp: null
+      margin: null
+      gap: null
+      solmix: null
+    collisions: !!python/tuple []
+    terrain_type: plane
+    terrain_generator: null
+    env_spacing: 3.0
+    max_init_terrain_level: null
+    num_envs: 2048
+    debug_vis: false
+  entities:
+    robot:
+      init_state:
+        pos: !!python/tuple
+        - 0.0
+        - 0.0
+        - 0.38
+        rot: !!python/tuple
+        - 1.0
+        - 0.0
+        - 0.0
+        - 0.0
+        lin_vel: !!python/tuple
+        - 0.0
+        - 0.0
+        - 0.0
+        ang_vel: !!python/tuple
+        - 0.0
+        - 0.0
+        - 0.0
+        joint_pos:
+          ^lf0$: -0.6047205544565015
+          ^lf1$: -0.1
+          ^lfwheel$: 0.0
+          ^left_spring1_joint$: -0.0046716264016359865
+          ^left_spring2_joint$: -0.004754277661392026
+          ^rf0$: 0.6047205544560037
+          ^rf1$: 0.1
+          ^rfwheel$: 0.0
+          ^right_spring1_joint$: -0.004671626401986817
+          ^right_spring2_joint$: -0.004754277661366657
+          ^lf00$: 0.6083241726212976
+          ^lf01$: 0.1000000000061177
+          ^lf02$: -0.08072959108330684
+          ^lf03$: 0.09999999999830635
+          ^rf00$: -0.6083241726229305
+          ^rf01$: -0.100000000005281
+          ^rf02$: 0.08072959108283861
+          ^rf03$: -0.09999999999830585
+        joint_vel:
+          .*: 0.0
+      spec_fn: !!python/name:ct_mjlab.envs.chuanliantui.model.load_spec ''
+      articulation:
+        actuators: !!python/tuple
+        - target_names_expr: !!python/tuple
+          - lf0
+          - lf00
+          - lfwheel
+          - rf0
+          - rf00
+          - rfwheel
+          transmission_type: !!python/object/apply:mjlab.actuator.actuator.TransmissionType
+          - joint
+          armature: null
+          frictionloss: null
+          viscous_damping: null
+          delay_min_lag: 0
+          delay_max_lag: 0
+          delay_hold_prob: 0.0
+          delay_update_period: 0
+          delay_per_env_phase: true
+          command_field: effort
+        soft_joint_pos_limit_factor: 1.0
+      sort_actuators: false
+      lights: !!python/tuple []
+      cameras: !!python/tuple []
+      textures: !!python/tuple []
+      materials: !!python/tuple []
+      meshes: !!python/tuple []
+      geoms: !!python/tuple
+      - geom_names_expr: !!python/tuple
+        - .*
+        group: null
+        contype: null
+        conaffinity: null
+        condim: null
+        priority: 1
+        friction: null
+        solref: null
+        solimp: null
+        margin: null
+        gap: null
+        solmix: null
+      collisions: !!python/tuple []
+  sensors: !!python/tuple
+  - name: wheel_contact
+    primary:
+      mode: body
+      pattern: ^(lfwheel|rfwheel)$
+      entity: robot
+      exclude: !!python/tuple []
+    secondary: null
+    fields: !!python/tuple
+    - found
+    - force
+    reduce: netforce
+    num_slots: 1
+    secondary_policy: first
+    track_air_time: false
+    global_frame: false
+    history_length: 8
+    debug: false
+  - name: base_contact
+    primary:
+      mode: body
+      pattern: ^base_link$
+      entity: robot
+      exclude: !!python/tuple []
+    secondary: null
+    fields: !!python/tuple
+    - found
+    - force
+    reduce: netforce
+    num_slots: 1
+    secondary_policy: first
+    track_air_time: false
+    global_frame: false
+    history_length: 8
+    debug: false
+  - name: undesired_contact
+    primary:
+      mode: body
+      pattern: ^(base_link|[lr]f(0|1|00|01|02|03))$
+      entity: robot
+      exclude: !!python/tuple []
+    secondary: null
+    fields: !!python/tuple
+    - found
+    - force
+    reduce: netforce
+    num_slots: 1
+    secondary_policy: first
+    track_air_time: false
+    global_frame: false
+    history_length: 8
+    debug: false
+  - name: terrain_scan
+    frame:
+      type: body
+      name: base_link
+      entity: robot
+    pattern:
+      size: !!python/tuple
+      - 1.2
+      - 0.0
+      resolution: 0.2
+      direction: !!python/tuple
+      - 0.0
+      - 0.0
+      - -1.0
+    ray_alignment: yaw
+    max_distance: 2.0
+    exclude_parent_body: true
+    include_geom_groups: !!python/tuple
+    - 0
+    debug_vis: false
+    viz:
+      hit_color: !!python/tuple
+      - 0.0
+      - 1.0
+      - 0.0
+      - 0.8
+      miss_color: !!python/tuple
+      - 1.0
+      - 0.0
+      - 0.0
+      - 0.4
+      hit_sphere_color: !!python/tuple
+      - 0.0
+      - 1.0
+      - 1.0
+      - 1.0
+      hit_sphere_radius: 0.5
+      show_rays: false
+      show_normals: false
+      normal_color: !!python/tuple
+      - 1.0
+      - 1.0
+      - 0.0
+      - 1.0
+      normal_length: 5.0
+  - name: wheel_height
+    frame: !!python/tuple
+    - type: body
+      name: lfwheel
+      entity: robot
+    - type: body
+      name: rfwheel
+      entity: robot
+    pattern:
+      size: !!python/tuple
+      - 0.0
+      - 0.0
+      resolution: 0.1
+      direction: !!python/tuple
+      - 0.0
+      - 0.0
+      - -1.0
+    ray_alignment: world
+    max_distance: 2.0
+    exclude_parent_body: true
+    include_geom_groups: !!python/tuple
+    - 0
+    debug_vis: false
+    viz:
+      hit_color: !!python/tuple
+      - 0.0
+      - 1.0
+      - 0.0
+      - 0.8
+      miss_color: !!python/tuple
+      - 1.0
+      - 0.0
+      - 0.0
+      - 0.4
+      hit_sphere_color: !!python/tuple
+      - 0.0
+      - 1.0
+      - 1.0
+      - 1.0
+      hit_sphere_radius: 0.5
+      show_rays: false
+      show_normals: false
+      normal_color: !!python/tuple
+      - 1.0
+      - 1.0
+      - 0.0
+      - 1.0
+      normal_length: 5.0
+    reduction: min
+  extent: null
+  spec_fn: null
+observations:
+  actor:
+    terms:
+      proprioception:
+        func: !!python/name:ct_mjlab.envs.chuanliantui.multimode_observations.actor_observation ''
+        params:
+          cfg:
+            noise: true
+            delay: true
+            delay_seconds: !!python/tuple
+            - 0.005
+            - 0.01
+            - 0.015
+        noise: null
+        clip: null
+        scale: null
+        delay_min_lag: 0
+        delay_max_lag: 0
+        delay_per_env: true
+        delay_hold_prob: 0.0
+        delay_update_period: 0
+        delay_per_env_phase: true
+        history_length: 0
+        flatten_history_dim: true
+    concatenate_terms: true
+    concatenate_dim: -1
+    enable_corruption: false
+    history_length: null
+    flatten_history_dim: true
+    nan_policy: error
+    nan_check_per_term: true
+  critic:
+    terms:
+      proprioception:
+        func: !!python/name:ct_mjlab.envs.chuanliantui.multimode_observations.critic_observation ''
+        params:
+          cfg:
+            noise: true
+            delay: true
+            delay_seconds: !!python/tuple
+            - 0.005
+            - 0.01
+            - 0.015
+        noise: null
+        clip: null
+        scale: null
+        delay_min_lag: 0
+        delay_max_lag: 0
+        delay_per_env: true
+        delay_hold_prob: 0.0
+        delay_update_period: 0
+        delay_per_env_phase: true
+        history_length: 0
+        flatten_history_dim: true
+    concatenate_terms: true
+    concatenate_dim: -1
+    enable_corruption: false
+    history_length: null
+    flatten_history_dim: true
+    nan_policy: error
+    nan_check_per_term: true
+actions:
+  pd:
+    entity_name: robot
+    clip: null
+    leg_position_scale: 0.5
+    wheel_velocity_scale: 10.0
+    max_wheel_velocity: 150.0
+    leg_stiffness: 60.0
+    leg_damping: 2.0
+    wheel_stiffness: 0.1
+    wheel_damping: 0.0
+    standup_landing_gate: false
+    nominal_leg_positions: !!python/tuple
+    - -0.6047205544565015
+    - 0.6083241726212976
+    - 0.6047205544560037
+    - -0.6083241726229305
+    spring_force_bias_range: !!python/tuple
+    - -50.0
+    - 50.0
+    motor_randomization: true
+    standup_pushes: false
+    class_type: !!python/name:ct_mjlab.envs.chuanliantui.huananhu_action.HuananhuPdAction ''
+    nominal_leg_offset_range: !!python/tuple
+    - -0.08726646259971647
+    - 0.08726646259971647
+    randomize_delays: true
+    action_delay_choices_s: !!python/tuple
+    - 0.006
+    - 0.008
+    - 0.01
+    action_delay_s: null
+    motor_response_time_constant_s: 0.0
+    ground_start_hold_s: 0.2
+    parameter_reset_interval_steps: 720
+events:
+  huananhu_domain_randomization:
+    func: !!python/name:ct_mjlab.envs.chuanliantui.huananhu_randomization.randomize_at_startup ''
+    params: {}
+    mode: startup
+    interval_range_s: null
+    is_global_time: false
+    min_step_count_between_reset: 0
+  huananhu_reset_disturbances:
+    func: !!python/name:ct_mjlab.envs.chuanliantui.huananhu_randomization.reset_disturbances ''
+    params: {}
+    mode: reset
+    interval_range_s: null
+    is_global_time: false
+    min_step_count_between_reset: 0
+  huananhu_velocity_push:
+    func: !!python/name:ct_mjlab.envs.chuanliantui.huananhu_randomization.push_root_velocity ''
+    params:
+      linear_range: !!python/tuple
+      - -0.6
+      - 0.6
+    mode: interval
+    interval_range_s: !!python/tuple
+    - 5.0
+    - 10.0
+    is_global_time: false
+    min_step_count_between_reset: 0
+  huananhu_local_wrench:
+    func: !!python/name:ct_mjlab.envs.chuanliantui.huananhu_randomization.sample_local_wrench ''
+    params:
+      force_range: !!python/tuple
+      - -20.0
+      - 20.0
+      torque_range: !!python/tuple
+      - -2.0
+      - 2.0
+    mode: interval
+    interval_range_s: !!python/tuple
+    - 5.0
+    - 10.0
+    is_global_time: false
+    min_step_count_between_reset: 0
+  reset_pose:
+    func: !!python/name:ct_mjlab.envs.chuanliantui.multimode_mdp.reset_pose ''
+    params:
+      ground_probability: 1.0
+    mode: reset
+    interval_range_s: null
+    is_global_time: false
+    min_step_count_between_reset: 0
+  reset_observations:
+    func: !!python/name:ct_mjlab.envs.chuanliantui.multimode_observations.reset_observations ''
+    params: {}
+    mode: reset
+    interval_range_s: null
+    is_global_time: false
+    min_step_count_between_reset: 0
+seed: 42
+sim:
+  nconmax: 128
+  njmax: 2000
+  contact_sensor_maxmatch: 64
+  broadphase: null
+  broadphase_filter: null
+  ls_parallel: null
+  mujoco:
+    timestep: 0.002
+    integrator: implicitfast
+    impratio: 10.0
+    cone: elliptic
+    jacobian: auto
+    solver: newton
+    iterations: 100
+    tolerance: 1.0e-10
+    ls_iterations: 20
+    ls_tolerance: 0.01
+    ccd_iterations: 50
+    gravity: !!python/tuple
+    - 0.0
+    - 0.0
+    - -9.81
+    disableflags: !!python/tuple []
+    enableflags: !!python/tuple []
+  nan_guard:
+    enabled: false
+    buffer_size: 100
+    output_dir: /tmp/mjlab/nan_dumps
+    max_envs_to_dump: 5
+viewer:
+  origin_type: !!python/object/apply:mjlab.viewer.viewer_config.OriginType
+  - 4
+  height: 240
+  width: 320
+  enable_reflections: true
+  enable_shadows: true
+  geom_group: !!python/tuple
+  - 1
+  - 1
+  - 1
+  - 0
+  - 0
+  - 0
+  site_group: !!python/tuple
+  - 1
+  - 1
+  - 1
+  - 0
+  - 0
+  - 0
+  env_idx: 0
+  max_extra_envs: 2
+  reward_bar_max_terms: 20
+  distance: 2.0
+  elevation: -15.0
+  azimuth: 90.0
+  fovy: null
+  lookat: !!python/tuple
+  - 0.0
+  - 0.0
+  - 0.0
+  entity_name: robot
+  body_name: base_link
+episode_length_s: 20.0
+rewards:
+  termination:
+    func: &id001 !!python/name:ct_mjlab.envs.chuanliantui.huananhu_rewards.reward ''
+    params:
+      name: termination
+    weight: -200.0
+  leg_joint_acc:
+    func: *id001
+    params:
+      name: leg_joint_acc
+    weight: -5.0e-07
+  leg_joint_vel:
+    func: *id001
+    params:
+      name: leg_joint_vel
+    weight: -0.005
+  joint_torque:
+    func: *id001
+    params:
+      name: joint_torque
+    weight: -0.0001
+  wheel_acc:
+    func: *id001
+    params:
+      name: wheel_acc
+    weight: -1.0e-08
+  wheel_vel:
+    func: *id001
+    params:
+      name: wheel_vel
+    weight: -1.0e-05
+  wheel_power:
+    func: *id001
+    params:
+      name: wheel_power
+    weight: -0.0001
+  lin_vel_z:
+    func: *id001
+    params:
+      name: lin_vel_z
+    weight: -0.5
+  ang_vel_xy:
+    func: *id001
+    params:
+      name: ang_vel_xy
+    weight: -0.05
+  action_smoothness_leg:
+    func: *id001
+    params:
+      name: action_smoothness_leg
+    weight: -0.05
+  action_rate:
+    func: *id001
+    params:
+      name: action_rate
+    weight: -0.01
+  action_smoothness_wheel:
+    func: *id001
+    params:
+      name: action_smoothness_wheel
+    weight: -0.01
+  flat_orientation_y_v:
+    func: *id001
+    params:
+      name: flat_orientation_y_v
+    weight: -2.0
+  flat_orientation_y_exp:
+    func: *id001
+    params:
+      name: flat_orientation_y_exp
+    weight: 1.0
+  flat_orientation_x_v:
+    func: *id001
+    params:
+      name: flat_orientation_x_v
+    weight: -2.0
+  flat_orientation_x_exp:
+    func: *id001
+    params:
+      name: flat_orientation_x_exp
+    weight: 1.0
+  track_lin_vel_xy:
+    func: *id001
+    params:
+      name: track_lin_vel_xy
+    weight: 1.0
+  track_lin_vel_xy_square:
+    func: *id001
+    params:
+      name: track_lin_vel_xy_square
+    weight: -0.1
+  track_ang_vel_z:
+    func: *id001
+    params:
+      name: track_ang_vel_z
+    weight: 1.0
+  track_ang_vel_z_square:
+    func: *id001
+    params:
+      name: track_ang_vel_z_square
+    weight: -0.1
+  stand_still_lin_vel:
+    func: *id001
+    params:
+      name: stand_still_lin_vel
+    weight: -2.0
+  track_height_exp_tight:
+    func: *id001
+    params:
+      name: track_height_exp_tight
+    weight: 1.0
+  track_height_square:
+    func: *id001
+    params:
+      name: track_height_square
+    weight: -1.0
+  no_fork:
+    func: *id001
+    params:
+      name: no_fork
+    weight: -1.0
+  no_fork_square:
+    func: *id001
+    params:
+      name: no_fork_square
+    weight: -1.0
+  undesired_contact:
+    func: *id001
+    params:
+      name: undesired_contact
+    weight: -2.0
+  knee_limit:
+    func: *id001
+    params:
+      name: knee_limit
+    weight: -0.5
+  zero_command_hold:
+    func: &id002 !!python/name:ct_mjlab.envs.chuanliantui.multimode_rewards.reward ''
+    params:
+      name: zero_command_hold
+    weight: 3.0
+  jump_push:
+    func: *id002
+    params:
+      name: jump_push
+    weight: 1.0
+  jump_target:
+    func: *id002
+    params:
+      name: jump_target
+    weight: 2.0
+  airborne_balance:
+    func: *id002
+    params:
+      name: airborne_balance
+    weight: -0.1
+  step_height:
+    func: *id002
+    params:
+      name: step_height
+    weight: 1.0
+  stair_height:
+    func: *id002
+    params:
+      name: stair_height
+    weight: 1.0
+terminations:
+  failure:
+    func: !!python/name:ct_mjlab.envs.chuanliantui.multimode_mdp.failure ''
+    params: {}
+    time_out: false
+  time_out:
+    func: !!python/name:mjlab.envs.mdp.terminations.time_out ''
+    params: {}
+    time_out: true
+commands:
+  standup:
+    resampling_time_range: !!python/tuple
+    - 5.0
+    - 15.0
+    debug_vis: false
+    recovery_window_s: 2.0
+    zero_hold_probability: 0.3
+    ground_start_probability: 1.0
+curriculum: {}
+metrics:
+  observation_delay_ms:
+    func: !!python/name:ct_mjlab.envs.chuanliantui.multimode_observations.sample_observations ''
+    params: {}
+    per_substep: true
+    reduce: last
+recorders: {}
+is_finite_horizon: false
+auto_reset: true
+scale_rewards_by_dt: true

@@ -16,6 +16,8 @@ micro-squat targets) and the leg PD target is built around the same nominal, whi
 raw XML qpos0 stays only the soft-limit clamp centre.  Contact
 parameters mirror the training scene's robot-geom priority patch (play friction:
 0.5 sliding on robot-floor contacts).
+The measured H7 cache-to-first-PD delay is rounded to one 2 ms physics tick,
+shared with training through h7_timing.json; microsecond jitter is not simulated.
 
 Scope is flat ground.  `--cmd-vx/--cmd-yaw/--cmd-height` hold a constant command,
 so one entry point covers both the historical zero-speed 0.30 m static standing
@@ -74,7 +76,7 @@ HELP = "Home/Backspace: reset current pose | R: random ground pose | F1: pause |
 # --teleop hands the three command channels to the keyboard. The HUD string stays
 # ASCII because the MuJoCo font has no arrow glyphs; terminal prints may use them.
 # Bounds mirror the trained command envelope in docs/mjlab-chuanliantui.md:
-# body +x velocity ±1.5 m/s, yaw rate ±1.5 rad/s, target height 0.27-0.34 m.
+# body +x velocity ±1.5 m/s, yaw rate ±1.5 rad/s, target height 0.2165-0.3664 m.
 TELEOP_HUD = ("Up/Down vx +-0.1 | Left/Right yaw +-0.2 | PgUp/PgDn or ,/. height +-0.02 | "
               "Space stop | Home/Backspace reset | F1 pause")
 TELEOP_PRINT = ("↑/↓ 前进速度 ±0.1 m/s | ←/→ 偏航角速度 ±0.2 rad/s | PgUp/PgDn 或 , / . 高度 ±0.02 m | "
@@ -87,7 +89,7 @@ TELEOP_RESET_KEYS = (268, 259, 260, 261, 269)   # Home, Backspace, Insert, Delet
 TELEOP_HEIGHT_UP_KEYS = (266, 46)               # PgUp, .
 TELEOP_HEIGHT_DOWN_KEYS = (267, 44)             # PgDn, ,
 TELEOP_VX_LIMIT, TELEOP_YAW_LIMIT = 1.5, 1.5
-TELEOP_HEIGHT_MIN, TELEOP_HEIGHT_MAX = .27, .34
+TELEOP_HEIGHT_MIN, TELEOP_HEIGHT_MAX = .2165, .3664
 TELEOP_DVX, TELEOP_DYAW, TELEOP_DHEIGHT = .1, .2, .02
 LEFT_JOINTS = ("lf0", "lf1", "lfwheel", "left_spring1_joint", "left_spring2_joint",
                "lf00", "lf01", "lf02", "lf03")
@@ -249,9 +251,21 @@ def build_model(model_path: Path = MODEL_ASSET):
 
 class Playback:
     def __init__(self, initial_pose: str = "normal", command=DEFAULT_COMMAND, *, model_path: Path = MODEL_ASSET,
-                 wheel_friction_compensation=None):
+                 wheel_friction_compensation=None, motor_response_time_constant_s: float | None = None):
         self.model = build_model(model_path)
         self.data = mujoco.MjData(self.model)
+        self.h7_timing = json.loads(MODEL_ASSET.with_name("h7_timing.json").read_text())
+        if motor_response_time_constant_s is not None:
+            self.h7_timing["simulation"]["motor_response_time_constant_s"] = motor_response_time_constant_s
+        self.motor_response_time_constant_s = self.h7_timing["simulation"]["motor_response_time_constant_s"]
+        tau = self.motor_response_time_constant_s
+        if not np.isfinite(tau) or tau < 0.:
+            raise ValueError("Motor response time constant must be finite and nonnegative")
+        self._motor_response_alpha = -np.expm1(-DT / tau) if tau else 1.
+        self._motor_response_torque = np.zeros(6, dtype=np.float64)
+        self.action_delay_steps = int(np.floor(self.h7_timing["simulation"]["action_delay_s"] / DT + .5))
+        self._action_history = np.zeros((self.action_delay_steps + 1, 6), dtype=np.float32)
+        self._history_head = 0
         self.wheel_friction_compensation = wheel_friction_compensation
         self._gas_spring_force = gas_spring_force
         self._closed_chain_residual = closed_chain_residual
@@ -319,6 +333,9 @@ class Playback:
                     self.data.qpos[self.model.joint(name).qposadr[0]] = value
         self.steps = 0
         self.last_action.fill(0.)
+        self._action_history.fill(0.)
+        self._motor_response_torque.fill(0.)
+        self._history_head = 0
         self.ground_start = pose == "ground"
         self.recovered = False
         self.airborne_time = 0.
@@ -395,8 +412,19 @@ class Playback:
         wheel_forces = np.zeros(2)
         force_buffer = np.zeros(6)
         for _ in range(DECIMATION):
-            torque, spring = self.controls(action)
-            self.data.ctrl[self.motor_ids] = torque
+            self._history_head = (self._history_head + 1) % len(self._action_history)
+            self._action_history[self._history_head] = action
+            # Hold the old action for one 2 ms tick; infer/publish/first-use is one path.
+            applied = self._action_history[(self._history_head - self.action_delay_steps) % len(self._action_history)]
+            torque, spring = self.controls(applied)
+            # Candidate drive response in nominal Nm, before the XML wheel gain.
+            if self.motor_response_time_constant_s:
+                self._motor_response_torque += self._motor_response_alpha * (torque - self._motor_response_torque)
+            else:
+                self._motor_response_torque[:] = torque
+            if self.ground_start and self.steps < 10:
+                self._motor_response_torque.fill(0.)
+            self.data.ctrl[self.motor_ids] = self._motor_response_torque
             self.data.ctrl[self.spring_ids] = spring
             mujoco.mj_step(self.model, self.data)
             substep_forces = np.zeros(2)
@@ -423,7 +451,7 @@ class Playback:
                               if clear and bool((wheel_forces < 5.).all()) else 0.)
         row = self.metrics()
         stable = (not row["base_contact"] and max(map(abs, row["roll_pitch_deg"])) < 40.
-                  and row["hip_wheel_height_m"] > RECOVERY_HEIGHT_M)
+                  and row["hip_wheel_height_m"] > self.recovery_height_threshold())
         self.stable_time = self.stable_time + DT * DECIMATION if stable else 0.
         self.recovered |= self.ground_start and self.stable_time >= .5
         if not np.isfinite(self.data.qpos).all() or not np.isfinite(self.data.qvel).all():
@@ -431,6 +459,13 @@ class Playback:
         if max(self.data.warning.number):
             raise FloatingPointError("MuJoCo reported a simulation warning")
         return action, torque
+
+    def recovery_height_threshold(self) -> float:
+        # Convert the low base-height target to vertical hip-wheel projection.
+        # Retain the historical 0.20 m threshold for the original command band.
+        hip_z = float(np.mean(self.model.body_pos[
+            self.model.jnt_bodyid[list(self.hip_joints)], 2]))
+        return min(RECOVERY_HEIGHT_M, float(self.command[2]) - WHEEL_RADIUS + hip_z - .01)
 
     def hip_wheel_height(self) -> float:
         """Mean leg-plane L*cos(theta), in the body frame as in H7's estimate.
@@ -723,6 +758,7 @@ def main() -> None:
             args.report.write_text(json.dumps({
                 "backend": "independent-native-mujoco-cpu", "completed": completed,
                 "seconds": args.seconds, "physics_dt_s": DT, "control_dt_s": DT * DECIMATION,
+                "h7_timing": env.h7_timing,
                 "checkpoint": str(args.checkpoint), "checkpoint_sha256": sha256(args.checkpoint),
                 "initial_pose": args.initial_pose,
                 "controller": "pytorch" if evaluator is None else "onnx-reference",

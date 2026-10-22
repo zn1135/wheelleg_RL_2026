@@ -1,19 +1,198 @@
 # 常用命令速查
 
-串联腿 mjlab 只保留华南虎 multimode（39/82 维）一条训练线，基线 `model_3023.pt`。安装、检查、训练／TensorBoard、回放、地面起立评估和 ONNX 导出命令见 [mjlab 命令](docs/mjlab-chuanliantui.md#可执行命令)；独立 CPU MuJoCo sim2sim 见 [ONNX 使用说明](docs/onnx-huananhu-multimode-model5849.md)。39 维模型不兼容下文旧 25/125 维 H7 命令。
+2026-10-22 更新。除明确标注“Jetson端”的步骤外，均在电脑端的仓库根目录执行。模型采纳状态与实验结论见[项目实验记录顶部](docs/ai/project-log.md)，本页只维护命令。
 
-H7固件的Linux终端编译与创芯工坊PowerDebugger烧录，见[终端烧录步骤](deployment/H7_RL/md/file-guide.md#terminal-flash)。该流程使用ARM GCC、eIDE构建器和OpenOCD，不使用下文Isaac环境。
+| 要做什么 | 入口 |
+|---|---|
+| 当前串联腿训练、回放、评估与导出 | [mjlab 主线](#mjlab-当前串联腿主线) |
+| Jetson连接、实采、实测姿态回放 | [Jetson操作](#jetson操作连接录制与回放) |
+| 原UART与USB工程的选择 | [部署目录说明](deployment/README.md) |
+| 固件编译与烧录 | 所选工程的[UART说明](deployment/H7_RL/md/file-guide.md#terminal-flash)或[USB说明](deployment/H7_RL_ros/md/file-guide.md#terminal-flash) |
+| Isaac历史模型与旧检查脚本 | [Isaac旧环境准备](#isaac旧环境准备) |
 
-## Jetson只读USB采集连接
+## mjlab 当前串联腿主线
 
-本机用户名、SSH地址、Jetson项目目录和H7 USB设备保存在Git忽略的 `.env.local`，示例字段见 `.env.example`。`imca`是当前Jetson用户名，不是本机已配置的SSH主机别名；实际地址以本机配置为准。新终端先加载，再检查身份与设备：
+使用 `mjlab_training/.venv`（Python 3.12），入口为 `scripts/mjlab.sh`。actor输入39维、critic输入82维、动作6维；物理／控制500 Hz、策略50 Hz。actor负责根据观测产生动作，critic仅在训练中估计状态的收益。与下文旧串联腿25／125维模型不兼容，mjlab参数使用连字符，例如 `--num-envs`，不要套用Isaac的 `--num_envs`。
+
+### 选择模型与检查环境
+
+以下用项目基线演示；测试其他模型时修改 `ct_checkpoint`，新终端需重新设置。运行使用当前共享XML，不等于重现该模型训练时的物理配置；对应来源见[共享XML记录](docs/diagnostics/20261021-shared-huananhu-xml.md)。
+
+```bash
+ct_checkpoint="artifacts/multimode-v1-replay-20261014/models/model_3023.pt"
+test -f "$ct_checkpoint"
+scripts/mjlab.sh check --checkpoint "$ct_checkpoint" --num-envs 2 --steps 16
+```
+
+成功判据：退出码0，输出actor形状 `[2,39]`、critic形状 `[2,82]`、动作维数6，无非有限值。此项只检查接口和有限步数值。
+
+已有环境无需重新安装；首次配置见[mjlab说明](docs/mjlab-chuanliantui.md#可执行命令)。
+
+### 训练与续训
+
+以下轮数仅为命令示例，实际使用本次已确定的训练预算。两条训练命令择一执行，脚本默认不创建可视窗口，无需 `--headless`。若修改初始位置或复位分布，先执行 `scripts/mjlab.sh play --num-envs 20` 观察初态。
+
+```bash
+# 从零训练。
+scripts/mjlab.sh train --num-envs 4096 --iterations 3000 --run-name multimode-new
+# 从选定checkpoint续训；--iterations是本次新增轮数。
+scripts/mjlab.sh train --num-envs 2048 --iterations 300 --run-name multimode-resume \
+  --resume "$ct_checkpoint"
+```
+
+另一电脑终端在仓库根目录监控：
+
+```bash
+mjlab_training/.venv/bin/python -m tensorboard.main \
+  --logdir logs/mjlab/chuanliantui_huananhu_multimode_v1 --port 8080
+```
+
+成功判据：终端打印新的 `Training output` 目录，目录内生成 `params/`、TensorBoard事件及checkpoint；监控页面出现训练曲线。旧模型与日志保留。
+
+### 可视回放
+
+```bash
+scripts/mjlab.sh play --checkpoint "$ct_checkpoint" --num-envs 1
+# 手动每5秒击倒已站稳的机器人，观察恢复。
+scripts/mjlab.sh play --checkpoint "$ct_checkpoint" --num-envs 1 --knockdown-every 5
+# 无桌面时使用网页查看器，8091避开TensorBoard的8080。
+scripts/mjlab.sh play --checkpoint "$ct_checkpoint" --num-envs 4 \
+  --viewer viser --viser-port 8091
+```
+
+成功判据：viewer显示策略动作；原生窗口左上角CMD实时显示当前选中环境的前进速度(m/s)、偏航角速度(rad/s)和目标高度(m)；击倒回放能观察到恢复过程。play关闭随机化及观测噪声/延迟，保留实测校准的一拍2 ms动作等待，不等于训练配置下的验收。
+
+### 地面起立评估与跟踪测量
+
+```bash
+# 每次创建新结果目录，避免覆盖历史产物。
+ct_eval_dir="$(mktemp -d artifacts/multimode-eval-XXXXXX)"
+scripts/mjlab.sh eval --checkpoint "$ct_checkpoint" --num-envs 64 --seeds 42 \
+  --start-mode force --terrain flat --steps 1000 --output "$ct_eval_dir/standup.json"
+mjlab_training/.venv/bin/python scripts/agent/assess_multimode_tracking.py \
+  --checkpoint "$ct_checkpoint" --output "$ct_eval_dir/tracking.json"
+```
+
+成功判据：生成JSON报告，分别查看起立成功／存活计数与速度／偏航／高度跟踪误差；命令执行完毕不代表行为全部通过。最终双轮平衡另按[平衡验收](docs/interfaces/chuanliantui-wheel-balance-acceptance-v2.md)执行，跟踪按[跟踪测量标准](docs/interfaces/chuanliantui-huananhu-multimode-tracking-v1.md)判读，两者互不替代。完整击倒验收命令见[mjlab说明](docs/mjlab-chuanliantui.md#可执行命令)。
+
+### ONNX导出与独立CPU回放
+
+ONNX是保存策略网络的文件格式；当前模型固定输入39维、输出6维。使用通用导出入口 `scripts/mjlab.sh export`；旧 `scripts/export_huananhu_multimode_onnx.py` 只适用于model_3023。
+
+```bash
+ct_export_dir="$(mktemp -d artifacts/multimode-export-XXXXXX)"
+scripts/mjlab.sh export --checkpoint "$ct_checkpoint" \
+  --output "$ct_export_dir/policy.onnx" --opset 13
+# 相同checkpoint配对其刚导出的ONNX，固定零命令测20秒。
+mjlab_training/.venv/bin/python sim2sim/mj_sim2sim_huananhu_multimode.py \
+  --checkpoint "$ct_checkpoint" --onnx "$ct_export_dir/policy.onnx" \
+  --cmd-vx 0 --cmd-yaw 0 --cmd-height 0.27 --seconds 20 \
+  --report "$ct_export_dir/cpu-normal.json"
+```
+
+成功判据：生成ONNX、`*_reference_vectors.npz`、`*_export.json`，导出数值检查通过；CPU报告查看 `passed` 和各项误差。图外的观测构造、PD与电机映射仍需单独核对。
+
+看地面起立时追加 `--initial-pose ground` 并使用新的报告名；可视回放追加 `--render`。键盘遥操作使用 `--render --teleop --seconds 0`，同时去掉 `--report`，因为变化命令不能用于固定命令测量。CPU回放默认读取当前共享XML，历史模型验收需配套当时资产；详细定义见[ONNX使用说明](docs/onnx-huananhu-multimode-model5849.md)。
+
+## Jetson操作：连接、录制与回放
+
+当前Jetson只读接收H7反馈，不发送策略动作或电机指令。下面分别标明电脑端和Jetson端；Jetson项目为 `~/real2sim`，使用其 `.venv/bin/python`。2026-10-22已核对Jetson实际脚本的 `--help`；当前不支持 `--firmware-manifest` 或 `--warmup`，不要在下列Jetson命令中加入这两个参数。
+
+<a id="jetson只读usb采集连接"></a>
+
+### 电脑端：连接Jetson
+
+在电脑的本项目根目录运行。本机用户名、SSH地址、Jetson项目目录和H7 USB设备保存在Git忽略的 `.env.local`，字段见 `.env.example`。`imca`是当前Jetson用户名；SSH连接使用配置中的 `JETSON_SSH_TARGET`：
 
 ```bash
 source ./.env.local
 ssh -o BatchMode=yes -o StrictHostKeyChecking=yes "$JETSON_SSH_TARGET" 'id -un; hostname; ls -l /dev/serial/by-id'
+# 进入Jetson终端；后续“Jetson端”命令也可直接在Jetson本机终端运行。
+ssh "$JETSON_SSH_TARGET"
 ```
 
-成功判据：用户名与配置相符，且出现STM32 Virtual ComPort的by-id设备；不能用PowerDebugger的CDC口代替H7数据口。只允许一个接收进程占用H7 USB。完整输出固件、采集命令、离线检查和本次实测结果见[完整输出接口](docs/interfaces/20261021-h7-output-capture-v1.md)。SSH密钥或密码不写入项目。
+成功判据：用户名正确，且列出STM32 Virtual ComPort设备；H7数据口不是PowerDebugger的CDC口。SSH密钥或密码不写入项目。
+
+### Jetson端：准备USB设备与实时画面
+
+```bash
+cd ~/real2sim
+ls -l /dev/serial/by-id/
+# 取H7的稳定设备路径；应只输出一个实际存在的STM32 USB口。
+h7_usb_port="$(ls /dev/serial/by-id/*STM32_Virtual_ComPort*-if00)"
+printf '%s\n' "$h7_usb_port"
+fuser "$h7_usb_port"
+```
+
+`fuser`没有输出表示当前没有接收进程占用；有进程时先在其终端按Ctrl+C结束。每个新Jetson终端重新设置 `h7_usb_port`，只开一个USB接收进程。
+
+```bash
+# Jetson本机桌面：显示实机姿态，Ctrl+C或关窗结束。
+.venv/bin/python sim2sim/real2sim_huananhu.py --port "$h7_usb_port"
+```
+
+成功判据：窗口姿态随实机变化，来源不持续显示STALE（数据过期）。屏幕位置固定，不表示实测位移。普通SSH终端采用下面的无窗口录制；开画面的命令在Jetson本机桌面执行。
+
+### Jetson端：录制120秒实机RL数据
+
+先结束上面的实时显示进程，再在同一Jetson终端运行：
+
+```bash
+rl_record_dir="artifacts/model6848-real-rl-$(date +%Y%m%d-%H%M%S)"
+printf '本次录制目录：%s\n' "$rl_record_dir"
+.venv/bin/python -u sim2sim/real2sim_huananhu.py \
+  --port "$h7_usb_port" \
+  --record "$rl_record_dir" \
+  --headless --seconds 120
+```
+
+成功判据：会话目录生成 `stream.jsonl` 和 `meta.json`，正常结束后 `meta.json` 中 `complete` 为 `true`。录制启动不会自动投入RL；是否投入以遥控档位和记录中的实际投入状态为准。USB断开后应另开新会话，保留中断段，不手工改成完整记录。
+
+当前 `deployment/H7_RL_ros` 遥控档位如下；轮矩测试独占期间的切档另受台架状态机约束。
+
+| 左拨杆／右拨杆 | H7请求的模式 |
+|---|---|
+| 左下／右下 | 禁用 |
+| 左上／右下 | 选择RL，不投入出力 |
+| 左上／右中 | 投入RL，实际出力还受反馈和许可条件约束 |
+| 左上／右上 | 轮矩脉冲测试档，不是RL投入档 |
+
+### Jetson端：回放录制
+
+在Jetson本机桌面、同一终端中回放刚录的会话；回放不占用USB：
+
+```bash
+cd ~/real2sim
+.venv/bin/python sim2sim/real2sim_huananhu.py --replay "$rl_record_dir"
+```
+
+新终端中先列出会话，再把所选目录赋给变量：
+
+```bash
+cd ~/real2sim
+ls -dt artifacts/model6848-real-rl-*/
+rl_record_dir="artifacts/<要回放的会话目录>"
+.venv/bin/python sim2sim/real2sim_huananhu.py --replay "$rl_record_dir"
+# 普通SSH下只检查回放，不开窗口。
+.venv/bin/python sim2sim/real2sim_huananhu.py --replay "$rl_record_dir" --headless
+```
+
+列表按目录修改时间排序，不保证第一项就是最近开始录制的会话。成功判据：能够读完整会话，画面按录制时间变化；这是实测姿态重放，不是MuJoCo自由积分预测。
+
+### 电脑端：取回录制并生成CSV和曲线
+
+回到电脑的本项目根目录；把 `rl_session_name` 换成Jetson上实际的会话名：
+
+```bash
+source ./.env.local
+rl_session_name="<实际会话名，例如model6848-real-rl-YYYYMMDD-HHMMSS>"
+rl_local_dir="artifacts/jetson-import-$(date +%Y%m%d-%H%M%S)/$rl_session_name"
+mkdir -p "$rl_local_dir"
+rsync -a "$JETSON_SSH_TARGET:$JETSON_PROJECT_DIR/artifacts/$rl_session_name/" "$rl_local_dir/"
+mjlab_training/.venv/bin/python sim2sim/real2sim_huananhu.py --analyze "$rl_local_dir"
+```
+
+成功判据：本地会话的 `analysis/` 下生成 `trajectory.csv`、`report.json` 和 `signals.png`。分析会核对录制所用模型及机器配置哈希；缺少对应版本时补齐原版本，不跳过核对。完整控制输出的采集与检查另见[完整输出接口](docs/interfaces/20261021-h7-output-capture-v1.md)。
 
 ## Isaac旧环境准备
 
@@ -57,7 +236,7 @@ python wheel_legged_gym/scripts/train.py --task=mini_wheel_legged --headless \
     --resume --load_run Jul20_12-42-47_
 
 # 常用可选参数
-#   --max_iterations 2000     总迭代数（覆盖 config）
+#   --max_iterations 2000     本次新增迭代数（覆盖 config），不是续训后的总轮数
 #   --num_envs 4096           并行环境数（显存不够就调小）
 #   --checkpoint 6900         配合 --resume，指定从 model_6900.pt 续训（默认最新）
 #   --run_name xxx            给本次 run 起名，方便区分日志目录
@@ -84,7 +263,7 @@ python wheel_legged_gym/scripts/play.py --task=mini_wheel_legged \
 
 训练和 sim2sim 之间先用 play 确认策略在 Isaac 里本身是好的，排除"训练没练好"和"sim2sim 有 gap"两种问题的混淆。
 
-## Sim2Sim（MuJoCo 部署验证）
+## Sim2Sim（Isaac历史模型的MuJoCo验证）
 
 用完整 checkpoint `model_*.pt`（含 encoder），不能用导出的 `policy_1.pt`。
 
@@ -119,18 +298,15 @@ python sim2sim/mj_sim2sim.py --render --teleop \
     --checkpoint logs/mini_wheel_legged/Jul21_14-09-24_/model_4000.pt --init_height 0.30
 ```
 
-### chuanliantui
+### chuanliantui（Isaac旧25维模型）
 
-#### 当前推荐：加入每侧 150 N 气弹簧后续训
+本节仅用于旧模型维护：actor观测25维、历史125维，物理／PD 500 Hz、策略100 Hz。当前mjlab主线使用上文39维入口。旧脚本的H7闭链适配是25维控制对照，不能当成当前39维固件的验收。
 
-`chuanliantui` 与 `chuanliantui_standup` 现在默认每侧恒定伸张力 150 N。
-安装点沿用 CAD 闭链，每个 2 ms 子步按当前膝角计算力矩，以上下连杆等大反向
-扭矩施加，独立于电机限幅、动作延迟和推扰门控。串联 MuJoCo 代理同步相同弹簧。
-这是支撑力的对齐，不表示后支路惯量、闭链反馈或真机动力学全部对齐。
+旧起立配置为解锁后目标0.22 m、成功高度0.20 m、膝余量奖励区0.05 rad，默认每侧150 N气弹簧。具体条件见[旧sim2sim说明](docs/ai/sim2sim.md#chuanliantui-站高精度与膝余量续训)；复现旧实验需要同时匹配模型、代码和配置。
 
-旧 25 维 checkpoint 可加载，但旧训练没有弹簧，需要续训；以下保留 0.22 m 站高、
-0.05 rad 膝余量奖励、随机推力及 0–10 ms 动作延迟，从 12000 轮模型新增 3000 轮。
-初始位置未改，可直接 headless；默认只交付命令，不自动启动训练。
+#### 气弹簧条件下续训（历史示例）
+
+以下保留旧任务从12000轮模型新增3000轮的命令，不作为当前mjlab训练推荐。修改run和checkpoint时成对替换；输出进入新的时间戳目录。
 
 ```bash
 python wheel_legged_gym/scripts/train.py --task=chuanliantui_standup --headless \
@@ -138,125 +314,25 @@ python wheel_legged_gym/scripts/train.py --task=chuanliantui_standup --headless 
     --max_iterations 3000 --run_name standup_h022_gas150_push
 ```
 
-另一终端加载本文件开头相同环境后：
+另一相同Isaac环境的终端监控：
 
 ```bash
 tensorboard --logdir=logs/chuanliantui_standup --port=8080
 ```
 
-数值及施力合成检查：`python scripts/agent/check_chuanliantui_gas_spring.py`。
-回放新模型时，`eval_isaac.py` 与 `mj_sim2sim_ct.py` 均默认每侧 150 N；
-复现原无弹簧串联训练条件，两者显式传 `--gas_spring_force 0`。
-训练端对应 `ChuanliantuiCfg.gas_spring.force_n`，不随 `--domain_rand` 开关改变。
-旧起立配置快照仍会继承当前父类弹簧配置，历史对照需显式关闭。
-详见[气弹簧物理条件记录](docs/interfaces/chuanliantui-gas-spring-training.md)。
+检查气弹簧数值与施力合成：`python scripts/agent/check_chuanliantui_gas_spring.py`。无弹簧历史对照需在回放中显式加 `--gas_spring_force 0`；仅加载旧配置快照不会自动关闭当前父类的弹簧配置。完整条件见[气弹簧记录](docs/interfaces/chuanliantui-gas-spring-training.md)。
 
 #### 前一轮：0.22 m 站高与 0.05 rad 膝余量续训
 
-本节保留前一轮命令；在当前代码执行同样命令也会启用上面新增的气弹簧。
-
-本轮用户目标仅为起立和原地站稳，线速度与偏航角速度命令均为零。验收关注站高、
-pitch、零速位移与转动、膝余量及受扰恢复；行走能力暂不纳入本轮验收。
-
-当前 `chuanliantui_standup` 解锁后目标高度为 **0.22 m**，连续站稳的高度门槛为
-**0.20 m**；膝端点奖励区宽度为 **0.05 rad**。在当前模型几何下，近零 pitch 且两膝
-保留该余量时最低站高约为 0.218 m，不能同时要求 0.20 m 站高、近零 pitch 和该膝余量。
-奖励区不改变物理关节 `range`，也不裁剪 PD 位置目标；本次不修改 H7。
-奖励公式与 MuJoCo 膝限位设置见 [sim2sim 说明](docs/ai/sim2sim.md#chuanliantui-站高精度与膝余量续训)。
-
-先检查实际奖励缩放、单项裁剪、膝硬限位与起立门控：
-
-```bash
-python scripts/agent/check_standup_precision_rewards.py
-```
-
-这是不创建仿真的 CPU 检查，不能代替训练后的 Isaac 回放和 MuJoCo 行为验收。
-以下从已有的 25 维 `Oct03_03-28-58_standup_action_delay_0_10ms/model_9000.pt`
-续训**额外 3000 轮**，输出到新的时间戳 run，保留原模型和日志：
-
-当前同时启用随机水平推力：首次轮接地后开始计时，每隔 3–5 s 施加 0.1 s 的恒力；
-尚未站稳时合力模长 1–5 N，当前连续站稳 0.5 s 时为 5–15 N，方向在水平面均匀采样。
-间隔指上一脉冲结束到下一脉冲开始的空档；强度在脉冲开始时选定，脉冲内保持不变。
-力作用于 `base_link` 质心，初始自由下落阶段不推；重置清空本回合推力。
-0–10 ms 动作延迟、零速度命令和以上站高/膝余量目标同时保留。
-
-```bash
-python wheel_legged_gym/scripts/train.py --task=chuanliantui_standup --headless \
-    --resume --load_run Oct03_03-28-58_standup_action_delay_0_10ms --checkpoint 9000 \
-    --max_iterations 3000 --run_name standup_h022_knee005_push
-```
-
-另一个相同环境的终端：
-
-```bash
-tensorboard --logdir=logs/chuanliantui_standup --port=8080
-```
-
-此次初始位置不变，可直接 headless。旧 25 维模型接口仍可加载，但需要续训学习新目标与
-奖励；仅把回放命令改成 0.22 m 不等于已经学会。以上仅交付手动命令，未自动启动训练，
-也没有据此宣称新策略训练成功或真机问题已修复。
-
-推力调度 CPU 检查：`python scripts/agent/check_standup_pushes.py`。
-默认 `play.py` / `eval_isaac.py` 关闭推扰；单独验收推扰可用：
-
-```bash
-python sim2sim/eval_isaac.py --task chuanliantui_standup \
-    --load_run <新训练run> --checkpoint <新checkpoint编号> \
-    --cmd_vx 0 --cmd_yaw 0 --cmd_height 0.22 --standup_post_unlock \
-    --pushes --action_delay_ms 6 --sim_time 20 --metrics_report /tmp/<新推扰报告>.json
-```
-
-加入 `--domain_rand` 可同时保留其余训练随机化。报告记录推力、持续时长和回合内次数；
-应结合重置、推后高度/pitch/零速恢复判断。`recovered_rate` 只表示该回合曾站起，
-不能直接当成抗推成功率。随机推力训练也不能消除训练控制与 H7 轮目标裁剪的差异。
+此标题保留供旧文档定位；历史基点是 `Oct03_03-28-58_standup_action_delay_0_10ms/model_9000.pt`。当时训练条件和结果查[项目实验记录](docs/ai/project-log.md)，不再重复多轮续训命令。
 
 #### 动作延迟随机化续训（历史示例）
 
-当前 `chuanliantui` 与 `chuanliantui_standup` 开启 0–10 ms 动作目标延迟，
-按 2 ms 内环量化；每个环境初始化时采样一次。先做队列边界与重置检查：
-
-```bash
-python scripts/agent/check_action_delay.py
-```
-
-此检查不创建仿真，不替代训练、Isaac 回放和 MuJoCo 行为验收。
-以下保留原延迟续训命令；复现历史实验须使用对应代码和配置。在当前代码执行它也会
-使用当前站高与膝余量奖励；当前推荐使用上面的 9000 轮 checkpoint 续训示例。
-下面以已有 `Sep22_16-26-11_standup_no_legangle_resume/model_6000.pt` 为续训基点；
-若实际部署使用其他 checkpoint，替换 `--load_run` 和 `--checkpoint`。
-`--max_iterations 3000` 表示额外训练 3000 轮；输出为带新时间戳的独立 run，
-保留原模型做对照。此次不修改初始位置，可直接 headless；命令仅供手动执行。
-
-```bash
-python wheel_legged_gym/scripts/train.py --task=chuanliantui_standup --headless \
-    --resume --load_run Sep22_16-26-11_standup_no_legangle_resume --checkpoint 6000 \
-    --max_iterations 3000 --run_name standup_action_delay_0_10ms
-```
-
-另一个相同环境的终端：
-
-```bash
-tensorboard --logdir=logs/chuanliantui_standup --port=8080
-```
-
-普通 `play.py` 和默认 `eval_isaac.py` 会关闭动作延迟；
-`eval_isaac.py --domain_rand` 才保留配置中的延迟及其他域随机化项，不能作为单独的延迟消融。
-单独固定延迟可用 `--action_delay_ms 0`、`6` 或 `10`；配合 `--standup_post_unlock --metrics_report /tmp/<新报告>.json`，统一起立判据并保存逐步轨迹和 5 秒之后的指标。
+历史延迟为0–10 ms，按2 ms内环量化；检查入口为 `python scripts/agent/check_action_delay.py`。普通play／默认Isaac对照回放关闭延迟，`eval_isaac.py --action_delay_ms 0`、`6`、`10` 可单独固定延迟；`--domain_rand` 同时启用其他随机化，不是单独的延迟对照。
 
 #### 回放与诊断
 
-零速度诊断可使用现有 Isaac 对照脚本，显式选择起立任务和同一 checkpoint。
-下例用旧 9000 轮模型检查新命令下的基线；验收续训结果时替换为新 run 与 checkpoint：
-
-```bash
-python sim2sim/eval_isaac.py --task chuanliantui_standup \
-    --load_run Oct03_03-28-58_standup_action_delay_0_10ms --checkpoint 9000 \
-    --cmd_vx 0 --cmd_yaw 0 --cmd_height 0.22 --sim_time 15
-```
-
-该脚本按 chuanliantui 的 +x 前向记录真实速度和 encoder 估速，固定起立课程高度，
-并区分超时重置与其他重置。应同时检查位移、高度、姿态及 `has_stood`；
-没有重置不代表已经起立或保持原地稳定。它是诊断对照，不替代可视行为验收。
+奖励、膝余量和推力调度检查分别为 `check_standup_precision_rewards.py`、`check_standup_pushes.py`（均在 `scripts/agent/`，用已激活的Isaac环境运行）。实际回放同时观察高度、倾角、位移、重置与膝余量，不能仅以 `recovered_rate` 判断站稳或抗推成功。
 
 ##### 30 秒静站与共同推扰计划
 
@@ -264,16 +340,17 @@ python sim2sim/eval_isaac.py --task chuanliantui_standup \
 每侧气弹簧 150 N、接触摩擦 0.5，动作延迟均为零。下列旧模型尚未学习新增气弹簧条件。
 
 ```bash
+isaac_eval_dir="$(mktemp -d /tmp/isaac-standing-XXXXXX)"
 python sim2sim/eval_isaac.py --task chuanliantui_standup \
     --load_run Oct03_14-27-59_standup_h022_knee005_push --checkpoint 12000 \
     --cmd_vx 0 --cmd_yaw 0 --cmd_height 0.22 --standup_post_unlock \
     --gas_spring_force 150 --contact_friction 0.5 --action_delay_ms 0 \
-    --sim_time 30 --metrics_report /tmp/isaac-standing-30s.json
+    --sim_time 30 --metrics_report "$isaac_eval_dir/isaac-standing-30s.json"
 
 python sim2sim/mj_sim2sim_ct.py --closed_chain --standup --h7_no_wheel_target_clip \
     --checkpoint logs/chuanliantui_standup/Oct03_14-27-59_standup_h022_knee005_push/model_12000.pt \
     --cmd_vx 0 --cmd_yaw 0 --cmd_height 0.22 --gas_spring_force 150 --friction 0.5 \
-    --sim_time 30 --no_realtime --diagnostic_report /tmp/mujoco-standing-30s.json
+    --sim_time 30 --no_realtime --diagnostic_report "$isaac_eval_dir/mujoco-standing-30s.json"
 ```
 
 `--h7_no_wheel_target_clip` 显式关闭 H7 回放的轮目标速度裁剪，保留电机力矩限幅；
@@ -286,11 +363,11 @@ Isaac 有限时长评估会把回合期限延长到至少 `sim_time + 1` 秒，�
 ```bash
 python scripts/agent/check_standing_push_schedule.py
 python sim2sim/standing_push_schedule.py --duration_s 30 --seed 42 \
-    --output /tmp/standing-pushes.json
+    --output "$isaac_eval_dir/standing-pushes.json"
 ```
 
-推扰阶段重复上面两条评估命令，均追加 `--push_schedule /tmp/standing-pushes.json`，
-并把报告改为新的文件名，例如 `/tmp/isaac-pushed-30s.json`、`/tmp/mujoco-pushed-30s.json`。
+推扰阶段重复上面两条评估命令，均追加 `--push_schedule "$isaac_eval_dir/standing-pushes.json"`，
+并把报告改为新的文件名，例如 `"$isaac_eval_dir/isaac-pushed-30s.json"`、`"$isaac_eval_dir/mujoco-pushed-30s.json"`。
 计划和报告均拒绝覆盖已有文件。Isaac 的固定计划不能与 `--pushes` 或 `--domain_rand` 合用。
 默认首次推力在 5 秒，持续 0.1 秒，水平幅值 5–15 N；以后每次结束后留 3–5 秒空档。
 两端均每 2 ms 向 `base_link` 质心施加同一世界系力，使用整次评估时钟，重置不重播计划。
@@ -302,90 +379,37 @@ Isaac 记录推理时刻的 `policy_t_s`、真速度、encoder 估速及误差�
 与计划的 `sum(force_world_n * duration_s)`，容许 float32 舍入误差。
 若无推扰时已经持续漂移，后续只能报告推后是否恢复原运动状态，不能称为恢复原地稳站。
 
-chuanliantui 的 actor 观测已改为 25 维、历史为 125；轮绝对位置不再输入策略。
-此前所有 27 维 chuanliantui `model_*.pt` 与当前网络接口不兼容，以下回放命令均应替换为
-新训练产生的 25 维 checkpoint。
-训练与 MuJoCo 回放采用 500 Hz 物理/PD 内环和 100 Hz 策略推理（每 5 个内环步更新一次动作）。
+##### 串联代理与闭链可视回放
 
-`mj_sim2sim_ct.py` 默认使用 `sim2sim/chuanliantui_train_proxy.xml`：它由 Isaac Gym
-使用的 `chuanliantui_train.urdf` 生成，含相同的 6 个训练 DOF、固定后支链和对应的
-六个力矩电机，**没有** `connect` 闭链约束。该路径只做串联训练代理一致性回放，
-不是实体闭链或真机验证。
+`mj_sim2sim_ct.py` 默认加载 `chuanliantui_train_proxy.xml`（无闭链约束）；加 `--closed_chain` 才加载实体闭链模型。两者仅用于对应旧25维checkpoint，旧27维串联腿模型不能直接加载。
 
 ```bash
-# 改 chuanliantui_train.urdf 后重新生成并检查串联代理。
+# 修改训练URDF后，才需要重新生成代理；随后检查结构和观测。
 python scripts/agent/generate_chuanliantui_train_proxy_mjcf.py
 python scripts/agent/check_chuanliantui_train_proxy.py
 python scripts/agent/check_chuanliantui_observation.py
 
-# 策略接口自检：只加载网络并验证 actor/encoder 输出形状，不运行 MuJoCo。
-# --selfcheck：启用接口检查模式。
-# --checkpoint：完整 model_*.pt 路径；不能使用缺 encoder 的 policy_1.pt。
-python sim2sim/mj_sim2sim_ct.py --selfcheck \
-    --checkpoint logs/chuanliantui/<new_25d_run>/model_<checkpoint>.pt
-
-# 训练一致的地面后摆起立回放。--standup 固定使用基座 0.15 m 和关节
-# [-1.566,0,0,1.566,0,0]；首次轮触地后下一策略步接管。
-# 点击 MuJoCo 窗口后按 Ctrl+R，可恢复后摆初态并清空速度/航向及观测历史。
+# 替换为实际的完整checkpoint；不能用缺encoder的policy_1.pt。
+isaac_ct_checkpoint="logs/chuanliantui_standup/<实际run>/model_<编号>.pt"
+python sim2sim/mj_sim2sim_ct.py --selfcheck --checkpoint "$isaac_ct_checkpoint"
+# 串联训练代理起立。
 python sim2sim/mj_sim2sim_ct.py --standup --render \
-    --checkpoint logs/chuanliantui_standup/<run>/model_<checkpoint>.pt \
-    --cmd_vx 0 --cmd_height 0.22 --friction 0.75
-
-# CAD 闭链机构 + H7 五连杆状态解算、PD、限幅、十拍预热。
-# 0.22 m 是本轮站立测试命令覆盖；H7 源码当前默认 0.20 m。
+    --checkpoint "$isaac_ct_checkpoint" --cmd_vx 0 --cmd_height 0.22
+# 旧H7控制的闭链对照；不代表当前39维H7接口。
 python sim2sim/mj_sim2sim_ct.py --closed_chain --standup --render \
-    --checkpoint logs/chuanliantui_standup/<run>/model_<checkpoint>.pt \
-    --cmd_vx 0 --cmd_height 0.22 --friction 0.75
-
-# 串联训练代理站立一致性回放。
-# --render：打开 MuJoCo viewer 并启用方向键遥操作；命令参数为初始值，关闭窗口退出。
-# --checkpoint：要验证的完整策略权重；--cmd_vx：前向速度命令，0 表示原地站立。
-# --cmd_height：策略观测中的目标机身高度；--init_height：复位时基座初始高度。
-python sim2sim/mj_sim2sim_ct.py --render \
-    --checkpoint logs/chuanliantui/<new_25d_run>/model_<checkpoint>.pt \
-    --cmd_vx 0 --cmd_height 0.32 --init_height 0.33
-
-# 串联训练代理行走一致性回放。
-# --render：打开 viewer 并启用方向键遥操作；命令参数为初始值，关闭窗口退出。
-# --checkpoint：完整策略权重；--cmd_vx 1.0：请求 1.0 m/s 前向行走。
-# --cmd_height 0.32：策略观测的目标高度；--init_height 0.33：初始基座高度。
-python sim2sim/mj_sim2sim_ct.py --render \
-    --checkpoint logs/chuanliantui/<new_25d_run>/model_<checkpoint>.pt \
-    --cmd_vx 1.0 --cmd_height 0.32 --init_height 0.33
-
-# 若另行修改初始位置，先不带 --headless、--num_envs 20 观察新环境；
-# 此次仅调整目标与奖励，初始位置不变，可使用上面的 headless 续训命令。
-# --task=chuanliantui_standup：选择 0.15 m 地面后摆起立任务；--num_envs 20：只创建 20 个并行环境，便于人工观察。
-python wheel_legged_gym/scripts/train.py --task=chuanliantui_standup --num_envs 20
-
-# 另一个启用相同环境的终端监控训练输出。
-tensorboard --logdir=logs/chuanliantui_standup --port=8080
-
-# 新起立权重的串联训练代理 MuJoCo 回放：将 <run> 和 <checkpoint> 替换为新训练输出。
-# --standup：使用与当前 Isaac 训练一致的 0.15 m 地面后摆初态；首次轮接地后下一控制步才推理策略。
-# --render：打开 MuJoCo viewer 并启用方向键遥操作；命令参数为初始值，关闭窗口退出。
-# --checkpoint：新训练生成的完整 model_*.pt；--cmd_vx 0：起立阶段不请求前进。
-# --cmd_height 0.22：与当前起立训练解锁后的目标高度一致。
-python sim2sim/mj_sim2sim_ct.py --standup --render \
-    --checkpoint logs/chuanliantui_standup/<run>/model_<checkpoint>.pt \
-    --cmd_vx 0 --cmd_height 0.22
+    --checkpoint "$isaac_ct_checkpoint" --cmd_vx 0 --cmd_height 0.22
 ```
 
-`--standup` 使用当前任务的 0.15 m 地面后摆初态，只能搭配完整 `model_*.pt`。
-串联代理与 `--closed_chain_controller cad` 保留首次轮接地后的下一控制步接管。
-`--closed_chain` 默认使用 H7 控制路径：模拟 RL 已投入，前十个有效策略步保持零动作 PD，
-随后推理；不使用首次接地门控，无效观测关闭电机输出并重新预热。
-原 CAD 解算对照需加 `--closed_chain_controller cad`。闭链后轴角默认以 CAD 杆方向注册，
-有共同姿态标定后可传 `--h7_rear_zero <LF> <RF>`（rad）；它不是编码器 `dm_zero`。
-两条路径的定义及验证边界见 [H7 闭链回放接口](docs/interfaces/chuanliantui-h7-closed-replay.md)。
+成功判据：自检仅确认网络形状；可视回放需看到接地后起立，并持续观察高度、姿态与位移。点击viewer取得焦点后，Ctrl+R复位；关窗退出。无窗口回放去掉 `--render`，加 `--sim_time 15 --no_realtime`。
 
-渲染模式关闭窗口退出；无渲染可指定 `--sim_time 15 --no_realtime`。
-日志 `pg_xyz` 中，前后倾看 `pg_x`，直立时 `pg_z` 接近 -1。
-未传 `--closed_chain` 时仍使用串联训练代理。复旦模型仅作独立参考。
+`--standup` 使用旧任务的地面后摆初态。串联代理和 `--closed_chain_controller cad` 在首次轮接地后接管；默认H7闭链路径先做十拍零动作PD预热。后轴名义角度注册、轮目标裁剪及报告定义见[旧H7闭链接口](docs/interfaces/chuanliantui-h7-closed-replay.md)，不用其历史参数替代当前固件定义。
 
 ## 典型工作流
 
-1. 改 config → `train.py --headless` 训练
-2. `play.py` 在 Isaac 里确认能站能走
-3. `mj_sim2sim.py` 站立 → 行走，验证跨引擎迁移
-4. MuJoCo 里也稳了，再考虑上真机（参照 `sim2sim/mj_sim2sim.py` 头部的部署契约注释）
+| 任务 | 顺序 |
+|---|---|
+| 当前mjlab主线 | 有限检查 → 预算内训练 → play回放 → 地面起立、平地跟踪及最终平衡评估 → 配对ONNX的独立CPU回放 → 对应版本的板端与实机核对 |
+| Isaac历史任务 | 激活Python 3.8环境 → 预算内训练 → Isaac play回放 → 对应旧脚本的MuJoCo自检／站立／行走 |
+| Jetson只读实采 | 核对USB与唯一接收进程 → 新目录录制 → 确认会话完整性 → 实测姿态回放 → 取回电脑分析 |
+
+自检、导出或编译通过均不能替代行为验收；模型交付与实机接口按[部署约定](docs/deployment-contract.md)核对。

@@ -58,8 +58,27 @@ def play(args):
         if viewer == 'auto':
             viewer = 'native' if os.environ.get('DISPLAY') or os.environ.get('WAYLAND_DISPLAY') else 'viser'
         if viewer == 'native':
+            import mujoco
             from mjlab.viewer import NativeMujocoViewer
-            NativeMujocoViewer(env, policy).run()
+
+            class CommandViewer(NativeMujocoViewer):
+                def _set_status_overlay(self, handle):
+                    status = self.get_status()
+                    capped = ' [CAPPED]' if status.capped else ''
+                    # Read the selected robot's current command in physical units.
+                    vx, yaw, height = self.env.unwrapped.command_manager.get_term(
+                        'standup').command[self.env_idx].detach().cpu().tolist()
+                    labels = 'Env\nStep\nStatus\nSpeed\nTarget RT\nActual RT\nCMD vx (m/s)\nCMD yaw (rad/s)\nCMD height (m)'
+                    values = (
+                        f'{self.env_idx + 1}/{self.env.num_envs}\n{status.step_count}\n'
+                        f'{"PAUSED" if status.paused else "RUNNING"}{capped}\n'
+                        f'{status.speed_label}\n{status.target_realtime:.2f}x\n'
+                        f'{status.actual_realtime:.2f}x ({status.smoothed_fps:.0f} FPS)\n'
+                        f'{vx:+.3f}\n{yaw:+.3f}\n{height:.3f}')
+                    handle.set_texts((mujoco.mjtFontScale.mjFONTSCALE_150.value,
+                                      mujoco.mjtGridPos.mjGRID_TOPLEFT.value, labels, values))
+
+            CommandViewer(env, policy).run()
         else:
             from mjlab.viewer import ViserPlayViewer
             if args.viser_port is None:

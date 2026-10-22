@@ -31,7 +31,8 @@ def wheel_response_input(command: torch.Tensor, velocity: torch.Tensor,
 class HuananhuPdActionCfg(ChuanliantuiPdActionCfg):
     """Unbounded policy actions with separate leg and wheel actuator delays.
 
-    The source's 5/10 ms delays round upward to physical simulation ticks.
+    Random delay choices round upward to physical simulation ticks; a fixed
+    measured action_delay_s replaces them and rounds to the nearest tick.
     Nominal motor gains and all effort limits retain this robot's hardware.
     """
 
@@ -39,7 +40,11 @@ class HuananhuPdActionCfg(ChuanliantuiPdActionCfg):
     wheel_stiffness: float = .1
     wheel_damping: float = .0
     motor_randomization: bool = True
+    nominal_leg_offset_range: tuple[float, float] = (0., 0.)
     randomize_delays: bool = True
+    action_delay_choices_s: tuple[float, ...] = (.005, .010)
+    action_delay_s: float | None = None  # Fixed measured delay overrides episode randomization.
+    motor_response_time_constant_s: float = 0.  # Unmeasured first-order response; zero bypasses it.
     ground_start_hold_s: float = .2
     parameter_reset_interval_steps: int = 720
 
@@ -51,17 +56,29 @@ class HuananhuPdAction(ChuanliantuiPdAction):
     cfg: HuananhuPdActionCfg
 
     def __init__(self, cfg: HuananhuPdActionCfg, env):
-        # The older task samples different ranges and offsets its nominal pose.
-        # Reuse the hardware indexing, then initialize only V14 randomization.
+        # Reuse hardware indexing, then apply this task's own randomization.
         super().__init__(replace(cfg, motor_randomization=False,
                                  standup_pushes=False, standup_landing_gate=False), env)
         self.cfg = cfg
+        low, high = cfg.nominal_leg_offset_range
+        if low != 0. or high != 0.:
+            # Sample once per environment/joint; PD and observations share this reference.
+            legs = self._leg_action_ids
+            self.nominal_offset[:, legs] = torch.empty_like(self.nominal_offset[:, legs]).uniform_(low, high)
+            self._nominal_pos.add_(self.nominal_offset)
+        tau = cfg.motor_response_time_constant_s
+        if not math.isfinite(tau) or tau < 0.:
+            raise ValueError("Motor response time constant must be finite and nonnegative")
+        self._motor_response_alpha = -math.expm1(-env.physics_dt / tau) if tau else 1.
+        self._motor_response_torque = torch.zeros_like(self._torques)
         self._wheel_response = torch.as_tensor(
             wheel_response_parameters(env.sim.mj_model),
             dtype=self._torques.dtype, device=self.device)
         self._wheel_action_delay_steps = torch.zeros_like(self.action_delay_steps)
         self._delay_choices = torch.tensor(
-            [math.ceil(.005 / env.physics_dt), math.ceil(.010 / env.physics_dt)],
+            ([int(math.floor(cfg.action_delay_s / env.physics_dt + .5))]
+             if cfg.action_delay_s is not None else
+             [math.ceil(delay / env.physics_dt) for delay in cfg.action_delay_choices_s]),
             dtype=torch.long, device=self.device)
         self._action_history = torch.zeros(
             int(self._delay_choices.max()) + 1, self.num_envs, self.action_dim,
@@ -113,12 +130,20 @@ class HuananhuPdAction(ChuanliantuiPdAction):
             - self.cfg.wheel_damping * qd[:, wheels])
         self._torques.mul_(self.motor_strength)
         self._torques.copy_(torch.clamp(self._torques, -self._effort_limits, self._effort_limits))
-        self._torques[self._ground_hold()] = 0.
+        hold = self._ground_hold()
+        self._torques[hold] = 0.
+        # Candidate drive response after PD/limits, separate from the action FIFO.
+        if self.cfg.motor_response_time_constant_s:
+            self._motor_response_torque.add_(
+                self._motor_response_alpha * (self._torques - self._motor_response_torque))
+        else:
+            self._motor_response_torque.copy_(self._torques)
+        self._motor_response_torque[hold] = 0.
         # Preserve nominal PD/limits and diagnostics; only the simulated motor
         # response changes. XML gain G is not multiplied here a second time.
-        inputs = self._torques.clone()
+        inputs = self._motor_response_torque.clone()
         inputs[:, wheels] = wheel_response_input(
-            self._torques[:, wheels], qd[:, wheels], self._wheel_response)
+            self._motor_response_torque[:, wheels], qd[:, wheels], self._wheel_response)
         self._entity.set_joint_effort_target(inputs, joint_ids=self._physical_joint_ids)
 
         compression = (SPRING_INITIAL_COMPRESSION
@@ -135,8 +160,12 @@ class HuananhuPdAction(ChuanliantuiPdAction):
     def reset(self, env_ids: torch.Tensor | slice | None = None) -> None:
         super().reset(env_ids)
         ids = self._env_ids if env_ids is None else self._env_ids[env_ids]
-        if self.cfg.randomize_delays:
-            choices = torch.randint(2, (len(ids), 2), device=self.device)
+        self._motor_response_torque[ids] = 0.
+        if self.cfg.action_delay_s is not None:
+            self.action_delay_steps[ids] = self._delay_choices[0]
+            self.wheel_action_delay_steps[ids] = self._delay_choices[0]
+        elif self.cfg.randomize_delays:
+            choices = torch.randint(len(self._delay_choices), (len(ids), 2), device=self.device)
             self.action_delay_steps[ids] = self._delay_choices[choices[:, 0]]
             self.wheel_action_delay_steps[ids] = self._delay_choices[choices[:, 1]]
         if self.cfg.motor_randomization:

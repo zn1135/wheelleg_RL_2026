@@ -1,0 +1,42 @@
+{
+  "created_at": "2026-10-22T22:39:44.066315+08:00",
+  "observation_contract": "chuanliantui-huananhu-multimode-39-82-v1",
+  "checkpoint": "model_9845.pt",
+  "checkpoint_sha256": "23855c413670ff6427cdd47ad60edacbd0e03c21dd206d8671ff9a834b911d27",
+  "onnx": "model_9845_opset13.onnx",
+  "onnx_sha256": "afde89c621b2a2a635155485f5188f568fe1d46ed6bacafc0645c286007bd414",
+  "opset": 13,
+  "input": {
+    "name": "obs",
+    "shape": [
+      1,
+      39
+    ],
+    "dtype": "float32"
+  },
+  "output": {
+    "name": "actions",
+    "shape": [
+      1,
+      6
+    ],
+    "dtype": "float32",
+    "order": [
+      "lf0",
+      "lf00",
+      "lfwheel",
+      "rf0",
+      "rf00",
+      "rfwheel"
+    ]
+  },
+  "numeric_check": {
+    "samples": 256,
+    "max_abs_diff": 5.7220458984375e-06,
+    "atol": 0.0001
+  },
+  "reference_vectors": "model_9845_opset13_reference_vectors.npz",
+  "graph_scope": "deterministic actor only; no observation construction, PD, clipping or motor mapping",
+  "deployment_status": "C network integrated; both variants compile/link and exact firmware weights verified; machine 0 flashed, read-back verified and reset 2026-10-22T22:51:30+08:00; zero-hold regression 8/32 to 4/32; hardware behavior not accepted",
+  "flash_evidence": "artifacts/model9845-h7-20261022-223919/flash-20261022-225027/flash-result.json"
+}

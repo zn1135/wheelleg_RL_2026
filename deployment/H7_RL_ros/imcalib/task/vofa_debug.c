@@ -21,13 +21,14 @@
 static uint16_t Mirror_Crc16(const uint8_t *data, uint16_t size)
 {
     uint16_t crc = 0xFFFFu;
+    uint16_t byte;
+
+    /* 与逐位CCITT-FALSE等价的逐字节展开，避免大批次每字节循环8次。 */
     for (uint16_t i = 0u; i < size; i++)
     {
-        crc ^= (uint16_t)data[i] << 8;
-        for (uint8_t bit = 0u; bit < 8u; bit++)
-        {
-            crc = (crc & 0x8000u) ? (uint16_t)((crc << 1) ^ 0x1021u) : (uint16_t)(crc << 1);
-        }
+        byte = (uint16_t)((crc >> 8) ^ data[i]);
+        byte ^= byte >> 4;
+        crc = (uint16_t)((crc << 8) ^ (byte << 12) ^ (byte << 5) ^ byte);
     }
     return crc;
 }
@@ -64,7 +65,7 @@ static float Mirror_Received_Age(uint64_t received_ns, uint8_t seen, uint64_t ca
 }
 
 /*
- * 只读镜像：未投入RL也发送公共反馈；约100Hz尝试、USB忙不等待。
+ * 只读镜像：未投入RL也发送公共反馈；成功提交约100Hz限速，USB忙不等待并在下一后台拍重试。
  * valid位0=IMU，1~4=四髋，5~6=两轮；无效来源报文填0，不修改原反馈或控制许可。
  * seq只计算USB提交成功的帧；软件快照仍包含异步来源，不能称为同步采样。
  */
@@ -74,7 +75,7 @@ void Vofa_Debug_Send(void)
     static mirror_policy_snapshot_t policy;
     static mirror_output_snapshot_t output;
     static float dbg[VOFA_MAX_CH];
-    static uint32_t last_attempt_ms;
+    static uint32_t last_send_ms;
     static uint32_t sequence;
     uint32_t now_ms = HAL_GetTick();
     uint32_t candidate = sequence + 1u;
@@ -82,11 +83,10 @@ void Vofa_Debug_Send(void)
     uint8_t online_mask;
     uint8_t valid_mask = 0u;
 
-    if ((uint32_t)(now_ms - last_attempt_ms) < 10u)
+    if ((uint32_t)(now_ms - last_send_ms) < 10u)
     {
         return;
     }
-    last_attempt_ms = now_ms;
     /* 先复制任务诊断，再取得同一临界区内的反馈时刻，诊断不会晚于captured_ns。 */
     taskENTER_CRITICAL();
     policy = mirror_policy_snapshot;
@@ -194,6 +194,7 @@ void Vofa_Debug_Send(void)
     if (Vofa_Send(dbg, VOFA_MAX_CH))
     {
         sequence = candidate;
+        last_send_ms = now_ms; /* USB忙/失败不消耗10ms额度，下个后台拍继续尝试。 */
     }
 }
 

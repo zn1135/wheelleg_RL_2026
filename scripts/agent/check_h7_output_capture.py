@@ -63,6 +63,9 @@ uint8_t CDC_Transmit_HS(uint8_t *,uint16_t);
 #include <math.h>
 uint32_t irq_mask;
 #include "@CAPTURE@"
+#include "@LATENCY_HEADER@"
+uint16_t Latency_Capture_Packet(uint8_t *out) { (void)out; return 0; }
+void Latency_Capture_Commit(void) {}
 #include "@SENDER@"
 static uint8_t configured,busy,fail_submit;
 static uint8_t *pending;
@@ -113,11 +116,24 @@ static void drain(FILE *f) {
     uint8_t packet[OUTPUT_CAPTURE_PACKET_MAX];uint16_t n=Output_Capture_Packet(packet);
     assert(fwrite(packet,1,n,f)==n);Output_Capture_Commit();
 }
+static uint16_t reference_crc(const uint8_t *data,unsigned n) {
+    uint16_t crc=0xffffu;
+    for(unsigned i=0;i<n;i++) {
+        crc^=(uint16_t)data[i]<<8;
+        for(unsigned bit=0;bit<8;bit++) { crc=crc&0x8000u?(uint16_t)((crc<<1)^0x1021u):(uint16_t)(crc<<1); }
+    }
+    return crc;
+}
 int main(int argc,char **argv) {
     assert(argc==7);golden=fopen(argv[1],"wb");assert(golden);
     FILE *stream=fopen(argv[2],"wb"),*overflow=fopen(argv[3],"wb"),*wrapped=fopen(argv[4],"wb");
     assert(stream && overflow && wrapped);
     assert(Capture_Crc16((const uint8_t*)"123456789",9)==0x29b1);
+    uint8_t crc_data[4264];unsigned lengths[]={0,1,2,7,8,15,16,31,32,63,64,87,88,127,128,255,256,511,512,636,640,1024,2152,4264};
+    for(unsigned i=0;i<sizeof(crc_data);i++) { crc_data[i]=(uint8_t)(i*73u+19u); }
+    for(unsigned i=0;i<sizeof(lengths)/sizeof(lengths[0]);i++) {
+        assert(Capture_Crc16(crc_data,lengths[i])==reference_crc(crc_data,lengths[i]));
+    }
     uint8_t a[OUTPUT_CAPTURE_PACKET_MAX],b[OUTPUT_CAPTURE_PACKET_MAX];
     irq_mask=1;control(1);assert(irq_mask==1);irq_mask=0;
     control(2);uint16_t n=Output_Capture_Packet(a);assert(n==40+2*88+2);
@@ -180,7 +196,7 @@ int main(int argc,char **argv) {
     names=('Dji_Torque_To_Current','Dji_Send_Current','Dji_Send_Wheel_Torque','Dji_All_Stop')
     header=(H7/'imcalib/drivers/dji.h').read_text()
     constants='\n'.join(line for line in header.splitlines() if re.match(r'#define DJI_(CURRENT_MAX|NM_FULL|RATIO_STD)_',line))
-    text=harness.replace('@CAPTURE@',str(H7/'imcalib/bsp/output_capture.c')).replace('@SENDER@',str(H7/'imcalib/bsp/Vofa_send.c'))
+    text=harness.replace('@LATENCY_HEADER@', str(H7/'imcalib/bsp/latency_capture.h')).replace('@CAPTURE@',str(H7/'imcalib/bsp/output_capture.c')).replace('@SENDER@',str(H7/'imcalib/bsp/Vofa_send.c'))
     text=text.replace('@CONSTANTS@',constants).replace('@DRIVER@','\n'.join(extract(driver,n) for n in names))
     source=directory/'probe.c';source.write_text(text);exe=directory/'probe'
     args=[os.environ.get('CC','cc'),'-std=c11','-O2','-Wall','-Wextra','-I',str(stubs),'-I',str(H7/'imcalib/bsp'),str(source),'-lm','-o',str(exe)]

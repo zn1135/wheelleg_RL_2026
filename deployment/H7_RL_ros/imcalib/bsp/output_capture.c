@@ -65,14 +65,14 @@ void Output_Capture_CAN(const uint8_t data[8], uint32_t can_id, uint8_t status, 
 static uint16_t Capture_Crc16(const uint8_t *data, uint16_t count)
 {
     uint16_t crc = 0xFFFFu;
+    uint16_t byte;
 
+    /* 与逐位CCITT-FALSE等价的逐字节展开，避免大批次每字节循环8次。 */
     for (uint16_t i = 0u; i < count; i++)
     {
-        crc ^= (uint16_t)data[i] << 8;
-        for (uint8_t bit = 0u; bit < 8u; bit++)
-        {
-            crc = (crc & 0x8000u) ? (uint16_t)((crc << 1) ^ 0x1021u) : (uint16_t)(crc << 1);
-        }
+        byte = (uint16_t)((crc >> 8) ^ data[i]);
+        byte ^= byte >> 4;
+        crc = (uint16_t)((crc << 8) ^ (byte << 12) ^ (byte << 5) ^ byte);
     }
     return crc;
 }

@@ -1,5 +1,9 @@
 # 训练与部署接口约定
 
+2026-10-22：multimode训练启用四腿默认角初始化随机偏置，作者最新将范围从±0.03 rad扩大到±5°（±0.08726646 rad）；PD目标与相对角观测共用，play/CPU保持原默认角，39/82/6及动作映射不变。仅训练随机化，不修改板端零点；新增1000轮训练预算、行为及H7负责人核对待确认，见[默认腿角偏置记录](interfaces/20261022-huananhu-nominal-leg-offset.md)。
+
+2026-10-22：[H7LAT001本地闭环时序旁带](interfaces/20261022-h7-latency-capture-v1.md)已完成烧录、吞吐修复与正常RL实采；按作者最新要求，训练动作等待为每回合腿/轮独立随机6、8、10 ms，play及独立CPU回放保留实测量化的一拍2 ms，见[仿真时序记录](interfaces/20261022-h7-simulation-timing.md)。39/82/6、模型、标定和控制频率保持；旧模型加载兼容，闭环行为需重新评估，H7负责人核对待确认。
+
 2026-10-21作者已要求将joint_sharp等效轮端响应写入共享XML并同步仿真执行链。训练与CPU均保留obs39/action6、原名义轮速PD/±3.9Nm输入限幅及策略/控制节拍；只改变仿真指令到响应模型，G/V/p同源于XML、增益只乘一次。H7固件/物理标定/生成网络均未改，未开始训练或交付新权重。部署负责人核对状态待确认；检查结果/随机化保留/未验证工况见[接入报告](diagnostics/20261021-h7-wheel-response-integration.md)。
 
 2026-10-21固定300ms台架固件已烧录并完成有动力左右正反脉冲：两份独立120秒会话各4次，完整记录各240000项，缺口/新增丢弃/CRC/截包/HAL失败0。原RL纯P版本0、权重/机器标定/普通RL与LQR保持；bench_profile及固件SHA单独区分旧保护版。新增等效轮端候选改善总体轮速，但加速阶段及旧RL短时俯仰有退化，整机校准未通过，不改正式XML、不训练或同步环境。新完整500Hz输入RL验证及H7部署负责人复查仍待确认，见[完整输入校准报告](diagnostics/20261021-fixed300-complete-input-calibration.md)。
@@ -19,6 +23,8 @@ H7部署工程作为普通目录保存在[deployment/H7_RL](../deployment/H7_RL/
 mjlab 训练侧只保留华南虎 multimode：actor39／critic82／action6，2 ms 物理、20 ms／50 Hz 策略，动作顺序 `[lf0,lf00,lfwheel,rf0,rf00,rfwheel]`，模式槽 `28:35`、标志槽 `35:39`。观测打包与 ONNX 契约见 [multimode 接口](interfaces/chuanliantui-huananhu-multimode-replay-v1.md)、[model_3023 说明](onnx-huananhu-multimode-model3023.md)及 [model_5849 说明](onnx-huananhu-multimode-model5849.md)；当前基线、模型采纳与验收结论以[项目实验记录顶部](ai/project-log.md)为准。
 
 当前主UART工程`deployment/H7_RL`的生成网络仍为 `model_5849`；实机USB工程`deployment/H7_RL_ros`已按2026-10-21授权接入并烧录 `model_6848`。两者输入39、输出6，不需要encoder历史输入；默认大机为500Hz采样／PD／正常下发、50Hz板载推理。命令复用公共 `rc.vel/yaw/len`，在RL观测入口限制到±1.5m/s、±1.5rad/s、0.27～0.34m；公共腿长范围可能进一步限制可达高度命令，不能把模型包线当成遥控全行程。
+
+2026-10-22[起立后零速保持训练准备](interfaces/20261022-huananhu-zero-hold-training.md)：作者指定腿长0.18～0.33m，训练/CPU高度命令换算为0.2165～0.3664m；39/82/6接口保持，H7未同步范围及低位恢复门槛、未生成新模型、未训练或烧录。该训练目标不代表原固件已支持，部署负责人核对待确认。
 
 2026-10-21新增[model6848模型文件交付](model-deliveries/20261021-model6848-h7-export.md)：完整PT、opset13 ONNX及参考向量存于USB工程`deployment/H7_RL_ros/models/model6848-20261021/`，39/6接口不变、导出及零速ONNX回放通过。随后按独立授权完成C转换、64组真实生成C宿主数值检查、大机构建和实际写入/校验/复位；[本次烧录证据](interfaces/20261021-h7-model6848-flash.md)。H7负责人对6848板端数值/时序及实机核对仍待确认，未运行带动力试验。
 

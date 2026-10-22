@@ -10,10 +10,9 @@ from mjlab.utils.lab_api.math import wrap_to_pi
 from .model import ACTUATED_JOINTS
 
 
-# Source 0.20–0.42 m exceeds this robot's static reach (≈0.21–0.37 m wheel-to-root,
-# ~3.5 cm PD sag). Starting at 0.27 m keeps leg-link kneeling (≈0.167 m) outside
-# the 10 cm velocity gate.
-HEIGHT_COMMAND_RANGE = (.27, .34)
+# Requested hip-wheel XZ leg length: 0.18-0.33 m. Vertical wheel-supported
+# base height adds about 0.03644 m; keep the actor's base-height semantics.
+HEIGHT_COMMAND_RANGE = (.2165, .3664)
 
 # Deployable tracking envelope for the flat phase. The source V14 recipe sampled
 # -2.7..2.7 m/s and -2pi..2pi rad/s, which a 6 cm wheel cannot realise, so the
@@ -162,7 +161,10 @@ def failure(env):
     down = (contact | tilted) & ~numerical
     state.failure_count, delayed = consecutive_failure(state.failure_count, down)
     height = getattr(state, 'height_above_ground', robot.data.root_link_pos_w[:, 2])
-    stable = ~contact & ~tilted & (height > .20)
+    # Low stances must be able to leave recover; the old >=0.27 m band keeps
+    # its 0.20 m threshold. Keep 1 cm tolerance below the requested base height.
+    stable_height = (state.command[:, 2] - .01).clamp(max=.20)
+    stable = ~contact & ~tilted & (height > stable_height)
     state.stable_time = torch.where(stable, state.stable_time + env.step_dt, 0.)
     state.metrics['ground_start'].copy_(state.ground_start)
     state.metrics['recovered'].copy_(torch.maximum(state.metrics['recovered'], (state.stable_time >= .5).float()))

@@ -39,6 +39,9 @@ static rl_motor_map_state_t rl_motor_map; /* 执行任务独占；退出RL才重
 static control_frame_t control_frame;
 static compensation_debug_t pending_compensation;
 static uint64_t output_dispatch_started_ns;
+/* 与control_frame数值同批复制，不能用后来的接收时刻冒充当拍源头。 */
+static uint64_t latency_source_rx_ns[8];
+static uint64_t latency_frame_captured_ns;
 volatile float rl_output_dm_cmd_nm[DM_MOTOR_NUM];
 volatile float rl_output_wheel_cmd_nm[DJI_MOTOR_NUM];
 
@@ -93,6 +96,9 @@ static void Control_Frame_Read(void)
 
     (void)Robot_Feedback_Read(&feedback);
     control_frame.landed = 0u;
+    latency_frame_captured_ns = feedback.captured_ns;
+    latency_source_rx_ns[0] = feedback.imu_sample.seen ? feedback.imu_sample.received_ns : 0u;
+    latency_source_rx_ns[7] = feedback.rc_sample.seen ? feedback.rc_sample.received_ns : 0u;
 
     taskENTER_CRITICAL();
     control_frame.imu = feedback.imu;
@@ -108,11 +114,13 @@ static void Control_Frame_Read(void)
     for (uint8_t i = 0u; i < DJI_MOTOR_NUM; i++)
     {
         control_frame.wheel_rx_ns[i] = feedback.motor.dji.parsed_rx_ns[i];
+        latency_source_rx_ns[5u + i] = feedback.motor.dji.parsed_rx_ns[i];
         control_frame.wheel_online |= feedback.motor.dji.online[i] ? (uint8_t)(1u << i) : 0u;
     }
     control_frame.joint_ready = 1u;
     for (uint8_t i = 0u; i < 4u; i++)
     {
+        latency_source_rx_ns[1u + i] = feedback.motor.dm.parsed_rx_ns[i];
         control_frame.motor_pos[i] = feedback.motor.dm.pos_continuous_rad[i];
         control_frame.motor_vel[i] = feedback.motor.dm.vel_rad_s[i];
         control_frame.joint_torque[i] = feedback.motor.dm.trq_nm[i];
@@ -232,6 +240,7 @@ static void Mirror_Output_Publish(mirror_output_snapshot_t *next, const torque_o
         record.wheel_age_us[i] = (!control_frame.wheel_rx_ns[i] || control_frame.wheel_rx_ns[i] > output_dispatch_started_ns || age_us >= UINT32_MAX) ? UINT32_MAX : (uint32_t)age_us;
     }
     Output_Capture_Push(&record);
+    Latency_Dispatch_End();
 }
 
 /* valid=0 或总输出关 → 零力矩; 否则原样下发 (各路限幅已在控制器内做, 极性在驱动边界做) */
@@ -248,6 +257,7 @@ static void output_dispatch(const torque_output_t *torque, mirror_output_snapsho
 
     applied = *torque;
     output_dispatch_started_ns = Mono_Ns_Get();
+    Latency_Dispatch_Begin(mirror_output_snapshot.sequence + 1u, diagnostic->policy_sequence, action_state.reset_count);
     diagnostic->tick_ms = (uint32_t)(output_dispatch_started_ns / 1000000u);
     debug = pending_compensation;
     debug.bench = (uint8_t)(ctrl_strategy == CTRL_STRATEGY_COMPENSATION);
@@ -567,6 +577,11 @@ static void solve_lqr_standup(torque_output_t *torque)
  */
 void output_task_body(void)
 {
+    latency_record_t task_timing = {0}, pd_timing = {0}, sample_timing = {0};
+    latency_tick_t trigger;
+    static uint32_t task_sequence, last_pd_policy, last_pd_reset;
+    static uint8_t have_pd;
+    uint64_t action_published_ns = 0u;
     float wheel_vel[2];
     ctrl_strategy_t strategy;
     torque_output_t torque;
@@ -584,6 +599,13 @@ void output_task_body(void)
     period_us = control_time_debug.sequence != 0u ? start_us - previous_start_us : 0u;
     previous_start_us = start_us;
 #endif
+
+    task_timing.kind = LATENCY_ACTUATION;
+    task_timing.begin_ns = Mono_Ns_Get();
+    task_timing.correlation = ++task_sequence;
+    trigger = Latency_Tick_Read(0u);
+    task_timing.value[0] = trigger.sequence;
+    task_timing.value[1] = Latency_Age_Us(task_timing.begin_ns, trigger.ns);
 
     Control_Frame_Read();
     Wheel_Bench_Update(&control_frame.rc, Wheel_Bench_Permit(), control_frame.wheel_vel, HAL_GetTick(), &bench_torque);
@@ -658,8 +680,22 @@ void output_task_body(void)
                 (void)RL_Motor_Map(&machine->rl, 2.0f * machine->dm_pos_max, control_frame.motor_pos, control_frame.motor_vel, wheel_vel, control_frame.motor_valid, &rl_motor_map, &control_frame.rl_motor);
                 RL_Observation_Sample(&rl_control.observation, control_frame.imu.gyro_rad_s, control_frame.imu.quat, &control_frame.rl_motor, control_frame.imu.online);
                 taskENTER_CRITICAL();
+                sample_timing.kind = LATENCY_SAMPLE;
+                sample_timing.begin_ns = latency_frame_captured_ns;
+                latency_sample_snapshot.sequence++;
+                latency_sample_snapshot.cached_ns = Mono_Ns_Get();
                 rl_observation_sample_tick_ms = (uint32_t)(Mono_Ns_Get() / 1000000u);
+                sample_timing.end_ns = latency_sample_snapshot.cached_ns;
+                sample_timing.correlation = latency_sample_snapshot.sequence;
+                sample_timing.reset_count = action_state.reset_count;
+                sample_timing.flags = rl_control.observation.sample_valid;
                 taskEXIT_CRITICAL();
+            }
+            if (tick)
+            {
+                for (uint8_t i = 0u; i < 8u; i++)
+                { sample_timing.value[i] = Latency_Age_Us(sample_timing.end_ns, latency_source_rx_ns[i]); }
+                Latency_Capture_Push(&sample_timing);
             }
             rl_engaged = (uint8_t)(control_frame.drive && control_frame.rc.mode.engage && rl_control.recovery.phase != RL_RECOVERY_IDLE && rl_control.recovery.phase != RL_RECOVERY_FAILED);
             if (rl_engaged && rl_control.recovery.phase != RL_RECOVERY_HOLD && action_state.rl_ready && control_frame.rl_motor.valid)
@@ -671,14 +707,33 @@ void output_task_body(void)
                     taskENTER_CRITICAL();
                     memcpy(diagnostic.action, action_state.a, sizeof(diagnostic.action));
                     diagnostic.policy_sequence = action_state.rl_ready ? mirror_policy_snapshot.sequence : 0u;
+                    action_published_ns = latency_policy_published_ns;
+                    pd_timing.reset_count = action_state.reset_count;
                     taskEXIT_CRITICAL();
+                    pd_timing.begin_ns = Mono_Ns_Get();
                     if (RL_Torque_Compute(&control_frame.rl_motor, &machine->rl, diagnostic.action, &rl_control.torque_state, &torque))
                     {
                         memcpy(diagnostic.target, rl_control.torque_state.target, sizeof(diagnostic.target));
                         memcpy(diagnostic.pos, rl_control.torque_state.pos, sizeof(diagnostic.pos));
                         memcpy(diagnostic.vel, rl_control.torque_state.vel, sizeof(diagnostic.vel));
                         diagnostic.flags |= 0x01u;
+                        pd_timing.flags = 1u;
                     }
+                    pd_timing.end_ns = Mono_Ns_Get();
+                    pd_timing.kind = LATENCY_PD;
+                    pd_timing.correlation = mirror_output_snapshot.sequence + 1u;
+                    pd_timing.value[0] = diagnostic.policy_sequence;
+                    pd_timing.value[1] = Latency_Age_Us(pd_timing.begin_ns, action_published_ns);
+                    for (uint8_t i = 0u; i < 6u; i++)
+                    { pd_timing.value[i + 2u] = Latency_Age_Us(pd_timing.begin_ns, latency_source_rx_ns[i + 1u]); }
+                    if (pd_timing.flags && (!have_pd || last_pd_policy != diagnostic.policy_sequence || last_pd_reset != pd_timing.reset_count))
+                    {
+                        pd_timing.flags |= 2u;
+                        have_pd = 1u;
+                        last_pd_policy = diagnostic.policy_sequence;
+                        last_pd_reset = pd_timing.reset_count;
+                    }
+                    Latency_Capture_Push(&pd_timing);
                 }
                 else { dispatch = 0u; }
             }
@@ -721,4 +776,14 @@ void output_task_body(void)
     control_time_debug.run_us = run_us;
     control_time_debug.sequence++;
 #endif
+    task_timing.end_ns = Mono_Ns_Get();
+    task_timing.flags = dispatch ? 1u : 0u;
+    task_timing.reset_count = action_state.reset_count;
+    task_timing.value[2] = dispatch ? mirror_output_snapshot.sequence : 0u;
+    task_timing.value[3] = diagnostic.policy_sequence;
+    task_timing.value[4] = (uint32_t)ctrl_strategy;
+    task_timing.value[5] = ctrl_fault;
+    task_timing.value[6] = (uint32_t)rl_control.recovery.phase;
+    task_timing.value[7] = latency_sample_snapshot.sequence;
+    Latency_Capture_Push(&task_timing);
 }

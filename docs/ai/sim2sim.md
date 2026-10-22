@@ -1,10 +1,12 @@
 # sim2sim 与部署契约
 
+2026-10-22：华南虎训练动作等待按作者后续要求改为每回合腿/轮独立随机6、8、10 ms；mjlab play及独立CPU回放保持H7实测缓存到首次PD约2.003 ms量化后的固定2 ms。网络调用已包含在此路径中，控制周期仍2 ms，微秒抖动不模拟；传感器数据龄随机化保持原配置。训练随机范围不代表真机实测，行为仍需评估，见[接入与验证](../interfaces/20261022-h7-simulation-timing.md)。
+
 mjlab 串联腿只保留华南虎 multimode 一条线：39维actor／82维critic／六个实体电机，详见 [mjlab 串联腿训练](../mjlab-chuanliantui.md)。本页旧串联／H7策略通道保留历史物理顺序，只适用于 Isaac 旧任务。
 
 华南虎 multimode 使用 39 维 actor／82 维 critic（`model_3023` 是历史基线）。其独立 CPU MuJoCo 入口为
 `sim2sim/mj_sim2sim_huananhu_multimode.py`：按契约元数据接受任何 39 维 checkpoint（可用 `--expect-sha256` 钉哈希），
-`--cmd-vx/--cmd-yaw/--cmd-height` 给定常值命令，报告新增 `tracking` 块；`--teleop`（需 `--render`，与 `--report` 互斥）把三个命令通道交给键盘：↑/↓ 前进速度 ±0.1 m/s、←/→ 偏航角速度 ±0.2 rad/s、PgUp/PgDn 或 `,`/`.` 高度 ±0.02 m、空格/回车 停车、Home 或 Backspace 复位（无 Home 的键盘可用 Backspace／Insert／Delete／End）、F1 暂停，限幅取训练包线（vx ±1.5 m/s、yaw ±1.5 rad/s、高度 0.27～0.34 m）。机体系速度经
+`--cmd-vx/--cmd-yaw/--cmd-height` 给定常值命令，报告新增 `tracking` 块；`--teleop`（需 `--render`，与 `--report` 互斥）把三个命令通道交给键盘：↑/↓ 前进速度 ±0.1 m/s、←/→ 偏航角速度 ±0.2 rad/s、PgUp/PgDn 或 `,`/`.` 高度 ±0.02 m、空格/回车 停车、Home 或 Backspace 复位（无 Home 的键盘可用 Backspace／Insert／Delete／End）、F1 暂停，限幅取训练包线（vx ±1.5 m/s、yaw ±1.5 rad/s、高度 0.2165～0.3664 m；对应近直立腿长约0.18～0.33m，见[零速保持训练准备](../interfaces/20261022-huananhu-zero-hold-training.md)）。机体系速度经
 `mj_objectVelocity(mjOBJ_XBODY, flg_local=1)` 读取，该 API 返回**角速度在前、线速度在后**（`result[3:]` 才是线速度）。
 观测腿槽与腿 PD 目标以训练动作项的站立标称角 `q_nominal`（`qpos0` 加微蹲目标解闭链）为中心、限幅以 XML `qpos0` 为中心，
 轮速回路增益 0.1／0，接触参数镜像训练场景的机器人 geom `priority=1` 补丁（机器人-地面滑动摩擦取训练值 0.5，非等优先级 max 的 1.0；2026-10-17 两次修正，见 [multimode 接口记录](../interfaces/chuanliantui-huananhu-multimode-replay-v1.md)）。
@@ -19,6 +21,10 @@ mjlab 串联腿只保留华南虎 multimode 一条线：39维actor／82维critic
 报告及窗口新增 `hip_wheel_height_m`；原 `height_m` 仍为真实机身离地高度，目标高度命令、39维观测、
 跟踪／静站验收和mjlab训练不变。本次仅替换恢复的高度条件，原机身无接触与倾角小于40度条件仍保留，
 没有移植H7的完整NORMAL／RECOVER／FAILED状态机或中途恢复重触发，不能称为完整H7仿真。
+
+2026-10-22低腿长训练扩展后，CPU恢复门槛对低位命令改为
+`min(0.20,cmd_height−轮半径+髋轴相对机身高度−0.01)`，原0.27～0.34m命令仍用0.20m投影门槛。
+H7尚未同步低位命令和恢复门槛；几何、兼容性与验证范围见[低腿长接口记录](../interfaces/20261022-huananhu-low-leg-length.md)。
 
 旧25/125维整机S2R1采集的策略复算与闭链MuJoCo离线复刻见
 [历史S2R1／HPI1说明](s2r-offline.md)。它不适用于当前H7 RL39，当前固件没有匹配旧协议。只读镜像使用

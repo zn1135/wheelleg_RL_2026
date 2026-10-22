@@ -9,8 +9,27 @@
 #include "can_bus.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "latency_capture.h"
+#include "mono_ns.h"
+#include <string.h>
 
 static can_bus_t can_bus[CAN_BUS_NUM];
+/* 每个硬件TX buffer独立保存原提交信息；不能用最新全局命令配完成IRQ。 */
+static latency_record_t latency_tx[CAN_BUS_NUM][32];
+static uint8_t latency_tx_active[CAN_BUS_NUM][32];
+static uint32_t latency_tx_sequence;
+
+static void Can_Latency_Finish(uint32_t bus, uint32_t slot, uint64_t now_ns, uint8_t result)
+{
+    latency_record_t record;
+    if (!latency_tx_active[bus][slot]) { return; }
+    record = latency_tx[bus][slot];
+    record.end_ns = now_ns;
+    record.flags = (uint8_t)((record.flags & 0x80u) | result);
+    latency_tx_active[bus][slot] = 0u;
+    Latency_Can_Pending(0u);
+    Latency_Capture_Push(&record);
+}
 
 static FDCAN_HandleTypeDef *handles[CAN_BUS_NUM] = { &hfdcan1, &hfdcan2, &hfdcan3 };
 
@@ -58,6 +77,15 @@ static int32_t Can_Bus_Hw_Index(const FDCAN_HandleTypeDef *hfdcan)
 static void Can_Bus_Stop(uint32_t idx)
 {
     FDCAN_HandleTypeDef *hfdcan = handles[idx];
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    for (uint32_t slot = 0u; slot < 32u; slot++)
+    {
+        uint32_t bit = 1u << slot;
+        uint8_t completed = (uint8_t)((hfdcan->Instance->TXBTO & bit) && !(hfdcan->Instance->TXBRP & bit));
+        Can_Latency_Finish(idx, slot, Mono_Ns_Get(), completed ? 2u : 4u);
+    }
+    __set_PRIMASK(mask);
     SET_BIT(hfdcan->Instance->TXBCR, hfdcan->Instance->TXBRP);
     HAL_FDCAN_Stop(hfdcan);
 }
@@ -83,6 +111,8 @@ static bool Can_Bus_Start(uint32_t idx)
         (void)HAL_FDCAN_Stop(hfdcan);
         return false;
     }
+    /* TX事件FIFO仍关闭；只观察硬件完成位，不改CAN速率、优先级或报文。 */
+    (void)HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_TX_COMPLETE, 0xffffffffu);
     return true;
 }
 
@@ -145,30 +175,75 @@ HAL_StatusTypeDef Can_Bus_Transmit(FDCAN_HandleTypeDef *hfdcan, uint32_t can_id,
 {
     FDCAN_TxHeaderTypeDef tx_header;
     HAL_StatusTypeDef status;
+    latency_record_t record = {0};
+    uint64_t returned_ns;
+    uint32_t slot;
     int32_t idx;
 
+    record.kind = LATENCY_CAN;
+    record.begin_ns = Mono_Ns_Get();
+    record.value[0] = can_id;
     idx = Can_Bus_Hw_Index(hfdcan);
-    if (idx < 0 || len > 8u)
-    {
-        return HAL_ERROR;
-    }
-    /* 发送临界 */
+    if (idx < 0 || len > 8u) { return HAL_ERROR; }
+    record.source = (uint8_t)(idx + 1);
+    memcpy(&record.value[4], data, len); /* 原报文，不重新量化/换算。 */
+    Latency_Can_Context(&record);
     taskENTER_CRITICAL();
+    record.correlation = ++latency_tx_sequence;
     if (HAL_FDCAN_GetTxFifoFreeLevel(hfdcan) == 0u)
     {
-        taskEXIT_CRITICAL();
-        return HAL_ERROR;
+        status = HAL_ERROR;
+        slot = UINT32_MAX;
     }
-    tx_header = can_bus[idx].tx_template;
-    tx_header.Identifier = can_id;
-    tx_header.DataLength = len;
-    status = HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &tx_header, (uint8_t *)data);
+    else
+    {
+        slot = (hfdcan->Instance->TXFQS & FDCAN_TXFQS_TFQPI) >> FDCAN_TXFQS_TFQPI_Pos;
+        if (latency_tx_active[idx][slot])
+        {
+            uint32_t bit = 1u << slot;
+            uint8_t completed = (uint8_t)((hfdcan->Instance->TXBTO & bit) && !(hfdcan->Instance->TXBRP & bit));
+            Can_Latency_Finish((uint32_t)idx, slot, Mono_Ns_Get(), completed ? 2u : 4u);
+        }
+        tx_header = can_bus[idx].tx_template;
+        tx_header.Identifier = can_id;
+        tx_header.DataLength = len;
+        status = HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &tx_header, (uint8_t *)data);
+    }
+    returned_ns = Mono_Ns_Get();
+    record.value[2] = (uint32_t)returned_ns;
+    record.value[3] = (uint32_t)(returned_ns >> 32);
     if (status == HAL_OK)
     {
         can_bus[idx].last_tx_tick = HAL_GetTick();
+        record.value[1] = slot;
+        latency_tx[idx][slot] = record;
+        latency_tx_active[idx][slot] = 1u;
+        Latency_Can_Pending(1u);
+    }
+    else
+    {
+        record.end_ns = returned_ns;
+        record.flags = (uint8_t)((record.flags & 0x80u) | 3u);
+        record.value[1] = (uint32_t)status;
+        Latency_Capture_Push(&record);
     }
     taskEXIT_CRITICAL();
     return status;
+}
+
+/* TXBTO可能包含历史位；只消费仍有原提交上下文且不再pending的buffer。
+ * 同一次IRQ的多个完成共享观测时刻，只能作完成延迟上界，不虚构物理完成次序。 */
+void HAL_FDCAN_TxBufferCompleteCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t BufferIndexes)
+{
+    int32_t idx = Can_Bus_Hw_Index(hfdcan);
+    uint64_t now_ns = Mono_Ns_Get();
+    if (idx < 0) { return; }
+    for (uint32_t slot = 0u; slot < 32u; slot++)
+    {
+        uint32_t bit = 1u << slot;
+        if ((BufferIndexes & bit) && !(hfdcan->Instance->TXBRP & bit))
+        { Can_Latency_Finish((uint32_t)idx, slot, now_ns, 1u); }
+    }
 }
 
 

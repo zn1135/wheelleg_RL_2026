@@ -9,6 +9,7 @@
 
 #ifndef ROBOT_STATE_H
 #define ROBOT_STATE_H
+#include "latency_capture.h"
 
 #include "robot_control.h"
 #include "imu_state.h"
@@ -93,6 +94,9 @@ extern rl_control_state_t rl_control;
 extern mirror_policy_snapshot_t mirror_policy_snapshot;
 extern mirror_output_snapshot_t mirror_output_snapshot;
 extern uint32_t rl_observation_sample_tick_ms;
+/* 仅用于时序配对；与对应样本/动作在原临界区一同发布。 */
+extern latency_sample_t latency_sample_snapshot;
+extern uint64_t latency_policy_published_ns;
 extern lqr_state_t lqr_state;
 extern leg_balance_t leg_balance;
 extern volatile ctrl_strategy_t ctrl_strategy;

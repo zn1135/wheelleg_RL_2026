@@ -9,6 +9,9 @@ every env is terrain family 0 (flat), so the slope/step/stair triggers stay
 dormant; `multimode_terrains.py` is kept for restoring the mixed-terrain recipe.
 """
 
+import json
+import math
+
 from mjlab.managers.event_manager import EventTermCfg
 from mjlab.managers.metrics_manager import MetricsTermCfg
 from mjlab.managers.observation_manager import ObservationGroupCfg, ObservationTermCfg
@@ -19,6 +22,7 @@ from mjlab.sensor import GridPatternCfg, ObjRef, RayCastSensorCfg, TerrainHeight
 from . import huananhu_randomization, multimode_mdp, multimode_observations, multimode_rewards
 from .huananhu_env_cfg import make_huananhu_env_cfg, make_huananhu_ppo_cfg
 from .v14_observations import V14ObservationCfg
+from .model import MODEL_XML
 
 
 # Explicit play/check knockdowns only; training does not register this event.
@@ -27,6 +31,13 @@ KNOCKDOWN_ANGULAR_SPEED_RANGE = (18., 28.)
 
 def make_multimode_env_cfg(*, play=False):
     cfg = make_huananhu_env_cfg(play=play)
+    timing = json.loads(MODEL_XML.with_name("h7_timing.json").read_text())
+    # Training broadens action waiting; playback retains the measured one tick.
+    cfg.actions["pd"].action_delay_s = timing["simulation"]["action_delay_s"] if play else None
+    cfg.actions["pd"].action_delay_choices_s = (.006, .008, .010)
+    cfg.actions["pd"].motor_response_time_constant_s = timing["simulation"]["motor_response_time_constant_s"]
+    cfg.actions["pd"].randomize_delays = not play
+    cfg.actions["pd"].nominal_leg_offset_range = (0., 0.) if play else (-math.radians(5), math.radians(5))
     # Flat phase: the ground is the infinite plane, so the generated terrain is gone and
     # every env is terrain family 0. Travel is bounded only by
     # multimode_mdp.OUT_OF_PATCH_RADIUS_M, which ends a runaway episode; it does not need

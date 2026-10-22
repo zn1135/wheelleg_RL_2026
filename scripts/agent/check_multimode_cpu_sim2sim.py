@@ -341,6 +341,15 @@ def main() -> None:
     results["recovery_height"] = {"stance_m": baseline, "split_leg_projections_m": projected,
                                    "threshold_m": entry.RECOVERY_HEIGHT_M, "probes": recovery_probes}
 
+    # At a 0.15 m vertical leg, a low command may complete recovery; the old
+    # command band must still require the historical 0.20 m leg projection.
+    height_env.command[2] = .1865
+    low_threshold = height_env.recovery_height_threshold()
+    assert .13 < low_threshold < .15
+    height_env.command[2] = .27
+    assert height_env.recovery_height_threshold() == entry.RECOVERY_HEIGHT_M
+    results["recovery_height"]["low_command_threshold_m"] = low_threshold
+
     summary = {"ok": True, "script": str(Path(__file__).resolve()),
                "scope": "entry-vs-training consistency + H7 recovery-height probes; not a behavior acceptance",
                "results": results}

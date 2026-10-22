@@ -32,11 +32,10 @@ OUT_OF_PATCH_RADIUS_M = 45.
 
 @dataclass(kw_only=True)
 class MultimodeCommandCfg(HuananhuCommandCfg):
-    # Ground-start share of resets. The source recipe drew 50/50; raising it
-    # trains the recover (stand-up) phase on most episodes and keeps the
-    # ordinary pose distribution on the rest. Recorded per run in
-    # params/env.yaml, so a resume cannot silently inherit the wrong ratio.
-    ground_start_probability: float = .8
+    # Whole-episode zero commands include the ground-start recovery itself.
+    zero_hold_probability: float = .3
+    # 全部回合从现有趴地姿态库启动；实际比例记录在params/env.yaml。
+    ground_start_probability: float = 1.0
     # Continuous fallen time allowed before a fall ends the episode. The 0.4 s
     # contact/tilt gate is far shorter than a stand-up takes, so a knocked-down
     # robot is given this window instead and the recover mode re-arms. The
@@ -85,6 +84,9 @@ class MultimodeCommand(HuananhuCommand):
         self.jump_peak = torch.zeros(n, device=device)
         self.jump_cooldown = torch.zeros(n, device=device)
         self.recovered = torch.zeros(n, device=device, dtype=torch.bool)
+        self.zero_hold = torch.zeros(n, device=device, dtype=torch.bool)
+        self.zero_hold_anchor_xy = torch.zeros(n, 2, device=device)
+        self.zero_hold_anchor_valid = torch.zeros(n, device=device, dtype=torch.bool)
         # Latched from a mid-episode fall until the robot is stably back up, so
         # the recover channel spans the whole stand-up in a normal-start episode
         # exactly as ground_start does in a ground-start one. Gating recover on
@@ -145,6 +147,8 @@ class MultimodeCommand(HuananhuCommand):
         for name in ("airborne", "stair_active", "recovered", "getting_up", "obstacle_seen"):
             getattr(self, name)[env_ids] = False
         self.jump_phase[env_ids] = 0
+        self.zero_hold_anchor_xy[env_ids] = 0.
+        self.zero_hold_anchor_valid[env_ids] = False
         terrain = self._env.scene.terrain
         # `terrain_type="plane"` has no terrain columns, so every env is family 0
         # (flat). Read the generator's column types when they exist so a future
@@ -157,8 +161,24 @@ class MultimodeCommand(HuananhuCommand):
             self._env.sim.data.qpos[env_ids, root_z_adr] - self.ground_height[env_ids])
         return result
 
+    def _resample_command(self, env_ids):
+        super()._resample_command(env_ids)
+        if self._resetting:
+            self.zero_hold[env_ids] = (torch.rand(len(env_ids), device=self.device)
+                                       < self.cfg.zero_hold_probability)
+        selected = env_ids[self.zero_hold[env_ids]]
+        self.sampled[selected, :2] = 0.
+        self.standing[selected] = True
+        self.heading[selected] = False
+        self.special_mode[selected] = -1
+
     def _update_command(self, env_ids):
         super()._update_command(env_ids)
+        if hasattr(self, 'zero_hold'):
+            ids = slice(None) if env_ids is None else env_ids
+            # 零速回合从趴地时就保持零速，不被前1.5秒随机起立命令覆盖。
+            self._command[ids, :2] = torch.where(
+                self.zero_hold[ids, None], 0., self._command[ids, :2])
         if not hasattr(self, "jump_phase") or env_ids is not None:
             return
         step = self._env.common_step_counter
@@ -166,6 +186,13 @@ class MultimodeCommand(HuananhuCommand):
             return
         self._last_mode_step = step
         self.advance()
+
+    def _latch_zero_hold_anchor(self, root_xy):
+        """Record the first stable, post-recovery position of a zero-hold episode."""
+        anchor_now = (self.zero_hold & ~self.zero_hold_anchor_valid & ~self.recover
+                      & ~self.airborne & (self.jump_phase == 0) & (self.stable_time >= .5))
+        self.zero_hold_anchor_xy[anchor_now] = root_xy[anchor_now]
+        self.zero_hold_anchor_valid |= anchor_now
 
     def advance(self):
         env = self._env
@@ -196,6 +223,8 @@ class MultimodeCommand(HuananhuCommand):
         # one-step lag here.
         self.recovered = (self.recovered | (self.stable_time >= .5)) & ~self.fallen
         self.getting_up = (self.getting_up | self.fallen) & ~self.recovered
+        # 零速回合完成起立后只记录一次位置；之后的位移将直接影响保持奖励。
+        self._latch_zero_hold_anchor(robot.data.root_link_pos_w[:, :2])
 
         rise = ahead - center
         can_step = (rise >= .035) & (rise <= .09) & (self.terrain_kind >= 2)
@@ -222,7 +251,7 @@ class MultimodeCommand(HuananhuCommand):
         # A short, explicit takeoff request on a subset of stable flat episodes.
         can_jump = ((self.terrain_kind == 0) & (self.jump_phase == 0)
                     & (self.jump_cooldown <= 0) & (episode_t >= 2.)
-                    & (self.stable_time >= .5) & ~self.ground_start)
+                    & (self.stable_time >= .5) & ~self.ground_start & ~self.zero_hold)
         # Jump eligibility is `~ground_start` x terrain_kind == 0: the recipe being
         # resumed has ground starts at 0.8 and only the flat column at 50%, so the
         # eligible share was 0.2 x 0.5 = 10% of envs; flat-only terrain makes it

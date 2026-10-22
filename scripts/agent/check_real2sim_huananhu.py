@@ -192,12 +192,13 @@ int main(int argc,char **argv) {
     tick=1; Vofa_Debug_Send(); tick=9; Vofa_Debug_Send(); assert(attempts==0);
     tick=10; Vofa_Debug_Send(); tick=15; Vofa_Debug_Send(); assert(attempts==1);
     ready=0; tick=20; Vofa_Debug_Send(); assert(attempts==2);
+    tick=25; Vofa_Debug_Send(); assert(attempts==3); /* USB忙不延迟下一次尝试。 */
     ready=1; tick=30; Vofa_Debug_Send();
     source.motor.dji.online[0]=0; tick=40; Vofa_Debug_Send();
     source.motor.dm.pos_continuous_rad[0]=INFINITY; tick=50; Vofa_Debug_Send();
     source.imu.online=0; tick=60; Vofa_Debug_Send();
     tick=0xfffffff0u; Vofa_Debug_Send(); tick=4; Vofa_Debug_Send();
-    assert(attempts==8 && robot_state.motor_enabled==0 && ctrl_fault==0);
+    assert(attempts==9 && robot_state.motor_enabled==0 && ctrl_fault==0);
     fclose(output); return 0;
 }
 ''')
@@ -345,6 +346,9 @@ def check_usb_sender(directory: Path, raw: bytes):
 uint16_t Output_Capture_Packet(uint8_t *out) { memset(out,0,42); return 42; }
 void Output_Capture_Commit(void) {}
 ''' if capture else ''
+    timing = 'Latency_Capture_Packet' in (H7 / 'imcalib/bsp/Vofa_send.c').read_text()
+    if timing:
+        capture_stub += 'uint16_t Latency_Capture_Packet(uint8_t *out) { (void)out; return 0; }\nvoid Latency_Capture_Commit(void) {}\n'
     (stub / "usbd_cdc_if.h").write_text('''
 #include <stdint.h>
 #define USBD_OK 0u
@@ -447,6 +451,11 @@ void RL_Observation_Set_Last_Action(rl_observation_state_t *,const float *);
 void Action_State_Clear(void);
 #endif
 ''')
+    timing = 'Policy_Timing_End' in (H7 / 'imcalib/task/task_policy.c').read_text()
+    if timing:
+        header = stub / 'policy_stub.h'
+        content = header.read_text().replace('#endif', '#include "' + str(H7 / 'imcalib/bsp/latency_capture.h') + '"\nextern latency_sample_t latency_sample_snapshot;\nextern uint64_t latency_policy_published_ns;\n#endif')
+        header.write_text(content)
     for name in ("robot_control.h", "robot_state.h", "rl_observation.h", "rl_policy.h", "mono_ns.h"):
         (stub / name).write_text('#include "policy_stub.h"\n')
     source = directory / "policy-producer.c"
@@ -533,6 +542,9 @@ int main(void) {
     return 0;
 }
 ''')
+    if timing:
+        content = source.read_text().replace('uint32_t rl_observation_sample_tick_ms;', 'uint32_t rl_observation_sample_tick_ms;\nlatency_sample_t latency_sample_snapshot;\nuint64_t latency_policy_published_ns;\nlatency_tick_t Latency_Tick_Read(uint8_t policy) { (void)policy; latency_tick_t t={0}; return t; }\nvoid Latency_Capture_Push(const latency_record_t *record) { assert(record->kind==LATENCY_POLICY); }')
+        source.write_text(content)
     executable = directory / "policy-producer"
     subprocess.run([os.environ.get("CC", "cc"), "-std=c11", "-Wall", "-I", str(stub),
                     str(source), "-lm", "-o", str(executable)], check=True)
@@ -573,6 +585,8 @@ static void Output_Capture_Push_Check(const output_capture_record_t *record) {
 }
 #define Output_Capture_Push Output_Capture_Push_Check
 ''' if capture else ''
+    if 'Latency_Dispatch_Begin' in functions:
+        capture_stub += '#define Latency_Dispatch_Begin(...) ((void)0)\n#define Latency_Dispatch_End() ((void)0)\n'
     bench = (H7 / "imcalib/Algorithm/wheel_bench.c").exists()
     bench_stubs = r'''
 #define CTRL_STRATEGY_WHEEL_BENCH 5u
@@ -738,6 +752,8 @@ void Output_Capture_Push(const output_capture_record_t *record) {
     assert(memcmp(record->torque_nm,driver_request,sizeof(record->torque_nm))==0);
 }
 ''' if 'Output_Capture_Push' in functions else ''
+    if 'Latency_Dispatch_Begin' in functions:
+        capture_stub += '#define Latency_Dispatch_Begin(...) ((void)0)\n#define Latency_Dispatch_End() ((void)0)\n'
     source = directory / "wheel-bench-check.c"
     source.write_text(r'''
 #include <assert.h>

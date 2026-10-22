@@ -16,7 +16,7 @@ import struct
 MAGIC = b'H7OUT001'
 HEADER = struct.Struct('<8s4H6I')
 RECORD = struct.Struct('<IIQQII6f2f2I4hH6B')
-MAX_RECORDS = 24
+MAX_RECORDS = 48  # Accept both original 24-record and larger throughput batches.
 MAX_PACKET = HEADER.size + MAX_RECORDS*RECORD.size + 2
 assert HEADER.size == 40 and RECORD.size == 88
 

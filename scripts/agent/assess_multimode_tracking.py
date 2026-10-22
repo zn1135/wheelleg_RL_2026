@@ -62,6 +62,7 @@ from mjlab.envs import ManagerBasedRlEnv  # noqa: E402
 from mjlab.managers.event_manager import EventTermCfg  # noqa: E402
 from mjlab.rl import RslRlVecEnvWrapper  # noqa: E402
 from mjlab.utils.torch import configure_torch_backends  # noqa: E402
+from mjlab.utils.lab_api.math import quat_apply_inverse  # noqa: E402
 from ct_mjlab.envs import task_registry  # noqa: E402
 from ct_mjlab.envs.chuanliantui.huananhu_poses import sample_reset_state  # noqa: E402
 from ct_mjlab.envs.chuanliantui.multimode_mdp import MODE_NAMES, TERRAIN_NAMES  # noqa: E402
@@ -164,6 +165,7 @@ def pin_commands(env, state, command, env_ids=None):
         state.special_mode[resample_ids] = -1
         state.ground_start[resample_ids] = False
         state.ground_command[resample_ids] = 0.
+        state.zero_hold[resample_ids] = False  # 固定行走命令不受训练的整回合零速采样覆盖。
         # Jump requests are suppressed: a takeoff is a disturbance the tracking criterion
         # does not ask about, and `can_jump` requires jump_cooldown <= 0.
         state.jump_cooldown[resample_ids] = JUMP_COOLDOWN_PIN
@@ -213,7 +215,7 @@ def build_combos(vx_values, yaw_values, height_values):
             for yaw in yaw_values for vx in vx_values]
 
 
-def evaluate_seed(args, seed, combos):
+def evaluate_seed(args, seed, combos, *, record_dir=None):
     """Run one seed. Returns (per-env rows, extras)."""
     configure_torch_backends()
     cfg, agent = task_registry.get_cfgs(TASK, play=True)
@@ -239,6 +241,8 @@ def evaluate_seed(args, seed, combos):
 
         state = env.command_manager.get_term("standup")
         robot = env.scene["robot"]
+        hip_ids, _ = robot.find_bodies(('lf0', 'rf0'), preserve_order=True)
+        wheel_ids, _ = robot.find_bodies(('lfwheel', 'rfwheel'), preserve_order=True)
         # reset() samples commands, so the observation it returned carries a random one. Pin the
         # grid, then flush with one zero-action step: the observation manager returns its cached
         # group buffers outside a step, so simply recomputing it would still show the reset draw.
@@ -260,6 +264,14 @@ def evaluate_seed(args, seed, combos):
         ended_step = torch.zeros(num_envs, device=env.device, dtype=torch.long)
         numerical = torch.zeros(num_envs, device=env.device, dtype=torch.bool)
         terrain = state.terrain_kind.clone()
+        leg_sum = torch.zeros((num_envs, 2), device=env.device)
+        leg_min = torch.full_like(leg_sum, float('inf'))
+        leg_max = torch.full_like(leg_sum, -float('inf'))
+        recorded_qpos, recorded_lengths = [], []
+        if record_dir is not None:
+            import mujoco
+            record_dir.mkdir(parents=True, exist_ok=False)
+            mujoco.mj_saveModel(env.sim.mj_model, str(record_dir / 'scene.mjb'), None)
 
         with torch.inference_mode():
             for step in range(total_steps):
@@ -287,6 +299,18 @@ def evaluate_seed(args, seed, combos):
                 yaw_error = command[:, 1] - angular[:, 2]
                 height_error = state.height_above_ground - command[:, 2]
                 mask = measured.float()
+                # Measure actual hip-to-wheel length in the body XZ plane;
+                # neither the height command nor world base height is leg length.
+                delta = robot.data.body_link_pos_w[:, wheel_ids] - robot.data.body_link_pos_w[:, hip_ids]
+                quat = robot.data.root_link_quat_w[:, None, :].expand(-1, 2, -1)
+                leg = quat_apply_inverse(quat.reshape(-1, 4), delta.reshape(-1, 3)).reshape(-1, 2, 3)
+                lengths = torch.linalg.vector_norm(leg[:, :, (0, 2)], dim=-1)
+                if record_dir is not None:
+                    recorded_qpos.append(env.sim.data.qpos.detach().cpu().numpy().copy())
+                    recorded_lengths.append(lengths.detach().cpu().numpy().copy())
+                leg_sum += lengths * mask[:, None] * dt
+                leg_min = torch.where(measured[:, None], torch.minimum(leg_min, lengths), leg_min)
+                leg_max = torch.where(measured[:, None], torch.maximum(leg_max, lengths), leg_max)
                 acc["vx_abs"] += vx_error.abs() * mask * dt
                 acc["vx_signed"] += (linear[:, 0] - command[:, 0]) * mask * dt
                 acc["vy_abs"] += linear[:, 1].abs() * mask * dt
@@ -359,6 +383,11 @@ def evaluate_seed(args, seed, combos):
                 "command": {"vx_m_s": vx_cmd, "yaw_rad_s": yaw_cmd, "height_m": height_cmd},
                 "jump_seconds": float(jump_steps[index]),
                 "ended_step": int(ended_step[index]),
+                "leg_length_xz_m": {
+                    side: {"mean": float(leg_sum[index, j] / acc['observed'][index]),
+                           "min": float(leg_min[index, j]), "max": float(leg_max[index, j])}
+                    if float(acc['observed'][index]) > 0 else None
+                    for j, side in enumerate(('left', 'right'))},
                 **verdict,
             })
         extras = {
@@ -370,6 +399,11 @@ def evaluate_seed(args, seed, combos):
             "survived": int(sum(row["checks"]["survived"] for row in rows)),
             "numerical_failures": int(sum(not row["checks"]["numerical_ok"] for row in rows)),
         }
+        if record_dir is not None:
+            np.savez_compressed(record_dir / 'trajectory.npz',
+                                qpos=np.asarray(recorded_qpos),
+                                leg_lengths=np.asarray(recorded_lengths), command=np.asarray(combos),
+                                time_s=(np.arange(len(recorded_qpos)) + 1) * dt)
         return rows, extras
     finally:
         env.close()
@@ -417,6 +451,8 @@ def main():
                         help="repeated envs per command point (identical command, different reset draw)")
     parser.add_argument("--seeds", default="42", help="comma-separated seeds, e.g. 42,43")
     parser.add_argument("--device", default="cuda:0")
+    parser.add_argument("--record-dir", type=Path, default=None,
+                        help="optional new directory for recorded states and render model")
     parser.add_argument("--min-success-rate", type=float, default=None,
                         help="exit non-zero when the pooled success rate is below this value")
     args = parser.parse_args()
@@ -433,7 +469,8 @@ def main():
     script_sha = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     per_seed, all_rows = {}, []
     for seed in seeds:
-        rows, extras = evaluate_seed(args, seed, combos)
+        rows, extras = evaluate_seed(args, seed, combos, record_dir=(
+            None if args.record_dir is None else args.record_dir / f'seed{seed}'))
         per_seed[str(seed)] = {"extras": extras, "aggregate": aggregate(rows)}
         all_rows.extend(rows)
         args.output.parent.mkdir(parents=True, exist_ok=True)

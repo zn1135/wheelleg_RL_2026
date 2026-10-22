@@ -27,6 +27,8 @@ rl_control_state_t rl_control;
 mirror_policy_snapshot_t mirror_policy_snapshot;
 mirror_output_snapshot_t mirror_output_snapshot;
 uint32_t rl_observation_sample_tick_ms;
+latency_sample_t latency_sample_snapshot;
+uint64_t latency_policy_published_ns;
 lqr_state_t lqr_state;
 leg_balance_t leg_balance;
 volatile ctrl_strategy_t ctrl_strategy;
@@ -50,6 +52,7 @@ void Policy_Tick_Div(void)
     if (++div_cnt >= MACHINE_POLICY_DIV)
     {
         div_cnt = 0u;
+        Latency_Tick(1u);
         osSemaphoreRelease(policy_tick_sem_handle);
     }
 }

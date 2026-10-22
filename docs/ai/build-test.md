@@ -1,5 +1,11 @@
 # 构建与测试
 
+2026-10-22默认腿角偏置检查复用下方`check_h7_simulation_latency.py`：新增训练四腿±5°范围、PD/观测同基准、复位固定与play零偏置检查。范围见[默认腿角随机化](../interfaces/20261022-huananhu-nominal-leg-offset.md)。
+
+2026-10-22新增电机响应候选有限检查：`mjlab_training/.venv/bin/python scripts/agent/check_motor_response.py --out artifacts/<新目录>/motor-response.json`。覆盖非实测4ms时间常数的CPU/GPU真实PD响应、指数卷积、部分复位及禁用清零、四环境32步；`--baseline-cpu <改动前源码快照>`可另核对默认0时间常数的CPU逐值等价。默认候选关闭，不学习、不辨识真实参数、不替代行为验收。见[接口说明](../interfaces/20261022-h7-simulation-timing.md#电机响应候选未实测默认关闭)。
+
+2026-10-22新增实测H7时序有限检查：`mjlab_training/.venv/bin/python scripts/agent/check_h7_simulation_latency.py --out artifacts/<新目录>/timing-check.json`。覆盖训练6/8/10 ms随机等待、play/CPU一拍等待、真实PD首用与旧动作保持、部分复位与39/82维有限状态，不训练、不代表行为验收。校准范围与精度限制见[2 ms精度时序接入](../interfaces/20261022-h7-simulation-timing.md)。
+
 串联腿新任务使用独立 Python 3.12 / mjlab 环境，入口、有限检查及待训练行为验收见 [mjlab 串联腿迁移](../mjlab-chuanliantui.md)。下文 Python 3.8 / Isaac Gym 约定适用于旧任务；新包不得安装进旧环境。
 
 ## mjlab 检查
@@ -367,3 +373,15 @@ check_multimode_cpu_sim2sim.py现同时验证训练/CPU/real2sim引用同一XML�
 ### RL初始角度分支的定向回归
 
 `CC=<已有宿主C编译器> mjlab_training/.venv/bin/python scripts/agent/check_h7_rl_angle_branch.py --session <完整v2会话> --out <新目录>` 使用实际H7映射/观测/PD源码及现有大机配置，检查首次分支锁存、多圈/跨界连续、失效保持、obs/PD同源及前30秒实录角度映射。只做离线软件验证，不证明真实姿态、力矩或失联原因；大小机完整固件链接另见[候选验证记录](../interfaces/20261021-h7-rl-angle-branch-fix.md)。
+
+## H7LAT001新增时序旁带的有限软件检查
+
+`check_h7_latency_capture.py`编译真实采集/CAN及USB源码，检查逐buffer配对、复用/失败/IRQ、队列/CRC/分包、首次PD配对/旧动作保持，并复用原生产者回归；`--build-h7`在工程外分别链接大小机。宿主C编译器和完整ARM工具链需先设置CC/ARM_CC；不连接硬件、不证明板端开销/调度或行为。输出目录用新名称。
+
+```bash
+CC="${CC:?请设置已有宿主C编译器}" ARM_CC="${ARM_CC:?请设置完整ARM工具链}" \
+  mjlab_training/.venv/bin/python scripts/agent/check_h7_latency_capture.py \
+  --build-h7 --out artifacts/h7-timing-check-new
+```
+
+当前候选、验证与新实测步骤见[时序采集接口](../interfaces/20261022-h7-latency-capture-v1.md)。旧录制没有H7LAT001时解码明确拒绝，不能回填新增测点。

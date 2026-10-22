@@ -15,6 +15,7 @@ import torch
 
 from mjlab.utils.lab_api.math import quat_apply_inverse
 
+from .huananhu_mdp import HEIGHT_COMMAND_RANGE
 from .model import ACTUATED_JOINTS
 
 
@@ -35,8 +36,8 @@ REWARD_WEIGHTS = {
     # (−200×dt = −4 once) could beat surviving.
     'knee_limit': -.5,
 }
-# Soft zone inside each passive knee limit. Commanded 0.27–0.34 m stances keep the
-# knees well over 0.15 rad from both stops; the v7/v10 squat sits at the stop.
+# Soft zone inside each passive knee limit. The original 0.27–0.34 m band keeps
+# the full penalty; requested low stances taper it to avoid fighting the target.
 KNEE_LIMIT_MARGIN = .15
 KNEE_JOINTS = ('lf1', 'rf1')
 LEGS = (0, 1, 3, 4)
@@ -58,6 +59,8 @@ def reward_values(*, command, linear_velocity, angular_velocity, gravity, pitch,
     velocity_error = vx_command - linear_velocity[:, 0] * pitch.cos()
     yaw_error = yaw_command - angular_velocity[:, 2]
     height_error = height - command[:, 2]
+    knee_limit_scale = ((command[:, 2] - HEIGHT_COMMAND_RANGE[0])
+                        / (.27 - HEIGHT_COMMAND_RANGE[0])).clamp(0., 1.)
     # v9: full within 3 cm, zero beyond 6 cm (published profile used 5–10 cm).
     velocity_height_gate = ((.06 - height_error.abs()) / .03).clamp(0., 1.)
     orientation_gain = 2. * torch.exp(-command[:, 0].square() / 3.) + 2.
@@ -92,7 +95,7 @@ def reward_values(*, command, linear_velocity, angular_velocity, gravity, pitch,
         'undesired_contact': undesired_contact.float(),
         # 0 outside the margin, 1 at the stop; capped so soft-constraint overshoot stays bounded.
         'knee_limit': ((KNEE_LIMIT_MARGIN - knee_limit_distance).clamp_min(0.) / KNEE_LIMIT_MARGIN
-                       ).clamp_max(1.5).square().sum(-1),
+                       ).clamp_max(1.5).square().sum(-1) * knee_limit_scale,
     }
 
 

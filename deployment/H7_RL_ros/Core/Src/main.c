@@ -36,6 +36,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "latency_capture.h"
 #include "uart_idle.h"
 #include "dr16.h"
 #include "can_bus.h"
@@ -321,6 +322,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim->Instance == TIM6)
   {
     Mono_Ns_Tick();   /* 周期扩展 */
+    Latency_Tick(0u); /* 只记触发序号/时刻，不改变原信号量节拍。 */
     osSemaphoreRelease(ctrl_tick_sem_handle);   /* 按机型配置的 TIM6 周期唤醒输出任务 */
     Policy_Tick_Div();                          /* 分频唤醒策略任务 */
   }

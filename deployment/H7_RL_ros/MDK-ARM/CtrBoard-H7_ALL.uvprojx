@@ -1206,6 +1206,11 @@
               <FileType>1</FileType>
               <FilePath>../imcalib/bsp/output_capture.c</FilePath>
             </File>
+            <File>
+              <FileName>latency_capture.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../imcalib/bsp/latency_capture.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
