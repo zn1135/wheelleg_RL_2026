@@ -1,5 +1,7 @@
 # mjlab 串联腿训练（multimode 单线）
 
+2026-10-21轮端模型更新：训练与CPU/real2sim共用mjlab/chuanliantui.xml（旧multimode路径为链接），已写入joint_sharp的等效armature/阻尼/摩擦及驱动G/V/p。训练动作执行与固定增益后端共同实现该响应，标称参数取自XML，原随机化继续叠加；未训练，不保证跨工况gap消除。当前检查和复现见[接入报告](diagnostics/20261021-h7-wheel-response-integration.md)。
+
 mjlab 训练侧只保留一条线：华南虎 multimode 任务，基线模型 `model_3023.pt`。2026-10-15 起 V14、r5～r15、recover、V11 等旧配方已删除，代码与文档可从分支 `backup/gpt-structure-20261015`（`e451b3d`）或其父提交 `109da6d` 找回。
 
 ## 接口

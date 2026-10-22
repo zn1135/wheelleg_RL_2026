@@ -1,4 +1,4 @@
-/* 六实体电机：模型坐标目标/PD/限幅，再还原固件力矩；无虚拟关节或补偿依赖。 */
+/* 六实体电机：模型坐标目标/PD/统一限幅，再还原固件力矩。 */
 #ifndef RL_TORQUE_H
 #define RL_TORQUE_H
 #include "rl_types.h"

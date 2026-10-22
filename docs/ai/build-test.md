@@ -4,14 +4,64 @@
 
 ## mjlab 检查
 
-H7→Jetson只读镜像的软件检查（不训练、不连接或控制真机）：
+完整输出采集（H7OUT001，离线，不打开串口）的正式有限检查：
 
 ```bash
-# Jetson（~/real2sim，需cc）：实际C打包代码＋损坏流＋模型姿态＋伪串口断线检查
-.venv/bin/python scripts/agent/check_real2sim_huananhu.py --out artifacts/<新名称>/check-software.json
+# CC需指向已有宿主C编译器；缺少cc时显式设置，不安装到Python环境。
+CC=<已有宿主gcc路径> ARM_CC=/usr/bin/arm-none-eabi-gcc \
+  mjlab_training/.venv/bin/python scripts/agent/check_h7_output_capture.py \
+  --build-h7 --out artifacts/<新的完整采集检查目录>
+```
+
+检查实际C队列/USB/驱动、652组插桩前后报文字节与HAL返回、模拟500/1000Hz输出/40ms后台停顿、会话CSV和损坏流拒绝，可选大小机编译链接。需要保留本次`artifacts/h7-output-capture-20261021/source-baseline/`作为原驱动对照。结果`final/report.json`、USB/UART回归和未验证的板端时序范围见[完整输出接口](../interfaces/20261021-h7-output-capture-v1.md)。软件通过不代表2ms真实控制截止时间或物理输入已验证。
+
+2026-10-21轮端试验补偿：`--h7-root deployment/H7_RL_ros --build-h7`增加实际`wheel_response.c`与`rl_torque.c`的108组宿主C/Python对照，验证大机已确认补偿、小机原控制、腿部保持、非有限结果拒绝及最终限幅。大小机各107来源编译链接通过，报告`artifacts/real2sim-wheel-response-h7-20261021/check-final.json`；新旧版本/元数据及动力学拒绝检查见同目录`check-profile-complete.json`，旧完整动力学回归见`check-legacy-dynamics.json`。槽158控制版本、156/157复位计数及159CRC均覆盖。软件通过不等于行为通过：同目录`sim-approved-coefficients.json`的30秒闭环复核仍持续移动且跟踪失败，未烧录，详见项目实验记录顶部。
+
+2026-10-21：选择`--h7-root deployment/H7_RL_ros`时，同一入口另检查单轮台架真实C状态机、RC解码、许可与最终分发；最新源码为准备无人扶持零速采集恢复原RL投入，正常LQR档位及台架独占保留。检查覆盖独占切档、释放后RL投入、超时/超速/失联/反馈过期/时间回绕/CAN提交失败。不会控制真机；`--build-h7`同时编译大小机。最新软件和构建结果分别为`artifacts/real2sim-zero-stand-20261021/check-usb-software.json`与`check-arm-build.json`，板端未更新。历史暂停RL结果仍保留在`artifacts/wheel-bench-20261021/final/check.json`。
+
+H7→Jetson只读镜像的软件检查（不训练、不连接或控制真机）：
+
+实测输入的 MuJoCo 动力学对照另有 `--dynamics-only`，不依赖宿主 C 或 ARM 编译器：
+
+```bash
+mjlab_training/.venv/bin/python scripts/agent/check_real2sim_huananhu.py \
+  --dynamics-only --out artifacts/<新名称>/check-dynamics.json
+# 对完整运行：核对全部保存终点／统计，并抽样重新步进。
+mjlab_training/.venv/bin/python scripts/agent/check_real2sim_huananhu.py \
+  --dynamics-only --dynamics-run artifacts/<对照目录> \
+  --out artifacts/<新名称>/check-dynamics-results.json
+```
+
+它检查原始流 CRC、时间回绕、重启、缺口、断连、过期与截断拒绝，固定台架的姿态烘焙／零漂移、`mj_step` 与单轮方程一致性、预测不读取后续实测，以及独立候选 XML 只允许两个轮关节的附加惯量／阻尼／干摩擦变化。完整动力学运行命令和输入假设见 [USB 镜像接口的离线动力学对照](../interfaces/20261020-h7-ros-usb-mirror.md#离线mujoco动力学对照)。这些是有限软件检查，不构成真实力矩、物理标定或 gap 消除的验收。
+
+轮端惯量分配诊断使用独立入口，不改变上述六字段候选的约束：
+
+```bash
+mjlab_training/.venv/bin/python sim2sim/real2sim_coupling_huananhu.py \
+  --dynamics-run artifacts/<完整动力学对照目录> --out artifacts/<新分配对照目录>
+mjlab_training/.venv/bin/python scripts/agent/check_real2sim_huananhu.py \
+  --coupling-only --coupling-run artifacts/<分配对照目录> \
+  --out artifacts/<新名称>/check-coupling.json
+```
+
+诊断保持固定台架总轴惯量和损耗，只在独立XML中按0/5/10/15%将附加惯量移到轮本体，拒绝超出既有质量/包络半径必要上界的值。使用旧运行中逐位相同的初态，不重新拟合；覆盖台架响应不变、机身耦合变化、全部保存终点/统计、旧基线复现及重构数值敏感性。必要几何上界不等于实测或物理分布可实现性证明。已有完整验证见`artifacts/real2sim-coupling-20261021/check-fixed-initials.json`。
+
+CPU入口的`--model`／默认关闭的`--wheel-friction-compensation`用于轮端模型和实验控制器对照，运行命令见上述接口。原`scripts/agent/check_multimode_cpu_sim2sim.py`检查训练默认语义保持，并增加补偿过零、正反速度、腿控制保持、统一±3.9Nm限幅与趴地保持检查。最新结果`artifacts/real2sim-wheel-closed-loop-20261021/check-cpu-compensation.json`；它不验证实机补偿或零位移。
+
+```bash
+# 训练仓本机（需宿主cc及已有Matplotlib）：主工程默认UART软件回归。
+mjlab_training/.venv/bin/python scripts/agent/check_real2sim_huananhu.py \
+  --out artifacts/<新名称>/check-software.json
+# USB镜像工程：真实打包/发送源码、机器映射、模型及录制/离线分析检查；CDC由替身模拟。
+mjlab_training/.venv/bin/python scripts/agent/check_real2sim_huananhu.py \
+  --h7-root deployment/H7_RL_ros --out artifacts/<新名称>/check-real2sim-recording.json
 # 训练仓：从当前eIDE实际存在的来源编译、链接大小机；需要完整ARM GCC/Newlib
 ARM_CC=/usr/bin/arm-none-eabi-gcc mjlab_training/.venv/bin/python \
   scripts/agent/check_real2sim_huananhu.py --build-only --out artifacts/<新名称>/check-h7-build.json
+# 同一入口独立编译USB工程，不能拿主工程结果代替。
+ARM_CC=/usr/bin/arm-none-eabi-gcc mjlab_training/.venv/bin/python \
+  scripts/agent/check_real2sim_huananhu.py --h7-root deployment/H7_RL_ros \
+  --build-only --out artifacts/<新名称>/check-usb-build.json
 ```
 
 镜像不依赖PyTorch，单独依赖见`sim2sim/requirements-real2sim.txt`。`--build-h7`可在同时具备宿主C编译器
@@ -19,6 +69,14 @@ ARM_CC=/usr/bin/arm-none-eabi-gcc mjlab_training/.venv/bin/python \
 虚拟来源列入报告，不修改工程清单。检查覆盖CRC／伪尾／分包、序号回绕、DMA忙、单设备失效、200ms
 断流，以及模型闭链重构；不验证实际串口、物理极性／零点／IMU轴向或装配分支。操作见
 [部署接口](../deployment-contract.md#host-debug-plan)。
+
+只读镜像的模型范围越界采用显示并警告：实际趴地反馈检查覆盖双腿更新、黄色警告、200ms过期变红、回到范围内恢复原色及XML限位保持；闭合失败和坏反馈仍冻结。该显示规则不改变训练或H7控制。
+
+real2sim录制／回放／分析沿用同一检查入口，检查原始字节分包／损坏流、连接事件、单调时间、会话完整／错误状态、模型与机器配置哈希核对，以及离线与直播的姿态／过期／范围警告一致性。完整软件检查会调用离线分析，须使用本机已有Matplotlib的mjlab环境；分析生成会话`analysis/trajectory.csv`、`report.json`、`signals.png`。Jetson基础依赖不增加Matplotlib，直播／录制／回放无需绘图库，完整检查不要求在Jetson执行。
+
+USB源码镜像v2扩为160路／644字节，增加实际配对obs39／action6、命令、PD目标／反馈、门控后力矩请求和来源接收年龄；旧v1录制仍可读，缺失新列留空。新增检查覆盖v1／v2混流、真实C扩展打包与644字节缓冲保护，以及扩展字段录制／回放／CSV一致性。v2源码与板端版本、软件及台架验收须分别记录，见[接口记录](../interfaces/20261020-h7-ros-usb-mirror.md#只读对照信号v2)。
+本轮正式USB软件检查见`artifacts/real2sim-record-replay-20261020/check-usb-final-v3.json`，结果通过；新增窗口初始化不占采样预算、关窗耗时不误报最终来源过期的回归。默认主工程UART最终回归见同目录`check-uart-final.json`，通过。
+Jetson最终1072有效帧完整会话的CRC拒绝／序号缺口／重复／重启／乱序均0，原速离线回放1072帧、最终姿态最大差0，本机分析三文件已生成；证据见同目录`jetson-capture-final.json`、`jetson-replay-final.json`和`verification.json`。首次774帧采样预算／收尾状态问题已修，旧产物保留。实收会话不作为受控静止或逐关节方向／零点验收，动态配合仍待台架；不能用软件和USB会话通过替代物理映射验收。操作命令、证据与已知趴地超限记录见[USB镜像接口](../interfaces/20261020-h7-ros-usb-mirror.md#real2sim录制与离线诊断)。
 
 倒地恢复机制检查（不训练）：训练配置不主动施加绕轴击倒，手动冲量只在机制检查中使用。
 
@@ -272,3 +330,40 @@ CUDA 可用时同时检查批量 GPU 数学路径，不创建 Isaac 物理仿真
 `scripts/agent/export_chuanliantui_onnx.py` 从完整 25 维 checkpoint 导出 encoder + actor，执行 ONNX checker 和参考执行器/PyTorch 数值比较。可用 `--fixed-batch --opset 13` 生成面向 STM32H723 的静态 batch=1 模型；默认仍为动态 batch、opset 17。运行方式和 Cube.AI 验证步骤见 [ONNX 导出说明](../../ONNX导出说明.md)。该检查不替代训练、回放、sim2sim 或板端验证。
 
 本仓库没有 pytest、没有 CI。「测试」= `--selfcheck` + 上面三步人眼判读。不要声称跑过单测。新增可自动判读的检查请放 `scripts/agent/`。
+
+
+## 完整输入会话校准的有限离线核验
+
+本次独立worktree新增`scripts/agent/check_h7_capture_calibration.py`，检查原始会话哈希/完整性/划分、实际优化预算、候选编译保护字段、自由积分可复现/不依赖未来实测速度及±1%参数敏感性；有旧RL输出时复核保存终点并每模型重新积分一窗。只代表这些有限检查，不是整机行为验收或真实参数辨识。本次报告/命令见[固定300ms完整输入校准](../diagnostics/20261021-fixed300-complete-input-calibration.md)。已有产物可只读复核：
+
+```bash
+mjlab_training/.venv/bin/python scripts/agent/check_h7_capture_calibration.py --data-root artifacts/fixed-h7-fixed300-data-20261021 --fit-root artifacts/fixed-h7-fixed300-data-20261021/fit-budget80 --out artifacts/fixed-h7-fixed300-data-20261021/fit-budget80/recheck.json
+```
+
+
+## 连续驱动/滑行候选的有限检查
+
+新增`scripts/agent/check_h7_drive_response.py`，仅离线核对原始固件/机器/正式模型哈希、候选物理字段与非轮执行器不变、同一惯量、实际预算、完整悬空轮验证曲线复算/重复一致及±1%驱动参数敏感性。user-gain原生回调与独立Python逐步实现对照由`sim2sim/probe_h7_drive_response.py`先执行；源码`sim2sim/h7_drive_response.c`仅为离线MuJoCo回调，不接H7。候选XML需要该回调，单独XML不构成完整模型。范围、失败导出留档、命令与本轮悬空轮结果（整机未验证）见[检验报告](../diagnostics/20261021-h7-drive-coast-response.md)。
+
+
+## 当前悬空轮端候选回放
+
+用户选用轮速拟合最好的候选；独立选择记录为`artifacts/h7-wheel-best-20261021/selection.json`。`replay_selected.py`读取该选择，在悬空夹具中自由积分，不重新拟合、不运行RL或接硬件；结果必须复现选定RMSE。需要XML与同一增益回调配套。联合拟合仍由现有`check_h7_drive_response.py`有限核验；本次范围、局部退化和复现见[候选选择报告](../diagnostics/20261021-h7-wheel-best-selection.md)。
+
+
+## 共享华南虎XML来源检查
+
+check_multimode_cpu_sim2sim.py现同时验证训练/CPU/real2sim引用同一XML、旧模型路径为兼容链接且CPU姿态库位置保留。2026-10-21来源合并前后30项编译物理字段完全一致，有限检查通过；未执行训练、硬件或新行为验收。证据及复现见[共享XML说明](../diagnostics/20261021-shared-huananhu-xml.md)。
+
+
+## 已接入共享XML的轮端响应
+
+新增`scripts/agent/check_shared_wheel_response.py`核对当前XML等于选定轮端候选、部件/非轮/硬件保护项不变、训练与CPU力矩计算等价且G只乘一次、原录制严格归档模型、活动XML连续回放与候选一致，并计算2ms步长误差。CPU加载使用已有C回调的源码/版本缓存；没有cc/gcc时设置CC。已运行GPU2环境16步检查，仅检查有限数值/接口，不代表行为验收，不调用学习。命令和范围见[接入报告](../diagnostics/20261021-h7-wheel-response-integration.md)。
+
+### 已录H7 RL故障时序的离线复核
+
+`mjlab_training/.venv/bin/python scripts/agent/analyze_h7_rl_capture.py --session <完整会话目录> --seconds 30 --checkpoint <对应model_*.pt> --out <尚不存在的分析目录>` 验证原始流哈希/元数据后，输出首30秒档位、在线/故障、来源年龄与请求曲线，并复算已有PD快照和至多64个已录策略输入。可选`--comparison-checkpoint`以同一实测输入核对其他权重。只用于故障时序与算术检查，不打开串口、不生成另一套驱动输入，不验证真实力矩、位移、计圈真实性或故障物理根因；当前覆盖见[最新前30秒分析](../diagnostics/20261021-model6848-first30-fault-analysis.md)。
+
+### RL初始角度分支的定向回归
+
+`CC=<已有宿主C编译器> mjlab_training/.venv/bin/python scripts/agent/check_h7_rl_angle_branch.py --session <完整v2会话> --out <新目录>` 使用实际H7映射/观测/PD源码及现有大机配置，检查首次分支锁存、多圈/跨界连续、失效保持、obs/PD同源及前30秒实录角度映射。只做离线软件验证，不证明真实姿态、力矩或失联原因；大小机完整固件链接另见[候选验证记录](../interfaces/20261021-h7-rl-angle-branch-fix.md)。

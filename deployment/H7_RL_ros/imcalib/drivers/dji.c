@@ -9,6 +9,7 @@
 #include "dji.h"
 #include "machine_config.h"
 #include "mono_ns.h"
+#include "output_capture.h"
 
 /* 编译期检查: 极性表长度对齐 */
 typedef char dji_num_check[(MACHINE_WHEEL_NUM == DJI_MOTOR_NUM) ? 1 : -1];
@@ -223,6 +224,8 @@ HAL_StatusTypeDef Dji_Send_Current(FDCAN_HandleTypeDef *hfdcan, uint32_t can_id,
                                    const volatile int16_t current_raw[4])
 {
     uint8_t data[8];
+    uint64_t begin_ns;
+    HAL_StatusTypeDef status;
 
     if (hfdcan == NULL || can_id > 0x7FFu)
     {
@@ -235,7 +238,10 @@ HAL_StatusTypeDef Dji_Send_Current(FDCAN_HandleTypeDef *hfdcan, uint32_t can_id,
         data[2u * i] = (uint8_t)(raw >> 8);
         data[2u * i + 1u] = (uint8_t)raw;
     }
-    return Can_Bus_Transmit(hfdcan, can_id, data, sizeof(data));
+    begin_ns = Mono_Ns_Get();
+    status = Can_Bus_Transmit(hfdcan, can_id, data, sizeof(data));
+    Output_Capture_CAN(data, can_id, (uint8_t)status, begin_ns, Mono_Ns_Get()); /* 只记录实际提交字节，不改变原HAL返回值。 */
+    return status;
 }
 
 /* 按 ID 选槽 */

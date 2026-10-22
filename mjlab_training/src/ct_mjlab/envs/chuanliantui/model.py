@@ -67,16 +67,42 @@ _EXPECTED_CTRL_RANGES = np.array(
 
 
 def load_spec() -> mujoco.MjSpec:
-    """Load a fresh MJCF specification without sharing mutable state."""
+    """Load the shared XML for mjlab's fixed-gain GPU actuator backend.
+
+    The XML stores G/V/p as a user gain for native MuJoCo. mjlab applies the
+    velocity factor in HuananhuPdAction each physics tick; the backend supplies
+    only constant G, so the gain is applied exactly once.
+    """
     if not MODEL_XML.is_file():
         raise FileNotFoundError(f"Vendored chuanliantui model is missing: {MODEL_XML}")
-    return mujoco.MjSpec.from_file(str(MODEL_XML))
+    spec = mujoco.MjSpec.from_file(str(MODEL_XML))
+    for name in ('lfwheel_motor', 'rfwheel_motor'):
+        actuator = spec.actuator(name)
+        if actuator.gaintype == mujoco.mjtGain.mjGAIN_USER:
+            actuator.gaintype = mujoco.mjtGain.mjGAIN_FIXED
+    return spec
 
 
 def load_model() -> mujoco.MjModel:
-    """Compile a fresh MuJoCo model with the environment's physics settings."""
-    model = mujoco.MjModel.from_xml_path(str(MODEL_XML))
+    """Compile the training-backend model for pose/initialization helpers.
+
+    Its wheel speed factor is supplied by HuananhuPdAction during simulation;
+    standalone native rollout uses the CPU sim2sim loader instead.
+    """
+    model = load_spec().compile()
     return _configure_physics(model)
+
+
+def wheel_response_parameters(model: mujoco.MjModel) -> np.ndarray:
+    """Read G/V/p in left/right order from the compiled shared XML."""
+    ids = []
+    for name in ('lfwheel_motor', 'rfwheel_motor'):
+        matches = [i for i in range(model.nu)
+                   if model.actuator(i).name.rsplit('/', 1)[-1] == name]
+        if len(matches) != 1:
+            raise RuntimeError(f'Expected one wheel actuator: {name}')
+        ids.append(matches[0])
+    return model.actuator_gainprm[ids, :3].copy()
 
 
 def load_view_model() -> mujoco.MjModel:
@@ -339,7 +365,8 @@ def create_robot_cfg(
     return EntityCfg(
         spec_fn=load_spec,
         articulation=EntityArticulationInfoCfg(
-            actuators=(XmlActuatorCfg(target_names_expr=ACTUATED_JOINTS),),
+            actuators=(XmlActuatorCfg(target_names_expr=ACTUATED_JOINTS,
+                                      command_field="effort"),),
         ),
         init_state=EntityCfg.InitialStateCfg(
             pos=(0.0, 0.0, base_height),

@@ -53,6 +53,32 @@ typedef struct {
     rl_recovery_state_t recovery; /* 执行任务推进，策略只复制；阶段供Watch观察。 */
 } rl_control_state_t;
 
+/* 只读遥测：成功发布的同一次obs/action配对，不参与控制或推进算法。 */
+typedef struct {
+    float obs[RL_OBS_SIZE];
+    float action[RL_ACTION_SIZE]; /* 网络左右两侧顺序，未缩放。 */
+    float command[3]; /* 本次obs使用的原始rc.vel/yaw/len。 */
+    uint32_t sequence;
+    uint32_t sample_tick_ms; /* Mono_Ns_Get毫秒：500Hz缓存时刻，不是传感器采样时刻。 */
+    uint32_t published_tick_ms; /* 与镜像captured_ns同原点，不使用HAL tick。 */
+    uint32_t run_us;
+    uint8_t valid;
+} mirror_policy_snapshot_t;
+
+/* 一个输出拍的PD输入/目标及最终门控命令；HAL成功只表示发送入队。 */
+typedef struct {
+    float target[RL_ACTION_SIZE]; /* 四腿角度rad、双轮速度rad/s。 */
+    float action[RL_ACTION_SIZE]; /* 本拍实际使用的网络顺序action。 */
+    float pos[RL_LEG_MOTOR_NUM]; /* 本拍PD模型坐标rad。 */
+    float vel[RL_ACTION_SIZE]; /* 本拍PD模型坐标rad/s。 */
+    float torque[RL_ACTION_SIZE]; /* 门控后驱动入口Nm，固件四腿两轮顺序。 */
+    uint32_t sequence;
+    uint32_t tick_ms; /* Mono_Ns_Get毫秒，驱动下发前时刻，不是电机生效时刻。 */
+    uint32_t policy_sequence;
+    uint8_t flags; /* bit0=PD有效，1=零输出，2/3=DM/DJI入队，4=总开关，5=drive。 */
+    uint8_t valid;
+} mirror_output_snapshot_t;
+
 /* 写入归对应任务 */
 extern imu_state_t imu_state;
 extern motor_state_t motor_state;
@@ -64,6 +90,9 @@ extern leg_map_t leg_map_l;
 extern leg_map_t leg_map_r;
 extern robot_state_t robot_state;
 extern rl_control_state_t rl_control;
+extern mirror_policy_snapshot_t mirror_policy_snapshot;
+extern mirror_output_snapshot_t mirror_output_snapshot;
+extern uint32_t rl_observation_sample_tick_ms;
 extern lqr_state_t lqr_state;
 extern leg_balance_t leg_balance;
 extern volatile ctrl_strategy_t ctrl_strategy;

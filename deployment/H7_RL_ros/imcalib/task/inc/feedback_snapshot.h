@@ -32,6 +32,7 @@ typedef struct {
     float vel_rad_s[DJI_MOTOR_NUM];
     int16_t current_raw[DJI_MOTOR_NUM];
     uint32_t last_rx_tick[DJI_MOTOR_NUM];
+    uint64_t parsed_rx_ns[DJI_MOTOR_NUM]; /* 与当前解析角度/速度配套的接收时刻。 */
     uint8_t online[DJI_MOTOR_NUM];
 } dji_motor_state_t;
 

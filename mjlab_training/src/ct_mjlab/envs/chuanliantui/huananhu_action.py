@@ -16,6 +16,15 @@ from .gas_spring import (
     SPRING_REFERENCE_STROKE,
 )
 from .pd_action import ChuanliantuiPdAction, ChuanliantuiPdActionCfg
+from .model import wheel_response_parameters
+
+
+def wheel_response_input(command: torch.Tensor, velocity: torch.Tensor,
+                         parameters: torch.Tensor) -> torch.Tensor:
+    """Nominal Nm to actuator input; XML fixed gain supplies G afterward."""
+    along = torch.clamp(torch.sign(command) * velocity, min=0.)
+    fraction = torch.clamp(1. - along / parameters[:, 1], min=0.)
+    return command * fraction.pow(parameters[:, 2])
 
 
 @dataclass(kw_only=True)
@@ -47,6 +56,9 @@ class HuananhuPdAction(ChuanliantuiPdAction):
         super().__init__(replace(cfg, motor_randomization=False,
                                  standup_pushes=False, standup_landing_gate=False), env)
         self.cfg = cfg
+        self._wheel_response = torch.as_tensor(
+            wheel_response_parameters(env.sim.mj_model),
+            dtype=self._torques.dtype, device=self.device)
         self._wheel_action_delay_steps = torch.zeros_like(self.action_delay_steps)
         self._delay_choices = torch.tensor(
             [math.ceil(.005 / env.physics_dt), math.ceil(.010 / env.physics_dt)],
@@ -102,7 +114,12 @@ class HuananhuPdAction(ChuanliantuiPdAction):
         self._torques.mul_(self.motor_strength)
         self._torques.copy_(torch.clamp(self._torques, -self._effort_limits, self._effort_limits))
         self._torques[self._ground_hold()] = 0.
-        self._entity.set_joint_effort_target(self._torques, joint_ids=self._physical_joint_ids)
+        # Preserve nominal PD/limits and diagnostics; only the simulated motor
+        # response changes. XML gain G is not multiplied here a second time.
+        inputs = self._torques.clone()
+        inputs[:, wheels] = wheel_response_input(
+            self._torques[:, wheels], qd[:, wheels], self._wheel_response)
+        self._entity.set_joint_effort_target(inputs, joint_ids=self._physical_joint_ids)
 
         compression = (SPRING_INITIAL_COMPRESSION
                        - self._env.sim.data.qpos[:, self._spring_q_adr]).clamp(min=0.)

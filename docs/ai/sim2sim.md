@@ -10,6 +10,8 @@ mjlab 串联腿只保留华南虎 multimode 一条线：39维actor／82维critic
 轮速回路增益 0.1／0，接触参数镜像训练场景的机器人 geom `priority=1` 补丁（机器人-地面滑动摩擦取训练值 0.5，非等优先级 max 的 1.0；2026-10-17 两次修正，见 [multimode 接口记录](../interfaces/chuanliantui-huananhu-multimode-replay-v1.md)）。
 导出与使用规则见 [multimode ONNX 使用说明](../onnx-huananhu-multimode-model5849.md)（当前交付模型 `model_5849`；`model_3023` 为历史基线）。它不兼容下文旧 25/125 维 H7 流程。
 
+训练与CPU/real2sim已统一读取`resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml`；旧multimode_model3023/chuanliantui.xml仅作兼容链接。CPU姿态库仍为原multimode_model3023版本，不随模型源路径迁移。来源合并后，作者已明确要求将joint_sharp写入共享XML；当前双轮等效惯量/阻尼/摩擦及G/V/p已接入训练执行与CPU原生回调，参数仅存XML，见[轮端响应接入](../diagnostics/20261021-h7-wheel-response-integration.md)。
+
 2026-10-18起，独立CPU入口的地面起立“恢复完成”高度条件使用与H7同含义的髋轮投影均值：
 `h = (L_left*cos(theta_left) + L_right*cos(theta_right))/2`，要求 `h > 0.20 m` 连续满足0.5秒。
 每侧取髋关节轴心到轮轴心在机体XZ腿平面内的向量，腿角以机体向下为零；分别投影后取均值，

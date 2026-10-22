@@ -17,6 +17,9 @@
 #include "standup.h"
 #include "slip.h"
 #include "air_detection.h"
+#include "wheel_bench.h"
+#include "output_capture.h"
+#include "dr16.h"
 #include <math.h>
 #include <string.h>
 
@@ -32,8 +35,10 @@ static slip_state_t slip_control;
 static uint8_t lqr_running;     /* 已投入 */
 static uint8_t rl_engaged;      /* RL 已投入 */
 static uint8_t rl_wait_ticks;   /* 500Hz采样/执行 */
+static rl_motor_map_state_t rl_motor_map; /* 执行任务独占；退出RL才重新锁存角度分支。 */
 static control_frame_t control_frame;
 static compensation_debug_t pending_compensation;
+static uint64_t output_dispatch_started_ns;
 volatile float rl_output_dm_cmd_nm[DM_MOTOR_NUM];
 volatile float rl_output_wheel_cmd_nm[DJI_MOTOR_NUM];
 
@@ -42,10 +47,39 @@ uint8_t Robot_Control_Enable_Allowed(void)
 {
     uint8_t recovery;
 
+    if (wheel_bench.reserved || rc_command.mode.strategy == CTRL_STRATEGY_WHEEL_BENCH) { return 0u; }
     if (rc_command.mode.strategy == CTRL_STRATEGY_RL && rl_control.recovery.phase == RL_RECOVERY_FAILED) { return 0u; }
     recovery = (uint8_t)(standup_control.enabled && standup_control.recovery_enabled && rc_command.mode.strategy == CTRL_STRATEGY_LQR && rc_command.mode.engage);
     recovery |= (uint8_t)(machine->rl.configured && rc_command.mode.strategy == CTRL_STRATEGY_RL && rc_command.mode.engage);
     return (uint8_t)(rc_command.mode.rc_enable && rc_command.online && ctrl_fault == FAULT_NONE && (!robot_state.fallen || recovery));
+}
+
+/* 测试不借用整机使能：四髋必须已失能，轮反馈必须是最近解析的样本。 */
+static uint8_t Wheel_Bench_Permit(void)
+{
+    uint64_t now_ns;
+
+    taskENTER_CRITICAL();
+    if (!DR16_Online() || !rc_command.online || ctrl_fault != FAULT_NONE || robot_state.fallen || robot_state.motor_enabled || !torque_output_enabled || !motor_state.valid)
+    {
+        taskEXIT_CRITICAL();
+        return 0u;
+    }
+    for (uint8_t i = 0u; i < DM_MOTOR_NUM; i++)
+    {
+        if (Dm_Is_Enabled(i)) { taskEXIT_CRITICAL(); return 0u; }
+    }
+    now_ns = Mono_Ns_Get();
+    for (uint8_t i = 0u; i < DJI_MOTOR_NUM; i++)
+    {
+        if (!motor_state.dji.online[i] || now_ns - motor_state.dji.parsed_rx_ns[i] >= 10000000u || !isfinite(motor_state.dji.vel_rad_s[i]) || fabsf(motor_state.dji.vel_rad_s[i]) >= WHEEL_BENCH_SPEED_MAX)
+        {
+            taskEXIT_CRITICAL();
+            return 0u;
+        }
+    }
+    taskEXIT_CRITICAL();
+    return 1u;
 }
 
 /* 本拍快照与许可 */
@@ -70,6 +104,12 @@ static void Control_Frame_Read(void)
     control_frame.fallen = robot_state.fallen;
     control_frame.wheel_vel[0] = feedback.motor.dji.vel_rad_s[DJI_MOTOR_WHEEL_LFT];
     control_frame.wheel_vel[1] = feedback.motor.dji.vel_rad_s[DJI_MOTOR_WHEEL_RGT];
+    control_frame.wheel_online = 0u;
+    for (uint8_t i = 0u; i < DJI_MOTOR_NUM; i++)
+    {
+        control_frame.wheel_rx_ns[i] = feedback.motor.dji.parsed_rx_ns[i];
+        control_frame.wheel_online |= feedback.motor.dji.online[i] ? (uint8_t)(1u << i) : 0u;
+    }
     control_frame.joint_ready = 1u;
     for (uint8_t i = 0u; i < 4u; i++)
     {
@@ -90,6 +130,11 @@ static void Control_Frame_Read(void)
         control_frame.drive &= (uint8_t)(control_frame.left.output.valid && control_frame.right.output.valid);
     }
     control_frame.normal = (uint8_t)(control_frame.drive && !control_frame.fallen);
+    if (Wheel_Bench_Output_Valid(HAL_GetTick()) || control_frame.rc.mode.strategy == CTRL_STRATEGY_WHEEL_BENCH)
+    {
+        control_frame.drive = (uint8_t)(Wheel_Bench_Output_Valid(HAL_GetTick()) || Wheel_Bench_Permit());
+        control_frame.normal = 0u;
+    }
     control_frame.recovery = (uint8_t)(control_frame.drive && standup_control.enabled && control_frame.rc.mode.strategy == CTRL_STRATEGY_LQR && control_frame.rc.mode.engage);
     taskEXIT_CRITICAL();
 }
@@ -147,19 +192,63 @@ uint8_t output_task_rl_engaged(void)
 }
 
 /* ================= 3 分发层: 唯一下发点 ================= */
+/* 只读诊断在发送返回后一次发布，避免新命令配到上一拍HAL结果。 */
+static void Mirror_Output_Publish(mirror_output_snapshot_t *next, const torque_output_t *applied)
+{
+    output_capture_record_t record = {0};
+    uint64_t age_us;
+    for (uint8_t i = 0u; i < DM_MOTOR_NUM; i++)
+    {
+        next->torque[i] = applied->dm[i];
+    }
+    for (uint8_t i = 0u; i < DJI_MOTOR_NUM; i++)
+    {
+        next->torque[DM_MOTOR_NUM + i] = applied->dji[i];
+    }
+    next->flags |= output_debug_dm_sent ? 0x04u : 0u;
+    next->flags |= output_debug_dji_sent ? 0x08u : 0u;
+    taskENTER_CRITICAL();
+    next->sequence = mirror_output_snapshot.sequence + 1u;
+    next->valid = 1u;
+    mirror_output_snapshot = *next;
+    taskEXIT_CRITICAL();
+    /* 原输出发布保持；另保存每个实际分发拍，不能用100Hz最新快照替代。 */
+    record.kind = OUTPUT_CAPTURE_CONTROL;
+    record.begin_ns = output_dispatch_started_ns;
+    record.end_ns = Mono_Ns_Get();
+    record.id = next->sequence;
+    record.fault = ctrl_fault;
+    record.flags = next->flags;
+    record.strategy = (uint8_t)ctrl_strategy;
+    record.bench_phase = (uint8_t)wheel_bench.phase;
+    record.bench_reason = (uint8_t)wheel_bench.reason;
+    record.machine = (uint8_t)MACHINE_DEFAULT;
+    record.wheel_online = control_frame.wheel_online;
+    memcpy(record.torque_nm, next->torque, sizeof(record.torque_nm));
+    memcpy(record.wheel_speed, control_frame.wheel_vel, sizeof(record.wheel_speed));
+    for (uint8_t i = 0u; i < DJI_MOTOR_NUM; i++)
+    {
+        age_us = (output_dispatch_started_ns - control_frame.wheel_rx_ns[i]) / 1000u;
+        record.wheel_age_us[i] = (!control_frame.wheel_rx_ns[i] || control_frame.wheel_rx_ns[i] > output_dispatch_started_ns || age_us >= UINT32_MAX) ? UINT32_MAX : (uint32_t)age_us;
+    }
+    Output_Capture_Push(&record);
+}
+
 /* valid=0 或总输出关 → 零力矩; 否则原样下发 (各路限幅已在控制器内做, 极性在驱动边界做) */
 /*
  * 唯一电机输出口：发送前再次检查最新许可、有效性和所有力矩有限性。
  * 不满足条件发送零力矩；正常才调用DM/DJI物理力矩接口，避免求解期间许可变化仍继续出力。
  * 记录的是最终门控后的命令与HAL入队结果，不证明实体电机已经执行。
  */
-static void output_dispatch(const torque_output_t *torque)
+static void output_dispatch(const torque_output_t *torque, mirror_output_snapshot_t *diagnostic)
 {
     torque_output_t applied;
     compensation_debug_t debug;
     uint8_t zero_output;
 
     applied = *torque;
+    output_dispatch_started_ns = Mono_Ns_Get();
+    diagnostic->tick_ms = (uint32_t)(output_dispatch_started_ns / 1000000u);
     debug = pending_compensation;
     debug.bench = (uint8_t)(ctrl_strategy == CTRL_STRATEGY_COMPENSATION);
     for (uint8_t i = 0u; i < DM_MOTOR_NUM; i++)
@@ -177,7 +266,20 @@ static void output_dispatch(const torque_output_t *torque)
         }
     }
     zero_output = (uint8_t)(!applied.valid || !control_frame.drive || ctrl_fault != FAULT_NONE || !torque_output_enabled);
+    if (ctrl_strategy == CTRL_STRATEGY_WHEEL_BENCH)
+    {
+        memset(applied.dm, 0, sizeof(applied.dm));
+        /* 仅本次已锁存台架脉冲绕过运行许可；仍禁止非有限指令并检查300ms期限。 */
+        zero_output = (uint8_t)(!applied.valid || !Wheel_Bench_Output_Valid(HAL_GetTick()));
+    }
+    else if (wheel_bench.reserved || !Robot_Control_Enable_Allowed() || rc_command.mode.strategy != ctrl_strategy)
+    {
+        zero_output = 1u;
+    }
     if (ctrl_strategy == CTRL_STRATEGY_RL && rl_control.recovery.phase != RL_RECOVERY_NORMAL && rl_control.recovery.phase != RL_RECOVERY_RECOVER) { zero_output = 1u; }
+    diagnostic->flags |= zero_output ? 0x02u : 0u;
+    diagnostic->flags |= torque_output_enabled ? 0x10u : 0u;
+    diagnostic->flags |= control_frame.drive ? 0x20u : 0u;
     if (zero_output)
     {
         memset(&applied, 0, sizeof(applied));
@@ -198,10 +300,12 @@ static void output_dispatch(const torque_output_t *torque)
     {
         output_debug_dm_sent = (uint8_t)(Dm_Send_Zero() == HAL_OK);
         output_debug_dji_sent = (uint8_t)(Dji_All_Stop() == HAL_OK);
+        Mirror_Output_Publish(diagnostic, &applied);
         return;
     }
-    output_debug_dm_sent = (uint8_t)(Dm_Send_Torque(applied.dm) == HAL_OK);
+    output_debug_dm_sent = (uint8_t)((ctrl_strategy == CTRL_STRATEGY_WHEEL_BENCH ? Dm_Send_Zero() : Dm_Send_Torque(applied.dm)) == HAL_OK);
     output_debug_dji_sent = (uint8_t)(Dji_Send_Wheel_Torque( applied.dji[DJI_MOTOR_WHEEL_LFT], applied.dji[DJI_MOTOR_WHEEL_RGT]) == HAL_OK);
+    Mirror_Output_Publish(diagnostic, &applied);
 //     Dm_Send_Zero();
 //     Dji_All_Stop();
 }
@@ -466,7 +570,9 @@ void output_task_body(void)
     float wheel_vel[2];
     ctrl_strategy_t strategy;
     torque_output_t torque;
+    mirror_output_snapshot_t diagnostic;
     uint8_t dispatch;
+    torque_output_t bench_torque;
 #if CONTROL_TIME_VOFA_ENABLE
     static uint32_t previous_start_us;
     static uint32_t previous_output_us;
@@ -480,6 +586,7 @@ void output_task_body(void)
 #endif
 
     Control_Frame_Read();
+    Wheel_Bench_Update(&control_frame.rc, Wheel_Bench_Permit(), control_frame.wheel_vel, HAL_GetTick(), &bench_torque);
     Control_RL_Recovery_Update();
     wheel_vel[0] = control_frame.wheel_vel[0];
     wheel_vel[1] = control_frame.wheel_vel[1];
@@ -490,8 +597,9 @@ void output_task_body(void)
 
     /* 2 求解: torque 默认全零 valid=0, 只有走通的分支才置 valid */
     Torque_Output_Clear(&torque);
+    memset(&diagnostic, 0, sizeof(diagnostic));
     memset(&pending_compensation, 0, sizeof(pending_compensation));
-    strategy = control_frame.rc.mode.rc_enable ? control_frame.rc.mode.strategy : CTRL_STRATEGY_DISABLE;
+    strategy = Wheel_Bench_Output_Valid(HAL_GetTick()) ? CTRL_STRATEGY_WHEEL_BENCH : (control_frame.rc.mode.rc_enable ? control_frame.rc.mode.strategy : CTRL_STRATEGY_DISABLE);
     ctrl_strategy = strategy;
     if (!standup_control.enabled || strategy == CTRL_STRATEGY_COMPENSATION || (control_frame.rc.online && !(control_frame.rc.mode.strategy == CTRL_STRATEGY_LQR && control_frame.rc.mode.engage)))
     {
@@ -506,10 +614,16 @@ void output_task_body(void)
     if (strategy != CTRL_STRATEGY_RL)
     {
         rl_wait_ticks = 0u;
+        rl_motor_map.initialized = 0u;
     }
 
     switch (strategy)
     {
+        case CTRL_STRATEGY_WHEEL_BENCH:
+            lqr_idle();
+            torque = bench_torque;
+            break;
+
         case CTRL_STRATEGY_COMPENSATION:
             lqr_idle();
             solve_compensation(&torque);
@@ -540,14 +654,32 @@ void output_task_body(void)
             rl_wait_ticks = tick ? MACHINE_RL_CTRL_DIV - 1u : rl_wait_ticks - 1u;
             if (tick)
             {
-                (void)RL_Motor_Map(&machine->rl, control_frame.motor_pos, control_frame.motor_vel, wheel_vel, control_frame.motor_valid, &control_frame.rl_motor);
+                /* 首次有效样本选分支，后续保持连续角；策略与PD共用同一映射结果。 */
+                (void)RL_Motor_Map(&machine->rl, 2.0f * machine->dm_pos_max, control_frame.motor_pos, control_frame.motor_vel, wheel_vel, control_frame.motor_valid, &rl_motor_map, &control_frame.rl_motor);
                 RL_Observation_Sample(&rl_control.observation, control_frame.imu.gyro_rad_s, control_frame.imu.quat, &control_frame.rl_motor, control_frame.imu.online);
+                taskENTER_CRITICAL();
+                rl_observation_sample_tick_ms = (uint32_t)(Mono_Ns_Get() / 1000000u);
+                taskEXIT_CRITICAL();
             }
             rl_engaged = (uint8_t)(control_frame.drive && control_frame.rc.mode.engage && rl_control.recovery.phase != RL_RECOVERY_IDLE && rl_control.recovery.phase != RL_RECOVERY_FAILED);
             if (rl_engaged && rl_control.recovery.phase != RL_RECOVERY_HOLD && action_state.rl_ready && control_frame.rl_motor.valid)
             {
                 /* 正常间隔拍保持上次已发命令；故障/退出不走保持分支，仍每基础拍清零。 */
-                if (tick) { (void)RL_Torque_Compute(&control_frame.rl_motor, &machine->rl, action_state.a, &rl_control.torque_state, &torque); }
+                if (tick)
+                {
+                    /* 同一份action用于原PD和诊断，避免推理发布后配错policy序号。 */
+                    taskENTER_CRITICAL();
+                    memcpy(diagnostic.action, action_state.a, sizeof(diagnostic.action));
+                    diagnostic.policy_sequence = action_state.rl_ready ? mirror_policy_snapshot.sequence : 0u;
+                    taskEXIT_CRITICAL();
+                    if (RL_Torque_Compute(&control_frame.rl_motor, &machine->rl, diagnostic.action, &rl_control.torque_state, &torque))
+                    {
+                        memcpy(diagnostic.target, rl_control.torque_state.target, sizeof(diagnostic.target));
+                        memcpy(diagnostic.pos, rl_control.torque_state.pos, sizeof(diagnostic.pos));
+                        memcpy(diagnostic.vel, rl_control.torque_state.vel, sizeof(diagnostic.vel));
+                        diagnostic.flags |= 0x01u;
+                    }
+                }
                 else { dispatch = 0u; }
             }
             break;
@@ -565,7 +697,7 @@ void output_task_body(void)
     taskEXIT_CRITICAL();
     if (dispatch)
     {
-        output_dispatch(&torque);
+        output_dispatch(&torque, &diagnostic);
 #if CONTROL_TIME_VOFA_ENABLE
         control_time_debug.output_period_us = control_time_debug.output_sequence != 0u ? start_us - previous_output_us : 0u;
         previous_output_us = start_us;

@@ -1,5 +1,5 @@
 /*
- * 文件职责：固定48通道赋值与VOFA发送（vofa_debug.c）。
+ * 文件职责：固定160通道镜像v2赋值与VOFA发送（vofa_debug.c）。
  * 输入/来源：共享反馈/控制/离地/补偿诊断及驱动记录。
  * 输出/去向：后台每次调用固定赋值后提交一帧；改通道时手动注释旧赋值、启用新赋值。
  * 关键边界：只读观测，不推进检测或修改目标；异步来源同帧不等于同一物理采样时刻，通道表见md/file-guide.md#vofa。
@@ -11,7 +11,6 @@
 #include "dm.h"
 #include "Vofa_send.h"
 #include "dr16.h"
-#include "jetson_uart.h"
 #include "FreeRTOS.h"
 #include "task.h"
 
@@ -52,14 +51,28 @@ static float Mirror_Publication_Age(const feedback_meta_t *meta, uint64_t captur
     return (age_ms > 60000u) ? 60000.0f : (float)age_ms;
 }
 
+/* 原样本/解析接收年龄，与发布年龄分开；未知为-1，不能用最新IRQ时刻替代。 */
+static float Mirror_Received_Age(uint64_t received_ns, uint8_t seen, uint64_t captured_ns)
+{
+    uint64_t age_ms;
+    if (!seen)
+    {
+        return -1.0f;
+    }
+    age_ms = (captured_ns - received_ns) / 1000000u;
+    return (age_ms > 60000u) ? 60000.0f : (float)age_ms;
+}
+
 /*
- * 只读镜像：未投入RL也发送公共反馈；约100Hz尝试、DMA忙不等待。
+ * 只读镜像：未投入RL也发送公共反馈；约100Hz尝试、USB忙不等待。
  * valid位0=IMU，1~4=四髋，5~6=两轮；无效来源报文填0，不修改原反馈或控制许可。
- * seq只计算DMA提交成功的帧；软件快照仍包含异步来源，不能称为同步采样。
+ * seq只计算USB提交成功的帧；软件快照仍包含异步来源，不能称为同步采样。
  */
 void Vofa_Debug_Send(void)
 {
     static robot_feedback_t feedback;
+    static mirror_policy_snapshot_t policy;
+    static mirror_output_snapshot_t output;
     static float dbg[VOFA_MAX_CH];
     static uint32_t last_attempt_ms;
     static uint32_t sequence;
@@ -74,7 +87,12 @@ void Vofa_Debug_Send(void)
         return;
     }
     last_attempt_ms = now_ms;
+    /* 先复制任务诊断，再取得同一临界区内的反馈时刻，诊断不会晚于captured_ns。 */
+    taskENTER_CRITICAL();
+    policy = mirror_policy_snapshot;
+    output = mirror_output_snapshot;
     (void)Robot_Feedback_Read(&feedback);
+    taskEXIT_CRITICAL();
     memset(dbg, 0, sizeof(dbg));
     online_mask = feedback.imu.online ? 0x01u : 0x00u;
     online_mask |= feedback.rc.online ? 0x02u : 0x00u;
@@ -123,30 +141,63 @@ void Vofa_Debug_Send(void)
     state_bits |= output_task_lqr_engaged() ? 0x100u : 0x00u;
     state_bits |= output_task_rl_engaged() ? 0x200u : 0x00u;
     dbg[2] = (float)ctrl_fault;
-    /* 通信探测回报：只复制序号/随机数/计数，不影响动作或控制许可。 */
-    dbg[32] = (float)JETSON_UART_PROTOCOL;
-    Mirror_U32(&dbg[33], jetson_uart_status.sequence);
-    Mirror_U32(&dbg[35], jetson_uart_status.token);
-    Mirror_U32(&dbg[37], jetson_uart_status.received);
+    /* 成对诊断由生产任务发布；只复制，不重新构造obs、推理或推进控制。 */
+    dbg[152] = (float)feedback.rc.mode.strategy;
+    dbg[153] = (float)((feedback.rc.online ? 0x01u : 0u) | (feedback.rc.mode.rc_enable ? 0x02u : 0u) | (feedback.rc.mode.engage ? 0x04u : 0u));
+    dbg[154] = (float)rl_control.recovery.phase;
+    dbg[155] = (float)rl_control.policy.ready;
+    Mirror_U32(&dbg[156], action_state.reset_count);
+    /* 32~46保留清零；USB不支持UART探测或控制命令。 */
     taskEXIT_CRITICAL();
     dbg[0] = (float)online_mask;
     dbg[1] = (float)state_bits;
     dbg[3] = 7101.0f;
-    dbg[4] = 1.0f;
+    dbg[4] = 2.0f;
     dbg[5] = (float)MACHINE_DEFAULT;
     Mirror_U32(&dbg[6], candidate);
     Mirror_U32(&dbg[8], (uint32_t)(feedback.captured_ns / 1000000u));
     dbg[29] = (float)valid_mask;
     dbg[30] = Mirror_Publication_Age(&feedback.imu_meta, feedback.captured_ns);
     dbg[31] = Mirror_Publication_Age(&feedback.motor_meta, feedback.captured_ns);
-    dbg[47] = (float)Mirror_Crc16((const uint8_t *)dbg, 47u * sizeof(float));
+    dbg[47] = (float)((policy.valid ? 0x01u : 0u) | (output.valid ? 0x02u : 0u));
+    Mirror_U32(&dbg[48], policy.sequence);
+    Mirror_U32(&dbg[50], policy.sample_tick_ms);
+    Mirror_U32(&dbg[52], policy.published_tick_ms);
+    memcpy(&dbg[54], policy.command, sizeof(policy.command));
+    memcpy(&dbg[57], policy.obs, sizeof(policy.obs));
+    memcpy(&dbg[96], policy.action, sizeof(policy.action));
+    dbg[102] = (float)policy.run_us;
+    Mirror_U32(&dbg[103], output.sequence);
+    Mirror_U32(&dbg[105], output.tick_ms);
+    Mirror_U32(&dbg[107], output.policy_sequence);
+    dbg[109] = (float)output.flags;
+    memcpy(&dbg[110], output.target, sizeof(output.target));
+    memcpy(&dbg[116], output.action, sizeof(output.action));
+    memcpy(&dbg[122], output.pos, sizeof(output.pos));
+    memcpy(&dbg[126], output.vel, sizeof(output.vel));
+    memcpy(&dbg[132], output.torque, sizeof(output.torque));
+    for (uint8_t i = 0u; i < DM_MOTOR_NUM; i++)
+    {
+        dbg[138u + i] = Mirror_Received_Age(feedback.motor.dm.parsed_rx_ns[i], (uint8_t)(feedback.motor.dm.parsed_rx_ns[i] != 0u), feedback.captured_ns);
+        dbg[146u + i] = feedback.motor.dm.trq_nm[i];
+    }
+    for (uint8_t i = 0u; i < DJI_MOTOR_NUM; i++)
+    {
+        dbg[142u + i] = Mirror_Received_Age(feedback.motor.dji.parsed_rx_ns[i], (uint8_t)(feedback.motor.dji.parsed_rx_ns[i] != 0u), feedback.captured_ns);
+        dbg[150u + i] = (float)feedback.motor.dji.current_raw[i];
+    }
+    dbg[144] = Mirror_Received_Age(feedback.imu_sample.received_ns, feedback.imu_sample.seen, feedback.captured_ns);
+    dbg[145] = Mirror_Received_Age(feedback.rc_sample.received_ns, feedback.rc_sample.seen, feedback.captured_ns);
+    /* 156/157保留动作重置计数，158仅记录控制版本；系数由版本目录归档。 */
+    dbg[158] = 0.0f; /* Original wheel P controller; trial compensation disabled. */
+    dbg[159] = (float)Mirror_Crc16((const uint8_t *)dbg, 159u * sizeof(float));
     if (Vofa_Send(dbg, VOFA_MAX_CH))
     {
         sequence = candidate;
     }
 }
 
-/* 原LQR/RL布局完整保留；手动切回时注释上面的镜像函数，并取消下方旧函数的行注释。 */
+/* 历史v1/旧LQR/RL的48路布局仅作参考；手动切回须同步帧长及接收器版本。 */
 // void Vofa_Debug_Send(void)
 // {
 //     static float dbg[VOFA_MAX_CH];

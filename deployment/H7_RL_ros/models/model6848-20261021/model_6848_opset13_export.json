@@ -1,0 +1,66 @@
+{
+  "created_at": "2026-10-21T19:58:26.363731+08:00",
+  "observation_contract": "chuanliantui-huananhu-multimode-39-82-v1",
+  "checkpoint": "model_6848.pt",
+  "checkpoint_sha256": "4a96a4c216fed4cedc2153667defbc0ae7974b9a31eb857022a31b4658bb3001",
+  "onnx": "model_6848_opset13.onnx",
+  "onnx_sha256": "14a3232b39a96616b4afcb5f6b3cd6a58335afa8cd5456b397be6cb61ab04b5b",
+  "opset": 13,
+  "input": {
+    "name": "obs",
+    "shape": [
+      1,
+      39
+    ],
+    "dtype": "float32"
+  },
+  "output": {
+    "name": "actions",
+    "shape": [
+      1,
+      6
+    ],
+    "dtype": "float32",
+    "order": [
+      "lf0",
+      "lf00",
+      "lfwheel",
+      "rf0",
+      "rf00",
+      "rfwheel"
+    ]
+  },
+  "numeric_check": {
+    "samples": 256,
+    "max_abs_diff": 0.00000286102294921875,
+    "atol": 0.0001
+  },
+  "reference_vectors": "model_6848_opset13_reference_vectors.npz",
+  "graph_scope": "deterministic actor only; no observation construction, PD, clipping or motor mapping",
+  "versions": {
+    "python": "3.12.3",
+    "torch": "2.14.0+cu130",
+    "onnx": "1.22.0",
+    "numpy": "2.5.3",
+    "mujoco": "3.11.0"
+  },
+  "training_physics": {
+    "xml": "resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml",
+    "sha256": "cac8061de2850602bfd1421fc856bf217c4e5040a11c8f5d33cf1abe61d5f0cf",
+    "physics_dt_s": 0.002,
+    "policy_dt_s": 0.02,
+    "wheel_response": "joint_sharp equivalent command-to-response; not an H7 compensation"
+  },
+  "H7_status": {
+    "project": "deployment/H7_RL_ros",
+    "generated_network": "model_6848_opset13",
+    "C_conversion_done": true,
+    "compile_successful": true,
+    "machine": 0,
+    "HEX_sha256": "cbfa46dde22e7cf7a267c7e70f59cefe5cad34c01cedd0694ff8e25a5f3b9e01",
+    "flashed": true,
+    "flash_evidence": "artifacts/h7-model6848-flash-20261021/flash-result.json",
+    "board_numeric_and_timing": "pending H7 owner confirmation",
+    "hardware_motor_tested": false
+  }
+}

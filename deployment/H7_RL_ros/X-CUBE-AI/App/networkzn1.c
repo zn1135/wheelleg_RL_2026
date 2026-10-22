@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file    networkzn1.c
   * @author  AST Embedded Analytics Research Platform
-  * @date    2026-10-17T19:35:22+0800
+  * @date    2026-10-21T20:05:44+0800
   * @brief   AI Tool Automatic Code Generator for Embedded NN computing
   ******************************************************************************
   * @attention
@@ -35,14 +35,14 @@
 #define AI_NET_OBJ_INSTANCE g_networkzn1
  
 #undef AI_NETWORKZN1_MODEL_SIGNATURE
-#define AI_NETWORKZN1_MODEL_SIGNATURE     "0xd08eafcefc806ad2b05e796fa9c49479"
+#define AI_NETWORKZN1_MODEL_SIGNATURE     "0x0bcbbb951b0cf430e03d3eb5c13735b8"
 
 #ifndef AI_TOOLS_REVISION_ID
 #define AI_TOOLS_REVISION_ID     ""
 #endif
 
 #undef AI_TOOLS_DATE_TIME
-#define AI_TOOLS_DATE_TIME   "2026-10-17T19:35:22+0800"
+#define AI_TOOLS_DATE_TIME   "2026-10-21T20:05:44+0800"
 
 #undef AI_TOOLS_COMPILE_TIME
 #define AI_TOOLS_COMPILE_TIME    __DATE__ " " __TIME__
@@ -397,7 +397,7 @@ AI_NETWORK_OBJ_DECLARE(
     1536, NULL, NULL),
   AI_TENSOR_LIST_IO_OBJ_INIT(AI_FLAG_NONE, AI_NETWORKZN1_IN_NUM, &obs_output),
   AI_TENSOR_LIST_IO_OBJ_INIT(AI_FLAG_NONE, AI_NETWORKZN1_OUT_NUM, &actions_output),
-  &_0_Gemm_output_0_layer, 0x2bcdd19e, NULL)
+  &_0_Gemm_output_0_layer, 0x508b0b22, NULL)
 
 #else
 
@@ -417,7 +417,7 @@ AI_NETWORK_OBJ_DECLARE(
   ),
   AI_TENSOR_LIST_IO_OBJ_INIT(AI_FLAG_NONE, AI_NETWORKZN1_IN_NUM, &obs_output),
   AI_TENSOR_LIST_IO_OBJ_INIT(AI_FLAG_NONE, AI_NETWORKZN1_OUT_NUM, &actions_output),
-  &_0_Gemm_output_0_layer, 0x2bcdd19e, NULL)
+  &_0_Gemm_output_0_layer, 0x508b0b22, NULL)
 
 #endif	/*(AI_TOOLS_API_VERSION < AI_TOOLS_API_VERSION_1_5)*/
 
@@ -538,7 +538,7 @@ ai_bool ai_networkzn1_get_info(
       .params            = AI_STRUCT_INIT,
       .activations       = AI_STRUCT_INIT,
       .n_nodes           = 0,
-      .signature         = 0x2bcdd19e,
+      .signature         = 0x508b0b22,
     };
 
     if (!ai_platform_api_get_network_report(network, &r)) return false;
@@ -586,7 +586,7 @@ ai_bool ai_networkzn1_get_report(
       .map_weights       = AI_STRUCT_INIT,
       .map_activations   = AI_STRUCT_INIT,
       .n_nodes           = 0,
-      .signature         = 0x2bcdd19e,
+      .signature         = 0x508b0b22,
     };
 
     if (!ai_platform_api_get_network_report(network, &r)) return false;

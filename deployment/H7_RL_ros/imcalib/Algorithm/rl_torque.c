@@ -39,7 +39,7 @@ uint8_t RL_Torque_Compute(const rl_motor_state_t *motor, const machine_rl_cfg_t 
         state->motor_torque[i] = clip(value, config->torque.leg_torque_limit);
         torque->dm[i] = (float)config->motor_sign[i] * state->motor_torque[i]; /* 模型→固件，与输入映射配对。 */
     }
-    /* 双轮只有速度比例环：目标轮速高于实测时加速，低于实测时制动。 */
+    /* 双轮：原速度比例环，最后统一限幅。 */
     for (uint8_t i = 0u; i < 2u; i++)
     {
         value = config->torque.wheel_gain[i] * (state->target[RL_MOTOR_L_WHEEL + i] - motor->vel[RL_MOTOR_L_WHEEL + i]);

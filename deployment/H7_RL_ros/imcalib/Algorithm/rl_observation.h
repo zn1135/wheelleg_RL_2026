@@ -27,7 +27,7 @@ typedef enum {
 typedef struct {
     float gyro[3];                  /* 机体XYZ角速度，rad/s */
     float gravity[3];               /* 机体系单位重力 */
-    float pos[RL_LEG_MOTOR_NUM];     /* 四电机连续角，rad */
+    float pos[RL_LEG_MOTOR_NUM];     /* 四电机模型角分支，rad；观测与PD共用 */
     float vel[RL_ACTION_SIZE];      /* 四电机与左右轮速度，rad/s */
 } rl_observation_sample_t;
 typedef struct {
@@ -37,7 +37,13 @@ typedef struct {
     uint8_t sample_valid;           /* 最新反馈可用，坏反馈立即清除 */
     uint8_t valid;                  /* 本次obs39构建成功 */
 } rl_observation_state_t;
-uint8_t RL_Motor_Map(const machine_rl_cfg_t *config, const float position[4], const float velocity[4], const float wheel_velocity[2], uint8_t source_valid, rl_motor_state_t *out);
+/* 执行任务独占：首次有效RL反馈锁存整周期偏移，退出RL才重新选分支。 */
+typedef struct {
+    float position_offset[RL_LEG_MOTOR_NUM]; /* 模型坐标整周期偏移，rad；不是零点标定 */
+    uint8_t initialized;
+} rl_motor_map_state_t;
+/* 输入标定连续角/rad；只在初始化时选q_reference分支，运行中不逐拍取模。 */
+uint8_t RL_Motor_Map(const machine_rl_cfg_t *config, float position_period, const float position[4], const float velocity[4], const float wheel_velocity[2], uint8_t source_valid, rl_motor_map_state_t *state, rl_motor_state_t *out);
 uint8_t RL_Observation_Project_Gravity(const float quat[4], float gravity[3]);
 void RL_Observation_Reset(rl_observation_state_t *state);
 void RL_Observation_Sample(rl_observation_state_t *state, const float gyro[3], const float quat[4], const rl_motor_state_t *motor, uint8_t source_valid);

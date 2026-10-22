@@ -15,6 +15,7 @@
 #include "machine_config.h"
 #include "mono_ns.h"
 #include "jetson_uart.h"
+#include "wheel_bench.h"
 
 #include <math.h>
 #include <string.h>
@@ -46,6 +47,7 @@ static void Motor_State_Update(motor_state_t *next)
         next->dji.vel_rad_s[i] = feedback->vel_rad_s;
         next->dji.current_raw[i] = feedback->current_raw;
         next->dji.last_rx_tick[i] = feedback->last_rx_tick;
+        next->dji.parsed_rx_ns[i] = feedback->parsed_rx_ns;
         next->dji.online[i] = (uint8_t)Dji_Is_Online(i);
         next->valid &= next->dji.online[i];
     }
@@ -192,7 +194,11 @@ static void Robot_Enable_Update(void)
     else if (!enable_request && robot_state.motor_enabled)
     {
         robot_state.motor_enabled = 0u;
-        (void)Dji_All_Stop();
+        /* 已触发台架脉冲锁存至300ms；通信失能仍立即关闭四髋，但不抢先清零轮请求。 */
+        if (!Wheel_Bench_Output_Valid(HAL_GetTick()))
+        {
+            (void)Dji_All_Stop();
+        }
         (void)Dm_All_Disable();
     }
 

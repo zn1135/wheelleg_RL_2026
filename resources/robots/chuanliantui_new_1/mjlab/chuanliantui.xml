@@ -2,7 +2,7 @@
 <mujoco model="chuanliantui_closed">
   <!--由 chuanliantui_new_1/urdf/chuanliantui.urdf 生成；真实闭链静态模型。
       气弹簧端点由 CAD 定位件 rf001/rf002、lf001/lf002 换算；实体伸缩机构及直接电机 PD。-->
-  <compiler angle="radian" meshdir="meshes" autolimits="true" />
+  <compiler angle="radian" meshdir="../meshes" autolimits="true" />
   <!-- 仿真器选项由 model.py 与 mjlab 配置统一设定。 -->
   <default>
     <joint damping="0" armature="0" frictionloss="0" />
@@ -63,7 +63,7 @@
           <!-- CAD rf002 换算到 lf1 局部系：左气弹簧下端。 -->
           <site name="left_gas_spring_lower" pos="0.019692562545789 0.010000000000237 -0.044464367480282" size="0.004" rgba="1 0 0 1" />
           <body name="lfwheel" pos="0.164832478009991 0.0199999999999965 -0.187963438447721">
-            <joint name="lfwheel" type="hinge" axis="0 1 0" limited="false" />
+            <joint name="lfwheel" type="hinge" axis="0 1 0" limited="false" armature="0.0080597034626671733" damping="0.00083869090386276427" frictionloss="0.25014413785584316" />
             <inertial pos="0.000258895715753299 0.0127591454924048 -0.000369429481127753" mass="0.344781890891785" fullinertia="0.000322531613191 0.000620367874493 0.000322776964246 -3.23871644327e-08 -2.34585830897e-06 8.00535601876e-08" />
             <geom class="visual" mesh="rfwheel" material="metal" />
             <geom class="collision" mesh="rfwheel" />
@@ -102,7 +102,7 @@
           <!-- CAD lf002 换算到 rf1 局部系：右气弹簧下端。 -->
           <site name="right_gas_spring_lower" pos="0.019692562545793 -0.010000000000277 -0.044464367480479" size="0.004" rgba="1 0 0 1" />
           <body name="rfwheel" pos="0.16483247801054 -0.0280000000020713 -0.187963438447404">
-            <joint name="rfwheel" type="hinge" axis="0 -1 0" limited="false" />
+            <joint name="rfwheel" type="hinge" axis="0 -1 0" limited="false" armature="0.0075567065989106908" damping="0.0045030235315654775" frictionloss="0.14246196042515477" />
             <inertial pos="0.000400272099244092 -0.00475914549162054 -0.000274670509450486" mass="0.344781890910713" fullinertia="0.00032267537703 0.000620367874493 0.000322633200408 7.93341927054e-08 -2.34896908748e-06 -3.41113911781e-08" />
             <geom class="visual" mesh="lfwheel" material="metal" />
             <geom class="collision" mesh="lfwheel" />
@@ -190,10 +190,10 @@
   <actuator>
     <motor name="lf0_motor" joint="lf0" gear="1" ctrlrange="-40.0 40.0" />
     <motor name="lf00_motor" joint="lf00" gear="1" ctrlrange="-40.0 40.0" />
-    <motor name="lfwheel_motor" joint="lfwheel" gear="1" ctrlrange="-3.9 3.9" />
+    <general name="lfwheel_motor" joint="lfwheel" gear="1" ctrlrange="-3.9 3.9" gaintype="user" gainprm="1.8473323386471092 62.541426167322953 0.10000169865599307" />
     <motor name="rf0_motor" joint="rf0" gear="1" ctrlrange="-40.0 40.0" />
     <motor name="rf00_motor" joint="rf00" gear="1" ctrlrange="-40.0 40.0" />
-    <motor name="rfwheel_motor" joint="rfwheel" gear="1" ctrlrange="-3.9 3.9" />
+    <general name="rfwheel_motor" joint="rfwheel" gear="1" ctrlrange="-3.9 3.9" gaintype="user" gainprm="1.8556065261028514 63.710806947732571 0.10171646788527222" />
     <!-- 实体伸缩关节的压缩弹簧力和阻尼由运行时写入，不属于六维动作接口。 -->
     <motor name="left_gas_spring_motor" joint="left_spring2_joint" gear="1" ctrlrange="0 150" forcelimited="true" forcerange="0 150" />
     <motor name="right_gas_spring_motor" joint="right_spring2_joint" gear="1" ctrlrange="0 150" forcelimited="true" forcerange="0 150" />

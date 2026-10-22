@@ -48,8 +48,9 @@ CHECKPOINT = IMPORT_ROOT / "models" / "model_3023.pt"
 # contract metadata below (39-D observation/experiment/control contracts) is what
 # guarantees the graph and the actor body are the multimode ones.
 CHECKPOINT_SHA256 = "624ded630635f0fb51a7378cdd04a7350eee98ffb305acbe1104c3cc7705a88a"
-MODEL_ASSET = ROOT / "resources" / "robots" / "chuanliantui_new_1" / "multimode_model3023" / "chuanliantui.xml"
-POSE_BANK = MODEL_ASSET.with_name("huananhu_pose_bank.npz")
+# Training and native playback share one robot XML; the pose bank stays versioned.
+MODEL_ASSET = ROOT / "resources" / "robots" / "chuanliantui_new_1" / "mjlab" / "chuanliantui.xml"
+POSE_BANK = ROOT / "resources" / "robots" / "chuanliantui_new_1" / "multimode_model3023" / "huananhu_pose_bank.npz"
 
 MOTORS = ("lf0", "lf00", "lfwheel", "rf0", "rf00", "rfwheel")
 OBS_ORDER = np.array((0, 1, 3, 4, 2, 5), dtype=np.intp)
@@ -209,17 +210,19 @@ def load_actor(path: Path, expect_sha256: str | None = None) -> Actor:
     return actor
 
 
-def build_model():
+def build_model(model_path: Path = MODEL_ASSET):
     """Compile the versioned multimode XML with an in-memory flat floor."""
-    if not MODEL_ASSET.is_file():
-        raise FileNotFoundError(f"Multimode XML missing: {MODEL_ASSET}")
-    spec = mujoco.MjSpec.from_file(str(MODEL_ASSET))
+    if not model_path.is_file():
+        raise FileNotFoundError(f"Multimode XML missing: {model_path}")
+    spec = mujoco.MjSpec.from_file(str(model_path))
     floor = spec.worldbody.add_geom(
         name="sim2sim_flat_floor", type=mujoco.mjtGeom.mjGEOM_PLANE,
         size=(20., 20., .1), friction=(1., .005, .0001), priority=0,
     )
     floor.rgba = (.16, .20, .25, 1.)
     model = spec.compile()
+    from wheel_response import prepare_wheel_response
+    prepare_wheel_response(model)
     # Contact parameters mirror the training scene: huananhu_env_cfg patches every
     # robot geom with GeomCfg(geom_names_expr=('.*',), priority=1), so robot-floor
     # contacts take the robot's own friction (0.5 sliding). With both sides left at
@@ -245,9 +248,11 @@ def build_model():
 
 
 class Playback:
-    def __init__(self, initial_pose: str = "normal", command=DEFAULT_COMMAND):
-        self.model = build_model()
+    def __init__(self, initial_pose: str = "normal", command=DEFAULT_COMMAND, *, model_path: Path = MODEL_ASSET,
+                 wheel_friction_compensation=None):
+        self.model = build_model(model_path)
         self.data = mujoco.MjData(self.model)
+        self.wheel_friction_compensation = wheel_friction_compensation
         self._gas_spring_force = gas_spring_force
         self._closed_chain_residual = closed_chain_residual
         self._solve_standing_joint_positions = solve_standing_joint_positions
@@ -371,6 +376,9 @@ class Playback:
         # Wheel velocity loop with the gains huananhu_env_cfg configures: wheel_stiffness=.1,
         # wheel_damping=0. The 0.12/0.02 pair belongs to the older chuanliantui task.
         torque[WHEELS] = .1 * (target_velocity - velocity[WHEELS])
+        if self.wheel_friction_compensation is not None:
+            # Experimental wheel loss compensation, smooth through zero speed.
+            torque[WHEELS] += self.wheel_friction_compensation * np.tanh(velocity[WHEELS] / .5)
         torque = np.clip(torque, (-40., -40., -3.9, -40., -40., -3.9), (40., 40., 3.9, 40., 40., 3.9))
         if self.ground_start and self.steps < 10:
             torque.fill(0.)
@@ -487,6 +495,10 @@ class Playback:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", type=Path, default=CHECKPOINT)
+    parser.add_argument("--model", type=Path, default=MODEL_ASSET,
+                        help="MuJoCo XML; use a separate real2sim candidate for response comparisons")
+    parser.add_argument("--wheel-friction-compensation", type=Path,
+                        help="experimental: read the two dry-friction values from real2sim candidate-parameters.json")
     parser.add_argument("--seconds", type=float, default=20.)
     parser.add_argument("--render", action="store_true")
     parser.add_argument("--initial-pose", choices=("normal", "ground"), default="normal",
@@ -523,7 +535,17 @@ def main() -> None:
         parser.error("--teleop needs --render: keys only reach the process through the viewer")
     torch.set_num_threads(1)
     actor = load_actor(args.checkpoint, args.expect_sha256)
-    env = Playback(args.initial_pose, (args.cmd_vx, args.cmd_yaw, args.cmd_height))
+    friction = None
+    if args.wheel_friction_compensation:
+        parameters = json.loads(args.wheel_friction_compensation.read_text())
+        values = np.asarray(parameters['additional_parameters'], dtype=float)
+        if values.shape != (2, 3) or not np.isfinite(values).all() or np.any(values < 0):
+            parser.error("wheel compensation requires finite nonnegative parameters with shape [2,3]")
+        if list(parameters['wheel_order']) != ['lfwheel', 'rfwheel']:
+            parser.error("wheel compensation must use [lfwheel, rfwheel] order")
+        friction = values[:, 2]
+    env = Playback(args.initial_pose, (args.cmd_vx, args.cmd_yaw, args.cmd_height), model_path=args.model,
+                   wheel_friction_compensation=friction)
     onnx_path, evaluator, action_diff = None, None, [0.0]
     if not args.pytorch_controller:
         import onnx
@@ -707,7 +729,12 @@ def main() -> None:
                 "onnx": None if onnx_path is None else str(onnx_path),
                 "onnx_sha256": None if onnx_path is None else sha256(onnx_path),
                 "max_onnx_vs_torch_action_diff": None if evaluator is None else action_diff[0],
-                "model_asset": str(MODEL_ASSET), "model_asset_sha256": sha256(MODEL_ASSET),
+                "model_asset": str(args.model), "model_asset_sha256": sha256(args.model),
+                "wheel_friction_compensation": None if friction is None else {
+                    "source": str(args.wheel_friction_compensation),
+                    "sha256": sha256(args.wheel_friction_compensation),
+                    "coefficient_nm": friction.tolist(), "velocity_smoothing_rad_s": .5,
+                    "scope": "experimental controller; not physical calibration or H7 validation"},
                 "observation": observation_profile,
                 "recovery_height": {
                     "quantity": "body-frame mean leg-plane L*cos(theta)",

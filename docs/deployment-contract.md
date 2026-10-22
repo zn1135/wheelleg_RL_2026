@@ -1,12 +1,26 @@
 # 训练与部署接口约定
 
+2026-10-21作者已要求将joint_sharp等效轮端响应写入共享XML并同步仿真执行链。训练与CPU均保留obs39/action6、原名义轮速PD/±3.9Nm输入限幅及策略/控制节拍；只改变仿真指令到响应模型，G/V/p同源于XML、增益只乘一次。H7固件/物理标定/生成网络均未改，未开始训练或交付新权重。部署负责人核对状态待确认；检查结果/随机化保留/未验证工况见[接入报告](diagnostics/20261021-h7-wheel-response-integration.md)。
+
+2026-10-21固定300ms台架固件已烧录并完成有动力左右正反脉冲：两份独立120秒会话各4次，完整记录各240000项，缺口/新增丢弃/CRC/截包/HAL失败0。原RL纯P版本0、权重/机器标定/普通RL与LQR保持；bench_profile及固件SHA单独区分旧保护版。新增等效轮端候选改善总体轮速，但加速阶段及旧RL短时俯仰有退化，整机校准未通过，不改正式XML、不训练或同步环境。新完整500Hz输入RL验证及H7部署负责人复查仍待确认，见[完整输入校准报告](diagnostics/20261021-fixed300-complete-input-calibration.md)。
+
+2026-10-21独立worktree新增`h7-mirror-v2+output-capture-v1`采集准备：原644字节镜像前缀后，同次USB提交附加每拍控制/真实DJI CAN请求队列，含序号/时间/原接收年龄/台架原因/入队状态。原纯P控制版本0、39/6接口、权重和标定保持；软件及GCC构建通过；大机已烧录/校验/复位，断动力30秒实际USB观察59980项记录，无缺口/新增丢弃/CRC拒绝。非RL投入时序或机械响应验收；H7负责人、RL板端节拍与长期吞吐仍待确认。旧录制不能补出此数据，详见[完整输出接口](interfaces/20261021-h7-output-capture-v1.md)。
+
+2026-10-21 USB工程新增作者确认的轮端补偿试验源码，尚未烧录：大机`[0.11604,0.06147]Nm*tanh(轮速/0.5rad/s)`叠加原轮速比例输出后统一±3.9Nm限幅，小机保持原控制。obs39/action6、权重、时序、物理标定及正式XML保持；该试验改变输出控制行为，不能宣称与原训练控制器等价或无需行为复核。USB v2/644字节保持，槽158新增控制版本，录制归档对应系数，离线预测须匹配实际控制器。H7负责人核对和台架待确认；已确认系数的离线闭环复核未通过，当前不得标为已消除gap，证据见[实验记录](ai/project-log.md#当前状态2026-10-21)。
+
+`deployment/H7_RL_ros`为独立USB诊断工程，最新只读v2新增配对obs39／action6及输出诊断；2026-10-21大机已烧录／校验／复位，Jetson十秒1000帧v2、CRC拒绝／序号缺口0。随后10:34动态会话3001帧包含1501个实际推理配对／2876个有效PD样本，已核对计算与电脑一致；有人扶持／支架约束，物理映射及同条件动力学对照仍待台架。接口与验收见[USB镜像记录](interfaces/20261020-h7-ros-usb-mirror.md#只读对照信号v2)。下文主工程`H7_RL`的UART v1及其历史结论不代表USB v2行为验收。
+
 H7部署工程作为普通目录保存在[deployment/H7_RL](../deployment/H7_RL/md/file-guide.md)，与训练代码统一管理。2026-10-18已同步独立H7仓的 `e2a3339519add73805df531e6247233a9540fbf0`；生成网络为 `model_5849`，actor39/action6、500Hz实体PD、50Hz推理，并接入平地遥控与倒地恢复。同步范围、LQR整定、构建记录和待复查项见[部署同步记录](interfaces/20261018-h7-model5849-deployment-sync.md)；部署规则见[H7协作规范](../deployment/H7_RL/md/AGENTS.md)。源码同步不表示独立复查或真机验收通过。
 
 ## 新 mjlab 实体关节接口
 
+2026-10-21当前USB大机固件已写入[RL初始角度分支锁存修复](interfaces/20261021-h7-rl-angle-branch-fix.md)：首次有效RL反馈锁存整数周期，观测与PD共用连续模型角，退出RL才重新选择。模型仍6848，标定/增益/驱动/消息通道不改；板端实际角度和失联问题尚待实测，负责人待确认。
+
 mjlab 训练侧只保留华南虎 multimode：actor39／critic82／action6，2 ms 物理、20 ms／50 Hz 策略，动作顺序 `[lf0,lf00,lfwheel,rf0,rf00,rfwheel]`，模式槽 `28:35`、标志槽 `35:39`。观测打包与 ONNX 契约见 [multimode 接口](interfaces/chuanliantui-huananhu-multimode-replay-v1.md)、[model_3023 说明](onnx-huananhu-multimode-model3023.md)及 [model_5849 说明](onnx-huananhu-multimode-model5849.md)；当前基线、模型采纳与验收结论以[项目实验记录顶部](ai/project-log.md)为准。
 
-当前H7生成网络为 `model_5849`，输入39、输出6，不需要encoder历史输入；默认大机为500Hz采样／PD／正常下发、50Hz板载推理。命令复用公共 `rc.vel/yaw/len`，在RL观测入口限制到±1.5m/s、±1.5rad/s、0.27～0.34m；公共腿长范围可能进一步限制可达高度命令，不能把模型包线当成遥控全行程。
+当前主UART工程`deployment/H7_RL`的生成网络仍为 `model_5849`；实机USB工程`deployment/H7_RL_ros`已按2026-10-21授权接入并烧录 `model_6848`。两者输入39、输出6，不需要encoder历史输入；默认大机为500Hz采样／PD／正常下发、50Hz板载推理。命令复用公共 `rc.vel/yaw/len`，在RL观测入口限制到±1.5m/s、±1.5rad/s、0.27～0.34m；公共腿长范围可能进一步限制可达高度命令，不能把模型包线当成遥控全行程。
+
+2026-10-21新增[model6848模型文件交付](model-deliveries/20261021-model6848-h7-export.md)：完整PT、opset13 ONNX及参考向量存于USB工程`deployment/H7_RL_ros/models/model6848-20261021/`，39/6接口不变、导出及零速ONNX回放通过。随后按独立授权完成C转换、64组真实生成C宿主数值检查、大机构建和实际写入/校验/复位；[本次烧录证据](interfaces/20261021-h7-model6848-flash.md)。H7负责人对6848板端数值/时序及实机核对仍待确认，未运行带动力试验。
 
 当前已实现平地NORMAL／RECOVER；趴地投入保持200ms，连续稳定500ms转NORMAL，连续倒地严格超过2000ms锁定失败，须退出投入重试。髋轮投影间距代替仿真绝对机身高度／接触测量，airborne／step_active仍固定0，未实现跳跃、台阶、坡地模式。H7负责人对板端数值、真实时序、物理映射和恢复行为的核对状态仍为**待确认**；更换模型须成套核对权重与接口，不能只替换尺寸宏。
 

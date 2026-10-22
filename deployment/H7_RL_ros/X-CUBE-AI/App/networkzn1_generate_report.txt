@@ -1,33 +1,33 @@
 ST Edge AI Core v2.2.0-20266 2adc00962
-Created date          : 2026-10-17 19:35:23
-Parameters            : generate --target stm32h7 --name networkzn1 -m C:/Users/ynz/Desktop/model_5849_opset13.onnx --compression none --verbosity 1 -O time --workspace C:/Users/ynz/AppData/Local/Temp/mxAI_workspace165236659163008493952508344157801 --output C:/Users/ynz/.stm32cubemx/networkzn1_output
+Created date          : 2026-10-21 20:05:44
+Parameters            : generate --target stm32h7 --name networkzn1 --model deployment/H7_RL_ros/models/model6848-20261021/model_6848_opset13.onnx --compression none --optimization time --c-api legacy --workspace artifacts/h7-model6848-flash-20261021/generate-workspace --output artifacts/h7-model6848-flash-20261021/generated
 
 Exec/report summary (generate)
----------------------------------------------------------------------------------------------------------
-model file         :   C:\Users\ynz\Desktop\model_5849_opset13.onnx                                      
-type               :   onnx                                                                              
-c_name             :   networkzn1                                                                        
-compression        :   none                                                                              
-options            :   allocate-inputs, allocate-outputs                                                 
-optimization       :   time                                                                              
-target/series      :   stm32h7                                                                           
-workspace dir      :   C:\Users\ynz\AppData\Local\Temp\mxAI_workspace165236659163008493952508344157801   
-output dir         :   C:\Users\ynz\.stm32cubemx\networkzn1_output                                       
-model_fmt          :   float                                                                             
-model_name         :   model_5849_opset13                                                                
-model_hash         :   0xd08eafcefc806ad2b05e796fa9c49479                                                
-params #           :   51,782 items (202.27 KiB)                                                         
----------------------------------------------------------------------------------------------------------
-input 1/1          :   'obs', f32(1x39), 156 Bytes, activations                                          
-output 1/1         :   'actions', f32(1x6), 24 Bytes, activations                                        
-macc               :   56,710                                                                            
-weights (ro)       :   207,128 B (202.27 KiB) (1 segment)                                                
-activations (rw)   :   1,536 B (1.50 KiB) (1 segment) *                                                  
-ram (total)        :   1,536 B (1.50 KiB) = 1,536 + 0 + 0                                                
----------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+model file         :   /home/zn/.codex/worktrees/fixed-h7-real2sim/Wheel-Legged-Gym/deployment/H7_RL_ros/models/model6848-20261021/model_6848_opset13.onnx   
+type               :   onnx                                                                                                                                  
+c_name             :   networkzn1                                                                                                                            
+compression        :   none                                                                                                                                  
+options            :   allocate-inputs, allocate-outputs                                                                                                     
+optimization       :   time                                                                                                                                  
+target/series      :   stm32h7                                                                                                                               
+workspace dir      :   /home/zn/.codex/worktrees/fixed-h7-real2sim/Wheel-Legged-Gym/artifacts/h7-model6848-flash-20261021/generate-workspace                 
+output dir         :   /home/zn/.codex/worktrees/fixed-h7-real2sim/Wheel-Legged-Gym/artifacts/h7-model6848-flash-20261021/generated                          
+model_fmt          :   float                                                                                                                                 
+model_name         :   model_6848_opset13                                                                                                                    
+model_hash         :   0x0bcbbb951b0cf430e03d3eb5c13735b8                                                                                                    
+params #           :   51,782 items (202.27 KiB)                                                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+input 1/1          :   'obs', f32(1x39), 156 Bytes, activations                                                                                              
+output 1/1         :   'actions', f32(1x6), 24 Bytes, activations                                                                                            
+macc               :   56,710                                                                                                                                
+weights (ro)       :   207,128 B (202.27 KiB) (1 segment)                                                                                                    
+activations (rw)   :   1,536 B (1.50 KiB) (1 segment) *                                                                                                      
+ram (total)        :   1,536 B (1.50 KiB) = 1,536 + 0 + 0                                                                                                    
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
 (*) 'input'/'output' buffers are allocated in the activations buffer
 
-Model name - model_5849_opset13
+Model name - model_6848_opset13
 ------ ------------------------------------- --------------- ---------------- -------- ------------------ --- ----------------- ------------------ ------------------ 
 m_id   layer (type,original)                 oshape          param/size           macc       connected to   | c_size            c_macc             c_type             
 ------ ------------------------------------- --------------- ---------------- -------- ------------------ --- ----------------- ------------------ ------------------ 
@@ -73,7 +73,7 @@ model/c-model: macc=57,158/56,710 -448(-0.8%) weights=207,128/207,128  activatio
 
 Generated C-graph summary
 ------------------------------------------------------------------------------------------------------------------------
-model name            : model_5849_opset13
+model name            : model_6848_opset13
 c-name                : networkzn1
 c-node #              : 7
 c-array #             : 16
@@ -175,44 +175,13 @@ m_id   name              c_macc                    c_rom                     c_i
 6      _5_Elu_output_0   |                  1.2%   |                  0.0%   [5]    
 ------ ----------------- ------------------------- ------------------------- ------ 
 macc=56,710 weights=207,128 act=1,536 ram_io=0
- 
- Requested memory size by section - "stm32h7" target
- ------------------------------ ------- --------- ------- ------- 
- module                            text    rodata    data     bss 
- ------------------------------ ------- --------- ------- ------- 
- NetworkRuntime1020_CM7_GCC.a     6,924         0       0       0 
- networkzn1.o                       600       116   2,068     152 
- networkzn1_data.o                   48        16      88       0 
- lib (toolchain)*                   324       328       0       0 
- ------------------------------ ------- --------- ------- ------- 
- RT total**                       7,896       460   2,156     152 
- ------------------------------ ------- --------- ------- ------- 
- weights                              0   207,128       0       0 
- activations                          0         0       0   1,536 
- io                                   0         0       0       0 
- ------------------------------ ------- --------- ------- ------- 
- TOTAL                            7,896   207,588   2,156   1,688 
- ------------------------------ ------- --------- ------- ------- 
- *  toolchain objects (libm/libgcc*)
- ** RT AI runtime objects (kernels+infrastructure)
-  
-  Summary - "stm32h7" target
-  --------------------------------------------------
-               FLASH (ro)     %*   RAM (rw)       % 
-  --------------------------------------------------
-  RT total         10,512   4.8%      2,308   60.0% 
-  --------------------------------------------------
-  TOTAL           217,640             3,844         
-  --------------------------------------------------
-  *  rt/total
-
 
 Generated files (7)
----------------------------------------------------------------------- 
-C:\Users\ynz\.stm32cubemx\networkzn1_output\networkzn1_data_params.h   
-C:\Users\ynz\.stm32cubemx\networkzn1_output\networkzn1_data_params.c   
-C:\Users\ynz\.stm32cubemx\networkzn1_output\networkzn1_data.h          
-C:\Users\ynz\.stm32cubemx\networkzn1_output\networkzn1_data.c          
-C:\Users\ynz\.stm32cubemx\networkzn1_output\networkzn1_config.h        
-C:\Users\ynz\.stm32cubemx\networkzn1_output\networkzn1.h               
-C:\Users\ynz\.stm32cubemx\networkzn1_output\networkzn1.c               
+--------------------------------------------------------------------------------------------------------------------------------------- 
+/home/zn/.codex/worktrees/fixed-h7-real2sim/Wheel-Legged-Gym/artifacts/h7-model6848-flash-20261021/generated/networkzn1_data_params.h   
+/home/zn/.codex/worktrees/fixed-h7-real2sim/Wheel-Legged-Gym/artifacts/h7-model6848-flash-20261021/generated/networkzn1_data_params.c   
+/home/zn/.codex/worktrees/fixed-h7-real2sim/Wheel-Legged-Gym/artifacts/h7-model6848-flash-20261021/generated/networkzn1_data.h          
+/home/zn/.codex/worktrees/fixed-h7-real2sim/Wheel-Legged-Gym/artifacts/h7-model6848-flash-20261021/generated/networkzn1_data.c          
+/home/zn/.codex/worktrees/fixed-h7-real2sim/Wheel-Legged-Gym/artifacts/h7-model6848-flash-20261021/generated/networkzn1_config.h        
+/home/zn/.codex/worktrees/fixed-h7-real2sim/Wheel-Legged-Gym/artifacts/h7-model6848-flash-20261021/generated/networkzn1.h               
+/home/zn/.codex/worktrees/fixed-h7-real2sim/Wheel-Legged-Gym/artifacts/h7-model6848-flash-20261021/generated/networkzn1.c               

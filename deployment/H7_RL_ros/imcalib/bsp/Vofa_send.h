@@ -1,9 +1,8 @@
 /*
- * 文件职责：串口VOFA JustFloat发送接口。
- * 输入：浮点通道数组及通道数量；输出：经所选UART的DMA提交一帧。
- * 端口只由machine_config.h中的MACHINE_VOFA_PORT选择：大机UART10（USART10硬件），小机USART1。
- * 本接口不再维护UART/USB类型标识、运行时切换状态或切换许可。
- * DMA忙时跳过，帧缓冲由实现文件持有；波特率与上位机保持一致。
+ * 文件职责：板载USB CDC的VOFA JustFloat发送接口。
+ * 输入：镜像浮点数组及通道数量；同一次USB提交追加完整输出缓存批次。
+ * USB未枚举或忙时不出队，完成前缓冲由实现文件持有；不提供控制接收。
+ * 下方VOFA_UART仅保留给既有UART探测接收器，不再决定镜像发送路径。
  */
 #ifndef VOFA_SEND_H
 #define VOFA_SEND_H
@@ -12,9 +11,9 @@
 #include "usart.h"
 #include "machine_config.h"
 
-#define VOFA_MAX_CH 48u /* 固定48路；当前镜像布局与旧LQR参考见vofa_debug.c。 */
+#define VOFA_MAX_CH 160u /* 镜像v2固定160路；旧48路布局仅作历史参考。 */
 
-/* 真正选择硬件串口，数字是端口号，不是传输类型。 */
+/* 既有UART探测接收器的端口；USB镜像不使用此宏。 */
 #if MACHINE_VOFA_PORT == 7u
 #define VOFA_UART (&huart7)
 #elif MACHINE_VOFA_PORT == 8u
@@ -29,7 +28,7 @@
 #error "MACHINE_VOFA_PORT must be 7 (UART7), 8 (UART8), 9 (UART9), 10 (USART10) or 1 (USART1)"
 #endif
 
-/* 成功返回1表示DMA提交成功，不代表上位机已收到。 */
+/* 成功返回1表示USB提交成功，不代表Jetson已收到；波特率不决定USB线速。 */
 uint8_t Vofa_Send(const float *data, uint8_t n);
 
 #endif

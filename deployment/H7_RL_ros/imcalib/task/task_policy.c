@@ -7,6 +7,7 @@
 #include "robot_state.h"
 #include "rl_observation.h"
 #include "rl_policy.h"
+#include "mono_ns.h"
 #include <string.h>
 /* 策略任务启动时创建本机网络；configured是机型启用开关，不扫描固定配置。 */
 void ctrl_task_init(void)
@@ -22,6 +23,7 @@ void ctrl_task_body(void)
     rc_command_t command;
     float action[RL_ACTION_SIZE] = {0.0f};
     uint32_t reset_count;
+    uint32_t sample_tick_ms;
     uint8_t selected;
     uint8_t sampled;
     uint8_t built;
@@ -35,6 +37,7 @@ void ctrl_task_body(void)
         recovery = rl_control.recovery;
         command = rc_command;
         sampled = RL_Observation_Read_Sample(&rl_control.observation, &sample);
+        sample_tick_ms = rl_observation_sample_tick_ms;
         memcpy(observation.last_action, rl_control.observation.last_action, sizeof(observation.last_action));
     }
     else
@@ -79,6 +82,17 @@ void ctrl_task_body(void)
         action_state.last_ok_tick = HAL_GetTick();
         action_state.updated = 1u;
         action_state.rl_ready = 1u;
+        /* 本地obs与本次实际发布action一同保存，不能混入下一次推理的共享obs。 */
+        memcpy(mirror_policy_snapshot.obs, observation.obs, sizeof(mirror_policy_snapshot.obs));
+        memcpy(mirror_policy_snapshot.action, action, sizeof(mirror_policy_snapshot.action));
+        mirror_policy_snapshot.command[0] = command.vel;
+        mirror_policy_snapshot.command[1] = command.yaw;
+        mirror_policy_snapshot.command[2] = command.len;
+        mirror_policy_snapshot.sequence++;
+        mirror_policy_snapshot.sample_tick_ms = sample_tick_ms;
+        mirror_policy_snapshot.published_tick_ms = (uint32_t)(Mono_Ns_Get() / 1000000u);
+        mirror_policy_snapshot.run_us = rl_control.policy.run_us;
+        mirror_policy_snapshot.valid = 1u;
     }
     /* 不匹配时直接丢弃；不能用旧推理的失败路径清掉新控制段。 */
     taskEXIT_CRITICAL();

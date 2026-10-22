@@ -1201,6 +1201,11 @@
               <FileType>1</FileType>
               <FilePath>../imcalib/bsp/Vofa_send.c</FilePath>
             </File>
+            <File>
+              <FileName>output_capture.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../imcalib/bsp/output_capture.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1325,6 +1330,11 @@
               <FileName>air_detection.c</FileName>
               <FileType>1</FileType>
               <FilePath>../imcalib/Algorithm/air_detection.c</FilePath>
+            </File>
+            <File>
+              <FileName>wheel_bench.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../imcalib/Algorithm/wheel_bench.c</FilePath>
             </File>
             <File>
               <FileName>standup.c</FileName>

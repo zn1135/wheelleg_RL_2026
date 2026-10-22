@@ -2,8 +2,8 @@
 """Check the 39-D multimode CPU sim2sim entry against the training semantics it replays.
 
 Scope (no learning, no long simulation, no GPU):
-  robot    the entry's compiled model has the same XML qpos0 as the training model (the
-           two asset files differ only in the meshdir path), and its closed-stance solve
+  robot    training, native playback and real2sim share one XML, the legacy XML path
+           links to it, and the entry's closed-stance solve
            equals ct_mjlab model.solve_standing_joint_positions on the training model
   centres  observation leg slots and the leg PD target centre on that solved stance
            (q_nominal, exactly pd_action._nominal_pos = huananhu_env_cfg's
@@ -65,12 +65,22 @@ def main() -> None:
 
     import mujoco
     import mj_sim2sim_huananhu_multimode as entry
+    import real2sim_huananhu as mirror
     from ct_mjlab.envs.chuanliantui import gas_spring, model, v14_observations
     from ct_mjlab.envs.chuanliantui.huananhu_action import HuananhuPdActionCfg
     import assess_multimode_tracking as assess
 
     results = {}
     cfg = HuananhuPdActionCfg(entity_name="robot")
+
+    # A single editable asset prevents training/playback model copies from drifting.
+    legacy = ROOT / "resources/robots/chuanliantui_new_1/multimode_model3023/chuanliantui.xml"
+    assert entry.MODEL_ASSET.samefile(model.MODEL_XML)
+    assert mirror.MODEL.samefile(model.MODEL_XML)
+    assert legacy.is_symlink() and legacy.samefile(model.MODEL_XML)
+    assert entry.POSE_BANK.parent == legacy.parent, "versioned pose bank moved with the XML"
+    results["shared_xml"] = str(model.MODEL_XML.relative_to(ROOT))
+    results["legacy_xml_symlink"] = str(legacy.readlink())
 
     # 1. Same robot and same solved closed stance on both sides.
     training = model.load_model()
@@ -124,6 +134,30 @@ def main() -> None:
     torque, _ = env.controls(action)
     assert abs(torque[2] - 3.9) < 1e-9, f"wheel effort clamp {torque[2]}"
     results["wheel_clamp_nm"] = float(torque[2])
+
+    # Optional real2sim compensation must preserve leg control, wheel clamps and hold.
+    coefficients = np.array((.12, .06))
+    compensated = entry.Playback(wheel_friction_compensation=coefficients)
+    compensation_error = 0.
+    for speeds in ((0., 0.), (.01, -.01), (2., -2.), (-2., 2.), (80., -80.)):
+        env.data.qvel[env.v[entry.WHEELS]] = speeds
+        compensated.data.qpos[:] = env.data.qpos
+        compensated.data.qvel[:] = env.data.qvel
+        action = np.array((.2, -.2, .3, -.2, .2, -.3))
+        baseline, _ = env.controls(action)
+        actual, _ = compensated.controls(action)
+        expected = np.clip(.1*(10*action[entry.WHEELS]-speeds) +
+                           coefficients*np.tanh(np.asarray(speeds)/.5), -3.9, 3.9)
+        compensation_error = max(compensation_error, float(np.max(abs(actual[entry.WHEELS]-expected))))
+        assert np.array_equal(actual[entry.LEGS], baseline[entry.LEGS]), 'compensation changed leg control'
+        assert np.all(abs(actual[entry.WHEELS]) <= 3.9), 'compensation bypassed wheel effort clamp'
+    assert compensation_error < 1e-12
+    compensated.ground_start, compensated.steps = True, 0
+    assert np.all(compensated.controls(action)[0] == 0), 'compensation bypassed ground-start hold'
+    env.data.qvel[env.v] = 0.
+    results['optional_wheel_friction_compensation'] = {
+        'max_formula_difference': compensation_error, 'leg_control_preserved': True,
+        'zero_crossing_sign_clamp_and_ground_hold_checked': True, 'default_disabled': True}
 
     # 4. Gas-spring parity on a deterministic grid (the entry inlines the 90 mm stroke).
     positions = np.linspace(-0.02, 0.09, 41)

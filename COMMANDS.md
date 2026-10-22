@@ -4,6 +4,19 @@
 
 H7固件的Linux终端编译与创芯工坊PowerDebugger烧录，见[终端烧录步骤](deployment/H7_RL/md/file-guide.md#terminal-flash)。该流程使用ARM GCC、eIDE构建器和OpenOCD，不使用下文Isaac环境。
 
+## Jetson只读USB采集连接
+
+本机用户名、SSH地址、Jetson项目目录和H7 USB设备保存在Git忽略的 `.env.local`，示例字段见 `.env.example`。`imca`是当前Jetson用户名，不是本机已配置的SSH主机别名；实际地址以本机配置为准。新终端先加载，再检查身份与设备：
+
+```bash
+source ./.env.local
+ssh -o BatchMode=yes -o StrictHostKeyChecking=yes "$JETSON_SSH_TARGET" 'id -un; hostname; ls -l /dev/serial/by-id'
+```
+
+成功判据：用户名与配置相符，且出现STM32 Virtual ComPort的by-id设备；不能用PowerDebugger的CDC口代替H7数据口。只允许一个接收进程占用H7 USB。完整输出固件、采集命令、离线检查和本次实测结果见[完整输出接口](docs/interfaces/20261021-h7-output-capture-v1.md)。SSH密钥或密码不写入项目。
+
+## Isaac旧环境准备
+
 下文命令属于旧 Isaac 环境，不混装依赖。
 
 先按 [协作指南](CONTRIBUTING.md) 创建并填写 `.env.local`。在仓库根目录执行以下准备，完整激活对应 Python 3.8 conda 环境（`conda` 命令需已在 PATH 中）：

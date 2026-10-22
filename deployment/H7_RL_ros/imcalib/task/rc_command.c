@@ -11,6 +11,7 @@
 #include "machine_config.h"
 #include "lqr_gain_table.h"
 #include "gas_spring.h"
+#include "wheel_bench.h"
 #include <math.h>
 #include <stddef.h>
 
@@ -52,6 +53,19 @@ void Rc_Command_Update(rc_command_t *cmd, const dr16_t *rc, float dt)
     cmd->s2 = rc->s2;
     cmd->online = 1u;
 
+    if (cmd->s1 == DR16_SW_UP && cmd->s2 == DR16_SW_UP)
+    {
+        cmd->mode.strategy = CTRL_STRATEGY_WHEEL_BENCH;
+        cmd->mode.rc_enable = 1u;
+        cmd->mode.engage = 1u;
+        return;
+    }
+    /* 测试独占期间不进入经过的补偿或RL档；退出测试后LQR档位保持原样。 */
+    if (wheel_bench.reserved)
+    {
+        return;
+    }
+
     /* 拨杆语义 */
     switch (cmd->s1)
     {
@@ -72,6 +86,7 @@ void Rc_Command_Update(rc_command_t *cmd, const dr16_t *rc, float dt)
 
     case DR16_SW_UP: cmd->mode.strategy = CTRL_STRATEGY_RL;
         cmd->mode.rc_enable = machine->rl.configured ? 1u : 0u;
+        /* 左上/右中投入RL；左上/右上由前面的单轮测试分支处理。 */
         cmd->mode.engage = (uint8_t)(cmd->s2 == DR16_SW_MID);
         break;
 

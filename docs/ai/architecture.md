@@ -2,6 +2,10 @@
 
 串联腿当前训练使用独立 `mjlab_training/`：华南虎 multimode 任务由 mjlab 原生管理器负责控制、子步观测、奖励、终止、随机化、生成地形和复位，RSL-RL PPO 负责学习；接口见 [multimode 接口](../interfaces/chuanliantui-huananhu-multimode-replay-v1.md)。下文 Isaac 数据流只描述历史入口。
 
+华南虎训练、独立CPU sim2sim与real2sim当前共用`resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml`。旧multimode_model3023下XML为兼容符号链接；只编辑唯一源，策略权重和姿态库各自保留。结构及有限验证见[共享XML说明](../diagnostics/20261021-shared-huananhu-xml.md)。
+
+当前共享XML包含joint_sharp等效轮端响应。训练load_spec将轮USER增益转为后端固定G，动作执行每物理步补速度因子；CPU加载原生USER增益回调。两端参数同源、G只乘一次，H7名义控制与标定不改。历史录制按哈希读取artifacts/model-versions冻结版本，见[接入说明](../diagnostics/20261021-h7-wheel-response-integration.md)。
+
 ## 来源
 
 本仓库 fork 自 [legged_gym](https://github.com/leggedrobotics/legged_gym)，并把 [rsl_rl](https://github.com/leggedrobotics/rsl_rl) **内嵌**为 `wheel_legged_gym/rsl_rl/`（不是 pip 依赖）。改 RL 算法直接改这个目录，不要去装外部 rsl_rl。

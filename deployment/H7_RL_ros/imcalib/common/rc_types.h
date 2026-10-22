@@ -24,6 +24,7 @@ typedef enum {
     CTRL_STRATEGY_LQR,          /* LQR 平衡 */
     CTRL_STRATEGY_DISABLE,      /* 左下 / 离线 */
     CTRL_STRATEGY_COMPENSATION = 4, /* 补偿台架 */
+    CTRL_STRATEGY_WHEEL_BENCH = 5, /* 独立单轮短脉冲 */
 } ctrl_strategy_t;
 
 typedef struct {
