@@ -33,7 +33,9 @@ def main():
     assert not profile['simulation']['microsecond_jitter_modeled']
     configs = [make_multimode_env_cfg(play=play) for play in (False, True)]
     for cfg in configs:
-        assert cfg.sim.mujoco.timestep == cpu.DT == .002 and cfg.decimation == cpu.DECIMATION == 10
+        assert cfg.sim.mujoco.timestep == cpu.DT == .002
+        assert cfg.decimation == cpu.DECIMATION == 5
+    assert profile['simulation']['policy_dt_s'] == .01
     assert configs[0].actions['pd'].action_delay_s is None
     assert configs[0].actions['pd'].action_delay_choices_s == (.006, .008, .010)
     assert configs[0].actions['pd'].randomize_delays
@@ -55,10 +57,10 @@ def main():
     playback.step(lambda obs: a)
     playback.step(lambda obs: b)
     for i, (_, action) in enumerate(captured):
-        expected = np.zeros(6) if i == 0 else a if i <= 10 else b
+        expected = np.zeros(6) if i == 0 else a if i <= cpu.DECIMATION else b
         np.testing.assert_allclose(action, expected, atol=1e-8)
     assert abs(captured[1][0] - .002) < 1e-12
-    assert abs(captured[11][0] - .022) < 1e-12
+    assert abs(captured[6][0] - .012) < 1e-12
     np.testing.assert_array_equal(playback.last_action, b)
     playback.reset()
     captured.clear()
@@ -69,8 +71,10 @@ def main():
     cfg.scene.num_envs = 4
     env = ManagerBasedRlEnv(cfg, device=args.device)
     try:
+        assert env.physics_dt == .002 and env.step_dt == .01
         env.reset(seed=42)
         term = env.action_manager.get_term('pd')
+        assert term._ground_hold_steps == 20  # 策略加速后，启动零力矩仍保持0.2秒。
         assert bool((term.action_delay_steps == 1).all())
         assert bool((term.wheel_action_delay_steps == 1).all())
         assert not bool(term.nominal_offset.any())
@@ -99,15 +103,25 @@ def main():
         torch.testing.assert_close(term._torques, expected, atol=1e-5, rtol=0)
         # Reset the real physics, then exercise managers and 39/82 observations.
         env.reset(seed=42)
+        applied_steps = []
+        apply_actions = term.apply_actions
+        def count_apply_actions():
+            applied_steps.append(1)
+            return apply_actions()
+        term.apply_actions = count_apply_actions
         with torch.inference_mode():
             for _ in range(32):
                 obs, reward, _, _, _ = env.step(torch.zeros_like(action))
                 assert obs['actor'].shape == (4, 39) and obs['critic'].shape == (4, 82)
                 assert all(bool(torch.isfinite(obs[k]).all()) for k in ('actor', 'critic'))
                 assert bool(torch.isfinite(reward).all())
+        assert len(applied_steps) == 32 * 5
         result = dict(passed=True, paired_source_samples=1017, action_delay_steps=1,
+                      mjlab_physics_dt_s=env.physics_dt, mjlab_policy_dt_s=env.step_dt,
+                      mjlab_pd_substeps_per_action=len(applied_steps) // 32,
+                      cpu_policy_dt_s=cpu.DT * cpu.DECIMATION,
                       simulated_action_delay_ms=2., microsecond_jitter_modeled=False,
-                      cpu_first_action_applied_ms=2., cpu_second_action_applied_ms=22.,
+                      cpu_first_action_applied_ms=2., cpu_second_action_applied_ms=12.,
                       cpu_reset=True, gpu_partial_reset=True, gpu_envs=4, finite_policy_steps=32,
                       scope='finite timing/physics checks only; no learning or behavior acceptance')
     finally:
@@ -117,6 +131,7 @@ def main():
     cfg.scene.num_envs = 4
     env = ManagerBasedRlEnv(cfg, device=args.device)
     try:
+        assert env.physics_dt == .002 and env.step_dt == .01
         env.reset(seed=42)
         term = env.action_manager.get_term('pd')
         offset = term.nominal_offset.clone()

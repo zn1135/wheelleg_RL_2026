@@ -361,6 +361,7 @@ def evaluate_seed(args, seed: int) -> tuple[dict, list[dict], dict]:
                            for name in TERRAIN_NAMES},
         }
         extras = {"initial_state_signature": signature, "num_envs": n,
+                  "physics_dt_s": env.physics_dt, "policy_dt_s": dt,
                   "ground_start_envs": len(ground_rows), "ground_start_flat_envs": len(flat_ground),
                   "knockdown_at_s": args.knockdown_at,
                   "knockdown_speed_range": list(args.knockdown_speed)}
@@ -373,6 +374,8 @@ def evaluate_seed(args, seed: int) -> tuple[dict, list[dict], dict]:
 
 
 def main() -> None:
+    cfg, _ = task_registry.get_cfgs(MULTIMODE_TASK_ID, play=True)
+    policy_dt = cfg.sim.mujoco.timestep * cfg.decimation
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True, help="summary JSON path")
@@ -390,7 +393,8 @@ def main() -> None:
                         metavar=("MIN", "MAX"),
                         help="root angular-velocity impulse range in rad/s for "
                              "--knockdown-at (default: the training range)")
-    parser.add_argument("--steps", type=int, default=1000, help="max control steps (1000 = 20 s)")
+    parser.add_argument("--steps", type=int, default=round(20. / policy_dt),
+                        help=f"max control steps (default: 20 s at {1. / policy_dt:g} Hz)")
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--capture", action="store_true", help="save env 0's first-episode qpos")
     args = parser.parse_args()
@@ -431,7 +435,8 @@ def main() -> None:
         "script": str(Path(__file__).resolve()), "script_sha256": script_sha,
         **git_state(),
         "config": {"num_envs": args.num_envs, "start_mode": args.start_mode, "terrain": args.terrain,
-                   "steps": args.steps, "max_episode_s": args.steps * 0.02, "play": True,
+                   "steps": args.steps, "policy_dt_s": policy_dt,
+                   "max_episode_s": args.steps * policy_dt, "play": True,
                    "domain_randomization": False, "obs_noise_or_delay": False},
         "criteria": {
             "weak": "state.stable_time >= 0.5 (task-native recovered flag)",

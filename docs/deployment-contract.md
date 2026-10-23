@@ -1,5 +1,7 @@
 # 训练与部署接口约定
 
+2026-10-23：mjlab与独立CPU为100 Hz策略／500 Hz内环；USB工程`deployment/H7_RL_ros`已导入model13842并将大机名义策略周期同步为10ms／100Hz，PD仍500Hz，编译通过，并于本次动力断开确认后烧录、校验、复位成功；板端真实时序/行为待测。UART工程仍50Hz。时序接口、模型/固件哈希及板端待确认项见[13842交付](model-deliveries/20261023-model13842-h7-import.md)与[100Hz接口](interfaces/20261023-mjlab-policy100hz.md)。
+
 2026-10-22：multimode训练启用四腿默认角初始化随机偏置，作者最新将范围从±0.03 rad扩大到±5°（±0.08726646 rad）；PD目标与相对角观测共用，play/CPU保持原默认角，39/82/6及动作映射不变。仅训练随机化，不修改板端零点；新增1000轮训练预算、行为及H7负责人核对待确认，见[默认腿角偏置记录](interfaces/20261022-huananhu-nominal-leg-offset.md)。
 
 2026-10-22：[H7LAT001本地闭环时序旁带](interfaces/20261022-h7-latency-capture-v1.md)已完成烧录、吞吐修复与正常RL实采；按作者最新要求，训练动作等待为每回合腿/轮独立随机6、8、10 ms，play及独立CPU回放保留实测量化的一拍2 ms，见[仿真时序记录](interfaces/20261022-h7-simulation-timing.md)。39/82/6、模型、标定和控制频率保持；旧模型加载兼容，闭环行为需重新评估，H7负责人核对待确认。
@@ -22,7 +24,7 @@ H7部署工程作为普通目录保存在[deployment/H7_RL](../deployment/H7_RL/
 
 mjlab 训练侧只保留华南虎 multimode：actor39／critic82／action6，2 ms 物理、20 ms／50 Hz 策略，动作顺序 `[lf0,lf00,lfwheel,rf0,rf00,rfwheel]`，模式槽 `28:35`、标志槽 `35:39`。观测打包与 ONNX 契约见 [multimode 接口](interfaces/chuanliantui-huananhu-multimode-replay-v1.md)、[model_3023 说明](onnx-huananhu-multimode-model3023.md)及 [model_5849 说明](onnx-huananhu-multimode-model5849.md)；当前基线、模型采纳与验收结论以[项目实验记录顶部](ai/project-log.md)为准。
 
-当前主UART工程`deployment/H7_RL`的生成网络仍为 `model_5849`；实机USB工程`deployment/H7_RL_ros`已按2026-10-21授权接入并烧录 `model_6848`。两者输入39、输出6，不需要encoder历史输入；默认大机为500Hz采样／PD／正常下发、50Hz板载推理。命令复用公共 `rc.vel/yaw/len`，在RL观测入口限制到±1.5m/s、±1.5rad/s、0.27～0.34m；公共腿长范围可能进一步限制可达高度命令，不能把模型包线当成遥控全行程。
+当前主UART工程`deployment/H7_RL`的生成网络仍为 `model_5849`；实机USB工程`deployment/H7_RL_ros`已按2026-10-23授权导入并烧录 `model_13842`。两者输入39、输出6，不需要encoder历史输入；默认大机采样／PD／正常下发500Hz，UART策略50Hz、USB策略100Hz。命令复用公共 `rc.vel/yaw/len`，速度／转向仍限制到±1.5m/s、±1.5rad/s。USB大机最新源码将腿长目标按`h=clamp(rc.len+0.03648,0.2165,0.3664)`换算训练机体高度，RL拨轮腿长范围0.18002～0.32992m，低位恢复门槛配套调整；训练参考偏移不改变实机标定。**该换算已于2026-10-23烧录大机、读回校验并复位**；UART工程仍为腿长直接裁剪0.27～0.34m的旧逻辑。见[目标换算接口](interfaces/20261023-h7-leg-to-body-height.md)。
 
 2026-10-22[起立后零速保持训练准备](interfaces/20261022-huananhu-zero-hold-training.md)：作者指定腿长0.18～0.33m，训练/CPU高度命令换算为0.2165～0.3664m；39/82/6接口保持，H7未同步范围及低位恢复门槛、未生成新模型、未训练或烧录。该训练目标不代表原固件已支持，部署负责人核对待确认。
 

@@ -17,14 +17,26 @@ void RL_Recovery_Reset(rl_recovery_state_t *state)
 {
     memset(state, 0, sizeof(*state));
 }
+/* 目标按直立姿态换算，不让实测腿角摆动改变遥控设定的高度。 */
+float RL_Command_Height(float leg_length_command)
+{
+    return clampf(leg_length_command + MACHINE_RL_LEG_TO_HEIGHT, MACHINE_RL_HEIGHT_MIN, MACHINE_RL_HEIGHT_MAX);
+}
 /* 每基础执行拍推进一次；FAILED必须退出投入才复位，避免姿态回正后自动重启。 */
-void RL_Recovery_Update(rl_recovery_state_t *state, uint8_t request, uint8_t feedback_valid, uint8_t fallen, float height)
+void RL_Recovery_Update(rl_recovery_state_t *state, uint8_t request, uint8_t feedback_valid, uint8_t fallen, float height, float leg_length_command)
 {
     uint8_t down;
+    float recovery_height;
     if (!request) { RL_Recovery_Reset(state); return; }
     if (state->phase == RL_RECOVERY_FAILED) { return; }
     if (!feedback_valid) { RL_Recovery_Reset(state); return; }
-    down = (uint8_t)(fallen || height <= RL_RECOVERY_HEIGHT);
+    recovery_height = RL_RECOVERY_HEIGHT;
+    if (MACHINE_DEFAULT == MACHINE_ID_BIG_WHEELLEG)
+    {
+        /* 反馈仍是髋轮竖直投影；低位按目标机高反算并留1cm余量，原高位门槛不变。 */
+        recovery_height = fminf(RL_RECOVERY_HEIGHT, RL_Command_Height(leg_length_command) - MACHINE_RL_LEG_TO_HEIGHT - 0.01f);
+    }
+    down = (uint8_t)(fallen || height <= recovery_height);
     if (state->phase == RL_RECOVERY_IDLE)
     {
         state->ground_start = down;
@@ -123,10 +135,10 @@ uint8_t RL_Observation_Build(rl_observation_state_t *state, const machine_rl_cfg
     memset(state->obs, 0, sizeof(state->obs));
     state->valid = 0u;
     if (!source_valid || recovery->phase == RL_RECOVERY_FAILED) { return 0u; }
-    /* 作者选择直接复用rc.len作高度命令，接受低段拨轮被下限截住；不回写公共RC。 */
+    /* rc.len是目标腿长，先换算成训练定义的机体高度；不回写公共RC。 */
     state->obs[RL_OBS_CMD_VX] = clip(command->vel, 1.5f);
     state->obs[RL_OBS_CMD_YAW_RATE] = clip(command->yaw, 1.5f);
-    state->obs[RL_OBS_CMD_HEIGHT] = clampf(command->len, 0.27f, 0.34f) * config->observation.height_scale;
+    state->obs[RL_OBS_CMD_HEIGHT] = RL_Command_Height(command->len) * config->observation.height_scale;
     /* 4～9：机体角速度与单位重力；角速度先限幅，再乘训练缩放。 */
     for (uint8_t i = 0u; i < 3u; i++)
     {

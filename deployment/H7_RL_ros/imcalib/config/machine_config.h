@@ -31,7 +31,10 @@
 #define MACHINE_TIM6_PERIOD       999u    /* 1 kHz */
 #define MACHINE_TICK_DT           0.001f
 #define MACHINE_RL_CTRL_DIV       2u      /* RL实体PD/反馈采样/正常下发：500Hz */
-#define MACHINE_POLICY_DIV        20u     /* actor推理50Hz；一个action保持10个2ms控制子步 */
+#define MACHINE_POLICY_DIV        10u     /* model13842推理100Hz；一个action保持5个2ms控制子步 */
+#define MACHINE_RL_HEIGHT_MIN     0.2165f  /* 训练机身高度命令；不是LQR髋轮腿长 */
+#define MACHINE_RL_HEIGHT_MAX     0.3664f
+#define MACHINE_RL_LEG_TO_HEIGHT  (0.06f - 0.02352f) /* 训练XML直立目标：轮接地半径减髋轴相对base_link高度；非实机标定 */
 #define MACHINE_DM_OFFLINE_MS     50u
 #define MACHINE_VOFA_PORT         10u     /* UART10接Jetson，UART7接HI229；DR16恢复，离线保护保留 */
 #define MACHINE_FDCAN13_DATA_PRESCALER  1u
@@ -43,6 +46,9 @@
 #define MACHINE_RL_CTRL_DIV       1u      /* 小机兼容 */
 #define MACHINE_DM_OFFLINE_MS     10u
 #define MACHINE_POLICY_DIV        10u     /* 策略节拍 1000/10 = 100 Hz */
+#define MACHINE_RL_HEIGHT_MIN     0.27f    /* 小机保持原RL观测范围 */
+#define MACHINE_RL_HEIGHT_MAX     0.34f
+#define MACHINE_RL_LEG_TO_HEIGHT  0.0f     /* 小机保持原命令语义 */
 #define MACHINE_VOFA_PORT         1u      /* UART1 */
 #define MACHINE_FDCAN13_DATA_PRESCALER  3u
 #define MACHINE_FDCAN13_DATA_SEG1       5u

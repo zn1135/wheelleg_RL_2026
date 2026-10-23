@@ -23,11 +23,11 @@ Scope (no learning, no long simulation, no GPU):
   options  simulator options (timestep/integrator/iterations/ls_iterations/tolerance/
            cone/impratio) equal the multimodal env's MujocoCfg; the vx/yaw command slots
            clamp to +-100 like v14_observations.basic; the ground-start activation flag
-           flips on the 11th completed step (the training float32 boundary, not the 10th)
+           flips on the 21st completed step (the 100 Hz training float32 boundary, not the 20th)
   airborne the airborne flag (slot 37) mirrors multimode_mdp.MultimodeCommand.advance:
            both wheel centers clear of the floor by more than WHEEL_RADIUS + 2 cm with
-           peak wheel contact force below 5 N for one control period; asserted to flip
-           after the first completed step from the 0.38 m stance and to clear after the
+           peak wheel contact force below 5 N for 20 ms; asserted to flip
+           after the second completed step from the 0.38 m stance and to clear after the
            wheels land (the 2026-10-17 second-audit observation fix)
   contacts every robot geom carries the training scene's priority=1 patch, so robot-floor
            contact friction equals the training value (0.5 sliding), not the equal-priority
@@ -187,20 +187,22 @@ def main() -> None:
     results["normal_start_flags"] = [float(v) for v in flags]
 
     # 5b. The airborne flag (slot 37) is not pinned to 0: from the 0.38 m stance the
-    #     wheels leave the floor, so after one full control period it must read 1
+    #     wheels leave the floor, so after 20 ms (two control periods) it must read 1
     #     (as the training backend does), and it must clear once the wheels land.
     airborne_env = entry.Playback()
     airborne_env.step(lambda obs: np.zeros(6))
+    assert np.array_equal(airborne_env.mode_and_flags()[1], np.array((0., 1., 0., 0.), dtype=np.float32))
+    airborne_env.step(lambda obs: np.zeros(6))
     flags_airborne = airborne_env.mode_and_flags()[1]
     assert np.array_equal(flags_airborne, np.array((0., 1., 1., 0.), dtype=np.float32)), \
-        f"airborne after one control step: {flags_airborne}"
-    for _ in range(40):
+        f"airborne after 20 ms: {flags_airborne}"
+    for _ in range(round(.8 / (entry.DT * entry.DECIMATION))):
         airborne_env.step(lambda obs: np.zeros(6))
     flags_landed = airborne_env.mode_and_flags()[1]
     assert np.array_equal(flags_landed, np.array((0., 1., 0., 0.), dtype=np.float32)), \
         f"airborne after landing: {flags_landed}"
     results["airborne_flag"] = {"reset": [float(v) for v in flags],
-                                "after_one_step": [float(v) for v in flags_airborne],
+                                "after_20_ms": [float(v) for v in flags_airborne],
                                 "after_landing": [float(v) for v in flags_landed]}
     results["shared_tolerances"] = {"vx": entry.VX_TOL, "yaw": entry.YAW_TOL,
                                     "height": entry.HEIGHT_TOL, "tilt_deg": entry.TILT_TOL_DEG,
@@ -218,17 +220,26 @@ def main() -> None:
     finally:
         env.command[:] = (0., 0., .30)
     ground_env = entry.Playback("ground")
-    ground_env.steps = 10
-    at_ten = float(ground_env.mode_and_flags()[1][1])
-    ground_env.steps = 11
-    at_eleven = float(ground_env.mode_and_flags()[1][1])
-    assert (at_ten, at_eleven) == (0., 1.), \
-        f"ground policy_active boundary: 10 steps -> {at_ten}, 11 steps -> {at_eleven}"
-    results["ground_policy_active_steps"] = {"after_10": at_ten, "after_11": at_eleven}
+    assert entry.GROUND_START_HOLD_STEPS == 20
+    for _ in range(20):
+        _, held = ground_env.step(lambda obs: np.full(6, .1))
+        np.testing.assert_array_equal(held, np.zeros(6))
+        np.testing.assert_array_equal(ground_env._motor_response_torque, np.zeros(6))
+    assert abs(ground_env.data.time - .2) < 1e-12
+    at_twenty = float(ground_env.mode_and_flags()[1][1])
+    _, active = ground_env.step(lambda obs: np.full(6, .1))
+    assert np.any(active != 0.)
+    at_twenty_one = float(ground_env.mode_and_flags()[1][1])
+    assert (at_twenty, at_twenty_one) == (0., 1.), \
+        f"ground policy_active boundary: 20 steps -> {at_twenty}, 21 steps -> {at_twenty_one}"
+    results["ground_policy_active_steps"] = {"after_20": at_twenty, "after_21": at_twenty_one,
+                                            "zero_torque_hold_s": .2}
 
     # 7. Simulator options equal the multimodal env's MujocoCfg (the training settings).
     from ct_mjlab.envs.chuanliantui.multimode_env_cfg import make_multimode_env_cfg
     multimode_cfg = make_multimode_env_cfg(play=True)
+    assert entry.DECIMATION == multimode_cfg.decimation == 5
+    assert env.h7_timing["simulation"]["policy_dt_s"] == entry.DT * entry.DECIMATION == .01
     mujoco_cfg = multimode_cfg.sim.mujoco
     integrators = {"euler": mujoco.mjtIntegrator.mjINT_EULER,
                    "implicit": mujoco.mjtIntegrator.mjINT_IMPLICIT,
@@ -323,7 +334,7 @@ def main() -> None:
     for label, qpos, expected in (("folded", folded_qpos, False),
                                   ("extended", nominal_qpos, True)):
         height_env.reset("ground")
-        for _ in range(26):
+        for _ in range(round(.52 / (entry.DT * entry.DECIMATION))):
             height_env.data.qpos[:] = qpos
             height_env.data.qpos[:3] = (0., 0., 4.)
             height_env.data.qvel.fill(0.)

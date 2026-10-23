@@ -36,7 +36,9 @@ def check(args):
             raise RuntimeError(f'Observation shapes {shapes}, expected {expected}')
         print(json.dumps(dict(kind='finite physics/interface check; no training', task=args.task,
                               steps=args.steps, num_envs=n, checkpoint=str(args.checkpoint),
-                              observation_shapes=shapes, action_dim=env.num_actions), indent=2))
+                              observation_shapes=shapes, action_dim=env.num_actions,
+                              physics_dt_s=env.unwrapped.physics_dt,
+                              policy_dt_s=env.unwrapped.step_dt), indent=2))
     finally:
         env.close()
 

@@ -128,7 +128,7 @@ def main():
         n, dt = env.num_envs, env.step_dt
         height = torch.tensor([h for h in heights for _ in range(2*args.envs_per_case)], device=env.device)
         state.sampled[:, 2] = height; state._command[:, 2] = height
-        # 刷新复位时缓存的高度观测；这20ms计入起立/稳定等待，不计入保持窗口。
+        # 刷新复位时缓存的高度观测；这一策略步计入起立等待，不计入保持窗口。
         with torch.inference_mode():
             obs, _, _, _, _ = env.step(torch.zeros((n, 6), device=env.device))
         initial_ground = state.ground_start.clone()
@@ -147,10 +147,11 @@ def main():
         with torch.inference_mode():
             for step in range(round(25./dt)):
                 actor_obs = obs['actor']
-                if float(abs(actor_obs[:, :3]).max()) > 1e-6:
+                active = ~failed & ~finished
+                if float(abs(actor_obs[active, :3]).max()) > 1e-6:
                     raise ValueError('Zero command was overwritten')
-                torch.testing.assert_close(actor_obs[:,3], height*5)
-                torch.testing.assert_close(actor_obs[:,35], initial_ground.float())
+                torch.testing.assert_close(actor_obs[active,3], height[active]*5)
+                torch.testing.assert_close(actor_obs[active,35], initial_ground[active].float())
                 obs, _, terminated, timeout, _ = env.step(policy(obs))
                 elapsed = (step+2)*dt
                 live = ~failed & ~finished
@@ -194,6 +195,15 @@ def main():
                 flags.append(measuring.cpu().numpy())
                 if bool((finished | failed).all()):
                     break
+                reset_ids = (terminated | timeout).nonzero(as_tuple=False).flatten()
+                if len(reset_ids):
+                    # 失败结果已锁定；只复位终止环境，让其他样本继续测完。
+                    env.reset(env_ids=reset_ids)
+                    state.sampled[reset_ids, :2] = 0.
+                    state._command[reset_ids, :2] = 0.
+                    state.sampled[reset_ids, 2] = height[reset_ids]
+                    state._command[reset_ids, 2] = height[reset_ids]
+                    obs = env.get_observations()
         rows = []
         for i in range(n):
             fields = dict(duration=float(observed[i]), maximum_displacement=float(displacement[i]),
@@ -208,6 +218,7 @@ def main():
                          **fields, 'passed': verdict(**fields)})
         report = {'kind': 'zero-command hold after normal and ground starts; no training',
             'seed': args.seed, 'envs': n, 'passed': sum(r['passed'] for r in rows),
+            'physics_dt_s': env.physics_dt, 'policy_dt_s': dt,
             'criteria': {'hold_s': 20., 'anchor_deadline_s': 5., 'settle_at_least_s': 2.,
                          'max_displacement_m': .05, 'max_tilt_deg': 25., 'max_height_error_m': .03,
                          'min_wheel_support_fraction': .95, 'wheel_weight_share': .7,
@@ -218,6 +229,7 @@ def main():
                         for p in (Path(__file__), args.checkpoint.resolve(),
                             ROOT/'mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_mdp.py',
                             ROOT/'mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_rewards.py',
+                            ROOT/'mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_env_cfg.py',
                             ROOT/'mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_mdp.py',
                             ROOT/'resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml')}}
         np.savez_compressed(args.output.with_suffix('.npz'), position=np.array(positions),

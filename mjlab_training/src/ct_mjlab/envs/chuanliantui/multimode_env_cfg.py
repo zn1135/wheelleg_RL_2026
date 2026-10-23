@@ -31,6 +31,8 @@ KNOCKDOWN_ANGULAR_SPEED_RANGE = (18., 28.)
 
 def make_multimode_env_cfg(*, play=False):
     cfg = make_huananhu_env_cfg(play=play)
+    # 100 Hz策略试验：保持2 ms实体PD，每5个物理步更新一次动作。
+    cfg.decimation = 5
     timing = json.loads(MODEL_XML.with_name("h7_timing.json").read_text())
     # Training broadens action waiting; playback retains the measured one tick.
     cfg.actions["pd"].action_delay_s = timing["simulation"]["action_delay_s"] if play else None

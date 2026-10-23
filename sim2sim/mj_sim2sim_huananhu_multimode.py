@@ -61,9 +61,10 @@ WHEELS = np.array((2, 5), dtype=np.intp)
 NORMAL_MODE = np.array((1., 0., 0., 0., 0., 0., 0.), dtype=np.float32)
 NORMAL_FLAGS = np.array((0., 1., 0., 0.), dtype=np.float32)
 GROUND_RECOVER_MODE = np.array((0., 0., 0., 1., 0., 0., 0.), dtype=np.float32)
-DT, DECIMATION = .002, 10
+DT, DECIMATION = .002, 5  # 500 Hz实体PD／物理，100 Hz策略，与当前mjlab试验一致。
+GROUND_START_HOLD_STEPS = int(np.ceil(.2 / (DT * DECIMATION) - 1e-9))
 WHEEL_RADIUS = .06  # multimode_mdp.WHEEL_RADIUS; clearance/airborne tests
-AIRBORNE_TIME_S = .02  # airborne flips after one clear, unloaded control period
+AIRBORNE_TIME_S = .02  # 腾空确认保持20 ms，不随策略提频缩短。
 RECOVERY_HEIGHT_M = .20  # H7 uses mean L*cos(theta), not world base height.
 DEFAULT_COMMAND = (0., 0., .30)
 # Tracking tolerances for the motion report. They mirror the single source of truth in
@@ -255,6 +256,8 @@ class Playback:
         self.model = build_model(model_path)
         self.data = mujoco.MjData(self.model)
         self.h7_timing = json.loads(MODEL_ASSET.with_name("h7_timing.json").read_text())
+        # 报告本回放的有效策略周期；共享文件仍保留H7原50 Hz实测来源。
+        self.h7_timing["simulation"]["policy_dt_s"] = DT * DECIMATION
         if motor_response_time_constant_s is not None:
             self.h7_timing["simulation"]["motor_response_time_constant_s"] = motor_response_time_constant_s
         self.motor_response_time_constant_s = self.h7_timing["simulation"]["motor_response_time_constant_s"]
@@ -351,9 +354,9 @@ class Playback:
         """Match the historical ground-start recovery gate at the control rate."""
         # Ground-start activation at 0.20 s, computed in float32 exactly like
         # MultimodeCommand.policy_active (episode_length_buf * step_dt >= .2): the float32
-        # product leaves 10 * .02 just below .2, so the flag flips on the 11th completed
-        # step, not the 10th. The torque hold in controls() stays the integer 10-step
-        # gate (`steps < 10`), matching huananhu_action._ground_hold.
+        # product leaves 20 * .01 just below .2, so the flag flips on the 21st completed
+        # step, not the 20th. The torque hold uses the integer 20-step gate,
+        # matching huananhu_action._ground_hold's 0.2 s duration.
         policy_active = bool(not self.ground_start) or bool(
             np.float32(self.steps) * np.float32(DT * DECIMATION) >= np.float32(.2))
         mode = GROUND_RECOVER_MODE if self.ground_start and not self.recovered else NORMAL_MODE
@@ -397,7 +400,7 @@ class Playback:
             # Experimental wheel loss compensation, smooth through zero speed.
             torque[WHEELS] += self.wheel_friction_compensation * np.tanh(velocity[WHEELS] / .5)
         torque = np.clip(torque, (-40., -40., -3.9, -40., -40., -3.9), (40., 40., 3.9, 40., 40., 3.9))
-        if self.ground_start and self.steps < 10:
+        if self.ground_start and self.steps < GROUND_START_HOLD_STEPS:
             torque.fill(0.)
         spring = self._gas_spring_force(self.data.qpos[self.spring_q], self.data.qvel[self.spring_v])
         return torque, np.asarray(spring, dtype=np.float64)
@@ -422,7 +425,7 @@ class Playback:
                 self._motor_response_torque += self._motor_response_alpha * (torque - self._motor_response_torque)
             else:
                 self._motor_response_torque[:] = torque
-            if self.ground_start and self.steps < 10:
+            if self.ground_start and self.steps < GROUND_START_HOLD_STEPS:
                 self._motor_response_torque.fill(0.)
             self.data.ctrl[self.motor_ids] = self._motor_response_torque
             self.data.ctrl[self.spring_ids] = spring
@@ -443,7 +446,7 @@ class Playback:
         # Training's airborne flag (multimode_mdp.MultimodeCommand.advance): both
         # wheel centers clear of the flat floor by more than WHEEL_RADIUS + 2 cm
         # with the peak wheel contact force over the control step below 5 N, held
-        # for at least one control period before the flag flips. The 2026-10-17
+        # for at least 20 ms before the flag flips. The 2026-10-17
         # second audit found the entry had pinned this flag to 0.
         clear = all(self.data.xpos[body][2] > WHEEL_RADIUS + .02
                     for body in self.wheel_bodies)
@@ -611,6 +614,7 @@ def main() -> None:
     paused, completed, rows = False, False, []
     total_steps = 0
     print(f"{args.checkpoint.name} | independent CPU MuJoCo | {args.initial_pose} start"
+          f" | policy {1. / (DT * DECIMATION):g} Hz / PD {1. / DT:g} Hz"
           f"{' | TELEOP' if args.teleop else ''}", flush=True)
     if args.teleop:
         print("遥操作模式：点击 MuJoCo 窗口获得焦点后按键 —— " + TELEOP_PRINT, flush=True)
@@ -676,7 +680,8 @@ def main() -> None:
                 row = env.metrics()
                 viewer.set_texts([(mujoco.mjtFontScale.mjFONTSCALE_100.value,
                     mujoco.mjtGridPos.mjGRID_TOPLEFT.value,
-                    f"{args.checkpoint.name} CPU sim2sim | {'PAUSED' if paused else 'RUNNING'}\n"
+                    f"{args.checkpoint.name} CPU sim2sim | {'PAUSED' if paused else 'RUNNING'} | "
+                    f"policy {1. / (DT * DECIMATION):g} Hz / PD {1. / DT:g} Hz\n"
                     f"cmd vx {env.command[0]:+.1f} m/s | yaw {env.command[1]:+.1f} rad/s | "
                     f"height {env.command[2]:.3f} m\n"
                     # Measured body-frame velocity from the same mjOBJ_XBODY read the report uses.

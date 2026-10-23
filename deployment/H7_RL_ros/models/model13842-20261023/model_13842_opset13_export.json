@@ -1,0 +1,40 @@
+{
+  "created_at": "2026-10-23T15:46:37.239707+08:00",
+  "observation_contract": "chuanliantui-huananhu-multimode-39-82-v1",
+  "checkpoint": "/home/zn/\u6587\u6863/Wheel-Legged-Gym/logs/mjlab/chuanliantui_huananhu_multimode_v1/2026-10-23_14-12-38_policy100hz-resume11843-2000/model_13842.pt",
+  "checkpoint_sha256": "b8e536241827b2e2a6311ea368b5ccc56088402b6be1f1b7bd9a956946853c0d",
+  "onnx": "/home/zn/\u6587\u6863/Wheel-Legged-Gym/artifacts/model13842-h7-20261023/model_13842_opset13.onnx",
+  "onnx_sha256": "3c70bea65acce331712f53062a3a72265bee04acdd2c596a3c626ba0b89f75c5",
+  "opset": 13,
+  "input": {
+    "name": "obs",
+    "shape": [
+      1,
+      39
+    ],
+    "dtype": "float32"
+  },
+  "output": {
+    "name": "actions",
+    "shape": [
+      1,
+      6
+    ],
+    "dtype": "float32",
+    "order": [
+      "lf0",
+      "lf00",
+      "lfwheel",
+      "rf0",
+      "rf00",
+      "rfwheel"
+    ]
+  },
+  "numeric_check": {
+    "samples": 256,
+    "max_abs_diff": 3.814697265625e-06,
+    "atol": 0.0001
+  },
+  "reference_vectors": "/home/zn/\u6587\u6863/Wheel-Legged-Gym/artifacts/model13842-h7-20261023/model_13842_opset13_reference_vectors.npz",
+  "graph_scope": "deterministic actor only; no observation construction, PD, clipping or motor mapping"
+}

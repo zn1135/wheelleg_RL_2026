@@ -12,13 +12,15 @@ mjlab 训练侧只保留一条线：华南虎 multimode 任务，基线模型 `m
 | 观测契约 | `chuanliantui-huananhu-multimode-39-82-v1` |
 | Actor／Critic／动作 | 39／82／6 |
 | 动作顺序 | `[lf0, lf00, lfwheel, rf0, rf00, rfwheel]` |
-| 时序 | 2 ms 物理、20 ms／50 Hz 策略 |
+| 时序 | mjlab、独立CPU及USB H7大机13842源码：2 ms物理／PD、10 ms／100 Hz策略；UART H7仍20 ms／50 Hz，USB烧录状态见交付记录 |
 | 地形 | 无限平地（2026-10-17 起；此前为生成地形 flat 50%、slope 20%、step 15%、stair 15%） |
 | 命令 | 前向速度 ±1.5 m/s、偏航角速度 ±1.5 rad/s、机身高度 0.2165～0.3664 m（对应近直立髋轮腿长约0.18～0.33m；2026-10-22待续训验收） |
 | 初态 | 20% 普通／80% 地面（2026-10-15 起，原 50／50），姿态库 `resources/robots/chuanliantui_new_1/mjlab/huananhu_pose_bank.npz` |
 | 基线 checkpoint | `artifacts/multimode-v1-replay-20261014/models/model_3023.pt`，SHA256 `624ded630635f0fb51a7378cdd04a7350eee98ffb305acbe1104c3cc7705a88a` |
 
 观测槽、模式与标志位见 [multimode 接口](interfaces/chuanliantui-huananhu-multimode-replay-v1.md)。
+
+2026-10-23按用户要求试用旧Isaac串联腿的100 Hz策略／500 Hz内环组合：在`make_multimode_env_cfg`将`decimation`由10改为5，训练、play、check和eval使用同一时序；随后独立CPU入口也将`DECIMATION`改为5。启动保持仍为0.2秒，原训练动作等待6/8/10 ms与play/CPU等待2 ms保持。H7固件尚未提频；已有50 Hz模型可加载做变频对照，但不能据此视为100 Hz训练模型或按50 Hz交付新模型。接口差异、验证与回退见[100 Hz策略试验](interfaces/20261023-mjlab-policy100hz.md)。
 
 2026-10-22：曾按作者确认的髋轴到轮轴约0.15m最低腿长，将共享XML膝关节屈膝限位扩展到
 左−0.873677593512／右+0.873677593512rad；作者随后要求先恢复，当前已回到左−0.77／右+0.77rad的屈膝限位，

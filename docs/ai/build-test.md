@@ -1,5 +1,19 @@
 # 构建与测试
 
+2026-10-23 USB大机目标腿长→训练机体高度：实际C拨轮/模式/观测/恢复及当前XML直立参考检查入口如下；设备状态使用替身，不证明实机几何、调度或行为。两机各180组模式回归、低位恢复计时与大小机正式构建证据见[目标换算接口](../interfaces/20261023-h7-leg-to-body-height.md)。`--before-rc`指向本轮修改前已保存的原RC源码，用于模式回归。
+
+```bash
+CC=/home/zn/miniforge3/envs/fudan_env/bin/x86_64-conda-linux-gnu-gcc \
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 mjlab_training/.venv/bin/python \
+  scripts/agent/check_h7_height_command.py --h7-root deployment/H7_RL_ros \
+  --before-rc artifacts/h7-height-align-20261023/before/imcalib/task/rc_command.c \
+  --out artifacts/<新目录>/height-check.json
+```
+
+2026-10-23 H7 USB导入13842：`CC=<已有宿主gcc> mjlab_training/.venv/bin/python scripts/agent/check_h7_policy_timing.py --h7-root deployment/H7_RL_ros --out artifacts/<新目录>/policy-timing.json`核对实际分频函数（外设替身）及实际恢复C：大机100Hz策略/500Hz PD分频，小机100Hz/1kHz；200ms趴地保持、500ms稳定与退出清零。只证明有限软件计时，不证明板端调度或完整执行链。两机正式编译命令保持下文`check_real2sim_huananhu.py --build-only`，交付见[13842记录](../model-deliveries/20261023-model13842-h7-import.md)。
+
+2026-10-23策略提频检查复用`check_h7_simulation_latency.py`：mjlab训练／play与独立CPU均为2 ms物理、10 ms策略，实际每动作调用5次PD，趴地保持仍为0.2秒；CPU新动作首用对应2/12 ms。`check_multimode_cpu_sim2sim.py`同步检查20步零力矩保持、21步policy_active浮点边界、20 ms腾空确认与0.5秒恢复确认。`scripts/mjlab.sh check`报告实际物理／策略步长，`eval`默认按环境周期换算20秒步数。命令、证据和行为范围见[100 Hz策略试验](../interfaces/20261023-mjlab-policy100hz.md)。
+
 2026-10-22默认腿角偏置检查复用下方`check_h7_simulation_latency.py`：新增训练四腿±5°范围、PD/观测同基准、复位固定与play零偏置检查。范围见[默认腿角随机化](../interfaces/20261022-huananhu-nominal-leg-offset.md)。
 
 2026-10-22新增电机响应候选有限检查：`mjlab_training/.venv/bin/python scripts/agent/check_motor_response.py --out artifacts/<新目录>/motor-response.json`。覆盖非实测4ms时间常数的CPU/GPU真实PD响应、指数卷积、部分复位及禁用清零、四环境32步；`--baseline-cpu <改动前源码快照>`可另核对默认0时间常数的CPU逐值等价。默认候选关闭，不学习、不辨识真实参数、不替代行为验收。见[接口说明](../interfaces/20261022-h7-simulation-timing.md#电机响应候选未实测默认关闭)。

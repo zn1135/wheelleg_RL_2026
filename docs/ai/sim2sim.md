@@ -1,5 +1,7 @@
 # sim2sim 与部署契约
 
+2026-10-23：mjlab训练／play／eval及独立CPU入口均试用10 ms／100 Hz策略，物理和PD保持2 ms／500 Hz。CPU趴地零力矩仍保持0.2秒（20个策略步），腾空确认仍20 ms，原2 ms动作等待不变，报告中的有效策略周期同步为10 ms；共享H7实测JSON保留原来源。后续USB H7源码随model13842导入同步10 ms／100 Hz，UART工程仍20 ms／50 Hz；烧录及板端待验收状态见[交付记录](../model-deliveries/20261023-model13842-h7-import.md)，不能把名义周期一致当作真实时序已测；旧CPU结果继续只描述当时的50 Hz。见[变频接口与验证](../interfaces/20261023-mjlab-policy100hz.md)。
+
 2026-10-22：华南虎训练动作等待按作者后续要求改为每回合腿/轮独立随机6、8、10 ms；mjlab play及独立CPU回放保持H7实测缓存到首次PD约2.003 ms量化后的固定2 ms。网络调用已包含在此路径中，控制周期仍2 ms，微秒抖动不模拟；传感器数据龄随机化保持原配置。训练随机范围不代表真机实测，行为仍需评估，见[接入与验证](../interfaces/20261022-h7-simulation-timing.md)。
 
 mjlab 串联腿只保留华南虎 multimode 一条线：39维actor／82维critic／六个实体电机，详见 [mjlab 串联腿训练](../mjlab-chuanliantui.md)。本页旧串联／H7策略通道保留历史物理顺序，只适用于 Isaac 旧任务。

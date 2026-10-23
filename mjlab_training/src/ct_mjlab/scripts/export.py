@@ -1,6 +1,6 @@
 """Export a multimode checkpoint's deterministic actor to a fixed batch=1 ONNX graph.
 
-Observation construction, mode flags, PD control and the 50 Hz schedule stay
+Observation construction, mode flags, PD control and the policy schedule stay
 outside the graph. A reference-vector check compares ONNX with PyTorch.
 """
 from datetime import datetime

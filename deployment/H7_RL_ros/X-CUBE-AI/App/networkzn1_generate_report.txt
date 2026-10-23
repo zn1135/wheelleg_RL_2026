@@ -1,33 +1,33 @@
 ST Edge AI Core v2.2.0-20266 2adc00962
-Created date          : 2026-10-22 22:40:59
-Parameters            : generate --target stm32h7 --name networkzn1 --model artifacts/model9845-h7-20261022-223919/model_9845_opset13.onnx --compression none --optimization time --c-api legacy --workspace artifacts/model9845-h7-20261022-223919/generate-workspace --output artifacts/model9845-h7-20261022-223919/generated
+Created date          : 2026-10-23 15:46:43
+Parameters            : generate --model artifacts/model13842-h7-20261023/model_13842_opset13.onnx --target stm32h7 --name networkzn1 --compression none --optimization time --c-api legacy --workspace artifacts/model13842-h7-20261023/generate-workspace --output artifacts/model13842-h7-20261023/generated
 
 Exec/report summary (generate)
----------------------------------------------------------------------------------------------------------------------
-model file         :   /home/zn/文档/Wheel-Legged-Gym/artifacts/model9845-h7-20261022-223919/model_9845_opset13.onnx   
-type               :   onnx                                                                                          
-c_name             :   networkzn1                                                                                    
-compression        :   none                                                                                          
-options            :   allocate-inputs, allocate-outputs                                                             
-optimization       :   time                                                                                          
-target/series      :   stm32h7                                                                                       
-workspace dir      :   /home/zn/文档/Wheel-Legged-Gym/artifacts/model9845-h7-20261022-223919/generate-workspace        
-output dir         :   /home/zn/文档/Wheel-Legged-Gym/artifacts/model9845-h7-20261022-223919/generated                 
-model_fmt          :   float                                                                                         
-model_name         :   model_9845_opset13                                                                            
-model_hash         :   0xfb068e94e712461523b7713a0452a309                                                            
-params #           :   51,782 items (202.27 KiB)                                                                     
----------------------------------------------------------------------------------------------------------------------
-input 1/1          :   'obs', f32(1x39), 156 Bytes, activations                                                      
-output 1/1         :   'actions', f32(1x6), 24 Bytes, activations                                                    
-macc               :   56,710                                                                                        
-weights (ro)       :   207,128 B (202.27 KiB) (1 segment)                                                            
-activations (rw)   :   1,536 B (1.50 KiB) (1 segment) *                                                              
-ram (total)        :   1,536 B (1.50 KiB) = 1,536 + 0 + 0                                                            
----------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------
+model file         :   /home/zn/文档/Wheel-Legged-Gym/artifacts/model13842-h7-20261023/model_13842_opset13.onnx   
+type               :   onnx                                                                                     
+c_name             :   networkzn1                                                                               
+compression        :   none                                                                                     
+options            :   allocate-inputs, allocate-outputs                                                        
+optimization       :   time                                                                                     
+target/series      :   stm32h7                                                                                  
+workspace dir      :   /home/zn/文档/Wheel-Legged-Gym/artifacts/model13842-h7-20261023/generate-workspace         
+output dir         :   /home/zn/文档/Wheel-Legged-Gym/artifacts/model13842-h7-20261023/generated                  
+model_fmt          :   float                                                                                    
+model_name         :   model_13842_opset13                                                                      
+model_hash         :   0x34b7b35fad6c8eb511c4887e391f9122                                                       
+params #           :   51,782 items (202.27 KiB)                                                                
+----------------------------------------------------------------------------------------------------------------
+input 1/1          :   'obs', f32(1x39), 156 Bytes, activations                                                 
+output 1/1         :   'actions', f32(1x6), 24 Bytes, activations                                               
+macc               :   56,710                                                                                   
+weights (ro)       :   207,128 B (202.27 KiB) (1 segment)                                                       
+activations (rw)   :   1,536 B (1.50 KiB) (1 segment) *                                                         
+ram (total)        :   1,536 B (1.50 KiB) = 1,536 + 0 + 0                                                       
+----------------------------------------------------------------------------------------------------------------
 (*) 'input'/'output' buffers are allocated in the activations buffer
 
-Model name - model_9845_opset13
+Model name - model_13842_opset13
 ------ ------------------------------------- --------------- ---------------- -------- ------------------ --- ----------------- ------------------ ------------------ 
 m_id   layer (type,original)                 oshape          param/size           macc       connected to   | c_size            c_macc             c_type             
 ------ ------------------------------------- --------------- ---------------- -------- ------------------ --- ----------------- ------------------ ------------------ 
@@ -73,7 +73,7 @@ model/c-model: macc=57,158/56,710 -448(-0.8%) weights=207,128/207,128  activatio
 
 Generated C-graph summary
 ------------------------------------------------------------------------------------------------------------------------
-model name            : model_9845_opset13
+model name            : model_13842_opset13
 c-name                : networkzn1
 c-node #              : 7
 c-array #             : 16
@@ -177,11 +177,11 @@ m_id   name              c_macc                    c_rom                     c_i
 macc=56,710 weights=207,128 act=1,536 ram_io=0
 
 Generated files (7)
--------------------------------------------------------------------------------------------------------- 
-/home/zn/文档/Wheel-Legged-Gym/artifacts/model9845-h7-20261022-223919/generated/networkzn1_data_params.h   
-/home/zn/文档/Wheel-Legged-Gym/artifacts/model9845-h7-20261022-223919/generated/networkzn1_data_params.c   
-/home/zn/文档/Wheel-Legged-Gym/artifacts/model9845-h7-20261022-223919/generated/networkzn1_data.h          
-/home/zn/文档/Wheel-Legged-Gym/artifacts/model9845-h7-20261022-223919/generated/networkzn1_data.c          
-/home/zn/文档/Wheel-Legged-Gym/artifacts/model9845-h7-20261022-223919/generated/networkzn1_config.h        
-/home/zn/文档/Wheel-Legged-Gym/artifacts/model9845-h7-20261022-223919/generated/networkzn1.h               
-/home/zn/文档/Wheel-Legged-Gym/artifacts/model9845-h7-20261022-223919/generated/networkzn1.c               
+-------------------------------------------------------------------------------------------------- 
+/home/zn/文档/Wheel-Legged-Gym/artifacts/model13842-h7-20261023/generated/networkzn1_data_params.h   
+/home/zn/文档/Wheel-Legged-Gym/artifacts/model13842-h7-20261023/generated/networkzn1_data_params.c   
+/home/zn/文档/Wheel-Legged-Gym/artifacts/model13842-h7-20261023/generated/networkzn1_data.h          
+/home/zn/文档/Wheel-Legged-Gym/artifacts/model13842-h7-20261023/generated/networkzn1_data.c          
+/home/zn/文档/Wheel-Legged-Gym/artifacts/model13842-h7-20261023/generated/networkzn1_config.h        
+/home/zn/文档/Wheel-Legged-Gym/artifacts/model13842-h7-20261023/generated/networkzn1.h               
+/home/zn/文档/Wheel-Legged-Gym/artifacts/model13842-h7-20261023/generated/networkzn1.c               

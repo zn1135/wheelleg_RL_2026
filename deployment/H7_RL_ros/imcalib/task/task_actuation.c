@@ -157,7 +157,7 @@ static void Control_RL_Recovery_Update(void)
     recovery = rl_control.recovery;
     previous = recovery.phase;
     request = (uint8_t)(control_frame.rc.online && control_frame.rc.mode.rc_enable && control_frame.rc.mode.strategy == CTRL_STRATEGY_RL && control_frame.rc.mode.engage);
-    RL_Recovery_Update(&recovery, request, (uint8_t)(control_frame.drive && control_frame.height_valid), control_frame.fallen, control_frame.height);
+    RL_Recovery_Update(&recovery, request, (uint8_t)(control_frame.drive && control_frame.height_valid), control_frame.fallen, control_frame.height, control_frame.rc.len);
     taskENTER_CRITICAL();
     rl_control.recovery = recovery;
     if (recovery.phase != previous)

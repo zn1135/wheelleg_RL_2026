@@ -1,5 +1,17 @@
 # 工程代码总览
 
+## 2026-10-23 · 目标腿长转机体高度固件已烧录
+
+作者本次确认“电机动力已断开，保留H7和RX供电，可以烧录”。1290项来源及大机ELF/BIN/HEX哈希与软件检查版本一致后，经PowerDebugger/OpenOCD SWD200kHz写入；16:23:53结束，耗时79.934秒，退出0，Programming Finished、Verified OK、Resetting Target齐备。HEX SHA256 `c1b1dcdc67550d8e7163321f8166947fb85a9692bef680ca1428454dcbce6305`。model13842、100Hz策略/500Hz PD保持，已写入目标腿长加0.03648m的训练机体高度换算及低位恢复门槛。未使能电机或做真机行为测试，H7负责人待确认。下方“未烧录”为准备阶段历史。[本次证据](../../../artifacts/h7-leg-to-body-height-20261023/flash/result.json)；[接口](../../../docs/interfaces/20261023-h7-leg-to-body-height.md)。
+
+## 2026-10-23 · RL目标腿长转机体高度，源码构建通过、未烧录
+
+按作者“几何换算／做”实现USB大机目标映射：`h_cmd=clamp(rc.len+0.03648,0.2165,0.3664)`，RC仍为腿长目标，RL拨轮范围0.18002～0.32992m；0.30m腿长对应0.33648m训练机体高度。偏移仅来自训练XML直立目标参考，不改实机轮半径/杆长/极性/零点。低位恢复阈值随目标下调，保持原200ms启动/500ms稳定/2000ms超时语义；反馈height仍为髋轮竖直投影。两机各180组实际C模式回归、XML参考几何、恢复计时、大小机各108单元完整编译/链接通过，权重保持model13842。**本次未烧录，板上仍是下方15:53:22版本的直接腿长裁剪逻辑**；真机效果和H7负责人待确认。[接口与证据](../../../docs/interfaces/20261023-h7-leg-to-body-height.md)。
+
+## 2026-10-23 · model13842已导入并烧录，策略100 Hz／PD500 Hz
+
+本次USB大机生成网络已替换为model13842，MACHINE_POLICY_DIV20→10匹配100Hz训练；500Hz采样/PD/下发及200ms启动保持、500ms稳定计时保持。ONNX256组最大差3.815e-6、实际生成C64组4.768e-6，51782参数与两固件权重逐字节一致；大小机各108单元编译/链接通过。1284项既有受保护来源仅策略宏和task_policy首行注释改变，标定/极性/零点/PD/门控不改。用户本次随后确认动力断开后，15:51:48～15:53:22经OpenOCD SWD200kHz烧录，93.295秒、退出0，Programming Finished/Verified OK/Resetting Target齐备。未使能电机；板端真实时序/行为与H7负责人待确认。旧模型与50Hz时序需成套回退；下方旧日期为历史。详见[交付与证据](../../../docs/model-deliveries/20261023-model13842-h7-import.md)。
+
 ## 2026-10-22 · model9845大机固件已烧录并校验复位
 
 作者本次确认电机动力已断开、仅保留H7/RX供电后，Codex经PowerDebugger/OpenOCD SWD 200kHz烧录大机MACHINE_DEFAULT=0。22:51:30结束，耗时63.964秒，退出0，Programming Finished、Verified OK、Resetting Target齐备；HEX SHA256 `9fe37c6eba4e006566079d836b4771f4f5d6fdb477e18352201fede1a0ee2f95`。烧录前固件及1263项既有受保护文件、已导入生成网络哈希再次核对一致。仅写入、读回校验、复位，未使能电机；板端推理数值/时序、真机行为和H7负责人核对待确认。此前零速保持退化结论保留；下方“尚未烧录”为历史导入阶段。[烧录证据](../../../artifacts/model9845-h7-20261022-223919/flash-20261022-225027/flash-result.json)。
@@ -72,7 +84,7 @@ RL_Motor_Map首次有效RL样本按原驱动周期锁存最靠近q_reference的�
 | rl_policy C/H | 单float32输入39、输出6及独立I/O缓冲；保留SDK接口/返回/输出检查；作者新生成的model5849保留，外围支持平地命令和倒地恢复，板端效果待验证 |
 | rl_torque C/H、machine_config C/H | 跟随训练默认角与参考角、腿60/2及轮0.1速度环；目标与力矩分别限幅，再配对还原固件方向；当前CPU multimode入口已同步默认角中心与轮0.1速度环，旧差异只按历史记录解释 |
 | dm、feedback_snapshot、task_comm | 新增保留原驱动标定的累计角rad，并经同一快照传到执行；旧pos_zero_rad继续供几何使用，动作停更/持续不可用分开处理 |
-| robot_control、robot_state、task_policy、task_actuation | 大机500Hz采样/PD/正常下发、50Hz推理；普通初态无保持，趴地初态保持200ms；投入/退出/失败清历史，模式切换只撤销旧动作就绪并拒绝在途推理；观测完整发布，统一输出口复查许可 |
+| robot_control、robot_state、task_policy、task_actuation | 大机500Hz采样/PD/正常下发、100Hz推理；普通初态无保持，趴地初态保持200ms；投入/退出/失败清历史，模式切换只撤销旧动作就绪并拒绝在途推理；观测完整发布，统一输出口复查许可 |
 | air_detection、slip、leg_solver、斜坡、DM/DJI初始化 | 删除固定配置/初始参数合法性扫描及无消费者的状态字段；反馈、新运算、奇异性、公共协议/SDK边界、状态机和出力许可仍检查 |
 | math_utils、PID/腿解算/LQR消费者 | clip、clampf和相同逐圈环绕统一公共内联入口；保留原NaN/Inf、负零、端点和舍入语义，独有fmodf/非有限清零/协议行为保持 |
 | vofa_debug C/H | 所有模式固定通道赋值、一次发送；旧腿部/LQR赋值注释保留，换布局手动编辑，不用模式/就绪标志选帧 |
@@ -120,7 +132,7 @@ flowchart LR
     Prepare --> Snapshot[公共反馈快照]
     Snapshot --> Act[执行任务与许可]
     Act --> Sample[500Hz模型原生反馈采样]
-    Sample --> Policy[50Hz RL观测与推理]
+    Sample --> Policy[100Hz RL观测与推理]
     Policy --> Action[原始动作发布]
     Action --> Act
     Act --> Solve[LQR / 自起 / RL / 补偿求解]
@@ -141,7 +153,7 @@ flowchart LR
 | motor_state、leg_l/r | 通信任务 | 电机反馈及对应双腿解算配套发布 |
 | rc_command、robot_state、ctrl_fault | 通信任务；有效落地更新公共len | 执行/策略消费命令和许可，后台读取状态 |
 | RL最新反馈样本、PD/目标与力矩 | 执行任务500Hz | 策略在短临界区读取样本；PD使用当拍反馈 |
-| RL39观测、上一请求、policy、action_state | 策略任务50Hz | 执行消费原始请求；执行清零时递增reset_count使旧推理失效 |
+| RL39观测、上一请求、policy、action_state | 策略任务100Hz | 执行消费原始请求；执行清零时递增reset_count使旧推理失效 |
 | lqr_state、leg_balance、自起/离地/速度状态、最终力矩及补偿诊断 | 执行任务 | 求解和最终输出；Watch及后台按实际代码读取 |
 
 [feedback_snapshot.c](../imcalib/task/feedback_snapshot.c) / [头文件](../imcalib/task/inc/feedback_snapshot.h)由发布方在短临界区提交，执行任务每基础拍读取完整快照；策略任务读取执行任务准备的RL最新样本，不另直接读取原始快照。成功复制不代表传感器有效，各消费者仍检查所需online/valid和许可；同一软件快照不代表物理采样同步。
@@ -218,7 +230,7 @@ LQR_State_Update已删除无计算用途的dt参数，只检查imu.online/左右
 
 控制周期直接取`MACHINE_LQR_DT / MACHINE_RL_CTRL_DT / MACHINE_POLICY_DT`；仅为配套检查设置的`.lqr.dt`已删除。运行参数或PID在初始化/复位位置加载，不能假定改配置副本会自动同步现有控制器。name仅是调试标签，不参与控制。
 
-`rc_command.len`为米，沿用原公式：拨轮死区/归一化后，`len += wheel × rc.len_rate × dt`，回中保持，夹到原机械范围与K表域交集。通信任务直接传`MACHINE_TICK_DT`，更新后若未投入LQR/RL则把腿长恢复`rc.len_init`；离线由RC恢复初值。LQR离地时拨轮仍更新公共目标，轴向释放继续由执行层处理。有效落地仍设置0.20 m，写公共目标及执行当拍命令；作者已移除通信整段临界区，指令发布本身仍由快照接口保护。无新增累加状态、时间戳或复位接口，模式请求在RC解码，实际出力由执行层检查。
+`rc_command.len`为米，沿用原公式：拨轮死区/归一化后，`len += wheel × rc.len_rate × dt`，回中保持。USB大机RL模式夹到训练高度范围反算的腿长0.18002～0.32992m；LQR及小机仍夹到原机械范围与K表域交集。通信任务直接传`MACHINE_TICK_DT`，更新后若未投入LQR/RL则把腿长恢复`rc.len_init`；离线由RC恢复初值。LQR离地时拨轮仍更新公共目标，轴向释放继续由执行层处理。有效落地仍设置0.20 m，写公共目标及执行当拍命令；作者已移除通信整段临界区，指令发布本身仍由快照接口保护。无新增累加状态、时间戳或复位接口，模式请求在RC解码，实际出力由执行层检查。
 
 ## LQR与腿力控
 
@@ -239,7 +251,7 @@ LQR_State_Update已删除无计算用途的dt参数，只检查imu.online/左右
 <a id="rl39"></a>
 ## RL39观测、推理与实体电机执行
 
-当前生成网络对应 `model_6848`（2026-10-21转换、编译并烧录），接口仍为 `chuanliantui-huananhu-multimode-39-82-v1`、单输入39／单输出6，采用50Hz策略与500Hz实体控制；已接入公共遥控和平地NORMAL／RECOVER。模型交付见[model5849说明](../../../docs/onnx-huananhu-multimode-model5849.md)，同仓同步及待验收项见[部署同步记录](../../../docs/interfaces/20261018-h7-model5849-deployment-sync.md)。
+当前生成网络对应 `model_13842`（2026-10-23转换、编译并烧录），接口仍为 `chuanliantui-huananhu-multimode-39-82-v1`、单输入39／单输出6，采用100Hz策略与500Hz实体控制；已接入公共遥控和平地NORMAL／RECOVER。模型交付见[model5849说明](../../../docs/onnx-huananhu-multimode-model5849.md)，同仓同步及待验收项见[部署同步记录](../../../docs/interfaces/20261018-h7-model5849-deployment-sync.md)。
 
 2026-10-15的model3023迁移、交付提交773f88e与导出源码269ba935eeb3a39fc3fedcb87b554a4f654ffcec只解释历史初版。当前跳跃／台阶／坡地逻辑未实现，机身接触与绝对高度使用实机替代估计，不能把平地恢复接口称为完整multimode实机验收。
 
@@ -256,7 +268,7 @@ DM新增`pos_continuous_rad`：在原`pos_zero_rad`上补已解包的整数圈�
 | 索引 | actor39内容 |
 | --- | --- |
 | 0～2 | clip(rc.vel,1.5)、0、clip(rc.yaw,1.5)，单位m/s及rad/s |
-| 3 | clamp(rc.len,0.27,0.34)后×5；作者接受腿长目标直接作高度命令，初值0.15被截到0.27m |
+| 3 | USB大机`clamp(rc.len+0.03648,0.2165,0.3664)`后×5；直立目标腿长转训练base高度（2026-10-23已烧录）；小机仍直接裁剪0.27～0.34m |
 | 4～6 | 机体系gyro限±100后×0.5 |
 | 7～9 | inverse quaternion投影世界重力[0,0,-1]，限±100 |
 | 10～13 | 四实体模型角减名义角，限±100 |
@@ -268,7 +280,7 @@ DM新增`pos_continuous_rad`：在原`pos_zero_rad`上补已解包的整数圈�
 
 nominal_pos是训练微蹲默认姿态在模型原生坐标下的q_nominal；reference_pos是XML的qpos0，二者不是实机编码器零点。版本化XML与主线XML的19个body、19个joint、14个site属性一致；本机未安装指定mjlab环境，按相同前腿目标和定位点独立核算后链闭合，得到原生默认角，未冒充运行过训练环境。参数以machine_config.c为准。输入单位rad/rad/s，轮速已由驱动按轮轴齿比换算，不重复换算。
 
-执行任务500Hz保存最新模型样本，策略50Hz在短临界区复制样本和动作历史，在本地构造39维输入后完整发布，避免遥测读到半更新观测。坏反馈立即清sample_valid。部署不主动添加训练噪声、观测/目标延迟或均值方差归一化，仅存在实际任务、总线与设备延迟。模式和启动标志来自执行任务的同一恢复状态，SDK ready与policy_active分开；当前接model5849的平地运动/起立/倒地恢复，不自动请求跳跃、台阶或坡地，不借用LQR离地检测制造airborne。
+执行任务500Hz保存最新模型样本，策略100Hz在短临界区复制样本和动作历史，在本地构造39维输入后完整发布，避免遥测读到半更新观测。坏反馈立即清sample_valid。部署不主动添加训练噪声、观测/目标延迟或均值方差归一化，仅存在实际任务、总线与设备延迟。模式和启动标志来自执行任务的同一恢复状态，SDK ready与policy_active分开；当前接model5849的平地运动/起立/倒地恢复，不自动请求跳跃、台阶或坡地，不借用LQR离地检测制造airborne。
 
 ### 输出与启动
 
@@ -278,7 +290,7 @@ nominal_pos是训练微蹲默认姿态在模型原生坐标下的q_nominal；ref
 
 RL不调用雅可比、不叠加弹簧抵消或重力。实体被动弹簧仍存在；LQR/自起/台架的几何、补偿和原参数保持。RL实体PD不依赖雅可比；恢复流程需要公共height_valid，因此坏腿几何不会被当作有效低高度，届时停止本次输出。IMU、补角、电机组、模型、故障和实际输出许可继续检查。
 
-大机基础/LQR仍1kHz，RL分频2→500Hz，策略分频20→50Hz，一个原始action保持10个2ms控制子步。正常力矩每RL子步计算/下发，中间基础拍保持命令；退出/故障仍每基础拍检查。增加的执行与总线负载需要实测逐次周期、漏拍和发送成功，不能用宏定义或平均频率代替实测。
+大机基础/LQR仍1kHz，RL分频2→500Hz，策略分频10→100Hz，一个原始action名义保持5个2ms控制子步。正常力矩每RL子步计算/下发，中间基础拍保持命令；退出/故障仍每基础拍检查。增加的执行与总线负载需要实测逐次周期、漏拍和发送成功，不能用宏定义或平均频率代替实测。
 
 实际投入、退出、失能及恢复超时清原始动作/历史/PD目标；NORMAL与RECOVER/启动激活切换保留原始历史，仅清rl_ready并递增reset_count，拒绝切换前在途的推理，等待新模式首帧才出力。普通初态直接NORMAL；趴地初态200ms内继续推理但最终门控强制零力矩，之后进入RECOVER。ground_start锁存整个投入段，中途倒地不重新等待200ms。未实际投入但选择RL可零出力推理，不能提前推进恢复计时；零action不是零力矩。
 
@@ -296,7 +308,7 @@ RL不调用雅可比、不叠加弹簧抵消或重力。实体被动弹簧仍存
 
 新ONNX须使用上述实体契约及配套JSON；在CubeAI中保持网络名`networkzn1`，生成并成套替换`X-CUBE-AI/App/networkzn1.c/h`、`networkzn1_data*.c/h`及`networkzn1_config.h`（按实际生成清单），保留该工具链配套运行库。不能只改尺寸宏、只换部分权重或复用旧模型。当前只有单模型入口，旧多模型切换/索引及无人消费的命令镜像删除。导入后正常初始化自动恢复policy.ready，再做同输入PyTorch/ONNX/CubeAI对照。
 
-Watch输入为`rl_control.observation.obs[0..38]`；原始请求为`action_state.a[0..5]`，按网络左右两侧顺序；PD目标、当前模型位置/速度、模型裁剪力矩及固件请求为`rl_control.torque_state.target/pos/vel/motor_torque/last_torque`，按四腿两轮顺序。最终门控后命令为`rl_output_dm_cmd_nm/rl_output_wheel_cmd_nm`，不能混为同一层量。板端网络数值与实际2ms/20ms周期、反馈更新和总线发送仍待验证。
+Watch输入为`rl_control.observation.obs[0..38]`；原始请求为`action_state.a[0..5]`，按网络左右两侧顺序；PD目标、当前模型位置/速度、模型裁剪力矩及固件请求为`rl_control.torque_state.target/pos/vel/motor_torque/last_torque`，按四腿两轮顺序。最终门控后命令为`rl_output_dm_cmd_nm/rl_output_wheel_cmd_nm`，不能混为同一层量。板端网络数值与实际2ms/10ms周期、反馈更新和总线发送仍待验证。
 
 
 

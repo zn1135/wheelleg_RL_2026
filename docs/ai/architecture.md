@@ -2,6 +2,8 @@
 
 串联腿当前训练使用独立 `mjlab_training/`：华南虎 multimode 任务由 mjlab 原生管理器负责控制、子步观测、奖励、终止、随机化、生成地形和复位，RSL-RL PPO 负责学习；接口见 [multimode 接口](../interfaces/chuanliantui-huananhu-multimode-replay-v1.md)。下文 Isaac 数据流只描述历史入口。
 
+2026-10-23起mjlab与独立CPU sim2sim使用100 Hz策略／500 Hz物理与PD；USB工程`deployment/H7_RL_ros`导入model13842后，大机源码同步100 Hz策略／500 Hz控制，下文真机图按该候选实现更新，板端真实时序待测。UART工程仍为50 Hz，烧录实际状态见[13842交付](../model-deliveries/20261023-model13842-h7-import.md)，接口见[100 Hz记录](../interfaces/20261023-mjlab-policy100hz.md)。
+
 华南虎训练、独立CPU sim2sim与real2sim当前共用`resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml`。旧multimode_model3023下XML为兼容符号链接；只编辑唯一源，策略权重和姿态库各自保留。结构及有限验证见[共享XML说明](../diagnostics/20261021-shared-huananhu-xml.md)。
 
 当前共享XML包含joint_sharp等效轮端响应。训练load_spec将轮USER增益转为后端固定G，动作执行每物理步补速度因子；CPU加载原生USER增益回调。两端参数同源、G只乘一次，H7名义控制与标定不改。历史录制按哈希读取artifacts/model-versions冻结版本，见[接入说明](../diagnostics/20261021-h7-wheel-response-integration.md)。
@@ -24,7 +26,7 @@
 
 2026-10-23按华南虎multimode训练代码及`deployment/H7_RL_ros`核对。主链路为：**遥控器给目标 → H7读取反馈并选择RL或LQR → 计算六路力矩 → CAN下发电机 → 电机和姿态反馈回到H7**。Jetson当前只负责显示、录制和离线分析，策略推理在H7上运行。
 
-本节记录结构与调用关系；周期、增益、限幅和恢复阈值为本次源码快照，后续以实际代码为准。当前模型、烧录状态和行为验收结论统一见[项目实验记录顶部](project-log.md#当前状态2026-10-22)，具体模型来源及烧录证据见[模型交付记录](../model-deliveries/20261022-model9845-h7-import.md)。烧录、网络数值检查和行为验收是不同结论。
+本节记录结构与调用关系；周期、增益、限幅和恢复阈值为本次源码快照，后续以实际代码为准。当前模型、烧录状态和行为验收结论统一见[项目实验记录顶部](project-log.md)，具体模型来源及烧录证据见[模型交付记录](../model-deliveries/20261022-model9845-h7-import.md)。烧录、网络数值检查和行为验收是不同结论。
 
 ### 训练、验证与部署
 
@@ -70,7 +72,7 @@ flowchart TB
     GEO --> SNAP
     SNAP --> ACT["H7执行任务<br/>基础节拍1 ms<br/>读取反馈、检查许可、选择分支"]
 
-    ACT --> RL["RL分支<br/>20 ms推理<br/>2 ms计算实体电机力矩"]
+    ACT --> RL["RL分支<br/>10 ms推理<br/>2 ms计算实体电机力矩"]
     ACT --> SU["LQR／自起分支<br/>准备或翻身完成后交给平衡控制"]
     SU --> LQR["LQR平衡：1 ms<br/>状态反馈＋腿长／横滚控制"]
     LQR --> MAP["腿部力与摆矩映射成电机力矩<br/>按状态加入弹簧／重力补偿"]
@@ -105,13 +107,13 @@ LQR支路使用腿几何、速度融合和离地估计，腿部力矩经几何�
 
 ### RL内部控制链路
 
-PD是按位置误差推向目标，同时用速度阻尼抑制运动。大机策略每20 ms更新一次原始动作，位置／速度控制每2 ms用当前反馈重新计算力矩：**保持的是网络动作，力矩随反馈变化**。基础1 ms执行拍仍检查退出和故障。
+PD是按位置误差推向目标，同时用速度阻尼抑制运动。USB工程大机策略每10 ms更新一次原始动作，位置／速度控制每2 ms用当前反馈重新计算力矩：**保持的是网络动作，力矩随反馈变化**。基础1 ms执行拍仍检查退出和故障。
 
 ```mermaid
 flowchart TB
     F["当前IMU、电机反馈"] --> M["转换到训练模型坐标<br/>连续角、极性、零点与单位"]
     M --> S["每2 ms缓存最新模型反馈"]
-    S --> OBS["每20 ms构造39维观测"]
+    S --> OBS["每10 ms构造39维观测"]
     CMD["遥控命令"] --> OBS
     MODE["启动／恢复状态"] --> OBS
     LAST["上一次网络原始动作"] --> OBS
@@ -147,7 +149,7 @@ flowchart TB
 
 网络原始动作顺序为`[lf0, lf00, lfwheel, rf0, rf00, rfwheel]`，电机反馈和PD内部顺序为`[lf0, lf00, rf0, rf00, lfwheel, rfwheel]`。两者由`RL_Action_Index`统一重排，不能把通道重排当作极性变换。腿目标围绕XML参考角限幅，位置误差不做最短路径环绕；默认角、XML参考角和实机机械零点是三个不同的量。
 
-公共`rc.len`是腿长命令，目前RL观测直接将其限制在训练高度范围后用作高度输入，没有另做腿长到机身高度的几何换算。具体范围见[部署工程RL39说明](../../deployment/H7_RL_ros/md/file-guide.md#rl39)。零action仍指向默认腿角，并不等于零力矩。
+公共`rc.len`是腿长目标；USB大机源码现通过`RL_Command_Height`按训练XML直立目标换算为`clamp(rc.len+0.03648,0.2165,0.3664)`机体高度命令，小机保持原直接裁剪。该换算已于2026-10-23烧录、读回校验并复位；反馈height仍为髋轮竖直投影，不是机体离地高度。具体范围见[部署工程RL39说明](../../deployment/H7_RL_ros/md/file-guide.md#rl39)。零action仍指向默认腿角，并不等于零力矩。
 
 源码入口：[39维观测与模型坐标映射](../../deployment/H7_RL_ros/imcalib/Algorithm/rl_observation.c)、[策略推理与动作发布](../../deployment/H7_RL_ros/imcalib/task/task_policy.c)、[动作转目标与力矩](../../deployment/H7_RL_ros/imcalib/Algorithm/rl_torque.c)、[机器参数](../../deployment/H7_RL_ros/imcalib/config/machine_config.c)。
 
