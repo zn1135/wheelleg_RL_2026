@@ -1,0 +1,6 @@
+[
+  {"vx": 0.5, "yaw": 0.0, "leg_length": 0.30},
+  {"vx": -0.5, "yaw": 0.0, "leg_length": 0.30},
+  {"vx": 0.0, "yaw": 0.5, "leg_length": 0.30},
+  {"vx": 0.0, "yaw": -0.5, "leg_length": 0.30}
+]

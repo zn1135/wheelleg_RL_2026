@@ -2,9 +2,25 @@
 
 2026-10-22 更新。除明确标注“Jetson端”的步骤外，均在电脑端的仓库根目录执行。模型采纳状态与实验结论见[项目实验记录顶部](docs/ai/project-log.md)，本页只维护命令。
 
+## 当前起立／零速回放：PPO 400轮
+
+在本目录执行以下命令，加载已采纳的400轮模型及其SMP配方；`--smp-prior`同时选择配套轮角39维观测、正常趴地初态、0.2秒出力等待及零速命令。旧multimode和独立稳站任务的显式入口继续保留。
+
+```bash
+ct_checkpoint="logs/mjlab/chuanliantui_huananhu_multimode_smp_wheel_handover_v4_bc_finetune_isaac_standup_v3/2026-10-26_18-56-31_wheel39-phase-mix-bcfinetune-smp-400/model_399.pt"
+ct_smp_prior="logs/mjlab/chuanliantui_smp_prior/20261025_student170_remote10000-v2/prior_10000.pt"
+scripts/mjlab.sh play --checkpoint "$ct_checkpoint" --smp-prior "$ct_smp_prior" --num-envs 1
+```
+
+模型来源、备份和本目录验证见[同步记录](artifacts/ppo400-sync-20261026-v1/README.md)。当前停车仍未通过，不能据采纳决定写成超过LQR。
+
 | 要做什么 | 入口 |
 |---|---|
 | 当前串联腿训练、回放、评估与导出 | [mjlab 主线](#mjlab-当前串联腿主线) |
+| 独立 LQR+VMC 控制、正常起立与数值检查 | [teacher说明](docs/mjlab-lqr-vmc-teacher.md)；`scripts/mjlab.sh teacher` |
+| LQR示范采集、SMP评分模型预训练 | [第二阶段说明](docs/mjlab-smp-prior.md)；`scripts/mjlab.sh collect\|train-prior` |
+| 学生动作配对、行为克隆和独立验收 | [行为克隆说明](docs/mjlab-behavior-cloning.md)；`scripts/mjlab.sh train-bc`，每轮显式预算 |
+| SMP接入PPO、正常趴地初态与有限检查 | [接入说明](docs/mjlab-smp-prior.md#第三阶段可选-smp-ppo)；`train/play/check/eval --smp-prior <prior_N.pt>`，不传参数保持原PPO |
 | Jetson连接、实采、实测姿态回放 | [Jetson操作](#jetson操作连接录制与回放) |
 | 原UART与USB工程的选择 | [部署目录说明](deployment/README.md) |
 | 固件编译与烧录 | 所选工程的[UART说明](deployment/H7_RL/md/file-guide.md#terminal-flash)或[USB说明](deployment/H7_RL_ros/md/file-guide.md#terminal-flash) |

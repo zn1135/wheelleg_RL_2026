@@ -37,7 +37,7 @@ def main():
         assert cfg.decimation == cpu.DECIMATION == 5
     assert profile['simulation']['policy_dt_s'] == .01
     assert configs[0].actions['pd'].action_delay_s is None
-    assert configs[0].actions['pd'].action_delay_choices_s == (.006, .008, .010)
+    assert configs[0].actions['pd'].action_delay_choices_s == (.002, .004)
     assert configs[0].actions['pd'].randomize_delays
     assert configs[0].actions['pd'].nominal_leg_offset_range == (-math.radians(5), math.radians(5))
     assert configs[1].actions['pd'].action_delay_s == .002
@@ -169,7 +169,8 @@ def main():
             samples.append(torch.stack((term.action_delay_steps.clone(),
                                         term.wheel_action_delay_steps.clone()), dim=1))
         sampled = torch.cat(samples)
-        assert set(sampled[:, 0].tolist()) == set(sampled[:, 1].tolist()) == {3, 4, 5}
+        assert set(sampled[:, 0].tolist()) == set(sampled[:, 1].tolist()) == {1, 2}
+        assert set(map(tuple, sampled.tolist())) == {(1, 1), (1, 2), (2, 1), (2, 2)}
         assert bool((sampled[:, 0] != sampled[:, 1]).any())
         before = term.action_delay_steps.clone(), term.wheel_action_delay_steps.clone()
         term.reset(torch.tensor([0, 2], device=env.device))
@@ -180,8 +181,8 @@ def main():
 
         # Cover each discrete lag through PD at a fixed state, including old-action holding.
         term.reset()
-        term.action_delay_steps[:] = torch.tensor([3, 4, 5, 3], device=env.device)
-        term.wheel_action_delay_steps[:] = torch.tensor([5, 3, 4, 5], device=env.device)
+        term.action_delay_steps[:] = torch.tensor([1, 2, 1, 2], device=env.device)
+        term.wheel_action_delay_steps[:] = torch.tensor([2, 1, 1, 2], device=env.device)
         term.kp_scale.fill_(1.); term.kd_scale.fill_(1.); term.motor_strength.fill_(1.)
         env.command_manager.get_term('standup').ground_start[:] = False
         env.sim.data.qpos[:, term._motor_q_adr] = term.nominal_positions
@@ -192,12 +193,12 @@ def main():
         magnitude = torch.full_like(action, term.cfg.leg_stiffness * term.cfg.leg_position_scale * .1)
         magnitude[:, term._wheel_action_ids] = term.cfg.wheel_stiffness * term.cfg.wheel_velocity_scale * .1
         term.process_actions(action)
-        for tick in range(6):
+        for tick in range(5):
             term.apply_actions()
             expected = magnitude * (tick >= delays)
             torch.testing.assert_close(term._torques, expected, atol=1e-5, rtol=0)
         term.process_actions(action * 2)
-        for tick in range(6):
+        for tick in range(5):
             term.apply_actions()
             expected = magnitude * (1. + (tick >= delays).float())
             torch.testing.assert_close(term._torques, expected, atol=1e-5, rtol=0)
@@ -209,7 +210,8 @@ def main():
                 assert obs['actor'].shape == (4, 39) and obs['critic'].shape == (4, 82)
                 assert all(bool(torch.isfinite(obs[k]).all()) for k in ('actor', 'critic'))
                 assert bool(torch.isfinite(reward).all())
-        result.update(training_action_delay_ms=[6, 8, 10], training_sampling='per episode, independent leg/wheel groups',
+        result.update(training_action_delay_steps=[1, 2], training_action_delay_ms=[2, 4],
+                      training_sampling='per episode, independent leg/wheel groups; equivalent to torch.randint(1, 3)',
                       training_nominal_offsets_rad=offset.cpu().tolist(), nominal_offset_pd_observation_consistent=True,
                       nominal_offset_fixed_across_resets=True, playback_nominal_offset_zero=True,
                       training_sampled_group_pairs=sampled.cpu().tolist(), training_first_use_and_hold=True,

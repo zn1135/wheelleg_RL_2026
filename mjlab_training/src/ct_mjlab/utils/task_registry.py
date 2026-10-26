@@ -78,7 +78,11 @@ class TaskRegistry:
         if log_dir is not None:
             log_dir = Path(log_dir)
             log_dir.mkdir(parents=True, exist_ok=False)
-        runner = self._task(name).runner_class(
+        runner_class = self._task(name).runner_class
+        if 'smp_motion' in env.unwrapped.cfg.rewards:
+            from ct_mjlab.smp.ppo import SmpOnPolicyRunner
+            runner_class = SmpOnPolicyRunner
+        runner = runner_class(
             env, asdict(train_cfg), None if log_dir is None else str(log_dir), device)
         if resume is not None:
             print(f'[INFO] Resuming from {resume}', flush=True)

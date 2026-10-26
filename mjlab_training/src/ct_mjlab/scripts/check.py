@@ -3,6 +3,7 @@
 This is not a behavior acceptance; it never calls learn().
 """
 import json
+from pathlib import Path
 
 import torch
 
@@ -12,6 +13,12 @@ from ct_mjlab.utils.helpers import checkpoint_arg, get_args
 
 def check(args):
     env_cfg, train_cfg = task_registry.get_cfgs(args.task)
+    if args.smp_prior is not None:
+        from ct_mjlab.smp.ppo import configure_smp, policy_observation_contract, checkpoint_smp_weight, checkpoint_bc_finetune
+        configure_smp(env_cfg, train_cfg, args.smp_prior,
+                      policy_contract=policy_observation_contract(args.checkpoint),
+                      reward_weight=checkpoint_smp_weight(args.checkpoint),
+                      bc_finetune=checkpoint_bc_finetune(args.checkpoint))
     env, _ = task_registry.make_env(
         args.task, env_cfg=env_cfg, train_cfg=train_cfg, num_envs=args.num_envs,
         seed=train_cfg.seed if args.seed is None else args.seed, device=args.device)
@@ -46,6 +53,7 @@ def check(args):
 def main():
     args = get_args(__doc__, defaults={'num_envs': 2}, extra=(
         checkpoint_arg(), (('--steps',), dict(type=int, default=32)),
+        (('--smp-prior',), dict(type=Path, default=None, help='Enable finite SMP PPO checks')),
     ))
     check(args)
 

@@ -13,6 +13,7 @@ mjlab 训练侧只保留一条线：华南虎 multimode 任务，基线模型 `m
 | Actor／Critic／动作 | 39／82／6 |
 | 动作顺序 | `[lf0, lf00, lfwheel, rf0, rf00, rfwheel]` |
 | 时序 | mjlab、独立CPU及USB H7大机13842源码：2 ms物理／PD、10 ms／100 Hz策略；UART H7仍20 ms／50 Hz，USB烧录状态见交付记录 |
+| 动作等待 | 训练腿／轮各自每回合随机1或2个物理步，即2／4 ms；play／CPU固定2 ms；10 ms仅作独立压力测试（2026-10-25更新） |
 | 地形 | 无限平地（2026-10-17 起；此前为生成地形 flat 50%、slope 20%、step 15%、stair 15%） |
 | 命令 | 前向速度 ±1.5 m/s、偏航角速度 ±1.5 rad/s、机身高度 0.2165～0.3664 m（对应近直立髋轮腿长约0.18～0.33m；2026-10-22待续训验收） |
 | 初态 | 20% 普通／80% 地面（2026-10-15 起，原 50／50），姿态库 `resources/robots/chuanliantui_new_1/mjlab/huananhu_pose_bank.npz` |

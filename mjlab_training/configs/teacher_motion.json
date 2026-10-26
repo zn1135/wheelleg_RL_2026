@@ -1,0 +1,9 @@
+[
+  {"time": 0, "vx": 0, "yaw": 0, "leg_length": 0.15},
+  {"time": 4, "vx": 0.5, "yaw": 0, "leg_length": 0.15},
+  {"time": 8, "vx": -0.5, "yaw": 0, "leg_length": 0.15},
+  {"time": 12, "vx": 0, "yaw": 0.5, "leg_length": 0.22},
+  {"time": 16, "vx": 0, "yaw": -0.5, "leg_length": 0.22},
+  {"time": 20, "vx": 0, "yaw": 0, "leg_length": 0.30},
+  {"time": 24, "vx": 0, "yaw": 0, "leg_length": 0.15}
+]

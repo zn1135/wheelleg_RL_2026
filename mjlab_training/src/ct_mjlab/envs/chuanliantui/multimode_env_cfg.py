@@ -34,9 +34,10 @@ def make_multimode_env_cfg(*, play=False):
     # 100 Hz策略试验：保持2 ms实体PD，每5个物理步更新一次动作。
     cfg.decimation = 5
     timing = json.loads(MODEL_XML.with_name("h7_timing.json").read_text())
-    # Training broadens action waiting; playback retains the measured one tick.
+    # Train with 1/2 physics ticks, equivalent to randint(1, 3); play keeps one tick.
     cfg.actions["pd"].action_delay_s = timing["simulation"]["action_delay_s"] if play else None
-    cfg.actions["pd"].action_delay_choices_s = (.006, .008, .010)
+    cfg.actions["pd"].action_delay_choices_s = tuple(
+        steps * cfg.sim.mujoco.timestep for steps in range(1, 3))
     cfg.actions["pd"].motor_response_time_constant_s = timing["simulation"]["motor_response_time_constant_s"]
     cfg.actions["pd"].randomize_delays = not play
     cfg.actions["pd"].nominal_leg_offset_range = (0., 0.) if play else (-math.radians(5), math.radians(5))

@@ -1,5 +1,6 @@
 """Replay a checkpoint in the play configuration (same flow as wheel_legged_gym/scripts/play.py)."""
 import os
+from pathlib import Path
 
 import torch
 
@@ -40,6 +41,12 @@ def play(args):
     env_cfg, train_cfg = task_registry.get_cfgs(args.task, play=True)
     if args.seed is not None:
         env_cfg.seed = args.seed
+    if args.smp_prior is not None:
+        from ct_mjlab.smp.ppo import configure_smp, policy_observation_contract, checkpoint_smp_weight, checkpoint_bc_finetune
+        configure_smp(env_cfg, train_cfg, args.smp_prior, play=True,
+                      policy_contract=policy_observation_contract(args.checkpoint),
+                      reward_weight=checkpoint_smp_weight(args.checkpoint),
+                      bc_finetune=checkpoint_bc_finetune(args.checkpoint))
     env, _ = task_registry.make_env(
         args.task, env_cfg=env_cfg, train_cfg=train_cfg, play=True,
         num_envs=args.num_envs, device=args.device)
@@ -97,6 +104,7 @@ def play(args):
 def main():
     args = get_args(__doc__, defaults={'num_envs': 1}, extra=(
         checkpoint_arg(),
+        (('--smp-prior',), dict(type=Path, default=None, help='Use the SMP PPO profile and its normal ground starts')),
         (('--viewer',), dict(choices=('auto', 'native', 'viser'), default='auto')),
         (('--viser-port',), dict(type=int, default=None,
                                  help='port for the viser viewer (default: viser picks its own, 8080)')),

@@ -2,7 +2,7 @@
 from importlib import import_module
 import sys
 
-COMMANDS = ('train', 'play', 'eval', 'export', 'check')
+COMMANDS = ('train', 'play', 'eval', 'export', 'check', 'teacher', 'collect', 'train-prior', 'train-bc')
 
 
 def main(argv=None):
@@ -10,7 +10,7 @@ def main(argv=None):
     if not argv or argv[0] not in COMMANDS:
         sys.exit(f'usage: ct-mjlab {{{",".join(COMMANDS)}}} [args]  (use <command> --help)')
     command, sys.argv = argv[0], [f'ct-mjlab {argv[0]}', *argv[1:]]
-    return import_module(f'ct_mjlab.scripts.{command}').main()
+    return import_module(f'ct_mjlab.scripts.{command.replace("-", "_")}').main()
 
 
 if __name__ == '__main__':

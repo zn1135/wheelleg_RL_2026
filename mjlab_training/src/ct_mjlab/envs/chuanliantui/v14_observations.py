@@ -25,6 +25,8 @@ class V14ObservationCfg:
     noise: bool = True
     delay: bool = True
     delay_seconds: tuple[float, ...] = (.005, .010, .015)
+    wheel_angle_displacement: bool = False
+    wheel_angle_handover_reset: bool = False
 
 
 class GroupedSensorDelay:

@@ -136,9 +136,17 @@ def evaluate_seed(args, seed: int) -> tuple[dict, list[dict], dict]:
     cfg.curriculum = {}
     if args.start_mode == "force":
         cfg.events["reset_pose"] = EventTermCfg(func=force_ground_reset, mode="reset")
+    runner_class = task_registry._task(MULTIMODE_TASK_ID).runner_class
+    if args.smp_prior is not None:
+        from ct_mjlab.smp.ppo import configure_smp, SmpOnPolicyRunner, policy_observation_contract, checkpoint_smp_weight, checkpoint_bc_finetune
+        configure_smp(cfg, agent, args.smp_prior, play=True,
+                      policy_contract=policy_observation_contract(args.checkpoint),
+                      reward_weight=checkpoint_smp_weight(args.checkpoint),
+                      bc_finetune=checkpoint_bc_finetune(args.checkpoint))
+        runner_class = SmpOnPolicyRunner
     env = ManagerBasedRlEnv(cfg, device=args.device)
     try:
-        runner = task_registry._task(MULTIMODE_TASK_ID).runner_class(
+        runner = runner_class(
             RslRlVecEnvWrapper(env, clip_actions=agent.clip_actions), asdict(agent), device=args.device)
         runner.load(str(args.checkpoint), load_cfg={"actor": True}, strict=True, map_location=args.device)
         policy = runner.get_inference_policy(device=args.device)
@@ -378,6 +386,8 @@ def main() -> None:
     policy_dt = cfg.sim.mujoco.timestep * cfg.decimation
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--checkpoint", type=Path, required=True)
+    parser.add_argument("--smp-prior", type=Path, default=None,
+                        help="SMP PPO prior; evaluate the normal ground-start profile")
     parser.add_argument("--output", type=Path, required=True, help="summary JSON path")
     parser.add_argument("--num-envs", type=int, default=256)
     parser.add_argument("--seeds", default="42", help="comma-separated seeds, e.g. 42,43,44")
@@ -432,6 +442,8 @@ def main() -> None:
         "task": MULTIMODE_TASK_ID,
         "checkpoint": str(args.checkpoint.resolve()),
         "checkpoint_sha256": hashlib.sha256(args.checkpoint.read_bytes()).hexdigest(),
+        "smp_prior_sha256": (hashlib.sha256(args.smp_prior.read_bytes()).hexdigest()
+                             if args.smp_prior is not None else None),
         "script": str(Path(__file__).resolve()), "script_sha256": script_sha,
         **git_state(),
         "config": {"num_envs": args.num_envs, "start_mode": args.start_mode, "terrain": args.terrain,
