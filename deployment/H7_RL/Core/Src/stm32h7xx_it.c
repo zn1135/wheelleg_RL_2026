@@ -30,6 +30,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "uart_idle.h"
+#include "machine_config.h"
+#include "usart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -75,13 +77,10 @@ extern DMA_HandleTypeDef hdma_uart8_tx;
 extern DMA_HandleTypeDef hdma_uart9_rx;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
-extern DMA_HandleTypeDef hdma_usart10_rx;
-extern DMA_HandleTypeDef hdma_usart10_tx;
 extern UART_HandleTypeDef huart7;
 extern UART_HandleTypeDef huart8;
 extern UART_HandleTypeDef huart9;
 extern UART_HandleTypeDef huart1;
-extern UART_HandleTypeDef huart10;
 extern TIM_HandleTypeDef htim23;
 
 /* USER CODE BEGIN EV */
@@ -185,20 +184,6 @@ void DebugMon_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32h7xx.s).                    */
 /******************************************************************************/
-
-/**
-  * @brief This function handles DMA1 stream0 global interrupt.
-  */
-void DMA1_Stream0_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Stream0_IRQn 0 */
-
-  /* USER CODE END DMA1_Stream0_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_usart10_rx);
-  /* USER CODE BEGIN DMA1_Stream0_IRQn 1 */
-
-  /* USER CODE END DMA1_Stream0_IRQn 1 */
-}
 
 /**
   * @brief This function handles DMA1 stream1 global interrupt.
@@ -383,20 +368,6 @@ void TIM6_DAC_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles DMA2 stream0 global interrupt.
-  */
-void DMA2_Stream0_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA2_Stream0_IRQn 0 */
-
-  /* USER CODE END DMA2_Stream0_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_usart10_tx);
-  /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
-
-  /* USER CODE END DMA2_Stream0_IRQn 1 */
-}
-
-/**
   * @brief This function handles USB On The Go HS global interrupt.
   */
 void OTG_HS_IRQHandler(void)
@@ -416,7 +387,12 @@ void OTG_HS_IRQHandler(void)
 void UART7_IRQHandler(void)
 {
   /* USER CODE BEGIN UART7_IRQn 0 */
+#if MACHINE_VOFA_PORT == 7u
+  /* 探测DMA由comm消费，UART错误和发送完成交HAL。 */
+  HAL_UART_IRQHandler(&huart7);
+#else
   UART_Idle_Isr(&huart7, &hi229_rx);
+#endif
   return;
 #if 0
   /* USER CODE END UART7_IRQn 0 */
@@ -446,7 +422,12 @@ void UART8_IRQHandler(void)
 void UART9_IRQHandler(void)
 {
   /* USER CODE BEGIN UART9_IRQn 0 */
+#if MACHINE_VOFA_PORT == 9u
+  /* UART9由Jetson探测独占；HAL处理TX完成及RX错误，不进入DR16的IDLE缓冲。 */
+  HAL_UART_IRQHandler(&huart9);
+#else
   UART_Idle_Isr(&huart9, &dbus_rx);
+#endif
   return;
 #if 0
   /* USER CODE END UART9_IRQn 0 */
@@ -454,20 +435,6 @@ void UART9_IRQHandler(void)
   /* USER CODE BEGIN UART9_IRQn 1 */
 #endif
   /* USER CODE END UART9_IRQn 1 */
-}
-
-/**
-  * @brief This function handles USART10 global interrupt.
-  */
-void USART10_IRQHandler(void)
-{
-  /* USER CODE BEGIN USART10_IRQn 0 */
-
-  /* USER CODE END USART10_IRQn 0 */
-  HAL_UART_IRQHandler(&huart10);
-  /* USER CODE BEGIN USART10_IRQn 1 */
-
-  /* USER CODE END USART10_IRQn 1 */
 }
 
 /**
@@ -513,5 +480,26 @@ void TIM23_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-
+#if MACHINE_VOFA_PORT == 10u
+/* USART10负责UART错误/发送收尾，两路DMA负责数据搬运。 */
+void USART10_IRQHandler(void)
+{
+  HAL_UART_IRQHandler(&huart10);
+}
+void DMA2_Stream0_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(&hdma_usart10_rx);
+}
+void DMA2_Stream1_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(&hdma_usart10_tx);
+}
+#endif
+#if MACHINE_VOFA_PORT == 9u
+/* UART9发送DMA完成后交HAL收尾，继续由UART9 TC中断释放发送状态。 */
+void DMA1_Stream0_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(&hdma_uart9_tx);
+}
+#endif
 /* USER CODE END 1 */

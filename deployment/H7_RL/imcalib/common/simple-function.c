@@ -13,21 +13,21 @@
 /* ================= 一阶低通 ================= */
 
 /* 初始化 */
-void LPF_Init(lpf_t *lp, float alpha)
+void Lowpass_Init(lowpass1d_t *lp, float alpha)
 {
     lp->out = 0.0f;
     lp->alpha = alpha;
 }
 
 /* 单周期: y = a*x + (1-a)*y */
-float LPF_Update(lpf_t *lp, float in)
+float Lowpass_Update(lowpass1d_t *lp, float in)
 {
     lp->out = lp->alpha * in + (1.0f - lp->alpha) * lp->out;
     return lp->out;
 }
 
 /* 清零 */
-void LPF_Reset(lpf_t *lp)
+void Lowpass_Reset(lowpass1d_t *lp)
 {
     lp->out = 0.0f;
 }

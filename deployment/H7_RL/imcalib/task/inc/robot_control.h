@@ -28,16 +28,16 @@ typedef struct {
     uint8_t height_valid;
     uint8_t fallen;             /* 本拍公共姿态倒地；RL还单独判断低高度。 */
     float wheel_vel[2];
-    float motor_pos[4];         /* 本拍DM零点后连续角，rad；RL首次选分支 */
+    float motor_pos[4];         /* 本拍固件连续标定角，rad */
     float motor_vel[4];         /* 本拍固件电机速度，rad/s */
     rl_motor_state_t rl_motor;  /* 当前RL控制子步的模型坐标反馈，供采样与PD共用 */
     uint8_t motor_valid;        /* 源电机组在线且无故障，与虚拟腿几何valid分开 */
     float joint_torque[4];
     leg_compensation_values_t compensation;
     uint8_t joint_ready;
-    uint8_t drive_permit; /* 本拍反馈、电机和总输出许可满足 */
-    uint8_t nonfallen_drive_permit; /* drive_permit且公共姿态未倒地，不代表三态NORMAL */
-    uint8_t recovery_permit; /* 本拍LQR地面恢复执行许可，不是恢复阶段 */
+    uint8_t drive;
+    uint8_t normal;
+    uint8_t recovery;
     uint8_t landed;
 } control_frame_t;
 

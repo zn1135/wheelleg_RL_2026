@@ -10,11 +10,6 @@
 /obj
 /out
 
-# Keil 编译输出、个人界面布局及下载器日志
-/MDK-ARM/CtrBoard-H7_ALL/
-/MDK-ARM/*.uvguix.*
-/MDK-ARM/JLinkLog.txt
-
 # eide template
 *.ept
 *.eide-template
@@ -26,7 +21,5 @@ __pycache__/
 /data
 
 # MATLAB 增益表管线缓存 (matlabFunction 生成物、.mat)
-/tools/matlab/lqr10/cache
-/tools/matlab/**/*.log
-/tools/matlab/lqr4/output/
-/tools/matlab/**/*.asv
+/tools/matlab/cache
+/tools/matlab/*.log

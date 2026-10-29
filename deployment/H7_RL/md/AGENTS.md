@@ -1,6 +1,6 @@
 # AI协作规范 — 轮腿控制工程
 
-2026-10-16：按作者要求留存训练仓Git规则，并合并少废话、敢纠正、克制改动、解释、按需澄清及渐进协作偏好。根目录AGENTS.md为自动阅读入口，规则正文只维护在本文件。现行代码/调用/参数/VOFA/构建见[file-guide.md](file-guide.md)，历史见[sysid-change-map.md](sysid-change-map.md)；作者明确要求的训练部署说明作为额外交付快照保留。2026-10-20作者明确授权新增[结构优化计划](struct-optimization-plan.md)，倒地恢复先完成后才进入全项目结构体优化。
+2026-10-16：按作者要求留存训练仓Git规则，并合并少废话、敢纠正、克制改动、解释、按需澄清及渐进协作偏好。根目录AGENTS.md为自动阅读入口，规则正文只维护在本文件。现行代码/调用/参数/VOFA/构建见[file-guide.md](file-guide.md)，历史见[sysid-change-map.md](sysid-change-map.md)；作者明确要求的训练部署说明作为额外交付快照保留。
 
 规则优先保留以下修改授权、物理量红线与任务分层约束。接手先读规则和总览；历史账本按日期/关键词检索，不将旧参数、旧开关、旧通道或已删除工具当作当前行为。
 
@@ -62,7 +62,6 @@
 - 用户在做轮腿机器人RL训练和部署，编程/机器学习基础较弱。当前讲解首次出现的专业术语用一句大白话解释，后续不重复；不因此写长答案，不用“别担心”“这很正常”等安慰话。
 - 暴露概念误解时先纠正再回答。代码按文件推进，.c/.h配套讲，改动大的单独讲、小改动成组；不反复铺全部总览。
 - 小改动给片段并说明文件/函数，大改动才给完整文件；新增include注明文件和放置位置。关键行加简短注释，不逐行解释显然操作。
-- **给出修改任务或实施计划时，按文件列出修改位置（函数/结构体）和拟新增、删除或替换的关键代码，用片段或diff展示，说明修改原因和影响；不能只列功能或任务标题。** 未实施的片段标注“拟修改”，实施后展示实际差异；.c/.h配套说明。展示要求不增加新的实施确认关卡，执行授权仍按§0判断。
 - 多步骤每步给可观察的成功判据；提到排查时说明打开哪个文件、看哪个变量/指标、改哪个参数，不只列名词。
 - 完成后简要说明改了什么、为什么、实际验证和未验证项，不重复工作流水账。
 
@@ -183,7 +182,6 @@
 
 - Linux 下 eIDE/GCC 的新机器依赖、路径约束和 `libhostfxr.so` 排错见 [构建与验证](file-guide.md#build)；本机 .NET 环境变量放在 VS Code 用户设置，提交前检查工具链配置中没有个人绝对路径。
 - 本项目是 **Keil MDK / eIDE** 工程。Keil AC5 在 `D:\keil\keil_core\ARM\armcc_5\bin\armcc.exe`，完整编译参数取自 `build/CtrBoard-H7_ALL/compile_commands.json`。改完先编译；核验编译必须把 `-o` 改到临时目录，不能污染 eIDE 增量构建目录。启动汇编用 `armasm.exe`。
-- 新增/迁移C源同时核对Keil登记和eIDE实际sourceList、compile_commands及objlist，确认各进入一次；不能只凭srcDirs或外部手工补齐清单后的链接宣称IDE接入成功。缺源修复归持久工程配置，不直接改生成的builder.params；虚拟登记与物理扫描并存时按实际源选择规则避免重复编译。当前control检测、AIR响应、策略准备、控制运算和最终输出五个执行源通过ControlModules显式登记，物理路径排除只用于去除扫描副本，详见file-guide构建节。
 - **完整GCC链接可在工程外验证，下载与上机不在本轮范围** → 物理符号、增益、轴向一律标 **"待台架 / 待实测"**。
 - **作者2026-10-11明确要求**：删除工程Python测试/工具文件，后续不允许生成额外Python测试文件。不改用其他语言批量新增多余测试文件；优先使用现有Keil/ARM GCC编译、MATLAB检查和VOFA实测。做过哪些核验如实说明，物理符号、增益、轴向只能台架确认。
 - **调参观测靠 Vofa+**：显示值不对 → **先查打包/下标，再怀疑算法**。
@@ -218,31 +216,16 @@
 
 ## 当前事实的阅读边界
 
-- 2026-10-30作者指定旧高度门控1999并要求成套适配，现行RL已改为35维单帧/6输出、50Hz策略/500Hz PD、网络四腿两轮恒等顺序及固定普通模式；5999五帧历史/估速/承重解锁已退役。连续角及首次分支保留，标定/LQR不变。以file-guide顶部1999节为准，下面5999等内容为历史授权。
-
-- 2026-10-29作者已明确改用连续角并批准接入model5999。当前RL为32维帧/五帧160输入、6动作＋3估速、100Hz策略/500Hz PD，独立AIR估力及新版恢复；本段优先于下方旧RL39/50Hz、单圈输入和旧VOFA描述。物理极性/零点不变，LQR仍用pos_zero_rad。当前通道及执行顺序见file-guide顶部，旧授权不作为恢复旧接口依据。
-
-- 2026-10-17作者指定公共fallen直接使用IMU回传俯仰/横滚euler_deg，任一超过40度；不重复投影重力、不另增rl_fallen。公共高度仅计算两腿L*cos(theta)均值并发布有效标志。2026-10-19作者再次批准LQR触地与三态接入：control_condition消费同一height，初始触地采用独立门槛和连续确认；NORMAL/FALLEN/FLIGHT实际选路，原处理内部冻结。RL保持原0.20m低高度替代门槛、200ms趴地保持、500ms稳定确认及连续倒地严格超过2000ms失败，不消费LQR三态。投影高度不宣称等价仿真绝对高度/接触力测量。
+- 2026-10-17作者指定公共fallen直接使用IMU回传俯仰/横滚euler_deg，任一超过40度；不重复投影重力、不另增rl_fallen。公共高度仅计算两腿L*cos(theta)均值并发布有效标志，LQR不消费高度。现已接入RL平地命令与恢复：0.20m低高度替代门槛、200ms趴地保持、500ms连续稳定确认、连续倒地严格超过2000ms锁定失败。间距/低高度只是实机替代估计，不宣称等价仿真绝对高度/接触力测量；不接LQR离地检测，不恢复被撤销的公共接触改造。
 
 - 模式唯一解码入口是Rc_Command_Update，结果随rc.mode发布；左中右上是补偿台架，左中右中是自起/LQR，左上右中是RL，其余组合按实际许可输出零或失能；实际出力检查和求解仍在task_actuation。
 - 前进/偏航量程和腿长初值/速率仍共用machine.rc，RL只在观测入口按训练包线限幅。NORMAL/RECOVER共用原训练PD和电机映射；实际投入时锁存ground_start，中途倒地不重复启动保持，成功后ground_start不清零。模式切换保留原始动作历史，只撤销旧动作就绪并拒绝在途推理，等待新模式首帧；故障/退出/超时清动作，FAILED必须退出投入重试。
 - 大小机K表与machine配置均由MACHINE_DEFAULT编译绑定，固定使用各机当前表，无运行时K表切换、旧表对照或配套检查；LQR许可直接读取lqr_configured。实时输入/结果检查和表域限幅保留。
 - 作者要求原始反馈校验集中到处理端：IMU发布online、腿解算发布valid/force_valid、电机组发布motor.valid；消费者读取标志，不重复扫描已验证数值。映射/观测等新结果在生成处验证，固定配置/代码初始参数不做合法性扫描；保留运行反馈、奇异性、实际出力许可和最终结果检查。离地样本时间检查已删除，不能根据旧“保留采样时序”描述恢复。
-- debug_rx作为后续VOFA接收预留，当前未接通；Lowpass_Reset、Ramp_Init按作者要求暂留，不能按零调用自动删除。未使用的DR16_Rx_Cb、UART_Rx_Take、Slip_Update等旧入口不恢复，当前实际消费者使用带时间的UART快照接口及显式接触状态的Slip入口。
-- 2026-10-19作者已确认并接入公共检测、触地判断与三态实际选路，并再次确认分文件：task/control_detection.c调度原观测/判断，返回进入FALLEN事件，由执行层复位原动作；task/air_process.c承接原AIR响应，保留调用位置和处理行为。模型每拍准备一次，检测不依赖lqr_running/自起完成，也不由lqr_idle清历史。原AIR压缩分支、三态规则、standup动作、LQR/腿力控、物理参数和RL保持；分文件授权不等于修改处理公式。当前接口、Watch和软件验收见file-guide，实机效果及耗时待验证。
-- 2026-10-19作者进一步确认执行拍按横向三层整理：control_strategy只推进恢复、模型准备和检测并确认策略；control_compute只运行已选的一条原控制路径；control_output只复查许可、发布诊断和发送。三层由同一actuationTask同步直接调用，不新增任务、队列、跨拍候选缓存或业务结构体；先验证控制行为一致，再单独审查结构体删改。Algorithm控制实现、检测规则、控制周期与处理公式冻结。
-- 2026-10-20地面恢复已完成迁移：fallen_detection只发布姿态有效性、upright、inverted和普通异常；control_condition只做高度/三态选路；fallen_process完整持有普通自起、倒置自救、阶段、目标、PID、映射、补偿、超时和重试，standup.c/h及旧工程源登记已删除。恢复上下文显式分为lifecycle、normal、self_right、actuator四组，不使用字段宏别名。动作姿态复核仍在fallen_process内，不能误删。阶段顺序、PID、F/Tp、补偿、轨迹、限幅、超时和重试未改。
-- 2026-10-20全局首批成员清理：`lqr_state.u_col/u_hip_col`和`robot_state.rc_enable`经全工程检索均无读取后删除。删除成员前必须同时核对直接读写、VOFA/Watch、条件编译与跨任务快照；不能以“当前不参与控制”代替无消费者证据。
-- 2026-10-20反馈元数据链已按后续全项目审查授权删除；`Robot_Feedback_Read`只复制控制实际读取的反馈。DM的`parsed_rx_ns`仍是离地相关真实接收时间，不能与已删除的IMU/遥控镜像元数据混淆。
-- 2026-10-20 `air_debug`只保留VOFA实际读取的紧凑诊断快照；完整离地检测跨拍状态仍在`air_detection`。删调试镜像字段前须核对VOFA布局与Watch用途，不改变检测器本体。
-- 2026-10-20恢复动作继续去冗余：删除只在单轮计算内使用的angle_speed_cmd、临时prepare、raw_dm和跨函数临时force/tp；`Fallen_Process_Compute_Output`用局部候选完整映射后再发布。长度/角度目标、PID和斜坡必须独立保存，不能与正常LQR或遥控目标共用历史；`fallen_process_param.length_rate`不能替换为machine.rc.len_rate，否则改变恢复动作速率。
-- 2026-10-20倒地触发判据归fallen_detection_param：trigger_angle、trigger_pitch、trigger_time和pitch_max不属于恢复动作参数。恢复可读同一检测阈值维持姿态保护和重新恢复确认，但检测模块不得反向包含fallen_process头文件。
-- 2026-10-20普通恢复超时统一为length_timeout（EXTEND/RETRACT）和angle_timeout（REAR/SWING），当前均1.5s；length_tol同时用于伸腿和收腿，收腿转摆条件为retract_len+length_tol。作者要求删除翻身F和Tp预映射限幅，恢复输出只保留最终四髋限幅。
-- 2026-10-20翻身使用与后摆共用的angle_rate；TUCK改名PRELOAD且必须等待两腿达到recovery_len-length_tol才开始FLIP，不能恢复固定等待时间后未建力臂就扫腿的旧逻辑。PRELOAD仍由recovery_timeout兜底。
-- 2026-10-20已删除recovery_timeout：PRELOAD用length_timeout，FLIP用扫角上限或卡滞保护，SETTLE只按固定等待转段；不得恢复一个覆盖不同阶段语义的通用翻身超时。
-- 2026-10-19台架CSV显示AIR落地后全支撑前馈会使短腿快速回弹并再次离地；300 ms的支撑前馈/pitch列渐进恢复随后已按作者要求撤销，恢复原处理。当前先观察既有腿长PID D项是否能缓冲：VOFA 45/46为左右dout、47为fallen；不得在未看D项方向和限幅前盲调Kd。
+- debug_rx作为后续VOFA接收预留，当前仍未接通。2026-10-19串口探测使用jetson_uart独立RX DMA区，由comm轮询，只校验并回报探测序号／随机数，不接action；控制接管仍未实现。Lowpass_Reset、Ramp_Init按作者要求暂留，不能按零调用自动删除。未使用的DR16_Rx_Cb、UART_Rx_Take、Slip_Update等旧入口不恢复，当前实际消费者使用带时间的UART快照接口及显式接触状态的Slip入口。
+- 弹簧/重力已按执行拍统一准备并复用；进一步整理output_task_body的具体函数拆分、调度及目标/积分顺序目前仅提出计划，尚未获得实施授权，也未实现。后续实现后同步此条及file-guide，不能把本次规范整理当作重构完成。
 - FDCAN1/3数据段机器配置目前在main中套用，不能沿用旧“不生效”描述。
-- VOFA只使用选定UART DMA，固定48路：状态3、完整obs39、网络耗时1、恢复阶段/公共高度/高度有效/稳定ms/倒地ms共5路；不选帧、不新增页面或采样框架。旧LQR/腿部赋值保留注释，按源码手动切换；见[file-guide.md](file-guide.md#vofa)。
+- VOFA只使用选定UART DMA，当前固定48路只读实机镜像，约100Hz尝试发送，含电机/IMU原始反馈、逐来源有效位、序号/快照时间、发布年龄与CRC；不选帧、不新增页面或采样框架。旧LQR/RL完整布局保留行注释，按源码手动切换；通道与待台架边界见[file-guide.md](file-guide.md#vofa)。
 - 通用控制周期兼容别名、旧弹簧字段、Python测试/工具、Sysid控制和USB关节协议已清理；历史正文中的相关标识不是恢复功能的授权。
 - 极性、零点、IMU轴向、MIT刻度、几何符号及物理补偿不得因文档整理或参考代码推导而改变；源码疑点只在对话说明，物理效果待作者台架确认。
 
@@ -257,11 +240,3 @@
 作者明确新模型生成和networkzn1文件替换自行处理，AI不得伪造或修改生成权重/尺寸宏；2026-10-15作者替换model3023及其电脑端核对为历史记录；2026-10-17回退后按作者重新确认的方案，保留其model5849生成网络，现已接平地命令/公共几何高度/RL恢复及配套出力，板端效果仍待验证。具体调用、训练与CPU回放差异、reset_count处理在途推理及待验证项见[file-guide的RL39接口](file-guide.md#rl39)。不得把静站固定标志宣称为完整multimode状态机，不把本机独立几何核算说成运行过训练环境或完成硬件标定。
 
 CubeMX当前生成MDK工程，eIDE使用GCC，二者端口/库均需保留。GCC补充依赖已迁至CubeMX生成目录外的gcc_support：源与包含路径用FreeRTOS/ARM_CM4F，AI库用AI子目录；MDK继续保留RVDS/Keil依赖。不能依赖会被CubeMX回写的DeletePrevious开关保护Middlewares里的GCC补充文件，也不能把RVDS端口给GCC使用。重新导入工程须保持gcc_support三项引用，迁移第三方文件保留原字节与许可证，不改内容；不新增自动恢复脚本或冗余副本。详见file-guide构建段；不为修复生成依赖改变控制参数或硬件标定。
-
-## 2026-10-27 目录归类授权补充
-
-长腿离地诊断后续增加四髋反馈/请求、映射有效性及行列式，10～11、20～23、26～27、32～35已换义，按file-guide最新通道表解析CSV；本轮不改用户已调的离地门槛。
-
-2026-10-27长腿FLIGHT排查临时VOFA布局为file-guide的长腿离地诊断表；不得用此前yaw/四态通道解释新CSV。当前只增加只读观测，未确认根因前不修改AIR估力、阈值或原压缩落地处理。
-
-按作者最新确认，原AIR响应整体改名为Algorithm/process/air_process.c/h，与fallen_process按具体异常处理归组，但保留原task头文件依赖、共享目标写回临界区和原调用顺序；这是纯迁移，不据此宣称解耦。仅该既有模块按本轮授权保留依赖，不作为新增算法任意访问任务全局状态的依据。pitch_world仅迁入estimation，不合并实现。control_detection因包含跨模块检测调度和公共后处理计时，继续归task/control。H文件统一位于模块inc，config除外。

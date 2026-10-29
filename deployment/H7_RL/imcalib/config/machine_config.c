@@ -50,13 +50,15 @@ const machine_cfg_t machine_table[MACHINE_NUM] = {
             .vel_max = 3.0f,
             .yaw_max = 5.0f,
             .len_init = 0.15f,
-            .len_rate = 1.3f,
+            .len_rate = 0.2f,
         },
+        /* 匹配表已接入，控制待台架。 */
+        .lqr_configured = 1u,
         .spring = &machine_spring_leg3,               /* 气弹簧表 */
         .gravity = &gravity_big,
         .dji_type       = 1u,                          /* M3508 + C620 */
         .dji_gear_ratio = 15.3333333f,                       /* 转子→轮子总减速比 */
-        .dji_trq_clamp  = (0.30f * 20.0f) * (15.3333333f / 19.2f), /* 满电流 */
+        .dji_trq_clamp  = (0.30f * 20.0f) * (15.5f / 19.2f), /* 满电流 */
         .wheel_r        = 0.0525f,                     /* 作者确认 */
         .dm_pos_max     = 3.14159f,                    /* DM-J8009P: 上位机 ±π */
         .dm_vel_max     = 45.0f,
@@ -73,8 +75,8 @@ const machine_cfg_t machine_table[MACHINE_NUM] = {
         /* 腿几何: 杆长 0.21/0.25; 腿长区间为实测工作区间 */
         .leg_lu         = 0.21f,
         .leg_lg         = 0.25f,
-        .leg_len_min    = MACHINE_BIG_LEG_LEN_MIN,
-        .leg_len_max    = MACHINE_BIG_LEG_LEN_MAX,
+        .leg_len_min    = 0.13f,
+        .leg_len_max    = 0.34f,
         .leg_off_phi0   = {-0.0f, -0.0f},
         /* IMU 轴映射待台架核对 */
         .imu = {
@@ -91,23 +93,21 @@ const machine_cfg_t machine_table[MACHINE_NUM] = {
         .lqr = {
             .leg_trim = {-0.0f, -0.0f},             /* 摆角目标 rad */
             .pitch_trim = 0.0f,                      /* 俯仰目标 rad */
-            .pos_target = 0.1f,                      /* 位移目标 m */
+            .pos_target = 0.4f,                      /* 位移目标 m */
             .pos_arm_vel = 0.1f,                     /* 松杆低速门槛 */
-            /* 1kHz低通顺序：pitch角速度 / yaw角速度 / roll角速度 / 高度变化速度；越小越平滑、延迟越大 */
-            .lpf_alpha = {0.6f, 0.6f, 0.01f, 0.15f},
-            .roll_height_bias_common_max = 100.0f,
-            .roll_height_bias_diff_max = 20.0f,
-            .turn_comp = {20.534f, 0.42551f, 0.07113f, 0.3f}, /* 当前大机模型；当前系数0.2、方向+1 */
+            /* 角速度低通顺序: pitch / yaw */
+            .lpf_alpha = {0.3f, 0.3f},
             /* PID 顺序: Kp / Ki / Kd / 输出限幅 / 积分限幅; 输出单位 N */
-            .leg_len = {{2800.0f, 0.0f, 150000.0f, 5000.0f, 0.0f},
-                        {2800.0f, 0.0f, 150000.0f, 5000.0f, 0.0f}}, /* 左右腿长 */
-            .roll = {600.0f, 0.0f, 100.0f, 5000.0f, 0.0f}, /* 横滚补偿 */
+            .leg_len = {{2300.0f, 0.0f, 25000.0f, 5000.0f, 0.0f},
+                        {2300.0f, 0.0f, 25000.0f, 5000.0f, 0.0f}}, /* 左右腿长 */
+            .roll = {500.0f, 0.0f, 100.0f, 5000.0f, 0.0f}, /* 横滚补偿 */
             .support_force = {20.534f * 9.81f * 0.5f, 20.534f * 9.81f * 0.5f}, /* 支撑前馈 N */
             .yaw_hold = 1u,                          /* 偏航角环 */
             .yaw_rate_hold = 1u,                     /* 偏航角速环 */
             .pos_hold = 1u,                          /* 位移环 */
             .wheel_enable = 1u,                      /* 轮矩输出 */
-            .leg_swing_enable = 1u,                        /* 摆腿矩输出 */
+            .hip_enable = 1u,                        /* 摆腿矩输出 */
+            .len_pid_enable = 1u,                    /* 腿长PID */
         },
         /* 公共驱动保留LQR标定；RL配对转换复现作者提供的可用RL方向与零点。 */
         .rl = {
@@ -115,8 +115,9 @@ const machine_cfg_t machine_table[MACHINE_NUM] = {
             .motor_zero = {0.0f, 0.0f, 0.0f, 0.0f},
             /* 版本化XML与训练model.py微蹲闭链姿态：四腿顺序LF前/后、RF前/后。 */
             .nominal_pos = {-0.604720554f, 0.608324173f, 0.604720554f, -0.608324173f},
-            .position_limit_center = {-0.664720554f, 0.667594582f, 0.664720554f, -0.667594582f},
-            .observation = {0.5f, 5.0f, 0.1f, 100.0f, 200.0f}, /* model1999：先裁剪再缩放 */
+            .reference_pos = {-0.664720554f, 0.667594582f, 0.664720554f, -0.667594582f},
+            .configured = 1u,
+            .observation = {0.5f, 5.0f, 0.1f, 100.0f, 200.0f}, /* gyro/height/velocity缩放及两种裁剪 */
             .torque = {
                 .pos_scale = 0.5f,
                 .wheel_vel_scale = 10.0f,
@@ -124,7 +125,7 @@ const machine_cfg_t machine_table[MACHINE_NUM] = {
                 .d_gains = {2.0f, 2.0f, 2.0f, 2.0f},
                 .wheel_gain = {0.1f, 0.1f},
                 .position_limit = 3.14f,
-                .wheel_speed_limit = 100.0f, /* 1999检查点的max_wheel_velocity */
+                .wheel_speed_limit = 150.0f,
                 .leg_torque_limit = 40.0f, /* 训练电机饱和；公共DM限幅与MIT刻度保持原值 */
                 .wheel_torque_limit = 3.9f,
             },
@@ -141,19 +142,20 @@ const machine_cfg_t machine_table[MACHINE_NUM] = {
             .len_rate = 0.3f,
         },
         /* 小轮腿目前只使用 LQR。TODO: 训练小轮腿 RL 模型后再配置关节映射并启用。 */
+        .lqr_configured = 1u,
         .spring = 0,
         .lqr = {
             .leg_trim = {-0.04f, -0.04f},
             .pitch_trim = 0.0f, .pos_target = 0.10f,
             .pos_arm_vel = 0.0f,
-            .lpf_alpha = {0.3f, 0.3f, 0.0f, 0.0f}, /* pitch/yaw/roll角速度/高度速度；小机未接入四态，后两项保持0 */
+            .lpf_alpha = {0.3f, 0.3f},
             .leg_len = {{2500.0f, 0.0f, 10000.0f, 5000.0f, 0.0f},
                         {2500.0f, 0.0f, 10000.0f, 5000.0f, 0.0f}},
             .roll = {200.0f, 0.0f, 50.0f, 5000.0f, 0.0f},
             .support_force = {8.0f, 8.0f},
-            .turn_comp = {0.0f, 0.6918f, 0.0901f, 0.0f}, /* 小机本轮不补偿；轮距/高度偏置沿用小机模型 */
             .yaw_hold = 1u, .yaw_rate_hold = 1u,
-            .pos_hold = 1u, .wheel_enable = 1u, .leg_swing_enable = 1u,
+            .pos_hold = 1u, .wheel_enable = 1u, .hip_enable = 1u,
+            .len_pid_enable = 1u,
         },
         .dji_type       = 0u,                          /* M2006 */
         .dji_gear_ratio = 36.0f,
@@ -173,8 +175,8 @@ const machine_cfg_t machine_table[MACHINE_NUM] = {
         /* 腿几何 (本机原值) */
         .leg_lu         = 0.13087f,
         .leg_lg         = 0.15240f,
-        .leg_len_min    = MACHINE_SMALL_LEG_LEN_MIN,
-        .leg_len_max    = MACHINE_SMALL_LEG_LEN_MAX,
+        .leg_len_min    = 0.13f,
+        .leg_len_max    = 0.23f,
         .leg_off_phi0   = {-0.0f, -0.0f},
         /* IMU */
         .imu = {
@@ -188,7 +190,7 @@ const machine_cfg_t machine_table[MACHINE_NUM] = {
             .quat_sign = {-1, 1, -1},
         },
         /* RL 关节映射: 模型对应大机器, 小机器未配置 */
-        .rl = {0},
+        .rl = { .configured = 0u },
     },
 };
 

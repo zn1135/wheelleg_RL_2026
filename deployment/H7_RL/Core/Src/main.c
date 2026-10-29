@@ -3,7 +3,7 @@
  * 文件职责：上电初始化与主入口（main.c）。
  * 输入/来源：HAL复位、时钟/外设配置、机器选择。
  * 输出/去向：初始化通信/单调时钟/控制模块，创建RTOS并启动调度。
- * 关键边界：USB DMA存储和MPU适配在用户区；FDCAN启动先复位共享硬件，再统一应用机器时序。
+ * 关键边界：USB DMA存储和MPU适配在用户区；FDCAN附加时序套用目前未调用，实际参数看fdcan.c。
  * 阅读入口：md/file-guide.md；参数当前值以源码为准。
  */
 /**
@@ -128,7 +128,10 @@ static void Machine_Apply_Fdcan_Data_Timing(FDCAN_HandleTypeDef *handle)
     handle->Init.DataPrescaler = MACHINE_FDCAN13_DATA_PRESCALER;
     handle->Init.DataTimeSeg1 = MACHINE_FDCAN13_DATA_SEG1;
     handle->Init.DataTimeSeg2 = MACHINE_FDCAN13_DATA_SEG2;
-    /* 这里只更新参数，Can_Bus_Init统一初始化并处理失败重试。 */
+    if (HAL_FDCAN_Init(handle) != HAL_OK)
+    {
+      Error_Handler();
+    }
   }
 }
 
@@ -173,7 +176,7 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-  Can_Bus_Reset_Hardware(); /* 清除跨固件下载后的FDCAN残留，必须先于三路MX初始化。 */
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -194,13 +197,19 @@ int main(void)
   MX_UART9_Init();
   MX_TIM6_Init();
   MX_UART8_Init();
-  MX_USART10_UART_Init();
   /* USER CODE BEGIN 2 */
+#if MACHINE_VOFA_PORT == 10u
+  MX_USART10_UART_Init(); /* Jetson串口10硬件先就绪，再启动协议RX DMA。 */
+#endif
   FDCAN_Config();
+  Jetson_Uart_Init(); /* UART RX DMA; probe only. */
   Mono_Ns_Init();   /* 单调 ns 时钟 */
-  Jetson_Uart_Init();
+#if MACHINE_VOFA_PORT != 9u && MACHINE_VOFA_PORT != 7u && MACHINE_VOFA_PORT != 8u
   DR16_Init();
+#endif /* 仅旧UART7/8/9测试保持遥控暂停；UART10恢复DR16。 */
+#if MACHINE_VOFA_PORT != 7u
   HI229_Init();
+#endif /* UART7由Jetson独占，保留IMU离线保护。 */
   Can_Bus_Init();
   // IMU_Init();       // BMI088 板载IMU (SPI2) —— 暂不使用
   Dji_Init();       // DJI电机 CAN回调注册

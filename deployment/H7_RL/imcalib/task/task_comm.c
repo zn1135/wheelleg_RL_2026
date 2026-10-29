@@ -13,6 +13,7 @@
 #include "dji.h"
 #include "can_bus.h"
 #include "machine_config.h"
+#include "mono_ns.h"
 #include "jetson_uart.h"
 
 #include <math.h>
@@ -28,7 +29,7 @@ static void Motor_State_Update(motor_state_t *next)
 
         next->dm.pos_rad[i] = feedback->pos_rad;
         next->dm.pos_zero_rad[i] = feedback->pos_zero_rad;
-        next->dm.pos_continuous_rad[i] = feedback->pos_continuous_rad;
+        next->dm.pos_continuous_rad[i] = feedback->pos_continuous_rad; /* RL连续角随同一电机快照发布。 */
         next->dm.vel_rad_s[i] = feedback->vel_rad_s;
         next->dm.trq_nm[i] = feedback->trq_nm;
         next->dm.last_rx_tick[i] = feedback->last_rx_tick;
@@ -87,15 +88,21 @@ static void Remote_Control_Update(void)
 {
     dr16_t remote;
     rc_command_t rc_command_temp;
+    feedback_sample_t received;
+
+#if MACHINE_VOFA_PORT != 9u && MACHINE_VOFA_PORT != 7u && MACHINE_VOFA_PORT != 8u
     DR16_Process();
+#endif /* UART10恢复DR16解析；离线故障与出力门控不变。 */
     remote = DR16_Snapshot();
+    received.received_ns = remote.received_ns;
+    received.seen = remote.online;
     rc_command_temp = rc_command;
     Rc_Command_Update(&rc_command_temp, &remote, MACHINE_TICK_DT);
     if (!(output_task_lqr_engaged() || output_task_rl_engaged()))
     {
-        rc_command_temp.leg_length_target = machine->rc.len_init;
+        rc_command_temp.len = machine->rc.len_init;
     }
-    Robot_Feedback_Publish_Rc(&rc_command_temp);
+    Robot_Feedback_Publish_Rc(&rc_command_temp, received);
 }
 
 
@@ -209,7 +216,7 @@ void comm_task_body(void)
     motor_state_t motor_state_temp;
     leg_state_t leg_l_temp,leg_r_temp;
 
-    Jetson_Uart_Process(); /* 独立探测接收，不改变控制链顺序。 */
+    Jetson_Uart_Process(); /* 仅解析串口连通性探测，不发布控制动作。 */
     motor_state_temp = motor_state;
     leg_l_temp = leg_l;
     leg_r_temp = leg_r;

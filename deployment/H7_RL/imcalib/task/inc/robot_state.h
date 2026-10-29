@@ -25,7 +25,7 @@
 
 
 typedef struct {
-    float a[RL_ACTION_SIZE];    /* 1999原始顺序[LF前,LF后,RF前,RF后,L轮,R轮]，未缩放 */
+    float a[RL_ACTION_SIZE];    /* 原始网络顺序[LF前,LF后,L轮,RF前,RF后,R轮]，未缩放 */
     uint32_t reset_count;       /* 动作清零次数：拒绝清零前已在途、清零后才返回的推理 */
     uint32_t last_ok_tick;      /* 最近一次有效动作发布时间，ms */
     uint8_t updated;            /* 动作已发布，看门狗可开始检查更新时间 */
@@ -38,9 +38,10 @@ typedef struct {
 } leg_map_t;
 
 typedef struct {
+    uint8_t rc_enable;
     uint8_t motor_enabled;
     uint8_t fallen; /* 公共姿态倒地：IMU俯仰或横滚角任一超过40度，不包含高度。 */
-    float height; /* 公共髋轮投影间距m；通信发布，RL与LQR触地判断共用。 */
+    float height; /* 公共髋轮投影间距m；通信发布，LQR当前不消费。 */
     uint8_t height_valid;
 } robot_state_t;
 
@@ -70,8 +71,8 @@ extern volatile uint32_t ctrl_fault;
 extern volatile uint8_t output_debug_dm_sent;
 extern volatile uint8_t output_debug_dji_sent;
 extern volatile control_time_debug_t control_time_debug;
-extern volatile float output_dm_torque_nm[DM_MOTOR_NUM];
-extern volatile float output_wheel_torque_nm[DJI_MOTOR_NUM];
+extern volatile float rl_output_dm_cmd_nm[DM_MOTOR_NUM];
+extern volatile float rl_output_wheel_cmd_nm[DJI_MOTOR_NUM];
 extern uint8_t torque_output_enabled;
 extern volatile compensation_debug_t compensation_debug;
 

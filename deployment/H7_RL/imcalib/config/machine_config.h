@@ -18,14 +18,6 @@
 
 #define MACHINE_NUM               2u
 
-/* 两份机器配置表同时编译，各自引用机械腿长范围，单位m。 */
-#define MACHINE_BIG_LEG_LEN_MIN   0.13f
-#define MACHINE_BIG_LEG_LEN_MAX   0.34f
-#define MACHINE_RL_HEIGHT_CMD_MIN  0.27f
-#define MACHINE_RL_HEIGHT_CMD_MAX  0.47f
-
-#define MACHINE_SMALL_LEG_LEN_MIN 0.13f
-#define MACHINE_SMALL_LEG_LEN_MAX 0.23f
 /* 电机数量 (须与 dm.c / dji.c 的枚举一致) */
 #define MACHINE_LEG_NUM           4u
 #define MACHINE_WHEEL_NUM         2u
@@ -39,10 +31,9 @@
 #define MACHINE_TIM6_PERIOD       999u    /* 1 kHz */
 #define MACHINE_TICK_DT           0.001f
 #define MACHINE_RL_CTRL_DIV       2u      /* RL实体PD/反馈采样/正常下发：500Hz */
-#define MACHINE_POLICY_DIV        20u     /* model1999单帧35维，50Hz策略/500Hz PD */
+#define MACHINE_POLICY_DIV        20u     /* actor推理50Hz；一个action保持10个2ms控制子步 */
 #define MACHINE_DM_OFFLINE_MS     50u
-#define MACHINE_VOFA_PORT         8u      /* UART8 */
-#define MACHINE_JETSON_PORT       10u     /* UART10：Jetson只读镜像/探测，独立于VOFA。 */
+#define MACHINE_VOFA_PORT         10u     /* UART10接Jetson，UART7接HI229；DR16恢复，离线保护保留 */
 #define MACHINE_FDCAN13_DATA_PRESCALER  1u
 #define MACHINE_FDCAN13_DATA_SEG1       4u
 #define MACHINE_FDCAN13_DATA_SEG2       1u
@@ -53,7 +44,6 @@
 #define MACHINE_DM_OFFLINE_MS     10u
 #define MACHINE_POLICY_DIV        10u     /* 策略节拍 1000/10 = 100 Hz */
 #define MACHINE_VOFA_PORT         1u      /* UART1 */
-#define MACHINE_JETSON_PORT       0u      /* 小机未接Jetson。 */
 #define MACHINE_FDCAN13_DATA_PRESCALER  3u
 #define MACHINE_FDCAN13_DATA_SEG1       5u
 #define MACHINE_FDCAN13_DATA_SEG2       2u
@@ -63,10 +53,7 @@
 
 #define MACHINE_LQR_DT            MACHINE_TICK_DT
 #define MACHINE_RL_CTRL_DT        (MACHINE_TICK_DT * (float)MACHINE_RL_CTRL_DIV)
-/* 训练参考点换算，仅RL恢复代理高度使用，不修改公共髋轮投影。 */
-#define MACHINE_RL_LEG_TO_HEIGHT  (0.06f - 0.02352f)
 #define MACHINE_POLICY_DT         (MACHINE_TICK_DT * (float)MACHINE_POLICY_DIV)
-
 
 /* 一路电机的极性 */
 typedef struct {
@@ -101,13 +88,13 @@ typedef struct {
     float len_rate;             /* m/s */
 } machine_rc_cfg_t;
 
-/* model1999：先裁剪后缩放，模型原生q/dq供电机PD使用。 */
+/* RL39：缩放前裁剪，模型原生q/dq供电机PD使用。 */
 typedef struct {
     float gyro_scale;          /* 机体角速度观测缩放 */
     float height_scale;        /* 目标高度命令观测缩放 */
     float joint_vel_scale;     /* 六路电机速度观测缩放 */
-    float obs_clip;            /* 角速度/重力/角差/action缩放前裁剪幅值 */
-    float velocity_clip;       /* 1999电机速度先裁剪±200rad/s再缩放 */
+    float obs_clip;            /* 角速度/重力/角差/action的缩放前裁剪幅值 */
+    float velocity_clip;       /* 电机速度缩放前裁剪幅值，rad/s */
 } machine_rl_observation_cfg_t;
 typedef struct {
     float pos_scale;           /* action→相对名义角偏移，rad/action */
@@ -127,7 +114,8 @@ typedef struct {
     int8_t motor_sign[6];      /* 固件↔模型配对方向，输入角/速与输出力矩共用 */
     float motor_zero[4];       /* 固件标定连续角至模型零位的额外偏移，rad */
     float nominal_pos[4];      /* q_nominal：训练默认站立原生角，观测减此值、目标加此值 */
-    float position_limit_center[4];    /* q_reference：XML的qpos0，目标限幅中心，非实机零偏 */
+    float reference_pos[4];    /* q_reference：XML的qpos0，目标限幅中心，非实机零偏 */
+    uint8_t configured;        /* 本机是否启用RL接口；小机当前未接入 */
     machine_rl_observation_cfg_t observation;
     machine_rl_torque_cfg_t torque;
     uint32_t action_timeout_ms; /* 已发布动作停止更新的故障期限 */
@@ -135,29 +123,20 @@ typedef struct {
 } machine_rl_cfg_t;
 
 typedef struct {
-    float mass; /* 向心补偿采用的机身质量kg；0不补偿 */
-    float track; /* 左右轮接地点全轮距m */
-    float height_offset; /* 轮半径与机身质心相对髋轴高度之和m */
-    float gain; /* 向心补偿比例 */
-} machine_turn_comp_cfg_t;
-
-typedef struct {
     float leg_trim[2];
     float pitch_trim;
     float pos_target;
     float pos_arm_vel;
-    float lpf_alpha[4]; /* [0]pitch角速度 [1]yaw角速度 [2]roll角速度 [3]高度变化速度；系数越小越平滑、延迟越大 */
-    float roll_height_bias_common_max; /* 观测器平均偏置上限N/腿，不是腿力输出限幅 */
-    float roll_height_bias_diff_max; /* 左右偏置之差上限N，不是单腿力输出限幅 */
-    machine_pid_cfg_t leg_len[2]; /* 非NORMAL PD初始化乘LQR周期；恢复动作PID直接用原Kd */
-    machine_pid_cfg_t roll; /* 非NORMAL横滚PD初始化将差分Kd乘LQR周期换算为速度阻尼 */
+    float lpf_alpha[2];             /* pitch/yaw角速 */
+    machine_pid_cfg_t leg_len[2];
+    machine_pid_cfg_t roll;
     float support_force[2];
-    machine_turn_comp_cfg_t turn_comp;
     uint8_t yaw_hold;
     uint8_t yaw_rate_hold;
     uint8_t pos_hold;
     uint8_t wheel_enable;
-    uint8_t leg_swing_enable;
+    uint8_t hip_enable;
+    uint8_t len_pid_enable;
 } machine_lqr_cfg_t;
 
 typedef struct {
@@ -192,6 +171,7 @@ typedef struct {
 typedef struct {
     const char *name;
     machine_rc_cfg_t rc;        /* 公共量程 */
+    uint8_t     lqr_configured;     /* 此机器有匹配的 LQR 增益表 */
     machine_lqr_cfg_t lqr;
     const machine_spring_cfg_t *spring;
     const machine_gravity_cfg_t *gravity;
