@@ -1,5 +1,7 @@
 # H7 工程与原版备份
 
+2026-10-30本次PR将`H7_RL`同步为本地部署仓29ef907：1999/35维、50Hz策略/500Hz PD、UART8 VOFA与独立UART10 Jetson，连同控制结构及LQR调参成套更新。`H7_RL_ros`不随本次替换。下方2026-10-20内容为历史说明；当前来源与验证见[本次同步记录](../docs/interfaces/20261030-h7-model1999-deployment-sync.md)，模型见[1999导出目录](../exports/onnx/model_1999/)。
+
 2026-10-20撤销PR #4新版同步时，主工程与原版备份各1609个来源文件均与 `83290520b76ef55a04cf84e54c58763967cea129` 一致。随后按用户要求，仅在 `H7_RL_ros` 接入板载USB实机姿态镜像，两目录现已产生下述差异。
 
 **`H7_RL_ros` 通过板载USB CDC向Jetson上传姿态，`H7_RL` 保持原UART实现。** `H7_RL_ros` 的目录后缀不表示包含ROS节点；Jetson直接用MuJoCo显示模型。

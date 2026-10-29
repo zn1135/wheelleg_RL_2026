@@ -4,6 +4,7 @@
 
 | 分类目录 | ONNX | 对应说明 | 视频 |
 |---|---|---|---|
+| [model_1999/](model_1999/) | [model_1999_opset13.onnx](model_1999/model_1999_opset13.onnx) | [35维使用说明](model_1999/onnx-height-model1999.md)、[导出交付记录](model_1999/20261030-model1999-onnx-export.md) | — |
 | [model_5849/](model_5849/) | [model_5849_opset13.onnx](model_5849/model_5849_opset13.onnx) | [39 维使用说明](model_5849/onnx-huananhu-multimode-model5849.md)、[交付记录](model_5849/20261017-model5849-onnx-export.md) | — |
 | [model_3023/](model_3023/) | [model_3023_opset13.onnx](model_3023/model_3023_opset13.onnx) | [39 维使用说明](model_3023/onnx-huananhu-multimode-model3023.md)、[交付记录](model_3023/20261015-model3023-onnx-export.md) | [model_3023_opset13.mp4](model_3023/model_3023_opset13.mp4) |
 | [model_15000/](model_15000/) | [model_15000_h723.onnx](model_15000/model_15000_h723.onnx) | [验收与导出记录](model_15000/20261003-chuanliantui-gas150-model15000.md)、[25 维通用说明](ONNX导出说明.md) | — |
