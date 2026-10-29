@@ -1,0 +1,3 @@
+C:\Users\ynz\Desktop\wheelleg_rl_2026\wheelleg_RL_2026-26_wheelleg\scripts\agent\export_h7_height1999.py:61: DeprecationWarning: You are using the legacy TorchScript-based ONNX export. Starting in PyTorch 2.9, the new torch.export-based ONNX exporter has become the default. Learn more about the new export logic: https://docs.pytorch.org/docs/stable/onnx_export.html. For exporting control flow: https://pytorch.org/tutorials/beginner/onnx/export_control_flow_model_to_onnx_tutorial.html
+  torch.onnx.export(model, torch.zeros(1, 35), str(path), input_names=['observation'],
+{"path": "C:\\Users\\ynz\\AppData\\Local\\Temp\\height1999-export-38e5087514374e59abec059290d1ce39\\model_1999_opset13.onnx", "max_abs_error": 3.0994415283203125e-06, "samples": 64}
