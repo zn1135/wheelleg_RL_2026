@@ -1,5 +1,11 @@
 # 工程历史修改记录
 
+## 2026-10-29 · model5999稳站v2候选已编译，未烧录
+
+执行者Codex。作者指定5999导出ONNX、适配H7_ros并编译，明确暂不烧录，随后确认可复用AIR支撑力估计。成套生成并替换networkzn1；接32维帧/160维FIFO和6动作/3估速SDK，观测缩放/命令跟随5999已解锁包线。独立AIR状态按原估力模型提供左右支持力，恢复100Hz；实机几何/起立触地代理明确未台架确认。物理极性/零点/轴向/量程、PD和限矩、LQR/AIR参数不变，不向RL输出叠加补偿。
+
+正式观测/历史、SDK参考、恢复计时、生产发布在途保护、遥测v3及旧帧回归通过；最终大小机各108单元完整GCC编译链接，固件BIN权重逐字节核对通过，独立代码复查无实质缺陷。大机HEX SHA256 `63ce2f7123644c5799de3df14ef5167f5eb9863025a25b2dd05b8fc013d4fd0a`。无烧录/硬件/训练/提交推送，真实估力/机高接触代理、最坏耗时与行为及H7负责人待确认。[交付](../../../docs/model-deliveries/20261029-stand-v2-model5999-h7ros.md)。
+
 ## 2026-10-23 · 目标腿长转机体高度固件已烧录
 
 执行者Codex，作者本次确认“电机动力已断开，保留H7和RX供电，可以烧录”。1290项来源及大机ELF/BIN/HEX哈希与软件检查版本一致后，经PowerDebugger/OpenOCD SWD200kHz写入；16:23:53结束，耗时79.934秒，退出0，Programming Finished、Verified OK、Resetting Target齐备。HEX SHA256 `c1b1dcdc67550d8e7163321f8166947fb85a9692bef680ca1428454dcbce6305`。model13842、100Hz策略/500Hz PD保持，已写入目标腿长加0.03648m的训练机体高度换算及低位恢复门槛。未使能电机或做真机行为测试，H7负责人待确认。下方“未烧录”为准备阶段历史。[本次证据](../../../artifacts/h7-leg-to-body-height-20261023/flash/result.json)；[接口](../../../docs/interfaces/20261023-h7-leg-to-body-height.md)。

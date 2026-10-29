@@ -152,7 +152,7 @@ void Vofa_Debug_Send(void)
     dbg[0] = (float)online_mask;
     dbg[1] = (float)state_bits;
     dbg[3] = 7101.0f;
-    dbg[4] = 2.0f;
+    dbg[4] = 3.0f; /* v3: 57~88为32维当前帧，89~95保留0；旧v2解析器须拒载。 */
     dbg[5] = (float)MACHINE_DEFAULT;
     Mirror_U32(&dbg[6], candidate);
     Mirror_U32(&dbg[8], (uint32_t)(feedback.captured_ns / 1000000u));

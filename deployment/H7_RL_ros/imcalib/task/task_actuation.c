@@ -33,6 +33,8 @@
 
 static slip_state_t slip_control;
 static uint8_t lqr_running;     /* 已投入 */
+static air_detection_t rl_support; /* 独立反馈估力历史，不读取/改变LQR的flight控制状态。 */
+static uint8_t rl_recovery_wait_ticks;
 static uint8_t rl_engaged;      /* RL 已投入 */
 static uint8_t rl_wait_ticks;   /* 500Hz采样/执行 */
 static rl_motor_map_state_t rl_motor_map; /* 执行任务独占；退出RL才重新锁存角度分支。 */
@@ -152,12 +154,42 @@ static void Control_RL_Recovery_Update(void)
 {
     rl_recovery_state_t recovery;
     rl_recovery_phase_t previous;
-    uint8_t request;
+    uint8_t request, feedback_valid;
+    air_input_t input = {0};
+    float gravity[3], wheel_force[2];
 
     recovery = rl_control.recovery;
     previous = recovery.phase;
     request = (uint8_t)(control_frame.rc.online && control_frame.rc.mode.rc_enable && control_frame.rc.mode.strategy == CTRL_STRATEGY_RL && control_frame.rc.mode.engage);
-    RL_Recovery_Update(&recovery, request, (uint8_t)(control_frame.drive && control_frame.height_valid), control_frame.fallen, control_frame.height, control_frame.rc.len);
+    input.imu = &control_frame.imu;
+    input.leg[0] = &control_frame.left;
+    input.leg[1] = &control_frame.right;
+    input.compensation = &control_frame.compensation;
+    input.joint_ready = control_frame.joint_ready;
+    input.permit = (uint8_t)(request && control_frame.drive);
+    for (uint8_t side = 0u; side < 2u; side++)
+    {
+        for (uint8_t i = 0u; i < 2u; i++)
+        {
+            input.torque[side][i] = control_frame.joint_torque[side * 2u + i];
+        }
+    }
+    /* 原估算器按1kHz推进，只有恢复/起立判据按100Hz采样。 */
+    Air_Detection_Update(&rl_support, &input);
+    feedback_valid = (uint8_t)(control_frame.drive && control_frame.height_valid && rl_support.valid && RL_Observation_Project_Gravity(control_frame.imu.quat, gravity));
+    if (request && feedback_valid)
+    {
+        if (rl_recovery_wait_ticks != 0u) { rl_recovery_wait_ticks--; return; }
+        rl_recovery_wait_ticks = MACHINE_POLICY_DIV - 1u;
+    }
+    else
+    {
+        rl_recovery_wait_ticks = 0u;
+    }
+    wheel_force[0] = rl_support.leg[0].force;
+    wheel_force[1] = rl_support.leg[1].force;
+    /* 由既有髋轮投影加训练参考偏移构造代理机高；不修改物理标定或高度发布。 */
+    RL_Recovery_Update(&recovery, request, feedback_valid, control_frame.fallen, control_frame.height + MACHINE_RL_LEG_TO_HEIGHT, wheel_force, feedback_valid ? gravity[2] : 0.0f);
     taskENTER_CRITICAL();
     rl_control.recovery = recovery;
     if (recovery.phase != previous)
@@ -335,6 +367,11 @@ static void Control_Compensation_Update(void)
             {
                 enabled |= LEG_COMP_SPRING;
             }
+        }
+        else if (strategy == CTRL_STRATEGY_RL)
+        {
+            /* 只为反馈估力准备实体模型，不把补偿力矩叠加到RL输出。 */
+            enabled = LEG_COMP_SPRING | LEG_COMP_GRAVITY;
         }
         else if (strategy == CTRL_STRATEGY_COMPENSATION && control_frame.normal)
         {
@@ -609,10 +646,10 @@ void output_task_body(void)
 
     Control_Frame_Read();
     Wheel_Bench_Update(&control_frame.rc, Wheel_Bench_Permit(), control_frame.wheel_vel, HAL_GetTick(), &bench_torque);
-    Control_RL_Recovery_Update();
     wheel_vel[0] = control_frame.wheel_vel[0];
     wheel_vel[1] = control_frame.wheel_vel[1];
     Control_Compensation_Update();
+    Control_RL_Recovery_Update();
 
     /* 1 估计与融合 */
     Control_State_Update(0u);

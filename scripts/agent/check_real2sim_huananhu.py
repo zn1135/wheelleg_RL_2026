@@ -97,13 +97,15 @@ def c_packets(directory: Path, usb=False):
     tail_text = re.search(r"tail\[4\]\s*=\s*\{([^}]+)\}", sender).group(1)
     tail = bytes(int(value.strip(), 0) for value in tail_text.split(","))
     assert channels in (48, 160)
-    version = 2 if channels == 160 else 1
+    packer = (H7 / 'imcalib/task/vofa_debug.c').read_text()
+    version = int(float(re.search(r'dbg\[4\]\s*=\s*([\d.]+)', packer).group(1)))
+    obs_dim = 32 if version == 3 else 39
     frame_bytes = channels * 4 + len(tail)
     assert frame_bytes == mirror.FRAME_BYTES_BY_VERSION[version]
     assert tail == mirror.TAIL, "actual Vofa_Send tail differs from mirror protocol"
     stub = directory / "stubs"
     stub.mkdir()
-    (stub / "robot_state.h").write_text(STUB.replace("#define VOFA_MAX_CH 48u", f"#define VOFA_MAX_CH {channels}u"))
+    (stub / "robot_state.h").write_text(STUB.replace("#define VOFA_MAX_CH 48u", f"#define VOFA_MAX_CH {channels}u").replace('float obs[39]', f'float obs[{obs_dim}]'))
     for name in ("vofa_debug.h", "dm.h", "Vofa_send.h", "dr16.h", "FreeRTOS.h", "task.h"):
         (stub / name).write_text('#include "robot_state.h"\n')
     response = H7 / "imcalib/Algorithm/wheel_response.c"
@@ -202,6 +204,7 @@ int main(int argc,char **argv) {
     fclose(output); return 0;
 }
 ''')
+    probe.write_text(probe.read_text().replace('i<39', f'i<{obs_dim}'))
     executable, data = directory / "probe", directory / "h7-frames.bin"
     subprocess.run([os.environ.get("CC", "cc"), "-std=c11", "-Wall", "-I", str(stub), "-I", str(H7 / "imcalib/drivers"),
                     "-I", str(H7 / "imcalib/Algorithm"), str(probe), *([str(response)] if response.exists() else []),
@@ -222,12 +225,13 @@ int main(int argc,char **argv) {
     expected_probe = np.zeros(7) if usb else [1, 65535, 65535, 0x5678, 0x1234, 7, 0]
     assert np.array_equal(frames[0][32:39], expected_probe)
     assert np.all(frames[0][39:47] == 0)
-    if version == 2:
+    if version in (2, 3):
         assert frames[0][47] == 3
         assert mirror.read_u32(frames[0][48:50]) == 0x12345
         assert mirror.read_u32(frames[0][50:52]) == 6 and mirror.read_u32(frames[0][52:54]) == 8
         assert np.allclose(frames[0][54:57], [.2, -.3, .31])
-        assert np.array_equal(frames[0][57:96], np.arange(100, 139))
+        assert np.array_equal(frames[0][57:57 + obs_dim], np.arange(100, 100 + obs_dim))
+        assert np.all(frames[0][57 + obs_dim:96] == 0)
         assert np.allclose(frames[0][96:102], -.1 * np.arange(6)) and frames[0][102] == 250
         assert mirror.read_u32(frames[0][103:105]) == 0x23456
         assert mirror.read_u32(frames[0][105:107]) == 9 and mirror.read_u32(frames[0][107:109]) == 0x12345
@@ -451,6 +455,13 @@ void RL_Observation_Set_Last_Action(rl_observation_state_t *,const float *);
 void Action_State_Clear(void);
 #endif
 ''')
+    obs_dim = int(re.search(r'#define\s+RL_OBS_SIZE\s+(\d+)u', (H7 / 'imcalib/common/rl_types.h').read_text()).group(1))
+    if obs_dim == 32:
+        header = stub / 'policy_stub.h'
+        content = header.read_text().replace('#define RL_OBS_SIZE 39u', '#define RL_OBS_SIZE 32u')
+        content = content.replace('float obs[39]', 'float obs[32]')
+        content = content.replace('float obs[32],last_action[6];', 'float obs[32],last_action[6],history[160],command_velocity; uint8_t history_initialized;')
+        header.write_text(content)
     timing = 'Policy_Timing_End' in (H7 / 'imcalib/task/task_policy.c').read_text()
     if timing:
         header = stub / 'policy_stub.h'
@@ -542,6 +553,13 @@ int main(void) {
     return 0;
 }
 ''')
+    if obs_dim == 32:
+        content = source.read_text().replace('i<39', 'i<32')
+        content = content.replace('    return valid;', '    s->command_velocity=cmd->vel; s->history[0]=42.f; s->history_initialized=1;\n    return valid;')
+        content = content.replace('command[1]+.3f', 'command[1]-0.f').replace('command[2]-.31f', 'command[2]-.22f')
+        content = content.replace('assert(action_state.updated && action_state.rl_ready && action_state.reset_count==4u);',
+                                  'assert(action_state.updated && action_state.rl_ready && action_state.reset_count==4u);\n        assert(rl_control.observation.history_initialized && rl_control.observation.history[0]==42.f);')
+        source.write_text(content)
     if timing:
         content = source.read_text().replace('uint32_t rl_observation_sample_tick_ms;', 'uint32_t rl_observation_sample_tick_ms;\nlatency_sample_t latency_sample_snapshot;\nuint64_t latency_policy_published_ns;\nlatency_tick_t Latency_Tick_Read(uint8_t policy) { (void)policy; latency_tick_t t={0}; return t; }\nvoid Latency_Capture_Push(const latency_record_t *record) { assert(record->kind==LATENCY_POLICY); }')
         source.write_text(content)
@@ -1052,7 +1070,7 @@ def check_v2_sessions(directory, raw):
     received = []
     for start in range(0, len(stream), 11):
         received.extend(parser.feed(stream[start:start + 11]))
-    assert len(received) == 7 and parser.versions == {1: 2, 2: 5} and parser.last_version == 2
+    assert len(received) == 7 and parser.versions == {1: 2, 2: 5, 3: 0} and parser.last_version == 2
     for frame, wanted in zip(received, expected):
         assert np.array_equal(frame[:-1], wanted[:-1], equal_nan=True)
     assert parser.rejected >= 2
@@ -1089,7 +1107,7 @@ def check_v2_sessions(directory, raw):
     replay = mirror.ReplayReceiver(recorder.directory)
     replay.start()
     replay.join(timeout=2.)
-    assert not replay.is_alive() and replay.error is None and replay.parser.versions == {1: 2, 2: 5}
+    assert not replay.is_alive() and replay.error is None and replay.parser.versions == {1: 2, 2: 5, 3: 0}
     assert np.array_equal(replay.snapshot()[0][:-1], nonfinite[:-1], equal_nan=True)
     report = mirror.analyze_session(recorder.directory)
     with (recorder.directory / "analysis/trajectory.csv").open(newline="") as source:
@@ -1141,7 +1159,7 @@ def check_v2_sessions(directory, raw):
     assert report["channels"]["obs_00"]["count"] == 2 and report["channels"]["obs_01"]["count"] == 3
     assert report["channels"]["gated_torque_lf0_firmware_nm"]["count"] == 3
     telemetry = report["control_telemetry"]
-    assert telemetry["supported"] and telemetry["accepted_wire_versions"] == {1: 2, 2: 5}
+    assert telemetry["supported"] and telemetry["accepted_wire_versions"] == {1: 2, 2: 5, 3: 0}
     assert (telemetry["v1_unsupported_frames"], telemetry["policy_pair_frames"], telemetry["output_snapshot_frames"], telemetry["rl_pd_frames"]) == (2, 3, 3, 2)
     assert telemetry["unique_policy_sequences"] == telemetry["unique_output_sequences"] == 1
     assert telemetry["output_sample_counts"]["zero_output"] == 1

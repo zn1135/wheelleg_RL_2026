@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file    networkzn1.h
   * @author  AST Embedded Analytics Research Platform
-  * @date    2026-10-23T15:46:43+0800
+  * @date    2026-10-29T20:45:30+0800
   * @brief   AI Tool Automatic Code Generator for Embedded NN computing
   ******************************************************************************
   * @attention
@@ -23,7 +23,7 @@
 
 /******************************************************************************/
 #define AI_NETWORKZN1_MODEL_NAME          "networkzn1"
-#define AI_NETWORKZN1_ORIGIN_MODEL_NAME   "model_13842_opset13"
+#define AI_NETWORKZN1_ORIGIN_MODEL_NAME   "model_5999_opset13"
 
 /******************************************************************************/
 #define AI_NETWORKZN1_ACTIVATIONS_ALIGNMENT   (4)
@@ -44,12 +44,12 @@ AI_DEPRECATED
   AI_NETWORKZN1_IN_1_SIZE_BYTES, \
 }
 #define AI_NETWORKZN1_IN_1_FORMAT      (AI_BUFFER_FORMAT_FLOAT)
-#define AI_NETWORKZN1_IN_1_CHANNEL     (39)
-#define AI_NETWORKZN1_IN_1_SIZE        (39)
-#define AI_NETWORKZN1_IN_1_SIZE_BYTES  (156)
+#define AI_NETWORKZN1_IN_1_CHANNEL     (160)
+#define AI_NETWORKZN1_IN_1_SIZE        (160)
+#define AI_NETWORKZN1_IN_1_SIZE_BYTES  (640)
 
 /******************************************************************************/
-#define AI_NETWORKZN1_OUT_NUM       (1)
+#define AI_NETWORKZN1_OUT_NUM       (2)
 
 AI_DEPRECATED
 #define AI_NETWORKZN1_OUT \
@@ -57,17 +57,23 @@ AI_DEPRECATED
 
 #define AI_NETWORKZN1_OUT_SIZE { \
   AI_NETWORKZN1_OUT_1_SIZE, \
+  AI_NETWORKZN1_OUT_2_SIZE, \
 }
 #define AI_NETWORKZN1_OUT_SIZE_BYTES { \
   AI_NETWORKZN1_OUT_1_SIZE_BYTES, \
+  AI_NETWORKZN1_OUT_2_SIZE_BYTES, \
 }
 #define AI_NETWORKZN1_OUT_1_FORMAT      (AI_BUFFER_FORMAT_FLOAT)
 #define AI_NETWORKZN1_OUT_1_CHANNEL     (6)
 #define AI_NETWORKZN1_OUT_1_SIZE        (6)
 #define AI_NETWORKZN1_OUT_1_SIZE_BYTES  (24)
+#define AI_NETWORKZN1_OUT_2_FORMAT      (AI_BUFFER_FORMAT_FLOAT)
+#define AI_NETWORKZN1_OUT_2_CHANNEL     (3)
+#define AI_NETWORKZN1_OUT_2_SIZE        (3)
+#define AI_NETWORKZN1_OUT_2_SIZE_BYTES  (12)
 
 /******************************************************************************/
-#define AI_NETWORKZN1_N_NODES (7)
+#define AI_NETWORKZN1_N_NODES (15)
 
 
 AI_API_DECLARE_BEGIN

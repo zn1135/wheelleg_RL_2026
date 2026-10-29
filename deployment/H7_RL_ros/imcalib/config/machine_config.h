@@ -31,7 +31,7 @@
 #define MACHINE_TIM6_PERIOD       999u    /* 1 kHz */
 #define MACHINE_TICK_DT           0.001f
 #define MACHINE_RL_CTRL_DIV       2u      /* RL实体PD/反馈采样/正常下发：500Hz */
-#define MACHINE_POLICY_DIV        10u     /* model13842推理100Hz；一个action保持5个2ms控制子步 */
+#define MACHINE_POLICY_DIV        10u     /* model5999历史/推理100Hz；一个action保持5个2ms控制子步 */
 #define MACHINE_RL_HEIGHT_MIN     0.2165f  /* 训练机身高度命令；不是LQR髋轮腿长 */
 #define MACHINE_RL_HEIGHT_MAX     0.3664f
 #define MACHINE_RL_LEG_TO_HEIGHT  (0.06f - 0.02352f) /* 训练XML直立目标：轮接地半径减髋轴相对base_link高度；非实机标定 */
@@ -94,12 +94,12 @@ typedef struct {
     float len_rate;             /* m/s */
 } machine_rc_cfg_t;
 
-/* RL39：缩放前裁剪，模型原生q/dq供电机PD使用。 */
+/* 稳站v2：缩放后整帧裁剪，模型原生q/dq供电机PD使用。 */
 typedef struct {
     float gyro_scale;          /* 机体角速度观测缩放 */
     float height_scale;        /* 目标高度命令观测缩放 */
     float joint_vel_scale;     /* 六路电机速度观测缩放 */
-    float obs_clip;            /* 角速度/重力/角差/action的缩放前裁剪幅值 */
+    float obs_clip;            /* 缩放后整帧裁剪幅值 */
     float velocity_clip;       /* 电机速度缩放前裁剪幅值，rad/s */
 } machine_rl_observation_cfg_t;
 typedef struct {

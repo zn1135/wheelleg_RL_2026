@@ -1,10 +1,12 @@
-/* RL39实体电机顺序；网络原始action另按左右两侧排列。 */
+/* 稳站v2实体电机顺序；网络原始action另按左右两侧排列。 */
 #ifndef RL_TYPES_H
 #define RL_TYPES_H
 #include <stdint.h>
 #define RL_ACTION_SIZE 6u
 #define RL_LEG_MOTOR_NUM 4u
-#define RL_OBS_SIZE 39u
+#define RL_OBS_SIZE 32u
+#define RL_HISTORY_LENGTH 5u
+#define RL_HISTORY_SIZE (RL_OBS_SIZE * RL_HISTORY_LENGTH)
 
 /* 对应训练[lf0,lf00,rf0,rf00,lfwheel,rfwheel]；不再使用旧虚拟腿角色交换。 */
 typedef enum {

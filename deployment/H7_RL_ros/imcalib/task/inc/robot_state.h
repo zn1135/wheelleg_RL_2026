@@ -58,7 +58,7 @@ typedef struct {
 typedef struct {
     float obs[RL_OBS_SIZE];
     float action[RL_ACTION_SIZE]; /* 网络左右两侧顺序，未缩放。 */
-    float command[3]; /* 本次obs使用的原始rc.vel/yaw/len。 */
+    float command[3]; /* 本次帧的实际vx/yaw/机高，单位m/s、rad/s、m。 */
     uint32_t sequence;
     uint32_t sample_tick_ms; /* Mono_Ns_Get毫秒：500Hz缓存时刻，不是传感器采样时刻。 */
     uint32_t published_tick_ms; /* 与镜像captured_ns同原点，不使用HAL tick。 */

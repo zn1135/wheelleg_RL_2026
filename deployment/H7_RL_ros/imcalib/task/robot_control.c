@@ -67,6 +67,11 @@ void Action_State_Clear(void)
     action_state.last_ok_tick = 0u;
     action_state.updated = 0u;
     action_state.rl_ready = 0u;
+    /* 退出/失败后的新控制段不能带入旧命令或编码器历史。 */
+    rl_control.observation.history_initialized = 0u;
+    rl_control.observation.command_velocity = 0.0f;
+    rl_control.observation.valid = 0u;
+    memset(rl_control.observation.last_action, 0, sizeof(rl_control.observation.last_action));
     __set_PRIMASK(primask);
 }
 

@@ -1,0 +1,50 @@
+{
+  "created_at": "2026-10-29T21:12:57.528022+08:00",
+  "head": "952e4260aedf04e28fdbf366d5cb1c5562c75263",
+  "branch": "26_wheelleg",
+  "workspace": "pre-existing dirty workspace preserved; task modifications uncommitted",
+  "checkpoint_sha256": "a41b77caaf02389e2a1160a1781eda0d573ed33836e3cd6fe32ed02d090e825a",
+  "onnx_sha256": "a1b2b1508b15ca759a5303a5396360eb5d8ed05ee8ccbf4068bf304dd9953be1",
+  "observation_contract": "stand-v2-isaac32-history160-critic89-physical-v3",
+  "export_contract": "stand-v2-history160-single-input-v1",
+  "hardware_target": "H7_ros big wheelleg, MACHINE_DEFAULT=0",
+  "deployment_status": "adapted and built candidate; not flashed",
+  "user_scope": "adapt H7_ros and compile, no flashing; user confirmed reuse of AIR support estimate",
+  "height_contact_contract": "physical proxy, bench verification pending; not exact training contact sensors",
+  "review": "artifacts/model5999-h7ros-20261029/review-final.md; independent code review, not H7-owner signoff",
+  "handoff_record": "docs/model-deliveries/20261029-stand-v2-model5999-h7ros.md",
+  "interface_record": "docs/interfaces/20261029-h7ros-stand-v2-model5999.md",
+  "checks": "artifacts/model5999-h7ros-20261029/check-final-producer/result.json",
+  "firmware": [
+    {
+      "machine": 0,
+      "weights_offset": 182336,
+      "weights_bytes": 319272,
+      "sha256": {
+        "artifacts/model5999-h7ros-20261029/final-build/h7-machine-0/firmware.elf": "d11308b671b1566a669c7028c6ced66473fba3f0419e2f1f91af6fb04ae91e5f",
+        "artifacts/model5999-h7ros-20261029/final-build/h7-machine-0/firmware.bin": "6396ef29b4614dff104d038cd35b9b7de724c116c58c43df9fab9c8c954baba5",
+        "artifacts/model5999-h7ros-20261029/final-build/h7-machine-0/firmware.hex": "63ce2f7123644c5799de3df14ef5167f5eb9863025a25b2dd05b8fc013d4fd0a"
+      }
+    },
+    {
+      "machine": 1,
+      "weights_offset": 178528,
+      "weights_bytes": 319272,
+      "sha256": {
+        "artifacts/model5999-h7ros-20261029/final-build/h7-machine-1/firmware.elf": "ff4790694951756d40b9725090b38ea6ff9a6a62ada035c2a8dee29a45b80b8f",
+        "artifacts/model5999-h7ros-20261029/final-build/h7-machine-1/firmware.bin": "3f4bd14d28eb94210dd9f7b90a1d88428443e841c7fb6ee3b95c6e1413ca42a1",
+        "artifacts/model5999-h7ros-20261029/final-build/h7-machine-1/firmware.hex": "0eaee956011549635cf9d32218b3f748c24aa364889f07b49b9f83cf6466117e"
+      }
+    }
+  ],
+  "artifacts": {
+    "artifacts/model5999-h7ros-20261029/export-source.tar.gz": "f38ccece9eeb1ef36692e11c9ba4b8702a2c9f2f6f661f6ba833733ce3f7efa0",
+    "artifacts/model5999-h7ros-20261029/firmware-source.tar.gz": "d7c5d63e902a3844dc9c607b183e7668adb7b5266a5cc6186b3d9045f4b1f315",
+    "artifacts/model5999-h7ros-20261029/firmware-sources-sha256.json": "7b96bf55d7b263bbd607efc5252e306bf474bed2a99a23274d9d9ca48c96c66e",
+    "artifacts/model5999-h7ros-20261029/firmware-workspace.diff": "73307dab38e4bcb151c5dadc89ce5efe1fb60254ef7e6c86ec0e08abce700861",
+    "artifacts/model5999-h7ros-20261029/workspace-before.diff": "84b66ca5a0d0abf20adf635a56d429a1bfc5cd7b116f4cba0aeb08473f0f124d",
+    "artifacts/model5999-h7ros-20261029/review-final.md": "cb6d27acb11748788d2e007dd9207afbacad88be099eadaa055c5cdbf2fe579d",
+    "artifacts/model5999-h7ros-20261029/check-final-producer/result.json": "4e731bd0639d0f5461d8caaf4e24856cfc6a210f591da4d7776978a3433e5a1e",
+    "artifacts/model5999-h7ros-20261029/final-build/check.json": "93cdb0b8c49b820e122cdac9f53656c41ba46de4d9967e7971bfab71df8409fb"
+  }
+}

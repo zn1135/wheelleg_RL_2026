@@ -30,7 +30,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MODEL = ROOT / "resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml"
 MACHINE_CONFIG = ROOT / "deployment/H7_RL/imcalib/config/machine_config.c"
 TAIL, FRAME_BYTES = bytes.fromhex("0000807f"), 196
-FRAME_BYTES_BY_VERSION = {1: FRAME_BYTES, 2: 644}
+FRAME_BYTES_BY_VERSION = {1: FRAME_BYTES, 2: 644, 3: 644}
 MAX_FRAME_BYTES = max(FRAME_BYTES_BY_VERSION.values())
 STALE_S, CLOSURE_TOL_M = .2, .001
 DRIVES = (("lf0", "lf00"), ("rf0", "rf00"))
@@ -64,7 +64,7 @@ def decode_frame(raw: bytes) -> np.ndarray:
         raise ValueError("frame length/tail")
     values = np.frombuffer(raw[:-4], dtype="<f4").copy()
     if values[3] != 7101. or values[4] not in FRAME_BYTES_BY_VERSION:
-        raise ValueError("not mirror v1/v2")
+        raise ValueError("not mirror v1/v2/v3")
     if len(raw) != FRAME_BYTES_BY_VERSION[int(values[4])]:
         raise ValueError("version/frame length mismatch")
     if values[-1] != binascii.crc_hqx(raw[:-8], 0xffff):
@@ -76,7 +76,7 @@ def decode_frame(raw: bytes) -> np.ndarray:
     mask = values[29]
     if not np.isfinite(mask) or mask != int(mask) or not 0 <= mask <= 127:
         raise ValueError("invalid source mask")
-    if values[4] == 2:
+    if values[4] in (2, 3):
         for index, limit in ((47, 3), (109, 63)):
             value = values[index]
             if not np.isfinite(value) or value != int(value) or not 0 <= value <= limit:
@@ -94,7 +94,7 @@ class FrameParser:
     def __init__(self):
         self.buffer = bytearray()
         self.accepted = self.rejected = 0
-        self.versions = {1: 0, 2: 0}
+        self.versions = {version: 0 for version in FRAME_BYTES_BY_VERSION}
         self.last_version = None
         self.last_error = ""
 
@@ -110,7 +110,7 @@ class FrameParser:
             stop = end + 4
             if stop >= FRAME_BYTES:
                 error = "frame length/tail"
-                for size in FRAME_BYTES_BY_VERSION.values():
+                for size in dict.fromkeys(FRAME_BYTES_BY_VERSION.values()):
                     if stop < size:
                         continue
                     try:
@@ -434,12 +434,14 @@ def recording_info(recorder: SessionRecorder, frames: int, elapsed_s: float, sec
 
 
 def wire_info(parser: FrameParser) -> dict:
-    notice = ("v2 last-successful policy pairs/latest output; repeated sequence is not new inference"
+    notice = ("v3 stand-v2 current frame32 (history160 is not transmitted); command vx/yaw/body-height"
+              if parser.last_version == 3 else
+              "v2 last-successful policy pairs/latest output; repeated sequence is not new inference"
               if parser.last_version == 2 else
               "v1: command/obs/action/target/torque/send telemetry UNSUPPORTED"
               if parser.last_version == 1 else "no validated wire frames received")
     return {"wire_version": parser.last_version, "wire_version_counts": parser.versions.copy(),
-            "control_telemetry_supported": parser.last_version == 2, "control_telemetry_notice": notice}
+            "control_telemetry_supported": parser.last_version in (2, 3), "control_telemetry_notice": notice}
 
 
 def load_session(directory: Path, model_path: Path | None = None,
@@ -613,10 +615,10 @@ class ReplayReceiver(SerialReceiver):
 
 
 def telemetry_row(frame: np.ndarray) -> dict:
-    """Keep v1 and unavailable v2 groups empty rather than inventing control data."""
+    """Decode paired v2/v3 telemetry; v3 carries frame32 and actual body-height command."""
     columns = ["telemetry_valid_mask", "policy_pair_valid", "output_snapshot_valid", "rl_pd_valid",
                "policy_sequence", "policy_sample_tick_ms", "action_publish_tick_ms", "policy_run_us",
-               "command_vx_m_s", "command_yaw_rad_s", "command_leg_length_m",
+               "command_vx_m_s", "command_yaw_rad_s", "command_leg_length_m", "command_body_height_m", "observation_dim",
                "output_sequence", "output_tick_ms", "output_used_policy_sequence", "output_flags",
                "output_zero", "output_dm_hal_success", "output_dji_hal_success", "output_enabled", "drive_permitted",
                "imu_sample_age_ms", "rc_sample_age_ms", "rc_strategy", "rc_flags",
@@ -633,7 +635,7 @@ def telemetry_row(frame: np.ndarray) -> dict:
     columns += [f"feedback_torque_{name}_firmware_nm" for name in MOTORS[:4]]
     columns += [f"wheel_current_{name}_raw" for name in MOTORS[4:]]
     row = dict.fromkeys(columns)
-    if len(frame) != 160 or frame[4] != 2:
+    if len(frame) != 160 or frame[4] not in (2, 3):
         return row
 
     def number(index, available=True):
@@ -654,9 +656,11 @@ def telemetry_row(frame: np.ndarray) -> dict:
     for key, bit in (("output_zero", 1), ("output_dm_hal_success", 2), ("output_dji_hal_success", 3),
                      ("output_enabled", 4), ("drive_permitted", 5)):
         row[key] = int(bool(output_flags & (1 << bit))) if output_ok else None
-    for i, key in enumerate(("command_vx_m_s", "command_yaw_rad_s", "command_leg_length_m")):
+    height_key = "command_body_height_m" if frame[4] == 3 else "command_leg_length_m"
+    for i, key in enumerate(("command_vx_m_s", "command_yaw_rad_s", height_key)):
         row[key] = number(54 + i, policy_ok)
-    for i in range(39):
+    row["observation_dim"] = 32 if frame[4] == 3 else 39
+    for i in range(row["observation_dim"]):
         row[f"obs_{i:02d}"] = number(57 + i, policy_ok)
     for i, name in enumerate(ACTION_MOTORS):
         row[f"action_{name}"] = number(96 + i, policy_ok)
@@ -847,7 +851,7 @@ def analyze_session(directory: Path, model_path: Path | None = None,
         "supported": bool(telemetry_rows), "accepted_wire_versions": parser.versions,
         "v1_unsupported_frames": len(rows) - len(telemetry_rows),
         "unsupported": ([] if telemetry_rows else
-                        ["policy command/obs/action, PD target/feedback, gated torque and output send flags require wire v2"]),
+                        ["policy command/obs/action, PD target/feedback, gated torque and output send flags require wire v2/v3"]),
         "policy_pair_frames": sum(row["policy_pair_valid"] for row in telemetry_rows),
         "output_snapshot_frames": len(output_rows),
         "unique_policy_sequences": len({(row["segment"], row["policy_sequence"])
@@ -855,8 +859,8 @@ def analyze_session(directory: Path, model_path: Path | None = None,
         "unique_output_sequences": len({(row["segment"], row["output_sequence"]) for row in output_rows}),
         "rl_pd_frames": sum(row["rl_pd_valid"] for row in telemetry_rows),
         "policy_array_order": list(ACTION_MOTORS), "motor_array_order": list(MOTORS),
-        "observation": "actual 39 clipped/scaled values from the last successful policy pair; retained historical pairs may repeat after action clearing, not a reconstruction or proof of current RL engagement",
-        "command": "raw RC vel/yaw/leg-length of the policy pair, before network clipping/scaling; leg length is not measured world height",
+        "observation": "v2: 39 inputs; v3: current frame32 only, not the full history160; actual clipped/scaled values from the last successful policy pair; retained historical pairs may repeat after action clearing, not a reconstruction or proof of current RL engagement",
+        "command": "v2: raw RC vel/yaw/leg-length; v3: actual slew-limited vx, zero yaw and fixed body-height target; commands are not measured world height",
         "sequence_scope": "unique sequences are counted within detected board-restart segments; repeated 100 Hz telemetry frames are not new inferences or a full output history",
         "output_scope": "latest 500 Hz snapshot sampled by 100 Hz telemetry; firmware-coordinate gated Nm are drive-entry requests, not measured applied torque",
         "send_scope": "DM/DJI flags report group HAL submission success only; false may mean no submission, and success is not motor acknowledgement",
@@ -894,7 +898,7 @@ def analyze_session(directory: Path, model_path: Path | None = None,
     (output / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False) + "\n")
     fig, axes = plt.subplots(6, 1, figsize=(13, 17), sharex=True, constrained_layout=True)
 
-    def series(name):
+    def series(name, observation_dim=None):
         x, y, previous = [], [], None
         for row in rows:
             at = row["t_s"]
@@ -902,7 +906,8 @@ def analyze_session(directory: Path, model_path: Path | None = None,
                 x.append(previous + STALE_S)
                 y.append(np.nan)
             x.append(at)
-            y.append(row.get(name) if row.get(name) is not None else np.nan)
+            available = observation_dim is None or row.get('observation_dim') == observation_dim
+            y.append(row.get(name) if available and row.get(name) is not None else np.nan)
             previous = at
         return x, y
 
@@ -935,7 +940,8 @@ def analyze_session(directory: Path, model_path: Path | None = None,
     # Group by units and controller stage so command, feedback and drive requests are not conflated.
     fig, axes = plt.subplots(10, 1, figsize=(13, 25), sharex=True, constrained_layout=True)
     for key, label in (("command_vx_m_s", "vx [m/s]"), ("command_yaw_rad_s", "yaw [rad/s]"),
-                       ("command_leg_length_m", "raw leg length [m]")):
+                       ("command_leg_length_m", "raw leg length [m]"),
+                       ("command_body_height_m", "body-height target [m]")):
         axes[0].plot(*series(key), label=label)
     for name in ACTION_MOTORS:
         axes[1].plot(*series(f"action_{name}"), label=name, linewidth=.9)
@@ -967,7 +973,7 @@ def analyze_session(directory: Path, model_path: Path | None = None,
         if telemetry_rows:
             axis.legend(loc="upper right", ncol=3, fontsize="small")
         else:
-            axis.text(.5, .5, "UNSUPPORTED: this recording has no wire v2 telemetry", ha="center", transform=axis.transAxes)
+            axis.text(.5, .5, "UNSUPPORTED: this recording has no wire v2/v3 telemetry", ha="center", transform=axis.transAxes)
         for gap in stale_intervals:
             axis.axvspan(gap["start_s"], gap["end_s"], color="red", alpha=.1)
     axes[-1].set_xlabel("Host receive time [s]; 100 Hz samples of 500 Hz output, not a complete output history")
@@ -978,9 +984,20 @@ def analyze_session(directory: Path, model_path: Path | None = None,
     groups = ((0, 4, "Command slots"), (4, 7, "Scaled gyro"), (7, 10, "Projected gravity"),
               (10, 16, "Position slots"), (16, 22, "Scaled velocity"), (22, 28, "Previous actions"),
               (28, 35, "Mode flags"), (35, 39, "State flags"))
+    if parser.versions.get(3, 0) and not parser.versions.get(2, 0):
+        groups = ((0, 3, "Scaled gyro"), (3, 6, "Projected gravity"), (6, 9, "Command slots"),
+                  (9, 13, "Position slots"), (13, 19, "Scaled velocity"), (19, 25, "Previous actions"),
+                  (25, 30, "Mode flags"), (30, 32, "Jump / phase"))
+    mixed_observations = parser.versions.get(3, 0) and parser.versions.get(2, 0)
+    if mixed_observations:
+        groups = tuple((start, stop, f"Indices {start}:{stop}") for start, stop, _ in groups)
     for axis, (start, stop, label) in zip(axes, groups):
         for i in range(start, stop):
-            axis.plot(*series(f"obs_{i:02d}"), label=f"obs[{i}]", linewidth=.9)
+            if mixed_observations:
+                for dimension in (39, 32):
+                    axis.plot(*series(f"obs_{i:02d}", dimension), label=f"frame{dimension}[{i}]", linewidth=.9)
+            else:
+                axis.plot(*series(f"obs_{i:02d}"), label=f"obs[{i}]", linewidth=.9)
         axis.set_ylabel(label)
         axis.grid(alpha=.3)
         if telemetry_rows:
@@ -990,7 +1007,7 @@ def analyze_session(directory: Path, model_path: Path | None = None,
         for gap in stale_intervals:
             axis.axvspan(gap["start_s"], gap["end_s"], color="red", alpha=.1)
     axes[-1].set_xlabel("Host receive time [s]; repeated policy snapshots do not mean new inferences")
-    fig.suptitle("Last successful H7 network input, 39 values | retained pairs may be historical; clipping/scaling already applied")
+    fig.suptitle("Last successful H7 observation | v2: input39; v3: current frame32, history160 not transmitted")
     fig.savefig(output / "observations.png", dpi=140)
     plt.close(fig)
     return report

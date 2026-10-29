@@ -1,5 +1,5 @@
 /*
- * 100Hz策略：复制500Hz最新反馈及原始动作历史→组装obs39→推理→发布原始action6。
+ * 100Hz策略：复制500Hz最新反馈及原始动作历史→组装32维帧/160维历史→推理→发布原始action6。
  * 同帧复制公共遥控与恢复标志；趴地启动保持由执行任务控制，不以SDK就绪替代模型激活。
  * 共享样本/动作只在短临界区读写，观测构建和网络调用均放在临界区之外。
  */
@@ -28,7 +28,7 @@ void ctrl_task_body(void)
     latency_record_t timing = {0};
     latency_tick_t trigger;
     uint64_t build_started_ns, read_offset_ns;
-    rl_observation_state_t observation;
+    rl_observation_state_t observation = {0};
     rl_observation_sample_t sample;
     rl_recovery_state_t recovery;
     rc_command_t command;
@@ -61,6 +61,9 @@ void ctrl_task_body(void)
         timing.value[0] = latency_sample_snapshot.sequence;
         read_offset_ns = Mono_Ns_Get() - timing.begin_ns;
         timing.value[1] = read_offset_ns >= UINT32_MAX ? UINT32_MAX : (uint32_t)read_offset_ns;
+        observation.history_initialized = rl_control.observation.history_initialized;
+        observation.command_velocity = rl_control.observation.command_velocity;
+        memcpy(observation.history, rl_control.observation.history, sizeof(observation.history));
         memcpy(observation.last_action, rl_control.observation.last_action, sizeof(observation.last_action));
     }
     else
@@ -86,6 +89,9 @@ void ctrl_task_body(void)
         return;
     }
     memcpy(rl_control.observation.obs, observation.obs, sizeof(observation.obs));
+    memcpy(rl_control.observation.history, observation.history, sizeof(observation.history));
+    rl_control.observation.history_initialized = observation.history_initialized;
+    rl_control.observation.command_velocity = observation.command_velocity;
     rl_control.observation.valid = built;
     taskEXIT_CRITICAL();
     if (!built || !RL_Policy_Run(&rl_control.policy, &observation, action))
@@ -114,9 +120,9 @@ void ctrl_task_body(void)
         /* 本地obs与本次实际发布action一同保存，不能混入下一次推理的共享obs。 */
         memcpy(mirror_policy_snapshot.obs, observation.obs, sizeof(mirror_policy_snapshot.obs));
         memcpy(mirror_policy_snapshot.action, action, sizeof(mirror_policy_snapshot.action));
-        mirror_policy_snapshot.command[0] = command.vel;
-        mirror_policy_snapshot.command[1] = command.yaw;
-        mirror_policy_snapshot.command[2] = command.len;
+        mirror_policy_snapshot.command[0] = observation.command_velocity;
+        mirror_policy_snapshot.command[1] = 0.0f;
+        mirror_policy_snapshot.command[2] = 0.22f;
         mirror_policy_snapshot.sequence++;
         mirror_policy_snapshot.sample_tick_ms = sample_tick_ms;
         mirror_policy_snapshot.published_tick_ms = (uint32_t)(Mono_Ns_Get() / 1000000u);
