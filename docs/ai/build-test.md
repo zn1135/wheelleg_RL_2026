@@ -1,5 +1,7 @@
 # 构建与测试
 
+行走估速的独立闭环诊断（2026-10-31另行明确授权）：旧离线失败及门槛保留，`record_walk_estimator_trial.py`仅替换候选估速、冻结控制网络，使用候选自身传感与动作历史；原seed43初态和48/49保存基线逐项核对，沿原窗口完成三组，不因某组行为失败跳过其余组。`report_walk_estimator_closedloop.py --comparison 43 <JSON> --comparison 48 <JSON> --comparison 49 <JSON> --offline-result <旧最终JSON> --output <新目录>`只读汇总，分别报告旧离线结论、闭环行为与最终目标。`audit_walk_estimator_closedloop.py --artifact <本轮目录> --output <新JSON>`独立重算500Hz真实指标、t=0腿窗、持续反向及所有失败；`diagnose_walk_estimator_closedloop.py`只对已有三组成对轨迹作一次冻结估速交叉推理，比较同输入的网络变化与各自闭环历史变化，不新增物理步、拟合或修改门槛。实际命令、退出回执、适用范围和结果见[本轮诊断](../../artifacts/walk25-estimator-closedloop-20261031-r1/README.md)。本次授权不代表采纳候选、部署或继续训练。
+
 2026-10-23 USB大机目标腿长→训练机体高度：实际C拨轮/模式/观测/恢复及当前XML直立参考检查入口如下；设备状态使用替身，不证明实机几何、调度或行为。两机各180组模式回归、低位恢复计时与大小机正式构建证据见[目标换算接口](../interfaces/20261023-h7-leg-to-body-height.md)。`--before-rc`指向本轮修改前已保存的原RC源码，用于模式回归。
 
 ```bash
