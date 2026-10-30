@@ -135,6 +135,14 @@ virtualFolder:
     - name: ::CMSIS
       files: []
       folders: []
+    - name: ControlModules
+      files:
+        - path: imcalib/task/control_detection.c
+        - path: imcalib/task/control_air_response.c
+        - path: imcalib/task/control_strategy.c
+        - path: imcalib/task/control_compute.c
+        - path: imcalib/task/control_output.c
+      folders: []
     - name: Doc
       files:
         - path: X-CUBE-AI/App/jump_generate_report.txt
@@ -183,7 +191,12 @@ targets:
         - gcc_support/FreeRTOS/ARM_CM4F
         - Drivers/CMSIS/DSP/Include
       libList: []
-    excludeList: []
+    excludeList:
+      - imcalib/task/control_detection.c
+      - imcalib/task/control_air_response.c
+      - imcalib/task/control_strategy.c
+      - imcalib/task/control_compute.c
+      - imcalib/task/control_output.c
     settings:
       debugger: cortex-debug
     toolchain: GCC
