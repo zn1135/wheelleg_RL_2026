@@ -43,6 +43,15 @@ def load_actor(checkpoint):
 
 
 def export(checkpoint, output, *, opset=13, samples=256, atol=1e-4):
+    from ct_mjlab.envs.chuanliantui_stand_v2.observations import OBSERVATION_CONTRACT as HISTORY_CONTRACT
+    infos = torch.load(checkpoint, map_location='cpu', weights_only=False).get('infos') or {}
+    from ct_mjlab.envs.chuanliantui_split.observations import OBSERVATION_CONTRACT as SPLIT_CONTRACT
+    if infos.get('observation_contract') == SPLIT_CONTRACT:
+        from ct_mjlab.envs.chuanliantui_split.export import export as export_split
+        return export_split(checkpoint, output, opset=opset, samples=samples, atol=atol)
+    if infos.get('observation_contract') == HISTORY_CONTRACT:
+        from ct_mjlab.envs.chuanliantui_stand_v2.export import export as export_history
+        return export_history(checkpoint, output, opset=opset, samples=samples, atol=atol)
     import onnx
     from onnx.reference import ReferenceEvaluator
 

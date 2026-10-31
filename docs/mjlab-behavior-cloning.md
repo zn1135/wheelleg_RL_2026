@@ -1,5 +1,8 @@
 # 学生PD动作示范、行为克隆与PPO初始化
 
+辅助脚本已按用途迁移；下文固定旧实验保留其历史配方，旧路径查[迁移表](../scripts/agent/MIGRATION.md)，归档复核不代表当前版本验收。
+
+
 当前轮角39维BC已接通[SMP PPO v4初始化和恢复](interfaces/20261025-wheel39-smp-ppo-v4.md)：入口按观测定义自动配置，旧零轮角39维继续v3。仅复制actor，critic和PPO优化器新建；本轮零更新检查，不追加BC或PPO训练。后续以任务奖励改善停车、SMP作辅助，不要求BC完全复制LQR停车后才能接PPO。检查、回放和视频见[本轮报告](../artifacts/ppo-wheel39-interface-20261025-v1/README.md)，下方“尚未接通”为历史状态。
 
 最新零更新停车诊断：学生独立30秒0/156，LQR经学生PD接管17/156停车通过，补34000帧实际纠偏，未训练。用户目标是PPO超过LQR，后续不以BC完全复制停车为硬门槛；先核对轮角39维PPO合同和任务奖励，再另定更新预算。[诊断和视频](../artifacts/bc-aligned-braking-diagnostic-20261025-v1/README.md)。下方为此前阶段记录。
@@ -51,11 +54,11 @@ mjlab_training/.venv/bin/python -m tensorboard.main \
 
 ## 配对采集
 
-`scripts/agent/collect_lqr_student.py`在原SMP回合之外保存`observation`、`source_motor_q/dq`、`nominal_motor_positions`、`observation_time`和`action_time`。每拍先保存实际39维学生观测，再由实时LQR生成归一化6维PD目标，然后经过原PD／FIFO执行；状态和SMP特征仍在步进后记录。故`observation_time = action_time = time - 0.01`，不能把步进后状态和本拍动作直接配对。手动指定完整初态后重新构建观测缓存，避免首拍沿用另一个随机姿态。
+`scripts/agent/imitation/collect_lqr_student.py`在原SMP回合之外保存`observation`、`source_motor_q/dq`、`nominal_motor_positions`、`observation_time`和`action_time`。每拍先保存实际39维学生观测，再由实时LQR生成归一化6维PD目标，然后经过原PD／FIFO执行；状态和SMP特征仍在步进后记录。故`observation_time = action_time = time - 0.01`，不能把步进后状态和本拍动作直接配对。手动指定完整初态后重新构建观测缓存，避免首拍沿用另一个随机姿态。
 
 已有170条SMP示范没有这组完整配对，保持原文件；新采集另外输出。接收仍采用完整20秒、严格起立／最终平衡、平滑、停车及高度等原筛选。数据分组按姿态库行，同姿态不同延迟整体划分，不跨训练／验证。当前新数据为171条／49个初态，138条／39初态训练、33条／10初态验证；[本轮数据与结果](../artifacts/bc-lqr-20261025/README.md)。
 
-`scripts/agent/check_bc.py`独立重算步进前关节、角速度、重力方向和上一拍动作，核对时戳、文件哈希、分组及有限梯度；优化器更新0。该数据使用名义无噪声／无观测延迟的39维输入，不代表已适应正式训练随机化。
+`scripts/agent/imitation/check_bc.py`独立重算步进前关节、角速度、重力方向和上一拍动作，核对时戳、文件哈希、分组及有限梯度；优化器更新0。该数据使用名义无噪声／无观测延迟的39维输入，不代表已适应正式训练随机化。
 
 ## 行为克隆训练
 
@@ -85,13 +88,13 @@ mjlab_training/.venv/bin/python -m tensorboard.main \
 
 ## 独立回放和纠偏
 
-`scripts/agent/eval_bc.py`默认只用验证组不同初态，各覆盖四种2／4ms延迟，学生独立出动作；没有教师力矩混入。报告完整20秒、严格起立、最终双轮平衡、末5秒腿速RMS／速度／漂移。`scripts/agent/render_bc.py`从真实记录生成完整20秒60fps的同初态、同延迟教师／学生视频；提前终止后明确标记定格，不能当20秒物理存活。
+`scripts/agent/imitation/eval_bc.py`默认只用验证组不同初态，各覆盖四种2／4ms延迟，学生独立出动作；没有教师力矩混入。报告完整20秒、严格起立、最终双轮平衡、末5秒腿速RMS／速度／漂移。`scripts/agent/imitation/render_bc.py`从真实记录生成完整20秒60fps的同初态、同延迟教师／学生视频；提前终止后明确标记定格，不能当20秒物理存活。
 
 停车／转向的零更新接管对照另见[专项诊断](diagnostics/20261025-bc-parking.md)，入口`check_bc_parking.py`／`assess_bc_parking.py`；它检查教师阶段、隐藏停车参考和训练覆盖，不导出训练标签。本次严格短程数值恢复失败与补充恢复控制分开记录，不能将产物核对当作数值复现通过。
 
 ```bash
 PYTHONPATH=mjlab_training/src OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
-  mjlab_training/.venv/bin/python scripts/agent/eval_bc.py \
+  mjlab_training/.venv/bin/python -m scripts.agent.imitation.eval_bc \
   --dataset artifacts/bc-lqr-20261025/paired/dataset.json \
   --checkpoint logs/mjlab/chuanliantui_bc/20261025_remote5000/bc_5000.pt \
   --output artifacts/<新的独立验收目录>

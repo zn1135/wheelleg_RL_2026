@@ -1,5 +1,7 @@
 # 平地速度与角度跟踪测量（multimode 39 维，v1）
 
+2026-11-01起，当前运动判定采用[统一运动标准 v1](chuanliantui-motion-acceptance-v1.md)。本文以下保留原0.30跟踪、25°倾角等历史协议与结果含义；不能据此判定新标准通过。当前算术检查入口为`python -m scripts.agent.motion.assess --selfcheck`，旧路径查迁移表。
+
 ## 适用范围
 
 mjlab 串联腿 multimode 单线（任务 `chuanliantui`，39 维 actor／82 维 critic／6 动作，观测契约

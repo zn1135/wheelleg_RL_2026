@@ -1,26 +1,29 @@
 # 示范采集、SMP 与 PPO 接入
 
+辅助脚本已按用途迁移；下文固定旧实验保留其历史配方，旧路径查[迁移表](../scripts/agent/MIGRATION.md)，归档复核不代表当前版本验收。
+
+
 2026-10-25：新增[轮角39／82 SMP PPO v4](interfaces/20261025-wheel39-smp-ppo-v4.md)，从当前首次站稳清零BC初始化PPO，并在保存／恢复和各运行入口检查对应观测定义。旧v3及普通PPO默认保持；本轮不更新先验、不训练策略，先验仍为学生170条的10000次版本。零更新回放、奖励明细和视频见[接入报告](../artifacts/ppo-wheel39-interface-20261025-v1/README.md)。
 
 2026-10-24 清理状态：按用户要求，已删除本地立即出力起立示范 `artifacts/smp-rise-move-20261024/ground-integral-030`、`prior_2000.pt` 及其同权重的 `smp_prior.pt` 副本，并移除三份本地归档包中的对应内容。新 0.2 秒等待起立示范、静站和移动示范保留；远程文件未修改。下文涉及旧数据或 prior2000 的路径仅为历史记录，原命令当前不能直接运行；清理后的归档包也不再对应历史包哈希。新先验仍需另行训练。
 
 第二阶段交付 `collect`、`train-prior` 和运动评分 API；第三阶段通过可选 `--smp-prior` 接入 PPO。仍只有 `chuanliantui` 注册任务，不传该参数时保持原行为。39/82维观测、6维动作、2ms物理／PD和10ms策略接口不变。实验结果统一见[项目实验记录](ai/project-log.md)顶部。
 
-新0.2秒等待示范的SMP检查点与来源见[2026-10-25本地prior2000交付](model-deliveries/20261025-smp-hold-prior2000.md)；原立即出力数据的[历史prior2000](model-deliveries/20261024-smp-prior2000.md)本地已清理。训练后可用`scripts/agent/assess_smp_prior.py`核对预算、连续日志、优化器状态及固定验证窗口去噪误差；该脚本不更新参数。
+新0.2秒等待示范的SMP检查点与来源见[2026-10-25本地prior2000交付](model-deliveries/20261025-smp-hold-prior2000.md)；原立即出力数据的[历史prior2000](model-deliveries/20261024-smp-prior2000.md)本地已清理。训练后可用`scripts/agent/imitation/assess_smp_prior.py`核对预算、连续日志、优化器状态及固定验证窗口去噪误差；该脚本不更新参数。
 
 SMP（Score-Matching Motion Priors）用去噪模型判断一段运动像不像示范。它学习连续状态窗口，**不是把六路教师力矩直接回归成 PPO 动作**。力矩仍随原始状态保存，用于核对控制输出。
 
 动作模仿另用[行为克隆入口](mjlab-behavior-cloning.md)：采集同拍39维观测与6维学生PD目标，训练现有actor，独立验收后才考虑`train --smp-prior ... --bc-init ...`。首轮5000次的独立行为验收失败，PPO没有启动；纠偏查询标签不能作为SMP成功运动示范。
 
-2026-10-25已用170条学生PD示范在远程从头完成10000次更新，新模型及预算检查见[交付记录](model-deliveries/20261025-smp-student170-prior10000.md)。新增正式`scripts/agent/check_smp_student_scores.py`：`passive`从指定完整初态运行真实主动零出力物理；`score`以相同留出姿态比较平滑成功、10ms轮延迟振荡和落稳趴地，独立重算特征、固定噪声、核对评分不改参数／统计。单位尺度的本轮排序通过，示范误差缩放仅作诊断，未改生产PPO奖励或训练PPO。[报告、三类分数和复现命令](../artifacts/smp-ranking-student170-20261025/README.md)。
+2026-10-25已用170条学生PD示范在远程从头完成10000次更新，新模型及预算检查见[交付记录](model-deliveries/20261025-smp-student170-prior10000.md)。新增正式`scripts/agent/imitation/check_smp_student_scores.py`：`passive`从指定完整初态运行真实主动零出力物理；`score`以相同留出姿态比较平滑成功、10ms轮延迟振荡和落稳趴地，独立重算特征、固定噪声、核对评分不改参数／统计。单位尺度的本轮排序通过，示范误差缩放仅作诊断，未改生产PPO奖励或训练PPO。[报告、三类分数和复现命令](../artifacts/smp-ranking-student170-20261025/README.md)。
 
 ## 当前起立扩采：学生PD接口
 
-2026-10-25新增独立采集脚本`scripts/agent/collect_lqr_student.py`：实时LQR每10ms读取真实反馈并反解学生目标，原500Hz PD/FIFO执行；使用当前训练的腿／轮2/2、2/4、4/2、4/4ms，前0.2秒实际主动电机零出力。它不加载PPO模型，也不启用预览补偿，不修改下方默认1ms直接力矩采集入口。10ms仅作独立压力测试，失败轨迹不加入正示范。
+2026-10-25新增独立采集脚本`scripts/agent/imitation/collect_lqr_student.py`：实时LQR每10ms读取真实反馈并反解学生目标，原500Hz PD/FIFO执行；使用当前训练的腿／轮2/2、2/4、4/2、4/4ms，前0.2秒实际主动电机零出力。它不加载PPO模型，也不启用预览补偿，不修改下方默认1ms直接力矩采集入口。10ms仅作独立压力测试，失败轨迹不加入正示范。
 
 ```bash
 PYTHONPATH=mjlab_training/src OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
-  mjlab_training/.venv/bin/python scripts/agent/collect_lqr_student.py \
+  mjlab_training/.venv/bin/python -m scripts.agent.imitation.collect_lqr_student \
   --seeds 4101,4102 --pose-seed 4100 --poses-per-seed 32 \
   --output artifacts/<新扩采目录>
 ```
@@ -137,7 +140,7 @@ mjlab_training/.venv/bin/python -m tensorboard.main \
 
 实现为 `smp/ppo.py`，沿用现有 PPO，不叠加教师力矩。新增奖励率 `1.0 * SMP分数` 与原任务各项相加，由 RewardManager 统一乘 `dt=0.01` 一次。当前v3固定三个噪声级误差尺度为`[1,1,1]`，分数为`exp(-6*mean(原始误差))`，训练／回放相同；不累计随机策略误差，不作在线record/update，也不采用示范均值缩放。SMP网络、EMA和特征统计固定。v1／v2前100万个窗口在线估计尺度的实现仅为历史版本。独立随机数发生器产生评分噪声，不消耗PPO动作采样的随机数流。当前仅支持单GPU、24步PPO批次。
 
-每10ms、在自动复位之前刷新物理派生量，调用与示范相同的30维特征函数。连续10帧后才评分，前9步为零；终止步使用终止前的窗口，随后只清空已复位环境的历史。没有跨回合拼接。每步日志包含 `SMP/reward`、`SMP/raw_error`（原始误差）、`SMP/error_scale`（固定1）、`SMP/valid_fraction`、`SMP/normalizer_count`（固定0），回合日志包含 `Episode_Reward/smp_motion`。实际奖励占比用`scripts/agent/check_smp_reward_scale.py`读取RewardManager全部加权项，再乘一次dt核对总奖励，区分正奖励占比和包含负惩罚的绝对值占比。
+每10ms、在自动复位之前刷新物理派生量，调用与示范相同的30维特征函数。连续10帧后才评分，前9步为零；终止步使用终止前的窗口，随后只清空已复位环境的历史。没有跨回合拼接。每步日志包含 `SMP/reward`、`SMP/raw_error`（原始误差）、`SMP/error_scale`（固定1）、`SMP/valid_fraction`、`SMP/normalizer_count`（固定0），回合日志包含 `Episode_Reward/smp_motion`。实际奖励占比用`scripts/agent/imitation/check_smp_reward_scale.py`读取RewardManager全部加权项，再乘一次dt核对总奖励，区分正奖励占比和包含负惩罚的绝对值占比。
 
 **初态为正常趴地落地启动**：与教师 `--initial ground` 相同，双腿从姿态库同一行的 `negative` 分支采样，左右配对，机身四元数 `[1,0,0,0]`、根高度0.25m，全部初速度为零。0时刻可能尚未触地，先自由落下；沿用原PPO前0.2秒主动电机力矩门控，物理弹簧仍生效。当前按用户要求只学正常起立和零速站稳，速度／转向命令整个回合均为零；站稳、起立失败和重采样均不放开移动。目标机身高度0.33648m（教师腿长0.30m），所有回合启用站稳后的零速保持奖励。保留原训练物理随机化及推扰；不传 `--smp-prior` 时原初态、命令与奖励保持。
 
@@ -164,7 +167,7 @@ mjlab_training/.venv/bin/python -m tensorboard.main \
 输出独立保存到 `logs/mjlab/chuanliantui_huananhu_multimode_smp_stand_unit_v3/<时间>/`，包含actor/critic/PPO优化器、SMP文件哈希、固定单位尺度状态、评分随机状态；另复制 `smp_prior.pt` 和源码快照。续训须同时指定 `--smp-prior` 和 `--resume model_*.pt`，只接受同一先验／奖励定义的SMP PPO模型，拒绝普通PPO、旧自适应尺度profile或非单位统计的检查点。回放、有限check和起立eval同样支持 `--smp-prior`；eval的force/sample均使用该正常趴地分布，不与原姿态分布结果混比。ONNX导出仍仅导出39→6 actor，SMP不进入部署推理图；当前v3未训练，没有新策略交付；原v1的300轮检查点起立失败。有限检查保存的未训练往返夹具不作为策略交付。
 
 ```bash
-mjlab_training/.venv/bin/python scripts/agent/check_smp_ppo.py \
+mjlab_training/.venv/bin/python -m scripts.agent.imitation.check_smp_ppo \
   --prior "${CT_SMP_PRIOR:?先设置prior路径}" --render-initial \
   --dataset artifacts/smp-stage2-20261024/standing-030/dataset.json \
   --dataset artifacts/smp-stage2-20261024/standing-030-seed43/dataset.json \
@@ -177,10 +180,10 @@ mjlab_training/.venv/bin/python scripts/agent/check_smp_ppo.py \
 
 ## 真实运动评分补充检查
 
-新增`scripts/agent/compare_smp_motion_scores.py`。成功样本只取原资格检查通过、且属于验证组的正常起立回合；被动趴地样本是真实零电机力矩、保留弹簧和重力的自由仿真，筛选高度<0.20m且速度低的连续窗口；失败样本由原300轮冻结源码和模型重新运行64环境，初态签名与原检查一致，禁止用当前零速v2配置改写历史失败对照。所有组用同一EMA模型、相同评分噪声、固定评分尺度比较，记录原始误差，绝不更新先验参数或统计。
+新增`scripts/agent/imitation/compare_smp_motion_scores.py`。成功样本只取原资格检查通过、且属于验证组的正常起立回合；被动趴地样本是真实零电机力矩、保留弹簧和重力的自由仿真，筛选高度<0.20m且速度低的连续窗口；失败样本由原300轮冻结源码和模型重新运行64环境，初态签名与原检查一致，禁止用当前零速v2配置改写历史失败对照。所有组用同一EMA模型、相同评分噪声、固定评分尺度比较，记录原始误差，绝不更新先验参数或统计。
 
 ```bash
-mjlab_training/.venv/bin/python scripts/agent/compare_smp_motion_scores.py \
+mjlab_training/.venv/bin/python -m scripts.agent.imitation.compare_smp_motion_scores \
   --prior logs/mjlab/chuanliantui_smp_prior/20261024-191610_first2000/prior_2000.pt \
   --checkpoint logs/mjlab/chuanliantui_huananhu_multimode_smp_v1/2026-10-24_20-21-41_smp-first300/model_299.pt \
   --policy-source logs/mjlab/chuanliantui_huananhu_multimode_smp_v1/2026-10-24_20-21-41_smp-first300/snapshot \
@@ -191,7 +194,7 @@ mjlab_training/.venv/bin/python scripts/agent/compare_smp_motion_scores.py \
   --dataset artifacts/smp-rise-move-20261024/moving-integral-030-v2/dataset.json \
   --output artifacts/smp-real-score-check-new
 
-mjlab_training/.venv/bin/python scripts/agent/check_teacher_pd_interface.py \
+mjlab_training/.venv/bin/python -m scripts.agent.imitation.check_teacher_pd_interface \
   --dataset artifacts/smp-rise-move-20261024/ground-integral-030/dataset.json \
   --output artifacts/teacher-pd-interface-new.json
 ```
@@ -206,13 +209,13 @@ mjlab_training/.venv/bin/python scripts/agent/check_teacher_pd_interface.py \
 
 ```bash
 env MUJOCO_GL=egl PYTHONPATH=mjlab_training/src OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 \
-  mjlab_training/.venv/bin/python scripts/agent/check_smp_policy_source.py \
+  mjlab_training/.venv/bin/python -m scripts.agent.imitation.check_smp_policy_source \
   --checkpoint artifacts/multimode-v1-replay-20261014/models/model_3023.pt \
   --num-envs 160 --seeds 42,43 --output artifacts/smp-source-matrix-new --video
 
 # 已有验收状态直接补导视频，不重新运行策略或物理
 env MUJOCO_GL=egl PYTHONPATH=mjlab_training/src OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 \
-  mjlab_training/.venv/bin/python scripts/agent/check_smp_policy_source.py \
+  mjlab_training/.venv/bin/python -m scripts.agent.imitation.check_smp_policy_source \
   --render-only artifacts/smp-source-score-20261025/model3023-delay-matrix
 ```
 
@@ -221,11 +224,11 @@ env MUJOCO_GL=egl PYTHONPATH=mjlab_training/src OMP_NUM_THREADS=4 OPENBLAS_NUM_T
 ## 正式检查
 
 ```bash
-mjlab_training/.venv/bin/python scripts/agent/check_smp.py \
+mjlab_training/.venv/bin/python -m scripts.agent.imitation.check_smp \
   --output artifacts/smp-check.json
 
 # 加真实数据检查：可重复--dataset合并多个采集目录
-mjlab_training/.venv/bin/python scripts/agent/check_smp.py \
+mjlab_training/.venv/bin/python -m scripts.agent.imitation.check_smp \
   --dataset artifacts/smp-standing-030/dataset.json \
   --dataset artifacts/smp-ground-030/dataset.json --dataset artifacts/smp-moving-030/dataset.json \
   --require-behaviors standing,standup,forward,backward,turn_left,turn_right \
@@ -234,4 +237,4 @@ mjlab_training/.venv/bin/python scripts/agent/check_smp.py \
 
 检查覆盖特征的平移／航向／轮累计角不变性、10帧有效窗口、局部复位、完整回合分组与窗口边界、训练专用归一化、漂移回合拒收、原公开函数固定输入／噪声评分对照、原DiT计算路径对照、EMA与误差归一化、CPU/GPU评分一致性、检查点数值和优化器／随机状态保存。只做有限反向传播与序列化检查，**不调用优化器更新，不构成正式训练或行为验收**。合成数据只在临时目录用于检查，随后删除，不加入示范库。
 
-尚未覆盖正式预训练收敛、真实异常运动评分、PPO收敛、奖励权重有效性和完整策略验收；这些不能由有限检查通过推断。首轮训练预算/日志/检查点可用 `scripts/agent/assess_smp_ppo.py --checkpoint <model_299.pt> --prior <prior_2000.pt> --expected-iterations 300 --output <报告.json>` 核对，该脚本不更新参数，不能替代起立或移动行为检查。
+尚未覆盖正式预训练收敛、真实异常运动评分、PPO收敛、奖励权重有效性和完整策略验收；这些不能由有限检查通过推断。首轮训练预算/日志/检查点可用 `scripts/agent/imitation/assess_smp_ppo.py --checkpoint <model_299.pt> --prior <prior_2000.pt> --expected-iterations 300 --output <报告.json>` 核对，该脚本不更新参数，不能替代起立或移动行为检查。

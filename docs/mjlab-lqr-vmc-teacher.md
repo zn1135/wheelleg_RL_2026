@@ -1,10 +1,13 @@
 # mjlab LQR+VMC teacher
 
+辅助脚本已按用途迁移；下文固定旧实验保留其历史配方，旧路径查[迁移表](../scripts/agent/MIGRATION.md)，归档复核不代表当前版本验收。
+
+
 第一阶段仅运行传统控制器：平地站立、速度／偏航角速度／腿长命令及 H7 正常起立。不含倒置恢复、SMP、PPO 训练或固件修改。验收结果见[实验记录](ai/project-log.md)顶部。
 
 ## 学生PD接口闭环实验（2026-10-25）
 
-新增独立`scripts/agent/check_lqr_student_closed_loop.py`，按真实反馈每10ms更新LQR反解位置/轮速目标，由原2ms学生PD/FIFO执行，不重放固定目标、不训练。原teacher默认仍1ms直接力矩；控制器新增可选dt仅用于显式周期换算。无延迟和2/2ms各4/4通过末段平衡，完整6/8/10ms延迟网格24/36，10ms轮延迟持续抖动，尚不能作为全面合格示范采集入口。平衡、末段停车及腿部平滑分开报告。[实验定义](interfaces/20261025-lqr-student-closed-loop.md)，[实际结果、视频及命令](../artifacts/lqr-student-closed-loop-20261025/README.md)。
+新增独立`scripts/agent/imitation/check_lqr_student_closed_loop.py`，按真实反馈每10ms更新LQR反解位置/轮速目标，由原2ms学生PD/FIFO执行，不重放固定目标、不训练。原teacher默认仍1ms直接力矩；控制器新增可选dt仅用于显式周期换算。无延迟和2/2ms各4/4通过末段平衡，完整6/8/10ms延迟网格24/36，10ms轮延迟持续抖动，尚不能作为全面合格示范采集入口。平衡、末段停车及腿部平滑分开报告。[实验定义](interfaces/20261025-lqr-student-closed-loop.md)，[实际结果、视频及命令](../artifacts/lqr-student-closed-loop-20261025/README.md)。
 
 后续可选`--compensation wheel-lqr --high-rate`以当前状态和FIFO在独立影子模型预览下一拍LQR轮输出，保留真实延迟和增益；本轮4初态完整延迟组合两次均44/44平衡、实际训练网格36/36，原成功无丢失。只预测轮速的方案退化，未采纳。补偿尚未默认接入teacher/collect/train，也不表示PPO权重已改善或全姿态/随机化已验收。[补偿实现、视频、证据与限制](../artifacts/lqr-delay-compensation-20261025/README.md)。
 
@@ -83,17 +86,17 @@ teacher 单独构造环境，不注册训练策略、不调用 runner、不更�
 
 ```bash
 # 数值：编译原H7 C，只有CMSIS三角函数／开方替换为宿主libm
-mjlab_training/.venv/bin/python scripts/agent/check_lqr_vmc.py \
+mjlab_training/.venv/bin/python -m scripts.agent.imitation.check_lqr_vmc \
   --output artifacts/teacher-numerical.json
 # 若本机cc不在PATH，追加 --cc <已有宿主gcc路径>
 
 # 20秒静站；12秒十一组固定命令；20秒二十组正常趴地；20环境局部复位
-mjlab_training/.venv/bin/python scripts/agent/assess_lqr_vmc.py --case standing --output artifacts/teacher-standing
-mjlab_training/.venv/bin/python scripts/agent/assess_lqr_vmc.py --case motion --output artifacts/teacher-motion
-mjlab_training/.venv/bin/python scripts/agent/assess_lqr_vmc.py --case ground --output artifacts/teacher-ground
-mjlab_training/.venv/bin/python scripts/agent/assess_lqr_vmc.py --case reset --output artifacts/teacher-reset
+mjlab_training/.venv/bin/python -m scripts.agent.imitation.assess_lqr_vmc --case standing --output artifacts/teacher-standing
+mjlab_training/.venv/bin/python -m scripts.agent.imitation.assess_lqr_vmc --case motion --output artifacts/teacher-motion
+mjlab_training/.venv/bin/python -m scripts.agent.imitation.assess_lqr_vmc --case ground --output artifacts/teacher-ground
+mjlab_training/.venv/bin/python -m scripts.agent.imitation.assess_lqr_vmc --case reset --output artifacts/teacher-reset
 # 七段序列压缩为70ms，只核对命令分发和轨迹字段，不判行为通过
-mjlab_training/.venv/bin/python scripts/agent/assess_lqr_vmc.py --case sequence --output artifacts/teacher-sequence
+mjlab_training/.venv/bin/python -m scripts.agent.imitation.assess_lqr_vmc --case sequence --output artifacts/teacher-sequence
 ```
 
 数值检查覆盖增益／状态反馈、几何／雅可比／虚功、腿长与横滚PD／补偿／限幅、正常起立切换与超时重试、速度融合／离地落地、20环境独立历史与倒置零输出；另外用当前 XML 的闭合姿态核对坐标。不代表真实物理起立或板端控制通过。

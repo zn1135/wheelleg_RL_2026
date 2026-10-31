@@ -39,6 +39,15 @@ def check(args):
                     raise RuntimeError('Non-finite reward')
         shapes = {name: list(obs[name].shape) for name in ('actor', 'critic')}
         expected = {'actor': [n, 39], 'critic': [n, 82]}
+        if args.task == 'chuanliantui_stand_v2':
+            from ct_mjlab.envs.chuanliantui_stand_v2.observations import ACTOR_DIM, CRITIC_DIM
+            expected = {'actor': [n, ACTOR_DIM], 'critic': [n, CRITIC_DIM]}
+            if obs['history'].shape != (n, 160) or not torch.isfinite(obs['history']).all():
+                raise RuntimeError('Invalid stand_v2 history')
+        if args.task in ('chuanliantui_getup', 'chuanliantui_walk'):
+            expected = {'actor':[n,25], 'critic':[n,71]}
+            if obs['history'].shape != (n,125) or not torch.isfinite(obs['history']).all():
+                raise RuntimeError('Invalid split-policy history')
         if shapes != expected:
             raise RuntimeError(f'Observation shapes {shapes}, expected {expected}')
         print(json.dumps(dict(kind='finite physics/interface check; no training', task=args.task,

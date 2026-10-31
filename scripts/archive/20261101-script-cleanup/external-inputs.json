@@ -1,0 +1,100 @@
+{
+  "scripts/agent/audit_walk_estimator_final_result.py": [],
+  "scripts/agent/audit_walk_estimator_only_result.py": [],
+  "scripts/agent/audit_walk_shadow_result.py": [],
+  "scripts/agent/check_getup_height_training.py": [],
+  "scripts/agent/check_stand_v2_nominal_training.py": [],
+  "scripts/agent/check_stand_v2_post_stand_training.py": [],
+  "scripts/agent/check_stand_v2_speed_training.py": [],
+  "scripts/agent/check_stand_v2_tight_training.py": [],
+  "scripts/agent/check_supermimic_v13_continuation.py": [
+    {
+      "path": "artifacts/supermimic-v13-continuation-20261101-r1",
+      "exists": true,
+      "kind": "directory"
+    },
+    {
+      "path": "artifacts/supermimic-v13-alternating-20261031-r1",
+      "exists": true,
+      "kind": "directory"
+    }
+  ],
+  "scripts/agent/check_walk_training.py": [],
+  "scripts/agent/inspect_supermimic_motion_milestone.py": [],
+  "scripts/agent/report_supermimic_v13_continuation.py": [
+    {
+      "path": "artifacts/supermimic-v13-continuation-20261101-r1",
+      "exists": true,
+      "kind": "directory"
+    },
+    {
+      "path": "artifacts/supermimic-v13-alternating-20261031-r1/baseline-historical615-success-audit.json",
+      "exists": true,
+      "kind": "file"
+    },
+    {
+      "path": "artifacts/supermimic-v13-baseline615-current13-seed43-20261031",
+      "exists": true,
+      "kind": "directory"
+    },
+    {
+      "path": "artifacts/supermimic-v13-midpoint-seed43-20261031",
+      "exists": true,
+      "kind": "directory"
+    },
+    {
+      "path": "artifacts/supermimic-v13-final-seed43-20261031",
+      "exists": true,
+      "kind": "directory"
+    }
+  ],
+  "scripts/agent/report_supermimic_v13_count_budget.py": [
+    {
+      "path": "artifacts/supermimic-v13-continuation-a700-seed43-20261101-r1",
+      "exists": true,
+      "kind": "directory"
+    }
+  ],
+  "scripts/agent/report_walk_estimator_closedloop.py": [],
+  "scripts/agent/report_walk_estimator_only.py": [],
+  "scripts/agent/review_zero_hold_training.py": [
+    {
+      "path": "artifacts/model6848-startup-review-20261022-122136/zero-command-frozen-v2/cpu-ground-seed42.json",
+      "exists": true,
+      "kind": "file"
+    }
+  ],
+  "scripts/agent/score_supermimic_v13_prediction.py": [
+    {
+      "path": "logs/mjlab/chuanliantui_supermimic_walk",
+      "exists": true,
+      "kind": "directory"
+    },
+    {
+      "path": "artifacts/supermimic-v12-retrain-20261031-r1/score/predictions.pt",
+      "exists": true,
+      "kind": "file"
+    }
+  ],
+  "scripts/agent/score_supermimic_v9_paired_baseline.py": [],
+  "scripts/agent/summarize_getup_release.py": [],
+  "scripts/agent/summarize_stand_v2_hold_trial.py": [],
+  "scripts/agent/summarize_stand_v2_post_stand_tracking.py": [
+    {
+      "path": "artifacts/stand-v2-phase-stdmin-20261028/evaluation",
+      "exists": true,
+      "kind": "directory"
+    }
+  ],
+  "scripts/agent/summarize_stand_v2_speed_effect.py": [],
+  "scripts/agent/summarize_stand_v2_tight_effect.py": [],
+  "scripts/agent/summarize_walk_leg_swing.py": [],
+  "scripts/agent/summarize_walk_v8_regression.py": [],
+  "scripts/agent/train_supermimic_v13_continuation.py": [
+    {
+      "path": "artifacts/supermimic-v13-continuation-20261101-r1",
+      "exists": true,
+      "kind": "directory"
+    }
+  ]
+}

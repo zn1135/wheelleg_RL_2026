@@ -1,8 +1,11 @@
-# mjlab 串联腿训练（multimode 单线）
+# mjlab 串联腿训练（multimode）
+
+辅助脚本已按用途迁移；下文固定旧实验保留其历史配方，旧路径查[迁移表](../scripts/agent/MIGRATION.md)，归档复核不代表当前版本验收。
+
 
 2026-10-21轮端模型更新：训练与CPU/real2sim共用mjlab/chuanliantui.xml（旧multimode路径为链接），已写入joint_sharp的等效armature/阻尼/摩擦及驱动G/V/p。训练动作执行与固定增益后端共同实现该响应，标称参数取自XML，原随机化继续叠加；未训练，不保证跨工况gap消除。当前检查和复现见[接入报告](diagnostics/20261021-h7-wheel-response-integration.md)。
 
-mjlab 训练侧只保留一条线：华南虎 multimode 任务，基线模型 `model_3023.pt`。2026-10-15 起 V14、r5～r15、recover、V11 等旧配方已删除，代码与文档可从分支 `backup/gpt-structure-20261015`（`e451b3d`）或其父提交 `109da6d` 找回。
+本页描述 `chuanliantui` 华南虎 multimode 任务，基线模型 `model_3023.pt`。独立从零学习静站、抗推与恢复的 `chuanliantui_stand` 见[稳站任务说明](mjlab-chuanliantui-stand.md)，两者模型配方及日志分开。2026-10-15 起 V14、r5～r15、recover、V11 等旧配方已删除，代码与文档可从分支 `backup/gpt-structure-20261015`（`e451b3d`）或其父提交 `109da6d` 找回。
 
 ## 接口
 
@@ -55,7 +58,7 @@ H7仍限制高度0.27～0.34m，不能直接投入低位实机控制。
 
 **2026-10-16 的重要更正**：`model_4022` 那次续训落盘的 `params/env.yaml` 里**既没有 `recovery_window_s`、也没有 `huananhu_knockdown`**，两个推扰事件的 `params` 都是空字典（用的是函数默认的 ±0.25 m/s 与 ±10 N／±1 N·m）。所以此前"训练配方自 2026-10-15 起含恢复窗口与中途击倒"说的只是**源码**；中途倒地恢复这个能力到 2026-10-16 为止**没有被任何一次训练覆盖过**。2026-10-16 02:27:29 起按上述配方从 `model_4022` 续训（2048 环境 × 1000 轮）是第一次；训练前预检通过（32 环境、12 秒内 104 次击倒触发）。
 
-训练配置不注册主动击倒事件。机制检查：`mjlab_training/.venv/bin/python scripts/agent/check_multimode_recovery.py` 通过手动冲量验证恢复模式重新触发、恢复窗口与奖励门控；加 `--training-config` 检查训练确实未注册主动击倒事件且恢复窗口仍保留。两者都不执行学习，不替代行为验收。
+训练配置不注册主动击倒事件。机制检查：`mjlab_training/.venv/bin/python -m scripts.agent.multimode.check_multimode_recovery` 通过手动冲量验证恢复模式重新触发、恢复窗口与奖励门控；加 `--training-config` 检查训练确实未注册主动击倒事件且恢复窗口仍保留。两者都不执行学习，不替代行为验收。
 
 ## 可执行命令
 
@@ -91,7 +94,7 @@ scripts/mjlab.sh play --num-envs 4 --checkpoint <model_*.pt> \
 scripts/mjlab.sh eval --checkpoint <model_*.pt> --num-envs 64 --seeds 42 \
   --start-mode force --terrain flat --output logs/mjlab/evaluation/<name>/result.json
 # 注：记录在案的参考基线 model3023-baseline-gpu64 用的是 --terrain all（平子集 31/64）；
-# 与它配对必须同协议，scripts/agent/compare_multimode_eval.py 会在协议不一致时拒绝配对。
+# 与它配对必须同协议，scripts/agent/multimode/compare_multimode_eval.py 会在协议不一致时拒绝配对。
 
 # 中途击倒后重新起立评估：同一套初态，第 5 秒把每个存活环境掀翻
 scripts/mjlab.sh eval --checkpoint <model_*.pt> --num-envs 64 --seeds 42 \
@@ -102,7 +105,7 @@ scripts/mjlab.sh eval --checkpoint <model_*.pt> --num-envs 64 --seeds 42 \
 scripts/mjlab.sh export --checkpoint <model_*.pt> --output exports/<name>.onnx --opset 13
 
 # 当前最终平衡验收（不训练；输出目录使用新名称）
-mjlab_training/.venv/bin/python scripts/agent/assess_multimode_knockdown_recovery.py \
+mjlab_training/.venv/bin/python -m scripts.agent.multimode.assess_multimode_knockdown_recovery \
   --checkpoint <model_*.pt> --envs-per-combo 32 --seeds 43 \
   --magnitudes 12,16,20,25,30,40 --knockdown-at 3,9 \
   --recovery-window 12 --recover-deadline 12 \
@@ -111,10 +114,10 @@ mjlab_training/.venv/bin/python scripts/agent/assess_multimode_knockdown_recover
 
 ```bash
 # 平地速度/角度跟踪测量（训练前参考或训练后验收证据；口径见接口文档）
-mjlab_training/.venv/bin/python scripts/agent/assess_multimode_tracking.py \
+mjlab_training/.venv/bin/python -m scripts.agent.multimode.assess_multimode_tracking \
   --checkpoint <model_*.pt> --output artifacts/<新名称>/result.json
 # 判据离线检查（不建环境）
-mjlab_training/.venv/bin/python scripts/agent/check_multimode_tracking.py
+mjlab_training/.venv/bin/python -m scripts.agent.motion.assess --selfcheck
 ```
 
 改动初态或复位分布后，训练前先做 20 环境可视预检：`scripts/mjlab.sh play --num-envs 20`。
@@ -128,7 +131,7 @@ mjlab_training/.venv/bin/python scripts/agent/check_multimode_tracking.py
 mjlab 每个环境是独立物理世界（Warp 桥以 `nworld=num_envs` 建立），不同环境的机器人不会相遇，
 因此 `env_spacing` 保持任务原值。`eval.py` 与恢复机制检查改用同一常量，不再各自硬写 2.5 m。命令包线收窄到 vx ±1.5 m/s、yaw ±1.5 rad/s，
 special-mode 桶与 heading 外环一起限幅到同一包线；观测契约仍为 39／82／6。
-测量口径、判据与边界见[平地速度与角度跟踪测量](interfaces/chuanliantui-huananhu-multimode-tracking-v1.md)。
+当前运动判据见[统一运动标准 v1](interfaces/chuanliantui-motion-acceptance-v1.md)；原测量协议与历史结果见[平地速度与角度跟踪测量](interfaces/chuanliantui-huananhu-multimode-tracking-v1.md)。下方0.30容差结果保留历史含义，不能直接标为当前标准通过。
 
 **该阶段续训结果（2026-10-17）**：从 `model_4850` 按本配方续训 2048 环境 × 1000 轮（用户两次主动停止，分三段完成，run 目录 `2026-10-17_03-11-53`／`03-30-24`／`13-22-26_flat-track-vx1p5-yaw1p5`），最终为 `model_5849.pt`（SHA256 `d4be0bc9…`，含优化器与 `env_state`）。同一口径跟踪测量由 10／98 升到 **98／98**（mean |vx 误差| 0.118 m/s、|yaw 误差| 0.058 rad/s，容差 0.30），独立 CPU ONNX 回放在 vx 1.5／vx 1.0+yaw 0.5／零命令下均通过（入口摩擦口径 1.0；2026-10-17 晚对齐训练摩擦 0.5 后 vx=1.5 翻为原生引擎约 16.7 s 失稳、零速仍通过，见[接口记录](interfaces/chuanliantui-huananhu-multimode-replay-v1.md) 2026-10-17 晚节）；但同一套 64 强制地面初态的 `eval` 为 **63/64**（`env 27` 在 2.64 s 物理终止），父模型与基线均为 64/64。**未采纳为新基线**，基线仍是 `model_3023`；双轮平衡验收 v3.1 尚未对本模型完整重跑。
 

@@ -1,0 +1,773 @@
+{
+  "analyze_chuanliantui_stand": [
+    "assess_chuanliantui_stand"
+  ],
+  "analyze_chuanliantui_vofa_sysid": [],
+  "analyze_h7_latency": [],
+  "analyze_h7_rl_capture": [],
+  "analyze_h7_zero_command": [],
+  "analyze_ppo_bc_anchor": [],
+  "analyze_ppo_reward_regression": [],
+  "analyze_walk_shadow_delay": [
+    "analyze_walk_velocity_compensation"
+  ],
+  "analyze_walk_velocity_compensation": [
+    "walk_sensor_velocity"
+  ],
+  "assess_aligned_bc_braking": [
+    "check_lqr_student_closed_loop",
+    "prepare_bc_wheel_dataset"
+  ],
+  "assess_bc": [],
+  "assess_bc_braking_takeover": [
+    "check_bc_braking_takeover",
+    "check_lqr_student_closed_loop"
+  ],
+  "assess_bc_closed_loop": [],
+  "assess_bc_local_feedback": [
+    "check_bc_local_feedback",
+    "check_lqr_student_closed_loop"
+  ],
+  "assess_bc_parking": [
+    "check_lqr_student_closed_loop"
+  ],
+  "assess_chuanliantui_stand": [],
+  "assess_chuanliantui_stand_v2": [
+    "diagnose_chuanliantui_stand_v2"
+  ],
+  "assess_chuanliantui_supermimic": [
+    "diagnose_walk_v8_regression"
+  ],
+  "assess_chuanliantui_walk": [
+    "render_chuanliantui_stand"
+  ],
+  "assess_fast_bc_screen": [
+    "check_lqr_student_closed_loop"
+  ],
+  "assess_frozen_bc_randomization": [
+    "check_lqr_student_closed_loop"
+  ],
+  "assess_getup_target_slew": [],
+  "assess_ground_chuanliantui_stand": [
+    "assess_chuanliantui_stand"
+  ],
+  "assess_lqr_delay_compensation": [],
+  "assess_lqr_ppo_benchmark": [],
+  "assess_lqr_student_motion": [],
+  "assess_lqr_vmc": [],
+  "assess_multimode_cpu_envelope": [
+    "assess_multimode_tracking",
+    "measure_multimode_leg_motion"
+  ],
+  "assess_multimode_cpu_zero_hold": [],
+  "assess_multimode_envelope_friction": [
+    "assess_multimode_tracking",
+    "measure_multimode_leg_motion"
+  ],
+  "assess_multimode_knockdown_recovery": [],
+  "assess_multimode_recovery_height": [],
+  "assess_multimode_tracking": [
+    "assess_multimode_knockdown_recovery",
+    "check_multimode_tracking"
+  ],
+  "assess_multimode_zero_hold": [],
+  "assess_ppo400_import": [],
+  "assess_ppo_bc_finetune": [],
+  "assess_ppo_smp_comparison": [
+    "assess_smp_ppo"
+  ],
+  "assess_ppo_wheel_credit": [],
+  "assess_preserved_bc_feedback": [
+    "check_bc_local_feedback",
+    "check_lqr_student_closed_loop"
+  ],
+  "assess_smp_ppo": [],
+  "assess_smp_prior": [],
+  "assess_stand_v2_speed_transients": [
+    "assess_chuanliantui_stand_v2",
+    "experiment_stand_v2_phase_mix"
+  ],
+  "assess_stand_v2_tracking": [
+    "assess_chuanliantui_stand_v2"
+  ],
+  "assess_stand_v2_yaw_control": [
+    "assess_chuanliantui_stand_v2",
+    "experiment_stand_v2_phase_mix"
+  ],
+  "audit_walk_compensation_startup": [
+    "walk_sensor_velocity"
+  ],
+  "audit_walk_estimator_closedloop": [],
+  "audit_walk_estimator_final_result": [
+    "audit_walk_estimator_only_result",
+    "evaluate_walk_estimator_final"
+  ],
+  "audit_walk_estimator_only_result": [
+    "train_walk_estimator_only",
+    "walk_estimator_offline"
+  ],
+  "audit_walk_estimator_timing": [],
+  "audit_walk_estimator_training_data": [
+    "analyze_walk_velocity_compensation"
+  ],
+  "audit_walk_goal_feedback": [],
+  "audit_walk_shadow_method": [
+    "record_walk_shadow_sensors"
+  ],
+  "audit_walk_shadow_result": [
+    "analyze_walk_shadow_delay",
+    "record_walk_shadow_sensors"
+  ],
+  "check_action_delay": [],
+  "check_bc": [],
+  "check_bc_braking": [
+    "check_lqr_student_closed_loop"
+  ],
+  "check_bc_braking_takeover": [
+    "check_lqr_student_closed_loop",
+    "check_smp_policy_source",
+    "collect_lqr_student"
+  ],
+  "check_bc_corrections": [
+    "check_lqr_student_closed_loop"
+  ],
+  "check_bc_init": [],
+  "check_bc_local_feedback": [
+    "check_lqr_student_closed_loop",
+    "check_smp_policy_source",
+    "collect_lqr_student",
+    "eval_bc"
+  ],
+  "check_bc_parking": [
+    "check_lqr_student_closed_loop",
+    "check_smp_policy_source"
+  ],
+  "check_bc_parking_restore": [
+    "check_bc_parking",
+    "check_lqr_student_closed_loop",
+    "check_smp_policy_source"
+  ],
+  "check_bc_preservation": [
+    "prepare_bc_wheel_dataset"
+  ],
+  "check_bc_query_sync": [
+    "check_lqr_student_closed_loop",
+    "eval_bc"
+  ],
+  "check_bc_sampling": [],
+  "check_bc_wheel_dataset": [
+    "check_lqr_student_closed_loop"
+  ],
+  "check_chuanliantui_base_link_airborne_reward": [],
+  "check_chuanliantui_closed": [],
+  "check_chuanliantui_gas_spring": [],
+  "check_chuanliantui_h7_control": [],
+  "check_chuanliantui_new1_train_urdf": [],
+  "check_chuanliantui_observation": [],
+  "check_chuanliantui_stand": [
+    "assess_chuanliantui_stand"
+  ],
+  "check_chuanliantui_stand_regressions": [
+    "analyze_chuanliantui_stand"
+  ],
+  "check_chuanliantui_stand_reset_migration": [
+    "analyze_chuanliantui_stand"
+  ],
+  "check_chuanliantui_stand_v2": [
+    "check_isaac_standup_rewards",
+    "diagnose_chuanliantui_stand_v2"
+  ],
+  "check_chuanliantui_stand_velocity": [
+    "check_chuanliantui_stand"
+  ],
+  "check_chuanliantui_supermimic": [],
+  "check_chuanliantui_train_proxy": [],
+  "check_chuanliantui_two_policy": [
+    "check_chuanliantui_stand",
+    "check_walk_direction_curriculum",
+    "render_chuanliantui_stand"
+  ],
+  "check_chuanliantui_two_policy_sim2sim": [
+    "check_chuanliantui_two_policy"
+  ],
+  "check_convex_velocity_rewards": [
+    "check_ppo_finetune_resume"
+  ],
+  "check_fixed_h7_calibration": [],
+  "check_fixed_h7_rounding": [],
+  "check_frozen_bc_randomization": [
+    "check_lqr_student_closed_loop",
+    "eval_bc"
+  ],
+  "check_gas_spring_asset_geometry": [],
+  "check_getup_handover": [
+    "check_chuanliantui_two_policy"
+  ],
+  "check_getup_height_curriculum": [
+    "check_chuanliantui_two_policy"
+  ],
+  "check_getup_height_training": [],
+  "check_getup_leg_smoothing": [
+    "check_chuanliantui_two_policy"
+  ],
+  "check_getup_nominal_state": [
+    "check_chuanliantui_two_policy"
+  ],
+  "check_getup_target_slew": [
+    "assess_getup_target_slew"
+  ],
+  "check_getup_target_slew_state": [
+    "assess_getup_target_slew"
+  ],
+  "check_getup_torques": [
+    "check_chuanliantui_two_policy",
+    "check_getup_nominal_state"
+  ],
+  "check_h7_b_zero_bilateral": [
+    "fit_h7_b_zero_from_cad"
+  ],
+  "check_h7_capture_calibration": [],
+  "check_h7_drive_response": [],
+  "check_h7_height_command": [
+    "inspect_multimode_leg_length"
+  ],
+  "check_h7_joint_response": [],
+  "check_h7_latency_capture": [
+    "check_h7_output_capture",
+    "check_real2sim_huananhu"
+  ],
+  "check_h7_observation": [],
+  "check_h7_output_capture": [
+    "check_real2sim_huananhu"
+  ],
+  "check_h7_policy_control": [],
+  "check_h7_policy_timing": [],
+  "check_h7_policy_warmup": [],
+  "check_h7_rl_angle_branch": [],
+  "check_h7_rl_reentry_recording": [],
+  "check_h7_simulation_latency": [],
+  "check_h7_stand_v2": [
+    "check_real2sim_huananhu"
+  ],
+  "check_h7_zero_board": [],
+  "check_isaac_standup_rewards": [],
+  "check_lqr_control_clock": [],
+  "check_lqr_student_closed_loop": [
+    "check_smp_policy_source",
+    "lqr_delay_predictor"
+  ],
+  "check_lqr_vmc": [],
+  "check_mjlab_multimode": [],
+  "check_motor_response": [],
+  "check_multimode_cpu_sim2sim": [
+    "assess_multimode_tracking"
+  ],
+  "check_multimode_final_balance": [
+    "assess_multimode_knockdown_recovery",
+    "compare_multimode_knockdown"
+  ],
+  "check_multimode_ground_ratio": [],
+  "check_multimode_recovery": [],
+  "check_multimode_tracking": [
+    "assess_multimode_tracking"
+  ],
+  "check_policy_diag": [],
+  "check_policy_landing_gate": [],
+  "check_policy_run": [],
+  "check_ppo400_import": [
+    "check_ppo_finetune_resume"
+  ],
+  "check_ppo_bc_finetune": [
+    "screen_frozen_bc_conditions"
+  ],
+  "check_ppo_exploration": [
+    "check_ppo_finetune_resume"
+  ],
+  "check_ppo_finetune_resume": [],
+  "check_ppo_phase_mixing": [
+    "check_ppo_finetune_resume"
+  ],
+  "check_ppo_smp_ablation": [],
+  "check_real2sim_coupling_huananhu": [],
+  "check_real2sim_dynamics_huananhu": [],
+  "check_real2sim_huananhu": [
+    "check_real2sim_coupling_huananhu",
+    "check_real2sim_dynamics_huananhu"
+  ],
+  "check_real2sim_policy_pairs": [],
+  "check_real2sim_wheel_response": [],
+  "check_shared_reference": [
+    "check_lqr_student_closed_loop"
+  ],
+  "check_shared_wheel_response": [],
+  "check_smp": [],
+  "check_smp_policy_source": [],
+  "check_smp_ppo": [],
+  "check_smp_reward_scale": [
+    "check_lqr_student_closed_loop",
+    "check_smp_policy_source"
+  ],
+  "check_smp_student_scores": [],
+  "check_stand_v2_active_weight": [
+    "check_stand_v2_speed_commands",
+    "experiment_stand_v2_phase_mix"
+  ],
+  "check_stand_v2_cpu_launch_stability": [],
+  "check_stand_v2_cpu_sim2sim": [],
+  "check_stand_v2_exploration_resume": [
+    "experiment_stand_v2_phase_mix"
+  ],
+  "check_stand_v2_late_balance": [
+    "experiment_stand_v2_phase_mix"
+  ],
+  "check_stand_v2_nominal_training": [],
+  "check_stand_v2_position_hold": [
+    "check_stand_v2_speed_commands",
+    "check_stand_v2_yaw_control",
+    "experiment_stand_v2_phase_mix"
+  ],
+  "check_stand_v2_post_stand_tracking": [
+    "experiment_stand_v2_phase_mix"
+  ],
+  "check_stand_v2_post_stand_training": [
+    "experiment_stand_v2_phase_mix"
+  ],
+  "check_stand_v2_retention_seeds": [
+    "experiment_stand_v2_phase_mix"
+  ],
+  "check_stand_v2_speed_commands": [
+    "experiment_stand_v2_phase_mix"
+  ],
+  "check_stand_v2_speed_training": [
+    "experiment_stand_v2_phase_mix"
+  ],
+  "check_stand_v2_tight_term": [
+    "check_stand_v2_speed_commands",
+    "experiment_stand_v2_phase_mix"
+  ],
+  "check_stand_v2_tight_training": [
+    "experiment_stand_v2_phase_mix"
+  ],
+  "check_stand_v2_tracking": [
+    "assess_chuanliantui_stand_v2"
+  ],
+  "check_stand_v2_yaw_control": [
+    "check_stand_v2_speed_commands",
+    "experiment_stand_v2_phase_mix"
+  ],
+  "check_standing_push_schedule": [],
+  "check_standup_precision_rewards": [],
+  "check_standup_pushes": [],
+  "check_standup_termination": [],
+  "check_supermimic_alternating": [],
+  "check_supermimic_analytic_auxiliaries": [
+    "score_supermimic_v11_paired_prediction"
+  ],
+  "check_supermimic_bptt": [],
+  "check_supermimic_contact_inputs": [
+    "check_supermimic_bptt"
+  ],
+  "check_supermimic_loss_scaling": [
+    "check_supermimic_bptt"
+  ],
+  "check_supermimic_motion": [],
+  "check_supermimic_motion_retrain": [],
+  "check_supermimic_motion_retrain_counts": [],
+  "check_supermimic_training": [],
+  "check_supermimic_v11_world_only": [
+    "check_supermimic_training"
+  ],
+  "check_supermimic_v13_continuation": [],
+  "check_supermimic_world_only": [
+    "check_supermimic_training"
+  ],
+  "check_teacher_pd_interface": [],
+  "check_teacher_startup": [],
+  "check_training_resume": [],
+  "check_wait_training_completion": [
+    "wait_training_completion"
+  ],
+  "check_walk_command_readiness": [
+    "check_chuanliantui_two_policy"
+  ],
+  "check_walk_direction_curriculum": [
+    "check_chuanliantui_two_policy",
+    "check_walk_command_readiness"
+  ],
+  "check_walk_leg_symmetry": [
+    "check_chuanliantui_two_policy",
+    "check_walk_command_readiness",
+    "check_walk_tracking_economy"
+  ],
+  "check_walk_resume": [
+    "check_chuanliantui_two_policy",
+    "check_walk_direction_curriculum"
+  ],
+  "check_walk_tracking_economy": [
+    "check_chuanliantui_two_policy",
+    "check_getup_nominal_state"
+  ],
+  "check_walk_training": [],
+  "check_walk_vertical_reward": [
+    "check_supermimic_motion"
+  ],
+  "check_wheel39_ppo": [
+    "check_lqr_student_closed_loop"
+  ],
+  "check_wheel39_ppo_entries": [],
+  "check_wheel_angle_bc_baseline": [
+    "assess_bc_closed_loop",
+    "check_lqr_student_closed_loop",
+    "eval_bc"
+  ],
+  "check_wheel_angle_bc_corrections": [
+    "prepare_bc_wheel_dataset"
+  ],
+  "check_wheel_angle_handover": [],
+  "check_wheel_angle_handover_data": [
+    "prepare_bc_wheel_dataset"
+  ],
+  "check_wheel_angle_observations": [],
+  "check_wheel_lqr_reference": [
+    "check_lqr_vmc"
+  ],
+  "check_wheel_odometry": [
+    "check_lqr_student_closed_loop",
+    "check_smp_policy_source"
+  ],
+  "check_zero_hold_training": [
+    "inspect_multimode_leg_length"
+  ],
+  "collect_bc_braking": [
+    "check_lqr_student_closed_loop",
+    "check_smp_policy_source",
+    "collect_lqr_student",
+    "eval_bc"
+  ],
+  "collect_lqr_student": [
+    "check_lqr_student_closed_loop",
+    "check_smp_policy_source"
+  ],
+  "collect_reference_bc": [
+    "check_lqr_student_closed_loop",
+    "check_smp_policy_source",
+    "collect_lqr_student"
+  ],
+  "compare_6848_leg_oscillation": [],
+  "compare_h7_measured_start": [],
+  "compare_lqr_policy_motion": [],
+  "compare_multimode_eval": [],
+  "compare_multimode_knockdown": [],
+  "compare_smp_motion_scores": [
+    "check_smp_policy_source"
+  ],
+  "compare_stand_v2_acceptance": [
+    "assess_chuanliantui_stand_v2"
+  ],
+  "compare_stand_v2_active_weight": [
+    "assess_chuanliantui_stand_v2",
+    "assess_stand_v2_speed_transients",
+    "experiment_stand_v2_phase_mix"
+  ],
+  "compare_stand_v2_nominal_inversion": [
+    "summarize_stand_v2_split_inversion"
+  ],
+  "compare_stand_v2_phase_mix": [
+    "experiment_stand_v2_phase_mix"
+  ],
+  "compare_stand_v2_wheel_normal": [],
+  "compare_supermimic_behavior": [
+    "assess_chuanliantui_supermimic"
+  ],
+  "compare_walk_checkpoints": [],
+  "compare_walk_estimator_trial": [
+    "analyze_walk_velocity_compensation",
+    "summarize_walk_goal_feedback"
+  ],
+  "compare_walk_feedback": [],
+  "compare_walk_height_response": [],
+  "compose_chuanliantui_factor_videos": [],
+  "diagnose_aligned_bc_braking": [
+    "check_bc_local_feedback",
+    "check_lqr_student_closed_loop",
+    "collect_reference_bc"
+  ],
+  "diagnose_bc_wheel_input": [
+    "assess_bc_closed_loop",
+    "eval_bc"
+  ],
+  "diagnose_chuanliantui_stand_v2": [],
+  "diagnose_getup_release": [],
+  "diagnose_getup_start": [],
+  "diagnose_isaac_ppo_rewards": [
+    "evaluate_lqr_ppo"
+  ],
+  "diagnose_ppo_sampling": [],
+  "diagnose_ppo_wheel_credit": [],
+  "diagnose_smp_score_noise": [],
+  "diagnose_stand_v2_cpu_launch": [],
+  "diagnose_stand_v2_inversion": [
+    "diagnose_chuanliantui_stand_v2"
+  ],
+  "diagnose_stand_v2_late_balance": [
+    "evaluate_stand_v2_phase_mix",
+    "experiment_stand_v2_phase_mix"
+  ],
+  "diagnose_stand_v2_launch_reference": [],
+  "diagnose_stand_v2_mode_input": [
+    "assess_chuanliantui_stand_v2"
+  ],
+  "diagnose_stand_v2_pitch_progression": [
+    "evaluate_stand_v2_phase_mix"
+  ],
+  "diagnose_stand_v2_rewards_velocity": [],
+  "diagnose_supermimic_rollout_drift": [
+    "score_supermimic_physical_prediction"
+  ],
+  "diagnose_walk_estimator_closedloop": [
+    "evaluate_walk_estimator_final",
+    "train_walk_estimator_only",
+    "walk_estimator_offline"
+  ],
+  "diagnose_walk_forward_failure": [],
+  "diagnose_walk_goal_feedback": [
+    "diagnose_walk_v8_regression"
+  ],
+  "diagnose_walk_height": [
+    "diagnose_walk_v8_regression"
+  ],
+  "diagnose_walk_v8_regression": [],
+  "diagnose_walk_velocity_compensation": [
+    "diagnose_walk_goal_feedback",
+    "diagnose_walk_v8_regression",
+    "walk_sensor_velocity"
+  ],
+  "diagnose_wheel_angle_bc": [],
+  "diagnose_wheel_angle_bc_handover": [
+    "check_lqr_student_closed_loop",
+    "eval_bc"
+  ],
+  "diagnose_zero_hold_disturbances": [],
+  "eval_bc": [
+    "check_lqr_student_closed_loop",
+    "check_smp_policy_source",
+    "collect_lqr_student"
+  ],
+  "eval_wheel39_ppo_init": [
+    "check_lqr_student_closed_loop",
+    "eval_bc"
+  ],
+  "evaluate_lqr_ppo": [],
+  "evaluate_ppo_exploration": [
+    "evaluate_lqr_ppo"
+  ],
+  "evaluate_stand_v2_phase_mix": [
+    "experiment_stand_v2_phase_mix"
+  ],
+  "evaluate_walk_estimator_final": [
+    "train_walk_estimator_only",
+    "walk_estimator_offline"
+  ],
+  "experiment_stand_v2_phase_mix": [],
+  "export_bc_braking_takeover": [
+    "check_lqr_student_closed_loop"
+  ],
+  "export_chuanliantui_onnx": [],
+  "fit_h7_b_zero_from_cad": [],
+  "generate_chuanliantui_closed_chain_references": [],
+  "generate_chuanliantui_closed_mjcf": [],
+  "generate_chuanliantui_new1_train_urdf": [],
+  "generate_chuanliantui_train_proxy_mjcf": [],
+  "inspect_multimode_leg_length": [],
+  "inspect_supermimic_motion_milestone": [
+    "score_supermimic_motion_retrain"
+  ],
+  "lqr_delay_predictor": [],
+  "measure_multimode_leg_motion": [
+    "assess_multimode_tracking"
+  ],
+  "migrate_chuanliantui_stand_velocity": [],
+  "plot_chuanliantui_ablation_evaluation": [],
+  "prepare_bc_preservation": [
+    "check_lqr_student_closed_loop",
+    "check_smp_policy_source",
+    "collect_lqr_student",
+    "eval_bc"
+  ],
+  "prepare_bc_wheel_dataset": [
+    "check_lqr_student_closed_loop",
+    "collect_bc_braking"
+  ],
+  "prepare_reference_bc": [
+    "prepare_bc_wheel_dataset"
+  ],
+  "prepare_wheel_angle_bc": [
+    "prepare_bc_wheel_dataset"
+  ],
+  "prepare_wheel_angle_bc_recovery": [
+    "prepare_bc_wheel_dataset"
+  ],
+  "probe_chuanliantui_stand_rewards": [
+    "assess_chuanliantui_stand"
+  ],
+  "probe_getup_torque_rewards": [
+    "check_chuanliantui_two_policy",
+    "check_getup_nominal_state"
+  ],
+  "probe_supermimic_action_gradient": [],
+  "probe_supermimic_contact_encoding": [
+    "score_supermimic_physical_prediction"
+  ],
+  "record_chuanliantui_stand": [
+    "assess_chuanliantui_stand"
+  ],
+  "record_multimode_knockdown_failures": [
+    "assess_multimode_knockdown_recovery"
+  ],
+  "record_stand_v2_sample": [
+    "diagnose_chuanliantui_stand_v2"
+  ],
+  "record_supermimic_physical_prediction": [
+    "assess_chuanliantui_supermimic"
+  ],
+  "record_walk_estimator_trial": [
+    "diagnose_walk_goal_feedback",
+    "diagnose_walk_v8_regression"
+  ],
+  "record_walk_shadow_sensors": [
+    "diagnose_walk_goal_feedback",
+    "diagnose_walk_v8_regression",
+    "diagnose_walk_velocity_compensation"
+  ],
+  "render_aligned_bc_braking": [
+    "check_lqr_student_closed_loop"
+  ],
+  "render_bc": [
+    "check_lqr_student_closed_loop"
+  ],
+  "render_bc_braking": [
+    "check_lqr_student_closed_loop"
+  ],
+  "render_bc_braking_takeover": [
+    "check_bc_braking_takeover",
+    "check_lqr_student_closed_loop"
+  ],
+  "render_bc_parking": [
+    "check_lqr_student_closed_loop"
+  ],
+  "render_chuanliantui_ablation_replay": [],
+  "render_chuanliantui_stand": [
+    "check_chuanliantui_stand"
+  ],
+  "render_chuanliantui_supermimic": [
+    "render_chuanliantui_stand"
+  ],
+  "render_fast_bc_screen": [
+    "check_lqr_student_closed_loop"
+  ],
+  "render_frozen_bc_randomization": [
+    "check_lqr_student_closed_loop"
+  ],
+  "render_getup_target_slew": [
+    "render_chuanliantui_stand"
+  ],
+  "render_h7_zero_command": [],
+  "render_lqr_delay_compensation": [],
+  "render_lqr_ppo_benchmark": [],
+  "render_lqr_student_comparison": [],
+  "render_lqr_vmc_demo": [],
+  "render_multimode_leg_length": [],
+  "render_multimode_minimum_leg": [
+    "inspect_multimode_leg_length"
+  ],
+  "render_ppo_smp_comparison": [
+    "check_lqr_student_closed_loop"
+  ],
+  "render_preserved_bc": [
+    "check_lqr_student_closed_loop",
+    "render_bc"
+  ],
+  "render_stand_v2_acceptance": [
+    "render_chuanliantui_stand"
+  ],
+  "render_stand_v2_late_balance": [
+    "experiment_stand_v2_phase_mix",
+    "render_chuanliantui_stand"
+  ],
+  "render_stand_v2_sample": [
+    "render_chuanliantui_stand"
+  ],
+  "render_stand_v2_speed_comparison": [
+    "experiment_stand_v2_phase_mix",
+    "render_chuanliantui_stand"
+  ],
+  "render_stand_v2_tracking": [
+    "render_chuanliantui_stand"
+  ],
+  "replay_teacher_pd": [],
+  "report_fixed_h7_calibration": [
+    "check_fixed_h7_calibration",
+    "check_fixed_h7_rounding"
+  ],
+  "report_supermimic_v13_continuation": [
+    "compare_supermimic_behavior"
+  ],
+  "report_supermimic_v13_count_budget": [
+    "report_supermimic_v13_continuation"
+  ],
+  "report_walk_estimator_closedloop": [],
+  "report_walk_estimator_only": [],
+  "review_zero_hold_training": [],
+  "score_supermimic_motion": [
+    "score_supermimic_physical_prediction"
+  ],
+  "score_supermimic_motion_retrain": [
+    "score_supermimic_physical_prediction"
+  ],
+  "score_supermimic_physical_prediction": [],
+  "score_supermimic_v11_paired_prediction": [
+    "diagnose_supermimic_rollout_drift",
+    "score_supermimic_physical_prediction"
+  ],
+  "score_supermimic_v13_prediction": [
+    "score_supermimic_motion_retrain"
+  ],
+  "score_supermimic_v9_paired_baseline": [
+    "score_supermimic_physical_prediction"
+  ],
+  "screen_frozen_bc_conditions": [
+    "check_lqr_student_closed_loop"
+  ],
+  "select_preserved_bc": [
+    "assess_bc_closed_loop",
+    "eval_bc"
+  ],
+  "simplify_chuanliantui_new1_base": [],
+  "summarize_getup_release": [],
+  "summarize_stand_v2_hold_trial": [],
+  "summarize_stand_v2_post_stand_tracking": [
+    "experiment_stand_v2_phase_mix"
+  ],
+  "summarize_stand_v2_speed_effect": [
+    "experiment_stand_v2_phase_mix"
+  ],
+  "summarize_stand_v2_split_inversion": [],
+  "summarize_stand_v2_tight_effect": [],
+  "summarize_walk_goal_feedback": [],
+  "summarize_walk_leg_swing": [],
+  "summarize_walk_v8_regression": [],
+  "train_ppo_smp_comparison": [],
+  "train_supermimic_v13_continuation": [],
+  "train_walk_estimator_only": [
+    "analyze_walk_velocity_compensation",
+    "walk_estimator_offline"
+  ],
+  "validate_stand_v2_handover": [
+    "diagnose_chuanliantui_stand_v2"
+  ],
+  "wait_training_completion": [],
+  "walk_estimator_offline": [
+    "analyze_walk_velocity_compensation"
+  ],
+  "walk_sensor_velocity": []
+}

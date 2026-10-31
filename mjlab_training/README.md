@@ -1,8 +1,15 @@
 # 串联腿 mjlab 训练
 
-只保留一条训练线：华南虎 multimode（39/82 维）。接口、命令和基线说明见 [mjlab 串联腿训练](../docs/mjlab-chuanliantui.md)。使用独立的 Python 3.12 环境，不装进 Isaac Gym 环境。
+辅助脚本已按用途迁移；下文固定旧实验保留其历史配方，旧路径查[迁移表](../scripts/agent/MIGRATION.md)，归档复核不代表当前版本验收。
+
+
+2026-10-30新增`chuanliantui_getup`和`chuanliantui_walk`两个独立任务：25维观测、125维历史、71维Critic、6动作，网络无模式标志。各自训练、续载、单模型play和导出，日志独立；两模型自动切换只在独立CPU sim2sim。原stand_v2及旧模型保留；接口、20环境预检和训练/TensorBoard命令见[双策略说明](../docs/interfaces/20261030-chuanliantui-two-policy.md)。
+
+提供 `chuanliantui` 华南虎 multimode 与 `chuanliantui_stand` 独立稳站任务，均为39/82维观测、6维动作、500 Hz物理／100 Hz策略。稳站Actor保留第15、16维轮角占位，不追加前向、侧向平面速度；历史41维模型另按冻结配方回放。原任务见 [mjlab 串联腿训练](../docs/mjlab-chuanliantui.md)，新任务的固定 0.27 m、高度／机体平速／腿电机角速度验收和独立日志见[稳站说明](../docs/mjlab-chuanliantui-stand.md)。使用独立的 Python 3.12 环境，不装进 Isaac Gym 环境。
 
 ## 代码结构
+
+独立 `chuanliantui_stand_v2`：Isaac布局32维＋5帧速度编码器、89维Critic、6动作；全地面起步、起立宽限、准备期奖励屏蔽、init_std=0.5。闭链XML/PD/500Hz物理与100Hz策略保留，旧39维任务模型不能直接续载。完整网络导出及检查见[稳站v2](../docs/mjlab-chuanliantui-stand-v2.md)。
 
 和 Isaac 的 `wheel_legged_gym/` 按同样的职责划分：
 
@@ -10,13 +17,14 @@
 src/ct_mjlab/
 ├── cli.py                    # ct-mjlab / scripts/mjlab.sh：<command> → scripts.<command>
 ├── envs/
-│   ├── __init__.py           # 注册任务 chuanliantui
+│   ├── __init__.py           # 注册 chuanliantui、chuanliantui_stand 与 chuanliantui_stand_v2
 │   └── chuanliantui/         # 冻结快照里的 23 个模块（model_3023 训练时的源码）
 │       ├── multimode_env_cfg.py    # 环境配置与 PPO 配置工厂
 │       ├── multimode_runner.py     # checkpoint 契约检查与课程进度
 │       ├── multimode_mdp.py / multimode_observations.py / multimode_rewards.py / multimode_terrains.py
 │       ├── huananhu_*.py           # multimode 基于的平地配方：命令、动作、观测、奖励、随机化、姿态库
 │       └── model.py / pd_action.py / gas_spring.py / runner.py / ...
+│   └── chuanliantui_stand/   # 独立命令、混合初态、奖励、推扰课程及模型契约
 ├── scripts/                  # train / play / eval / export / check
 └── utils/
     ├── task_registry.py      # register、get_cfgs、make_env、make_alg_runner

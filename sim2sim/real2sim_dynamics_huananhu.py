@@ -867,7 +867,7 @@ def main():
             shutil.copy2(path, source/path.name)
         firmware = args.machine_config.parent.parent
         for path in (firmware/'drivers/dji.h', firmware/'drivers/dji.c', firmware/'common/motor_types.h',
-                     ROOT/'scripts/agent/check_real2sim_dynamics_huananhu.py'):
+                     ROOT/'scripts/agent/real2sim/check_real2sim_dynamics_huananhu.py'):
             shutil.copy2(path, source/path.name)
         (source/'tracked.diff').write_text(subprocess.run(
             ['git', 'diff', '--', 'sim2sim/mj_sim2sim_huananhu_multimode.py', 'sim2sim/real2sim_huananhu.py'],

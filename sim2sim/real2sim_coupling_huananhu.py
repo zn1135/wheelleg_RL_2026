@@ -137,7 +137,7 @@ def run(args):
     source = out/'source'; source.mkdir()
     for path in (Path(__file__), Path(dyn.__file__), Path(dyn.sim.__file__), Path(dyn.mirror.__file__),
                  config, args.dynamics_run/'candidate-parameters.json',
-                 dyn.ROOT/'scripts/agent/check_real2sim_coupling_huananhu.py'):
+                 dyn.ROOT/'scripts/agent/real2sim/check_real2sim_coupling_huananhu.py'):
         shutil.copy2(path, source/path.name)
     selected = [x['row'] for x in prior_rl['initialization'][::10]]
     # Reusing bit-identical initial states separates parameter effects from closure

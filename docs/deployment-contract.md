@@ -1,6 +1,40 @@
 # 训练与部署接口约定
 
+2026-10-30 getup当前恢复[原四腿EMA80平滑](interfaces/20261030-getup-leg-action-smoothing.md)，100ms实测角接管已撤回。[当前奖励v4](interfaces/20261030-getup-prestand-torque.md)仅启用起立前力矩罚，部署不计算奖励。25/125/71/6及ONNX形状保持、输出仍是raw；执行端每10ms维护四腿80/20递归缓存，复位及0.2秒等待期清零，轮子不滤波，无100ms角锁存/接管要求，JSON恢复原v2滤波配置。独立CPU仍未实现EMA并明确拒载；H7未改，滤波适配及负责人核对待确认，无新训练模型交付。
+
+2026-10-30行走profile v5将非零直行目标幅值下限改为1.0m/s，课程上限改为(1.0,1.5)，command contract升v3并记录walking_speed_min；旧v4直接加载拒绝。此下限只作用于训练直行目标采样，停车纠偏和斜率过程仍允许小速度，CPU调用方不强制将所有vx抬到1.0。观测/ONNX/PD/物理不变，H7未改且负责人核对待确认；本版未训练。[双策略接口](interfaces/20261030-chuanliantui-two-policy.md)。
+
+行走v4修正奖励关节集合至四个实体腿电机，并保留XML无限位与被动膝余量；姿态权重−100加权后限到−1、yaw主跟踪权重1.0；profile为chuanliantui-walk-physical25-v4，reward recipe为split-walk-physical-motor-regularization-v3，旧walk v3拒载。命令v2、25/125网络/时序/PD/物理不变，CPU按PT严格契约联调，H7未改且负责人核对待确认。[接口](interfaces/20261030-chuanliantui-two-policy.md)。
+
+2026-10-30起立恢复高度课程：getup profile升v2，checkpoint新增课程标识和4096窗口/30%门槛核对；旧固定高度v1不静默迁移。25/125/71/6、ONNX及控制时序不变，图外目标高度随保存阶段为0.30或0.22m；独立CPU双策略仅接受已解锁0.22m模型。H7未改/未交付，负责人核对待确认。[本次接口记录](interfaces/20261030-getup-height-curriculum.md)。
+
+2026-10-30行走奖励精简：profile升`chuanliantui-walk-physical25-v3`、reward recipe为`split-walk-motion-without-getup-phases-v2`，17项独立运动奖励；旧walk v1/v2及旧20项配方拒载。命令contract仍v2，观测/ONNX/PD/物理和getup v1不变；CPU通过PT严格核对接受本版，不需要图外时序改动。H7未改、负责人核对待确认。[奖励及接口](interfaces/20261030-chuanliantui-two-policy.md)。
+
+2026-10-30行走配方v2：训练每回合均匀采样机身目标高度0.22～0.30m且回合内固定，只采样停车/直行/原地转请求；25/125观测和奖励权重不变。行走profile/command及高度范围严格核对，旧walk v1拒载，getup v1保持兼容。独立CPU用`--height`固定行走高度，起立仍0.22m，图外调用方维护角色高度及互斥运动请求；H7未改且适配待确认。[接口](interfaces/20261030-chuanliantui-two-policy.md)。
+
+2026-10-30新增[起立/行走双策略接口](interfaces/20261030-chuanliantui-two-policy.md)：新两任务Actor25/历史125/Critic71/动作6，ONNX各自125→6+3，去掉模式输入；旧32/160模型不可原样续载。训练及mjlab play仅单任务，选择模型的逻辑仅在独立CPU sim2sim；调用方维护切换迟滞、共享FIFO、真实上次动作、清航向/停车点和既有命令外环。H7需另行核对两图、25维打包与切换/里程语义，待负责人适配；本轮H7未改，模型未训练、未交付固件。
+
+2026-10-29稳站v2新增[停车位置外环v8](interfaces/20261029-stand-v2-position-hold.md)，显式依赖yaw，profile/command升版。32维帧/160维历史/6动作及ONNX不变；调用方新增停车基准、低速锁定、当前航向投影、死区/P限幅、vx斜率与清除语义，逻辑不进ONNX。训练用位置真值，评估另测轮速积分偏差；H7已有LQR积分是否可复用待确认，本轮未改H7、未训练或交付新训练模型。
+
+2026-10-29稳站v2新增[转向与松杆航向保持v7](interfaces/20261029-stand-v2-yaw-heading-hold.md)。32维帧/160维历史、6动作及ONNX布局保持，但命令语义与profile升版；调用方需维护航向参考、角度回绕、角速度限幅/斜率和恢复清零，不能仅替换模型。当前只实现训练侧配方与检查，未训练新yaw模型；H7/CPU适配及负责人核对待确认。
+
 2026-10-29：[稳站v2 model5999的H7_ros编译候选](interfaces/20261029-h7ros-stand-v2-model5999.md)已完成ONNX、160维历史/双输出SDK、AIR反馈估力和实机恢复代理适配及大小机编译；用户确认使用AIR估力，明确不烧录。USB v3当前帧32与旧v1/v2兼容解析已同步电脑端；板端真实时序、估力/接触代理及真机和H7负责人核对待确认，不将编译候选当作真机通过。[交付与证据](model-deliveries/20261029-stand-v2-model5999-h7ros.md)。
+
+2026-10-29稳站v2新增[B独立窄核跟踪recipe v6](interfaces/20261029-stand-v2-tight-tracking.md)，奖励开关默认关闭；checkpoint严格保存核分母与权重。观测/动作/历史/ONNX/控制时序保持，H7不受本次奖励代码影响，无需新增字段；原适配与负责人核对仍待确认。仅实现与检查，无训练及新训练模型交付。
+
+2026-10-29稳站v2新增[激活期主跟踪奖励recipe v5](interfaces/20261029-stand-v2-active-tracking-weight.md)，只改训练奖励倍率条件；profile/command、观测/动作/ONNX/控制时序保持，H7无新增运行字段或代码改动，负责人核对仍待确认。仅实现与检查，无训练及新训练模型交付。
+
+2026-10-29稳站v2新增[速度课程与限斜率命令v6](interfaces/20261029-stand-v2-speed-slew.md)，32/160/89/6和500/100Hz保持；模型外的实际命令按a×dt逼近目标，观测/奖励均用实际值，失稳立即清零。导出元数据保存斜率配置，H7适配与真实时序**待确认**；未修改H7、未训练或交付新权重。
+
+2026-10-28稳站v2新增[站起后50%回合速度跟踪](interfaces/20261028-stand-v2-post-stand-tracking.md)，新profile/命令/奖励版本；32/160/89/6和500/100Hz保持，vx覆盖前后0.1～0.3m/s。旧零速2999保留；新模型须与新配方配套，独立CPU显式拒载新跟踪图。本轮未改H7，负责人适配、数值/时序和真机核对待确认。
+
+2026-10-28新增[稳站v2原生CPU sim2sim](interfaces/20261028-stand-v2-native-cpu.md)：32维帧/160维历史、6动作及单输入ONNX接口保持。原2ms积分在初态17数值弹飞；当前为0.5ms积分、2ms PD/弹簧、10ms策略/历史，训练不变，回放已停。异常筛查通过但CPU起立仍与训练引擎不同，sim2sim行为未通过。仅已解锁0.22m零速名义工况，恢复使用训练的世界机身高度和轮端承重。本次未修改/交付H7固件，负责人适配、数值和真实时序核对仍待确认。
+
+2026-10-27当前稳站v2改为[先直立后精确高度](interfaces/20261027-stand-v2-upright-first.md)。32/160/89/6及单输入ONNX、NORMAL承重判据不变；奖励/课程/profile升版，旧model499/model999不可在当前入口续训或冒充本版模型。需用新训练产物重新交付，H7负责人核对状态仍为待确认。
+
+2026-10-27后续：稳站v2的NORMAL追加[轮端承重条件](interfaces/20261027-stand-v2-wheel-load-normal.md)：每轮≥重量10%且≥5N、合计≥重量80%，仍须满足40°/0.20m并持续0.5秒。32/160/89/6及单输入ONNX形状不变，`recovery_contract`区分模式规则；model499直接套新规则的64初态配对发生27→1平衡退化，普通回放/续训禁止静默跨规则。H7尚无对应轮端支撑力输入，估计或传感方案由部署负责人确认，本轮未改固件。
+
+2026-10-27：`chuanliantui_stand_v2`采用[160维单输入ONNX](interfaces/20261027-stand-v2-history160-onnx.md)，图内取最后32维作为当前帧；输出6动作和3维机体系质心速度。本版32维历史编码器checkpoint无需重训，仅重新导出；H7需维护100Hz五帧历史，部署负责人适配与实际时序核对待确认。
 
 2026-10-25后续：[轮角39／82 SMP PPO v4](interfaces/20261025-wheel39-smp-ppo-v4.md)已接通当前BC初始化及PPO保存／恢复、play／eval／check，按检查点定义区分旧零轮角39维与首次站稳清零39维。本轮仅零更新检查和回放，动作、物理、奖励、初态与时序保持；普通PPO默认不变。新轮角CPU／ONNX／H7未适配，旧导出器拒绝，部署负责人核对待确认。
 

@@ -6,12 +6,52 @@ from ct_mjlab.envs import task_registry
 from ct_mjlab.utils.helpers import get_args
 
 
+def training_viewer(env, port):
+    """Display the actual rollout states; PPO remains the only simulation driver."""
+    import time
+    import viser
+    from mjlab.viewer.viser.scene import MjlabViserScene
+
+    server = viser.ViserServer(host='127.0.0.1', port=port, label='mjlab training')
+    try:
+        sim = env.unwrapped.sim
+        scene = MjlabViserScene(server, sim.mj_model, env.num_envs,
+            sim_model=sim.model, expanded_fields=sim.expanded_fields)
+        scene.show_only_selected = False
+        scene.create_scene_gui(camera_distance=6., show_debug_viz_control=False)
+        server.gui.add_markdown(f'**Training: {env.num_envs} environments** — live PPO rollouts')
+        scene.update(sim.data)
+        original_step = env.step
+        last_render = time.perf_counter()
+
+        def step(actions):
+            nonlocal last_render
+            started = time.perf_counter()
+            result = original_step(actions)
+            # Limit simulation speed for viewing without adding steps or changing actions.
+            time.sleep(max(0., env.unwrapped.step_dt - (time.perf_counter() - started)))
+            if time.perf_counter() - last_render >= 1. / 30.:
+                with server.atomic():
+                    scene.update(sim.data)
+                last_render = time.perf_counter()
+            return result
+
+        env.step = step
+        print(f'Training viewer: http://127.0.0.1:{server.get_port()}', flush=True)
+        return server, original_step
+    except BaseException:
+        server.stop()
+        raise
+
+
 def train(args):
     env_cfg, train_cfg = task_registry.get_cfgs(args.task)
     if args.seed is not None:
         train_cfg.seed = args.seed
     if args.iterations is not None:
         train_cfg.max_iterations = args.iterations
+    if getattr(args, 'stand_curriculum_stage', None) is not None:
+        env_cfg.commands["standup"].curriculum_stage = args.stand_curriculum_stage
     env_cfg.seed = train_cfg.seed
     if args.smp_prior is not None:
         from ct_mjlab.smp.ppo import (configure_smp, policy_observation_contract,
@@ -25,6 +65,7 @@ def train(args):
                       bc_finetune=getattr(args, 'bc_finetune', False) or checkpoint_bc_finetune(args.resume))
     env, env_cfg = task_registry.make_env(
         args.task, env_cfg=env_cfg, train_cfg=train_cfg, num_envs=args.num_envs, device=args.device)
+    viewer = None
     try:
         runner, train_cfg = task_registry.make_alg_runner(
             env, args.task, train_cfg=train_cfg, log_dir='default', resume=args.resume,
@@ -45,20 +86,32 @@ def train(args):
         if args.smp_prior is not None:
             import shutil
             shutil.copy2(args.smp_prior, log_dir / 'smp_prior.pt')
+        if args.smp_prior is not None or args.task in ('chuanliantui_stand_v2', 'chuanliantui_getup', 'chuanliantui_walk'):
+            import shutil
             source = Path(__file__).resolve().parents[1]
             shutil.copytree(source, log_dir / 'snapshot' / 'ct_mjlab',
                             ignore=shutil.ignore_patterns('__pycache__'))
         print(f'Training output: {log_dir}', flush=True)
+        if args.viewer == 'viser':
+            viewer, original_step = training_viewer(env, args.viser_port)
         runner.learn(num_learning_iterations=train_cfg.max_iterations)
     finally:
+        if viewer is not None:
+            env.step = original_step
+            viewer.stop()
         env.close()
 
 
 def main():
-    args = get_args(__doc__, defaults={'num_envs': 4096}, extra=(
+    args = get_args(__doc__, extra=(
         (('--iterations',), dict(type=int, default=None, help='Override max_iterations')),
         (('--run-name',), dict(default='')),
-        (('--resume',), dict(type=Path, default=None, help='Continue from a multimode model_*.pt')),
+        (('--viewer',), dict(choices=('viser',), default=None,
+                            help='Show the actual training rollouts in a browser')),
+        (('--viser-port',), dict(type=int, default=8093)),
+        (('--stand-curriculum-stage',), dict(type=int, choices=(0, 1, 2), default=None,
+            help='Standing-only stage: 0=no pushes, 1=weak pushes, 2=strong/knockdown; default resumes saved stage')),
+        (('--resume',), dict(type=Path, default=None, help='Continue from a model_*.pt of the selected task')),
         (('--smp-prior',), dict(type=Path, default=None, help='Frozen prior_N.pt; enable SMP PPO with normal ground starts')),
         (('--smp-weight',), dict(type=float, choices=(0., 1.), default=None,
                                help='0: matched task-only comparison; default1 or resume checkpoint value')),
@@ -71,12 +124,19 @@ def main():
                                 help='Nominal BC refinement; isaac-standup uses Isaac pre-unlock task rewards')),
     ))
     # Fail before building the GPU environment.
+    if args.stand_curriculum_stage is not None and args.task != "chuanliantui_stand":
+        raise SystemExit("--stand-curriculum-stage only applies to chuanliantui_stand")
     if '/' in args.run_name or '\\' in args.run_name:
         raise SystemExit('--run-name must be a label, not a path')
     if args.resume is not None and not args.resume.is_file():
         raise SystemExit(f'--resume checkpoint not found: {args.resume}')
     if args.smp_prior is not None and (args.iterations is None or args.iterations < 1):
         raise SystemExit('SMP PPO requires an explicit positive --iterations budget')
+    if args.task in ('chuanliantui_stand_v2', 'chuanliantui_getup', 'chuanliantui_walk'):
+        if args.iterations is None or args.iterations < 1:
+            raise SystemExit('This task requires an explicit positive --iterations budget')
+        if args.smp_prior is not None:
+            raise SystemExit('This task uses its own history estimator; SMP profiles are incompatible')
     if args.smp_weight is not None and args.smp_prior is None:
         raise SystemExit('--smp-weight requires --smp-prior')
     if args.bc_init is not None and (args.resume is not None or args.smp_prior is None or not args.bc_init.is_file()):

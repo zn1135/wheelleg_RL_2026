@@ -1,10 +1,26 @@
 # sim2sim 与部署契约
 
+2026-10-30 getup当前恢复[原四腿EMA80平滑](../interfaces/20261030-getup-leg-action-smoothing.md)：100Hz混合新动作80%与上一拍已平滑动作20%，raw观测/ONNX保持，等待期/复位清缓存、轮子不滤波；100ms实测角接管已撤回，图外执行及JSON恢复原v2滤波配置，不再要求锁存角与接管计时。[当前奖励v4](../interfaces/20261030-getup-prestand-torque.md)仅在训练中启用起立前力矩罚，部署不计算奖励。独立CPU仍未实现EMA并明确拒载；H7未改，滤波适配/负责人核对待确认，未交付新权重。
+
+2026-10-30起立profile v2恢复训练高度课程0.30→0.22m；mjlab单模型play使用checkpoint保存阶段。独立CPU双策略仍固定起立0.22m，明确拒绝未解锁的v2模型，已解锁模型沿原路由；旧v1模型需对应历史源码。其余观测、ONNX、PD/物理及行走不变，H7待确认。[课程记录](../interfaces/20261030-getup-height-curriculum.md)。
+
+双策略行走v2新增`--height 0.22～0.30`，指定本次回放固定行走高度；起立始终0.22m。训练仅复位时随机高度，不随机切换高度段；CPU不自动随机，输入vx/yaw原始请求互斥。当前CPU命令版本v2，检查行走profile/命令版本和高度范围，getup v1接口保持。[参数与交付](../interfaces/20261030-chuanliantui-two-policy.md)。
+
+2026-10-30新增[单任务训练、仅CPU双策略切换](../interfaces/20261030-chuanliantui-two-policy.md)：`chuanliantui_getup`和`chuanliantui_walk`均25维帧/125维历史、无模式输入。独立入口`sim2sim/mj_sim2sim_chuanliantui_two_policy.py`读取各自PT对应的两个ONNX，按共同物理条件交接，保持FIFO/上次动作/PD，清航向及停车基准。CPU沿用0.5ms积分/2ms PD/100Hz策略，训练2ms物理不改。当前只有未训练夹具的观测对齐、有限CPU/切换检查，没有双策略行为通过或新训练模型；旧32/160 CPU入口不接新模型，H7待适配。
+
+2026-10-29稳站v2新增[停车位置外环v8](../interfaces/20261029-stand-v2-position-hold.md)：训练命令项使用仿真位置真值；独立冻结评估支持按实际模型轮轴符号/半径的500Hz轮速积分，比较里程计和真值误差。32/160/89/6及ONNX形状保持，停车基准、投影、死区/P限幅及清除由调用方维护。CPU sim2sim和H7尚未适配；H7能否复用LQR速度积分量待确认。
+
+稳站v2 CPU后续发现初态17在原2ms积分下数值弹飞。当前仅该入口细分为0.5ms积分（2000Hz），PD/弹簧500Hz、策略/历史100Hz保持；训练及共享XML不改。128初态前5秒异常筛查通过，但CPU与训练引擎起立仍有差异，行为未通过，回放已停止。[异常证据](../../artifacts/stand-v2-cpu-launch-20261028/README.md)。下文500/100Hz CPU描述为原v1记录，当前时序以[本版接口](../interfaces/20261028-stand-v2-native-cpu.md)为准。
+
+`chuanliantui_stand_v2`自2026-10-27改为32维当前观测＋160维历史编码器；旧39维独立CPU入口不能直接读取本版模型。2026-10-28新增`sim2sim/mj_sim2sim_chuanliantui_stand_v2.py`：原生CPU MuJoCo＋160维ONNX，已解锁0.22m阶段、名义零噪声/零时延，500/100Hz与0.2秒保持、承重NORMAL规则按训练版对齐；从已有名义initial.npz读取初态，浏览器单实例可切换。只有限接口检查和单例回放，未宣称完整行为或H7通过，见[CPU接入记录](../interfaces/20261028-stand-v2-native-cpu.md)与[32维接口](../interfaces/20261027-stand-v2-isaac32-history.md)。
+
+2026-10-25：仅`chuanliantui_stand`动作缓冲改为每环境每回合腿／轮独立随机1或2个策略步，按整数decimation接入原物理队列，无固定秒数。物理／PD仍500Hz、策略仍100Hz，部分复位清空对应队列。multimode、独立CPU和H7保持原时延，未同步此稳站任务改动；模型及行为状态见[项目实验记录](project-log.md)，实现见[稳站任务](../mjlab-chuanliantui-stand.md)。
+
 2026-10-23：mjlab训练／play／eval及独立CPU入口均试用10 ms／100 Hz策略，物理和PD保持2 ms／500 Hz。CPU趴地零力矩仍保持0.2秒（20个策略步），腾空确认仍20 ms，原2 ms动作等待不变，报告中的有效策略周期同步为10 ms；共享H7实测JSON保留原来源。后续USB H7源码随model13842导入同步10 ms／100 Hz，UART工程仍20 ms／50 Hz；烧录及板端待验收状态见[交付记录](../model-deliveries/20261023-model13842-h7-import.md)，不能把名义周期一致当作真实时序已测；旧CPU结果继续只描述当时的50 Hz。见[变频接口与验证](../interfaces/20261023-mjlab-policy100hz.md)。
 
 2026-10-22：华南虎训练动作等待按作者后续要求改为每回合腿/轮独立随机6、8、10 ms；mjlab play及独立CPU回放保持H7实测缓存到首次PD约2.003 ms量化后的固定2 ms。网络调用已包含在此路径中，控制周期仍2 ms，微秒抖动不模拟；传感器数据龄随机化保持原配置。训练随机范围不代表真机实测，行为仍需评估，见[接入与验证](../interfaces/20261022-h7-simulation-timing.md)。
 
-mjlab 串联腿只保留华南虎 multimode 一条线：39维actor／82维critic／六个实体电机，详见 [mjlab 串联腿训练](../mjlab-chuanliantui.md)。本页旧串联／H7策略通道保留历史物理顺序，只适用于 Isaac 旧任务。
+mjlab 串联腿的 multimode 与独立稳站任务共用39维actor／82维critic／六个实体电机，分别见 [multimode训练](../mjlab-chuanliantui.md)与[稳站任务](../mjlab-chuanliantui-stand.md)。现有独立CPU入口只验收multimode配方，不能将稳站任务的mjlab成绩直接当作CPU或真机成绩。本页旧串联／H7策略通道保留历史物理顺序，只适用于 Isaac 旧任务。
 
 华南虎 multimode 使用 39 维 actor／82 维 critic（`model_3023` 是历史基线）。其独立 CPU MuJoCo 入口为
 `sim2sim/mj_sim2sim_huananhu_multimode.py`：按契约元数据接受任何 39 维 checkpoint（可用 `--expect-sha256` 钉哈希），
@@ -114,14 +130,14 @@ XML 已用 `cone=elliptic` + `impratio=10`（轮式标准配置）。
 `resources/robots/chuanliantui_new_1/urdf/chuanliantui_train.urdf` 生成，保留训练端
 6-DOF 串联拓扑、固定后支链、地面、根 free joint 及六个同名力矩电机；模型必须保持
 `neq=0`。改训练 URDF 后运行
-`scripts/agent/generate_chuanliantui_train_proxy_mjcf.py`，再用
-`scripts/agent/check_chuanliantui_train_proxy.py` 检查该契约。
+`scripts/agent/isaac/generate_chuanliantui_train_proxy_mjcf.py`，再用
+`scripts/agent/isaac/check_chuanliantui_train_proxy.py` 检查该契约。
 
 chuanliantui actor 观测为 25 维：机体系角速度(3)、重力投影(3)、命令(3)、四个腿关节
 `[lf0, lf1, rf0, rf1]` 的位置(4)、六个关节速度(6)、上次动作(6)。连续轮的绝对位置
 不进入 actor 或 encoder；历史为 `25×5=125`。这改变了网络的 encoder、actor 和 critic
 输入形状，所有旧 27 维 chuanliantui checkpoint 均不能加载，必须重新训练。
-提交观测变更前可运行 `python scripts/agent/check_chuanliantui_observation.py`，核对训练端布局、
+提交观测变更前可运行 `python -m scripts.agent.isaac.check_chuanliantui_observation`，核对训练端布局、
 噪声、critic 维度、历史 FIFO 和 MuJoCo 构造是否一致。
 
 训练与 MuJoCo 回放均用 500 Hz 的物理/PD 内环（`sim_dt=0.002`），每 5 个内环步推理一次，
@@ -147,7 +163,7 @@ MuJoCo 零速诊断可在有限时长、无渲染回放上追加 `--diagnostic_r
 此调整只改变两膝限位约束的响应，保留 `lf1=[-0.12,0.77]`、`rf1=[-0.77,0.12]` rad
 的物理范围，不改变全局接触参数、关节耗散或控制 PD；不能把该设置等同于实体闭链或真机验证。
 队列上界、实际子步延后时长和部分回合重置可用
-`python scripts/agent/check_action_delay.py` 做 CPU 检查；这不替代正式行为验收。
+`python -m scripts.agent.isaac.check_action_delay` 做 CPU 检查；这不替代正式行为验收。
 
 ### chuanliantui 气弹簧支撑
 
@@ -161,7 +177,7 @@ MuJoCo 代理通过独立的两个 tendon motor 表示弹簧，主动电机仍�
 `eval_isaac.py`、`mj_sim2sim_ct.py` 的 `--gas_spring_force 0` 可恢复无弹簧对照；
 训练配置为 `ChuanliantuiCfg.gas_spring.force_n`。旧配置快照会继承当前父类，
 仅加载旧快照不会自动关闭弹簧。旧 checkpoint 形状兼容但行为需重新评估/续训。
-数值检查：`python scripts/agent/check_chuanliantui_gas_spring.py`；
+数值检查：`python -m scripts.agent.isaac.check_chuanliantui_gas_spring`；
 正式起立、站立回放仍按 [命令速查](../../COMMANDS.md) 执行。
 本轮没有把约 0.03 rad 的闭链虚拟/物理膝差写成补偿，也没有改变关节反馈。
 150 N 是现有仿真假设，真机弹簧推力待测量核实。
@@ -224,7 +240,7 @@ H7 路径则全部从主动轴反馈速度构造，MuJoCo 用 `qvel` 表示反�
 复旦模型的 `l20/r20` 不限位；当前闭链 XML 的 `lf00/rf00` 也已改为
 `limited="false"`，允许后输入轴连续旋转，避免原 ±3.14 rad 限位阻挡髋部转过一圈。
 这是 MuJoCo 模型对原始 CAD URDF 限位的显式修正；闭链生成器已同步该规则和气弹簧定义，
-重新生成后运行 `python scripts/agent/check_chuanliantui_closed.py`，检查左右膝限位、
+重新生成后运行 `python -m scripts.agent.isaac.check_chuanliantui_closed`，检查左右膝限位、
 端点连接、每侧 0/150 N 施力、±360° 闭合姿态以及原有的 5 秒无控制仿真。
 用户确认实机膝关节行程以 `chuanliantui_train.urdf` 为准：
 `lf1=[-0.12,0.77]`、`rf1=[-0.77,0.12]` rad。原始 `chuanliantui.urdf`
@@ -260,11 +276,11 @@ CPU 回归检查调用真实的奖励准备和计算路径，覆盖实际裁剪�
 硬限位保存、膝余量的对称性与起立门控：
 
 ```bash
-python scripts/agent/check_standup_precision_rewards.py
+python -m scripts.agent.isaac.check_standup_precision_rewards
 ```
 
 该检查不创建仿真或训练产物，不能代替正式训练、Isaac 回放和 MuJoCo 行为验收。
-历史续训命令见 [命令速查](../../COMMANDS.md#前一轮022-m-站高与-005-rad-膝余量续训)：
+历史续训命令见 [Isaac历史命令](../commands/isaac.md)：
 从 `Oct03_03-28-58_standup_action_delay_0_10ms/model_9000.pt` 额外训练 3000 轮，
 当前叠加下述推扰，使用新的 `standup_h022_knee005_push` run 名及日志目录；保留旧模型做同条件对照。
 恢复该已解锁 checkpoint 后，课程命令按当前配置切换为 0.22 m，成功高度为 0.20 m。
@@ -290,7 +306,7 @@ python scripts/agent/check_standup_precision_rewards.py
 手推测量标定。站高、膝余量、动作延迟及观测/动作接口保持当前设置；本轮没有把
 H7 的轮速目标 ±20 rad/s 裁剪加入训练，推扰不能替代这项控制一致性工作。
 
-`python scripts/agent/check_standup_pushes.py` 检查分档、时序、实际提交张量和重置。
+`python -m scripts.agent.isaac.check_standup_pushes` 检查分档、时序、实际提交张量和重置。
 正式行为检查使用 `eval_isaac.py --pushes`，可叠加 `--action_delay_ms 6` 单独比较；
 `--domain_rand` 则保留全部训练随机化。默认回放关闭推扰。`--metrics_report` 保存
 实际推力和每回合触发次数，非零施力时长按 100 Hz 采样估算并排除重置步。
