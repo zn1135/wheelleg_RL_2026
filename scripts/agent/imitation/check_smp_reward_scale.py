@@ -27,7 +27,7 @@ def run(args):
     for episode in dataset.episodes:
         with np.load(episode['path']) as trace:
             records.append((trace['initial_qpos'].copy(), trace['initial_qvel'].copy()))
-    cfg, train = task_registry.get_cfgs('chuanliantui', play=True)
+    cfg, train = task_registry.get_cfgs('smp', play=True)
     configure_smp(cfg, train, args.prior, play=False)
     cfg.seed, cfg.auto_reset = 42, False
     cfg.actions['pd'] = BridgeCfg(**{k: v for k, v in vars(cfg.actions['pd']).items() if k != 'class_type'})
@@ -38,7 +38,7 @@ def run(args):
     cfg.metrics['source_balance'] = MetricsTermCfg(func=balance_substep, per_substep=True, reduce='last')
     pairs = [(leg, wheel) for leg in (.002, .004) for wheel in (.002, .004)]
     count = len(records)*len(pairs)
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train,
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train,
                                    num_envs=count, device=args.device)
     try:
         raw = env.unwrapped

@@ -21,7 +21,7 @@ def run(args):
     torch.set_num_threads(1)
     args.output.mkdir(parents=True, exist_ok=False)
     assert Path(ct_mjlab.__file__).resolve().is_relative_to(ROOT)
-    assert 'chuanliantui_stand' in task_registry.names()
+    assert task_registry.names() == ('smp', 'supermimic')
     saved = torch.load(args.checkpoint, map_location='cpu', weights_only=False)
     assert saved['bc_finetune']['completed_iterations'] == 400
     assert hashlib.sha256(args.checkpoint.read_bytes()).hexdigest() == '3d41097c93b5c22f26fefc17f03c330f54f236ebd2bc76537dcc0768e1f8307a'
@@ -44,7 +44,7 @@ def run(args):
             equal(restored[key], saved[key])
         reached.append(True)
 
-    base = dict(task='chuanliantui', seed=42, num_envs=2, device='cuda:0', smp_prior=args.prior)
+    base = dict(task='smp', seed=42, num_envs=2, device='cuda:0', smp_prior=args.prior)
     with patch.object(torch.optim.Adam, 'step', side_effect=AssertionError('No training allowed')):
         with patch.object(task_registry, 'make_alg_runner', side_effect=make_runner), \
                 patch.object(SmpOnPolicyRunner, 'learn', before_sampling):

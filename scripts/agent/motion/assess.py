@@ -95,78 +95,10 @@ def supermimic_phase(values, layout, env, start, end, reference, dt, planned_end
     return result
 
 
-def stand_phase(p, c, *, selected, vx_target, yaw_target=0., complete=True, yaw_columns=False):
-    """稳站轨迹共用物理列；旧直线记录无偏航信号，明确报告缺项。"""
-    return phase_verdict(vx=c[:, 4] if yaw_columns else c[:, 2],
-        yaw=c[:, 5] if yaw_columns else (c[:, 4] if c.shape[1] >= 5 else None),
-        horizontal_speed=np.linalg.norm(p[:, 7:9], axis=-1), pitch_deg=np.rad2deg(p[:, 4]),
-        vx_target=vx_target, yaw_target=yaw_target, selected=selected,
-        valid=(p[:, 12] > .5) & (p[:, 13] > .5) & np.isfinite(p).all(-1) & np.isfinite(c).all(-1), complete=complete,
-        parking=bool(vx_target == 0. and yaw_target == 0.),
-        command_vx=(c[:, 2] if yaw_columns else c[:, 0]) if vx_target != 0. else None,
-        command_yaw=c[:, 3] if yaw_columns and yaw_target != 0. else None)
 
 
-def tracking_rows(meta, v, physical, active, times):
-    rows, windows = [], []
-    # 同一100Hz周期中的500Hz峰值不能被降采样漏掉。
-    ratio = physical.shape[0]//v.shape[0]
-    assert ratio*v.shape[0] == physical.shape[0]
-    grouped = physical.reshape(len(v), ratio, v.shape[1], physical.shape[-1])
-    pitch = np.rad2deg(np.abs(grouped[..., 4])).max(1)
-    speed = np.linalg.norm(grouped[..., 7:9], axis=-1).max(1)
-    live = active & (grouped[..., 12:14] > .5).all((1, 3))
-    for old in meta['rows']:
-        env = old['env']; phases = {}
-        for name, start, end, target in [('cruise', *meta['measured_window_s'], old['requested_vx_m_s']),
-                ('parking', meta['stop_window_s'][1]-1., meta['stop_window_s'][1], 0.)]:
-            selected = (times > start+1e-8) & (times <= end+1e-8)
-            phases[name] = phase_verdict(vx=v[:, env, 1], yaw=v[:, env, 3],
-                horizontal_speed=speed[:, env], pitch_deg=pitch[:, env], vx_target=target,
-                yaw_target=0., selected=selected, valid=live[:, env],
-                complete=bool(old['ready_at_8s'] and selected.sum() == round((end-start)/meta['policy_dt_s'])),
-                parking=target == 0., command_vx=v[:, env, 0])
-            windows.append(dict(env=env, phase=name, start_s=start, end_s=end))
-        rows.append(dict(env=env, phases=phases, passed=bool(old['survived_22s'] and all(p['passed'] for p in phases.values()))))
-    return rows, windows
 
 
-def stand_segments(meta, physical, command):
-    """按保存报告的指令分段复算，历史缺失偏航仍保留失败分母。"""
-    yaw_columns = command.shape[-1] >= 15
-    episodes = meta['episodes'] if yaw_columns else meta['moving']['episodes']
-    dt = meta.get('physics_dt_s', meta['duration_s']/len(physical))
-    rows, windows = [], []
-    for episode in episodes:
-        env, phases = episode['env'], {}
-        segments = episode['segments']
-        for index, segment in enumerate(segments):
-            start = segment['start_s']
-            end = segment.get('end_s', segments[index+1]['start_s'] if index+1 < len(segments) else meta['duration_s'])
-            section = slice(round(start/dt), round(end/dt))
-            p, c = physical[section, env], command[section, env]
-            vx = segment['requested_vx_m_s'] if yaw_columns else segment['target_vx_m_s']
-            yaw = segment.get('requested_yaw_rad_s', 0.)
-            live = (p[:, 12] > .5) & (p[:, 13] > .5) & np.isfinite(p).all(-1) & np.isfinite(c).all(-1)
-            gated = live & ((c[:, 9] > .5) & (c[:, 10] > .5) if yaw_columns else c[:, 3] > .5)
-            reached = gated & (np.abs(c[:, 2 if yaw_columns else 0]-vx) <= 1e-5)
-            if yaw_columns and yaw != 0.:
-                reached &= np.abs(c[:, 3]-yaw) <= 1e-5
-            if yaw_columns and 'position_hold' in meta and vx == 0.:
-                reached = gated.copy()
-                if yaw != 0.:
-                    reached &= np.abs(c[:, 3]-yaw) <= 1e-5
-            measured = settled_window(reached, dt)
-            name = str(index)+'-'+segment['kind']
-            ended = episode.get('first_end_s')
-            full = bool(len(p) == round((end-start)/dt) and gated.all()
-                        and measured.sum()*dt >= .5 and (ended is None or ended > end))
-            phases[name] = stand_phase(p, c, selected=measured, vx_target=vx, yaw_target=yaw,
-                yaw_columns=yaw_columns, complete=full)
-            windows.append(dict(env=env, phase=name, start_s=start, end_s=end,
-                selection='actual command reaches request, then wait0.5s; no actual-speed selection'))
-        rows.append(dict(env=env, phases=phases, passed=bool(phases and all(p['passed'] for p in phases.values()))))
-    return rows, windows
 
 
 def reevaluate(directory):
@@ -201,19 +133,8 @@ def reevaluate(directory):
                     windows.append(dict(env=original['env'], phase=name, start_s=old['start_s'], end_s=old['end_s']))
                 rows.append(dict(env=original['env'], phases=phases,
                     passed=bool(original['survived'] and phases and all(p['passed'] for p in phases.values()))))
-    elif (directory/'trace.npz').exists() and 'measured_window_s' in meta:
-        trace = directory/'trace.npz'
-        assert digest(trace) == meta['trace_sha256']
-        with np.load(trace, allow_pickle=False) as saved:
-            v, physical, active = saved['values'], saved['physical'], saved['active']
-            rows, windows = tracking_rows(meta, v, physical, active, saved['time_s'])
-    elif (directory/'trajectories.npz').exists():
-        trace = directory/'trajectories.npz'
-        assert digest(trace) == meta['trajectories_sha256']
-        with np.load(trace, allow_pickle=False) as saved:
-            rows, windows = stand_segments(meta, saved['physical'], saved['command'])
     else:
-        raise ValueError('Supported saved runs: SuperMimic or stand_v2 tracking/speed/yaw')
+        raise ValueError('Expected a retained SuperMimic summary/trajectory run')
     return dict(standard=STANDARD, thresholds=THRESHOLDS, input_files={str(p.resolve()): digest(p) for p in (meta_path, trace)},
         windows=windows, total=len(rows), passed=sum(row['passed'] for row in rows), rows=rows,
         source_verified=True, evaluator_sha256=digest(__file__),
@@ -255,77 +176,18 @@ def verify_sources(report, directory):
             archive.close()
 
 
-def audit_tracking(measurement, initial_reference=None):
-    from types import SimpleNamespace
-    args = SimpleNamespace(measurement=Path(measurement), initial_reference=initial_reference)
-    r = json.loads((args.measurement/"result.json").read_text())
-    assert r["parameter_updates"] == 0 and r["actor_and_encoder_unchanged"]
-    assert digest(r["checkpoint"]) == r["checkpoint_sha256"]
-    verify_sources(r, args.measurement)
-    assert digest(args.measurement/"trace.npz") == r["trace_sha256"]
-    assert digest(args.measurement/"qpos.npz") == r["qpos_sha256"]
-    with np.load(args.measurement/"trace.npz") as f:
-        v, active, physical, ready = f["values"], f["active"], f["physical"], f["ready"]
-        weight = f["weight_N"]
-        assert v.shape == (2200, 64, 8) and physical.shape == (11000, 64, 15)
-        assert np.allclose(f["time_s"], (np.arange(2200)+1)*.01)
-        assert np.isfinite(v[active]).all()
-        assert np.isfinite(physical[physical[:, :, 13] > .5]).all()
-        if args.initial_reference:
-            with np.load(args.initial_reference) as old:
-                for key in ("initial_qpos", "initial_qvel", "weight_N"):
-                    assert np.array_equal(old[key], f[key]), key
-    assert not (np.diff(active.astype(int), axis=0) > 0).any()
-    assert np.array_equal(ready, (v[799, :, 5] > .5) & (v[799, :, 6] < .5) & active[799])
-    requested = np.array([row["requested_vx_m_s"] for row in r["rows"]], dtype=np.float32)
-    expected = np.zeros((2200,64), dtype=np.float32)
-    expected[800:1800] = np.where(ready, requested, 0.)
-    assert np.array_equal(v[:, :, 0], expected), "Nonzero command did not reach the measurement window"
-    assert (v[800:1800, :, 0] != 0).any(), "No nonzero command was delivered"
-    tail = physical[5000:9000]
-    balanced = ((tail[:, :, :2] >= np.maximum(.1*weight, 5.)[None, :, None]).all(-1)
-        & (tail[:, :, :2].sum(-1) >= weight*.8) & (tail[:, :, :2].sum(-1) <= weight*1.2)
-        & (tail[:, :, 2] <= 1.) & (tail[:, :, 3:5].max(-1) <= np.deg2rad(35.))
-        & (tail[:, :, 5] <= .5) & (tail[:, :, 12] > .5) & (tail[:, :, 13] > .5))
-    for i,row in enumerate(r["rows"]):
-        if not row["ready_at_8s"]:
-            assert row["actual_mean_vx_m_s"] is None and row["measured_s"] == 0.
-            continue
-        data = v[1000:1800, i][active[1000:1800, i]]
-        assert np.isclose(row["actual_mean_vx_m_s"], data[:, 1].mean())
-        assert np.isclose(row["vx_mean_abs_error_m_s"], np.abs(data[:, 1]-requested[i]).mean())
-        assert np.isclose(row["steady_balance_fraction"], balanced[:, i].mean())
-    for group in r["groups"]:
-        rows = [row for row in r["rows"] if np.isclose(row["requested_vx_m_s"], group["command_vx_m_s"])]
-        complete = [row for row in rows if row["complete_tracking_window"]]
-        assert group["total"] == len(rows) and group["completed"] == len(complete)
-        if complete:
-            assert np.isclose(group["actual_mean_vx_m_s"], np.mean([row["actual_mean_vx_m_s"] for row in complete]))
-            assert np.isclose(group["mean_abs_error_m_s"], np.mean([row["vx_mean_abs_error_m_s"] for row in complete]))
-    result = dict(verified=True, checkpoint_sha256=r["checkpoint_sha256"],
-        recorded_policy_steps=2200, recorded_physics_steps=11000,
-        nonzero_command_delivered=True, original_64_initial_states_match=bool(args.initial_reference),
-        ready_envs=int(ready.sum()), not_ready_envs=np.where(~ready)[0].tolist(),
-        complete_tracking_envs=sum(row["complete_tracking_window"] for row in r["rows"]),
-        final_drive_balanced_envs=sum(row["final_drive_balance_1s"] for row in r["rows"]),
-        parameter_updates=0, source_sha256=digest(__file__))
-    return result
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument('--measurement', type=Path, help='Recompute four motion criteria from saved trajectories')
-    mode.add_argument('--audit-tracking', type=Path, help='Original stand_v2 source/hash/command/balance audit')
     mode.add_argument('--selfcheck', action='store_true', help='Finite arithmetic checks only')
-    parser.add_argument('--initial-reference', type=Path)
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     if args.selfcheck:
         from scripts.agent.maintenance.check_script_merges import motion
         result = motion()
-    elif args.audit_tracking:
-        result = audit_tracking(args.audit_tracking, args.initial_reference)
     else:
         if args.output is None:
             parser.error('--measurement requires --output pointing to a new JSON file')

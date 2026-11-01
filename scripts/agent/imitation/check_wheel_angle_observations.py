@@ -19,7 +19,7 @@ from ct_mjlab.smp.ppo import SmpCommandCfg, reset_pose
 @torch.inference_mode()
 def check(args):
     xml_hash = hashlib.sha256(MODEL_XML.read_bytes()).hexdigest()
-    cfg, train = task_registry.get_cfgs('chuanliantui', play=True)
+    cfg, train = task_registry.get_cfgs('smp', play=True)
     assert not cfg.observations['actor'].terms['proprioception'].params['cfg'].wheel_angle_displacement
     cfg.auto_reset = False
     cfg.rewards = {}
@@ -27,7 +27,7 @@ def check(args):
     cfg.commands['standup'] = SmpCommandCfg()
     cfg.events['reset_pose'] = EventTermCfg(func=reset_pose, mode='reset')
     observations.configure_wheel_angle_observations(cfg)
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train,
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train,
                                    num_envs=20, device=args.device)
     try:
         raw = env.unwrapped

@@ -112,9 +112,9 @@ def main():
     controller_contract,verified = verify_controller_sources(args.checkpoint,args.output)
     assert verified['verified']
     checkpoint_sha = digest(args.checkpoint)
-    cfg, train = task_registry.get_cfgs('chuanliantui_walk', play=True)
+    cfg, train = task_registry.get_cfgs('supermimic', play=True)
     cfg.auto_reset, cfg.seed = False, SEED
-    env, _ = task_registry.make_env('chuanliantui_walk', env_cfg=cfg, train_cfg=train,
+    env, _ = task_registry.make_env('supermimic', env_cfg=cfg, train_cfg=train,
         num_envs=NUM_ENVS, seed=SEED, device=args.device)
     raw = env.unwrapped
     try:

@@ -149,7 +149,7 @@ def main():
     from scipy.optimize import brentq
     from ct_mjlab.envs.chuanliantui.model import load_model, MODEL_XML
     from ct_mjlab.envs.chuanliantui.huananhu_poses import _front_kinematics
-    from scripts.agent.multimode.inspect_multimode_leg_length import standing_endpoint
+    from scripts.agent.shared.geometry import standing_endpoint
     model = load_model()
     hip_z = float(np.mean([model.body(name).pos[2] for name in ('lf0', 'rf0')]))
     offset = .06 - hip_z

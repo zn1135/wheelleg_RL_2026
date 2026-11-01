@@ -19,7 +19,7 @@ import torch
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT/'mjlab_training/src'))
-from scripts.agent.split.diagnose_walk_v8_regression import Recorder, digest, sample_physics
+from scripts.agent.shared.recording import Recorder, digest, sample_physics
 
 
 HEIGHT, START, STOP, SETTLE = .26, 2., 16., 1.5
@@ -69,30 +69,21 @@ def verify_training_sources(checkpoint, output, policy_kind):
         if not snapshot.is_dir():
             raise ValueError('PPO reference requires its original snapshot/ct_mjlab')
         hashes = {str(path.relative_to(snapshot)):digest(path) for path in snapshot.rglob('*.py')}
-        names = {str(path.relative_to(current)) for path in current.rglob('*.py')}
-        added = sorted(names-set(hashes))
-        assert hashes and not (set(hashes)-names), 'PPO training source files are missing'
-        assert all(name.startswith('supermimic/') for name in added), 'Unknown non-PPO source addition'
-        for name,sha in hashes.items():
-            assert digest(current/name) == sha, f'PPO training/current source differs: {name}'
-        # 新增算法模块不属于原PPO环境；记录差异，不声称整个源码树完全相同。
+        from ct_mjlab.utils.source_migration import verify_training_tree
+        proof = verify_training_tree(hashes, snapshot, current, allowed_added_prefixes=('supermimic/',))
         copied_manifest = output/'training-source-sha256.json'
         write(copied_manifest,hashes)
-        return dict(verified=True,manifest=str(copied_manifest),manifest_sha256=digest(copied_manifest),
-            snapshot_root=str(snapshot),source_files=len(hashes),full_source_tree_equal=not added,
-            added_non_environment_sources=added,shared_training_sources_all_equal=True,
-            method='Every original PPO Python source matches; only added supermimic modules are allowed')
+        return dict(**proof, manifest=str(copied_manifest), manifest_sha256=digest(copied_manifest),
+            snapshot_root=str(snapshot),source_files=len(hashes))
     if not manifest.is_file():
         return dict(verified=False,reason='Checkpoint run has no training source manifest')
     hashes = json.loads(manifest.read_text())
-    assert set(hashes) == {str(path.relative_to(current)) for path in current.rglob('*.py')}, \
-        'Training/current source-file coverage differs'
-    for name, sha in hashes.items():
-        assert digest(current/name) == sha, f'Training/current source differs: {name}'
-        assert digest(snapshot/name) == sha, f'Training snapshot differs: {name}'
+    from ct_mjlab.utils.source_migration import verify_training_tree
+    proof = verify_training_tree(hashes, snapshot, current)
     shutil.copy2(manifest,output/'training-source-sha256.json')
-    return dict(verified=True,manifest=str(manifest),manifest_sha256=digest(manifest),
-        snapshot_root=str(snapshot),source_files=len(hashes),full_source_tree_equal=True)
+    return dict(**proof, manifest=str(manifest), manifest_sha256=digest(manifest),
+        snapshot_root=str(snapshot),source_files=len(hashes))
+
 
 
 def verify_ppo_resources(checkpoint, output):
@@ -305,14 +296,14 @@ def run(args):
     physical_sources = (verify_ppo_resources(args.checkpoint,args.output)
                         if args.policy_kind == 'ppo-reference' else None)
     checkpoint_sha, xml_sha = digest(args.checkpoint), digest(MODEL_XML)
-    cfg, train = task_registry.get_cfgs('chuanliantui_walk',play=args.conditions == 'nominal')
+    cfg, train = task_registry.get_cfgs('supermimic',play=args.conditions == 'nominal')
     command_cfg = cfg.commands['standup']
     if args.yaw_rates is not None and any(abs(yaw)>command_cfg.yaw_rate_limit for yaw in args.yaw_rates):
         raise ValueError(f'Yaw requests must stay inside production +/-{command_cfg.yaw_rate_limit}rad/s')
     cases = make_cases(args.num_envs,args.speeds,args.yaw_rates,command_cfg.yaw_acceleration)
     cfg.auto_reset, cfg.seed = False, args.seed
     cfg.metrics['supermimic_assessment'] = MetricsTermCfg(func=sample_physics,per_substep=True,reduce='last')
-    wrapped,_ = task_registry.make_env('chuanliantui_walk',env_cfg=cfg,train_cfg=train,
+    wrapped,_ = task_registry.make_env('supermimic',env_cfg=cfg,train_cfg=train,
         num_envs=args.num_envs,seed=args.seed,device=args.device)
     raw = wrapped.unwrapped
     try:
@@ -327,7 +318,7 @@ def run(args):
             checkpoint_iteration, checkpoint_transitions = saved['iteration'],saved['transitions']
             load_method = 'SuperMimic Learner.load(inference=True), strict algorithm/task/XML contract'
         else:
-            runner,_ = task_registry.make_alg_runner(wrapped,'chuanliantui_walk',train_cfg=train,
+            runner,_ = task_registry.make_alg_runner(wrapped,'supermimic',train_cfg=train,
                                                      device=args.device)
             # 原生PPO读取原始字段及契约；不改检查点键，不恢复优化器或执行学习。
             runner.load(str(args.checkpoint),load_cfg={'actor':True},strict=True,map_location=args.device)

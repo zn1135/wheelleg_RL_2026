@@ -83,8 +83,8 @@ def main():
         for row in (good, bad)]
     statuses = ['末段平衡通过'] + [
         '末段平衡通过' if row['final_balance_v31'] else '末段平衡未通过' for row in (good, bad)]
-    cfg, train = task_registry.get_cfgs('chuanliantui', play=True)
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train, num_envs=1)
+    cfg, train = task_registry.get_cfgs('smp', play=True)
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train, num_envs=1)
     renderer = None
     try:
         width, height, header, fps = 640, 448, 112, 60

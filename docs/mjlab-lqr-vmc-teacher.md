@@ -103,4 +103,4 @@ mjlab_training/.venv/bin/python -m scripts.agent.imitation.assess_lqr_vmc --case
 
 平衡采用[现有v3.1](interfaces/chuanliantui-wheel-balance-acceptance-v2.md)末尾连续1秒判据：倾角≤35°、机身接触≤1N、每轮≥max(10%重量,5N)、双轮总承重80%～120%、横滚／俯仰角速度模长≤0.5rad/s；`final_balance_v31`还要求完整20秒、无故障和手动复位，短回放仅报告`final_window_balance`。
 
-跟踪采用[现有平地阈值](interfaces/chuanliantui-huananhu-multimode-tracking-v1.md)：固定命令至少12秒，跳过前2秒，速度／偏航平均绝对误差≤0.30，机身高度误差≤0.03m，测量段最大倾角≤25°、无机身接触、全程无故障。高度目标明确使用 `腿长命令+0.03648m`；另报实际腿长误差。十一组检查不是原协议全部196格命令网格，序列回放也不算固定命令跟踪通过。
+跟踪采用现有平地阈值（对应旧训练线已清理）：固定命令至少12秒，跳过前2秒，速度／偏航平均绝对误差≤0.30，机身高度误差≤0.03m，测量段最大倾角≤25°、无机身接触、全程无故障。高度目标明确使用 `腿长命令+0.03648m`；另报实际腿长误差。十一组检查不是原协议全部196格命令网格，序列回放也不算固定命令跟踪通过。

@@ -24,7 +24,7 @@ def assess(args):
     for name,path in (('stable_legacy39',args.stable),('wheel39_5000',args.first),('wheel39_10000',args.latest)):
         assert report['checkpoint_sha256'][name]==digest(path)
         models[name]=load_actor(path,'cuda:0')[0]
-    cfg,_=task_registry.get_cfgs('chuanliantui',play=True)
+    cfg,_=task_registry.get_cfgs('smp',play=True)
     errors=[];velocity_errors=[];gravity_errors=[]
     with np.load(args.run/'probes.npz') as probes:
         for index,tick in enumerate((2500,5000,7500)):

@@ -114,7 +114,7 @@ def run(args):
         ROOT/'scripts/agent/imitation/check_lqr_student_closed_loop.py',ROOT/'scripts/agent/imitation/check_smp_policy_source.py',ROOT/'scripts/agent/imitation/collect_lqr_student.py']:
         name=str(path.relative_to(ROOT));sources[name]=digest(path);target=args.output/'snapshot'/name
         target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(path,target)
-    cfg,train=task_registry.get_cfgs('chuanliantui',play=True)
+    cfg,train=task_registry.get_cfgs('smp',play=True)
     if data.observation_dim == 40:
         multimode_observations.configure_wheel_odometry(cfg)
     cfg.auto_reset=False;cfg.seed=42;cfg.episode_length_s=DURATION+1.;cfg.rewards={}
@@ -125,7 +125,7 @@ def run(args):
     cfg.metrics['wheel_capture']=MetricsTermCfg(func=capture_wheels,per_substep=True,reduce='last')
     cfg.actions['pd']=TakeoverCfg(**{k:v for k,v in vars(cfg.actions['pd']).items() if k!='class_type'})
     cfg.actions['pd'].action_delay_s=None;cfg.actions['pd'].randomize_delays=False;cfg.actions['pd'].action_delay_choices_s=(.002,.004)
-    env,_=task_registry.make_env('chuanliantui',env_cfg=cfg,train_cfg=train,num_envs=count,device=args.device)
+    env,_=task_registry.make_env('smp',env_cfg=cfg,train_cfg=train,num_envs=count,device=args.device)
     try:
         raw=env.unwrapped;raw.reset(seed=42);action=raw.action_manager.get_term('pd')
         assert raw.physics_dt==.002 and raw.step_dt==.01 and not action.cfg.motor_randomization

@@ -39,45 +39,6 @@ def periodic_knockdown_policy(env, policy, every_s, speed_range=KNOCKDOWN_ANGULA
 
 def play(args):
     env_cfg, train_cfg = task_registry.get_cfgs(args.task, play=True)
-    if getattr(args, 'post_stand_tracking', False):
-        if args.task != 'chuanliantui_stand_v2':
-            raise ValueError('--post-stand-tracking requires chuanliantui_stand_v2')
-        env_cfg.commands['standup'].post_stand_tracking = True
-    if getattr(args, 'speed_curriculum', False):
-        if args.task != 'chuanliantui_stand_v2' or not args.post_stand_tracking:
-            raise ValueError('--speed-curriculum requires stand_v2 and --post-stand-tracking')
-        env_cfg.commands['standup'].speed_curriculum = True
-        from ct_mjlab.envs.chuanliantui_stand_v2.mdp import SPEED_COMMAND_CONTRACT, YAW_COMMAND_CONTRACT, POSITION_COMMAND_CONTRACT
-        metadata = torch.load(args.checkpoint, map_location='cpu', weights_only=False).get('infos', {})
-        if metadata.get('command_contract') in (SPEED_COMMAND_CONTRACT, YAW_COMMAND_CONTRACT, POSITION_COMMAND_CONTRACT):
-            for key, value in metadata['standup_curriculum']['speed_curriculum']['config'].items():
-                setattr(env_cfg.commands['standup'], key, value)
-    if getattr(args, 'yaw_control', False):
-        if not getattr(args, 'speed_curriculum', False):
-            raise ValueError('--yaw-control requires --speed-curriculum')
-        env_cfg.commands['standup'].yaw_control = True
-        if metadata.get('command_contract') in (YAW_COMMAND_CONTRACT, POSITION_COMMAND_CONTRACT):
-            for key, value in metadata['yaw_control_config'].items():
-                setattr(env_cfg.commands['standup'], key, value)
-    if getattr(args, 'position_hold', False):
-        if not getattr(args, 'yaw_control', False):
-            raise ValueError('--position-hold requires --yaw-control')
-        env_cfg.commands['standup'].position_hold = True
-        if metadata.get('command_contract') == POSITION_COMMAND_CONTRACT:
-            for key, value in metadata['position_hold_config'].items():
-                setattr(env_cfg.commands['standup'], key, value)
-    if getattr(args, 'tracking_weight_while_active', False):
-        if not getattr(args, 'speed_curriculum', False):
-            raise ValueError('--tracking-weight-while-active requires --speed-curriculum')
-        env_cfg.commands['standup'].tracking_weight_while_active = True
-    if getattr(args, 'tracking_tight_term', False):
-        if not getattr(args, 'tracking_weight_while_active', False):
-            raise ValueError('--tracking-tight-term requires --tracking-weight-while-active')
-        from ct_mjlab.envs.chuanliantui_stand_v2.rewards import restore_tracking_reward_cfg
-        metadata = torch.load(args.checkpoint, map_location='cpu', weights_only=False).get('infos', {})
-        restore_tracking_reward_cfg(env_cfg.commands['standup'], metadata)
-        # 旧模型仍由runner的recipe检查拒绝，不在play里隐式迁移。
-        env_cfg.commands['standup'].tracking_tight_term = True
     if args.seed is not None:
         env_cfg.seed = args.seed
     if args.smp_prior is not None:
@@ -96,7 +57,7 @@ def play(args):
         else:
             runner, _ = task_registry.make_alg_runner(env, args.task, train_cfg=train_cfg, device=args.device)
             runner.load(str(args.checkpoint), load_cfg={'actor': True}, strict=True, map_location=args.device)
-            if getattr(args, 'speed_curriculum', False) or args.task == 'chuanliantui_walk':
+            if args.task == 'supermimic':
                 env.unwrapped.command_manager.get_term('standup').speed_curriculum_frozen = True
             policy = runner.get_inference_policy(device=args.device)
         if args.knockdown_every:
@@ -145,12 +106,6 @@ def play(args):
 def main():
     args = get_args(__doc__, defaults={'num_envs': 1}, extra=(
         checkpoint_arg(),
-        (('--post-stand-tracking',), dict(action='store_true', help='Replay the post-stand 50% velocity recipe')),
-        (('--speed-curriculum',), dict(action='store_true', help='Replay vx1.5 ramped command recipe')),
-        (('--tracking-weight-while-active',), dict(action='store_true', help='Replay active-period tracking reward v5')),
-        (('--tracking-tight-term',), dict(action='store_true', help='Replay additional tight tracking reward v6')),
-        (('--yaw-control',), dict(action='store_true', help='Replay yaw-rate commands with heading hold on release')),
-        (('--position-hold',), dict(action='store_true', help='Replay parking position outer loop; requires yaw control')),
         (('--smp-prior',), dict(type=Path, default=None, help='Use the SMP PPO profile and its normal ground starts')),
         (('--viewer',), dict(choices=('auto', 'native', 'viser'), default='auto')),
         (('--viser-port',), dict(type=int, default=None,

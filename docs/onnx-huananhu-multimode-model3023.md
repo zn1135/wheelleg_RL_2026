@@ -20,14 +20,14 @@ sim2sim/mj_sim2sim_huananhu_multimode.py
 
 | 项目 | 内容 |
 |---|---|
-| ONNX 文件 | [model_3023_opset13.onnx](../exports/chuanliantui_multimode/model3023-h7-20261015/model_3023_opset13.onnx) |
+| ONNX 文件 | model_3023_opset13.onnx（对应旧训练线已清理） |
 | 文件大小 | 208259 字节，权重内嵌，无需额外权重文件 |
 | ONNX SHA-256 | `fff95187813a11e066a4467db261579cfcfba2ee0e73df8b0d2e06053f2f0777` |
 | 导出配置 | opset 13、float32、固定 batch=1 |
 | 数值核对 | 256 组输入，最大绝对误差 `1.9073486328125e-06`，小于 `1e-4` |
 | 详细记录 | [本次模型交付记录](model-deliveries/20261015-model3023-onnx-export.md) |
 
-给 H7 协作者的完整文件集见 [H7 适配交付包](../exports/chuanliantui_multimode/model3023-h7-20261015/README.md)，包含 ONNX、参考输入输出（NPZ／CSV）、导出记录和校验清单；该目录随本说明纳入版本管理，协作者拉取包含它的提交后即可取得。旧 `artifacts/` 导出目录继续保留作本机证据。
+给 H7 协作者的完整文件集见 H7 适配交付包（对应旧训练线已清理），包含 ONNX、参考输入输出（NPZ／CSV）、导出记录和校验清单；该目录随本说明纳入版本管理，协作者拉取包含它的提交后即可取得。旧 `artifacts/` 导出目录继续保留作本机证据。
 
 ONNX 是保存网络计算和权重的通用格式；**opset 是计算操作的版本号，13 不表示输入维数**。batch=1 表示每次推理一台机器人的一组观测。actor 是根据观测产生动作的策略网络；本图结构为 `39 → 256 → 128 → 64 → 6`，三个隐藏层使用 ELU 激活函数，最后输出不经过 `tanh` 限幅。
 

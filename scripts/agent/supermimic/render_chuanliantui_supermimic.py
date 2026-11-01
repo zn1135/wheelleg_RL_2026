@@ -145,7 +145,7 @@ def precheck(record, plan, fps):
 def draw_video(record, plan, output, fps):
     import imageio.v2 as imageio
     import mujoco
-    from scripts.agent.stand.render_chuanliantui_stand import renderer_for
+    from scripts.agent.shared.rendering import renderer_for
 
     model = mujoco.MjModel.from_binary_path(str(record['paths']['scene']))
     if record['poses'].shape[-1] != model.nq:
@@ -225,7 +225,7 @@ def draw_video(record, plan, output, fps):
         renderer='render_chuanliantui_stand.renderer_for / MuJoCo EGL',physics_steps_executed=0,
         saved_qpos_read_only=not record['poses'].flags.writeable,
         renderer_script_sha256=digest(Path(__file__)),
-        renderer_helper_sha256=digest(Path(__file__).resolve().parents[3] / 'scripts/agent/stand/render_chuanliantui_stand.py'),
+        renderer_helper_sha256=digest(Path(__file__).resolve().parents[3] / 'scripts/agent/shared/rendering.py'),
         policy_calls=0,parameter_updates=0,decoded_frames=count,decoded_fps=float(metadata['fps']),
         decoded_duration_s=count/fps,decoded_first_frame_sha256=first,decoded_last_frame_sha256=last,
         video=str(video), output_sha256={name:digest(output/name) for name in ('replay.mp4','preview.png','storyboard.png')},

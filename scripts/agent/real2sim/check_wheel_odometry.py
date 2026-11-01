@@ -34,7 +34,7 @@ def check(args):
     for episode in episodes:
         with np.load(episode['path']) as d:
             initial.append((d['initial_qpos'].copy(), d['initial_qvel'].copy()))
-    cfg, train = task_registry.get_cfgs('chuanliantui', play=True)
+    cfg, train = task_registry.get_cfgs('smp', play=True)
     cfg.auto_reset=False;cfg.episode_length_s=21.
     cfg.commands['standup']=SmpCommandCfg()
     cfg.events['reset_pose']=EventTermCfg(func=reset_pose, mode='reset')
@@ -43,7 +43,7 @@ def check(args):
     cfg.actions['pd']=BridgeCfg(**{k:v for k,v in vars(cfg.actions['pd']).items() if k!='class_type'})
     cfg.actions['pd'].action_delay_s=None;cfg.actions['pd'].randomize_delays=False
     observations.configure_wheel_odometry(cfg)
-    env,_=task_registry.make_env('chuanliantui',env_cfg=cfg,train_cfg=train,num_envs=20,device=args.device)
+    env,_=task_registry.make_env('smp',env_cfg=cfg,train_cfg=train,num_envs=20,device=args.device)
     renderer=None
     try:
         raw=env.unwrapped;raw.reset(seed=42);action=raw.action_manager.get_term('pd')

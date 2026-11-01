@@ -74,13 +74,13 @@ def render_initial(raw, output):
 @torch.inference_mode()
 def run(args):
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    env_cfg, train_cfg = task_registry.get_cfgs('chuanliantui')
-    original, _ = task_registry.get_cfgs('chuanliantui')
+    env_cfg, train_cfg = task_registry.get_cfgs('smp')
+    original, _ = task_registry.get_cfgs('smp')
     env_cfg.seed = train_cfg.seed = 42
     configure_smp(env_cfg, train_cfg, args.prior)
     assert 'smp_motion' not in original.rewards
     assert original.actions['pd'].ground_start_hold_s == .2
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=env_cfg, train_cfg=train_cfg,
+    env, _ = task_registry.make_env('smp', env_cfg=env_cfg, train_cfg=train_cfg,
                                     num_envs=20, device=args.device)
     raw, report = env.unwrapped, {}
     try:
@@ -134,7 +134,7 @@ def run(args):
             qpos=initial_qpos.cpu().tolist())
         if args.render_initial:
             render_initial(raw, args.output.with_name('initial-20.png'))
-        runner, _ = task_registry.make_alg_runner(env, 'chuanliantui', train_cfg=train_cfg,
+        runner, _ = task_registry.make_alg_runner(env, 'smp', train_cfg=train_cfg,
                                                   device=args.device)
         assert isinstance(runner, SmpOnPolicyRunner)
         before = {key: value.detach().clone() for key, value in term.prior.denoiser.state_dict().items()}

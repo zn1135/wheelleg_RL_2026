@@ -51,8 +51,8 @@ def collect_quality(env):
 @torch.inference_mode()
 def collect(args):
     args.output.mkdir(parents=True, exist_ok=False)
-    cfg, train = task_registry.get_cfgs('chuanliantui', play=True)
-    training_cfg, _ = task_registry.get_cfgs('chuanliantui', play=False)
+    cfg, train = task_registry.get_cfgs('smp', play=True)
+    training_cfg, _ = task_registry.get_cfgs('smp', play=False)
     delays = training_cfg.actions['pd'].action_delay_choices_s
     assert delays == (.002, .004)
     pairs = [(leg, wheel) for leg in delays for wheel in delays]
@@ -105,7 +105,7 @@ def collect(args):
     cfg.actions['pd'].randomize_delays = False
     cfg.actions['pd'].action_delay_choices_s = delays
     count = args.poses_per_seed*len(pairs)
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train,
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train,
                                   num_envs=count, device=args.device)
     accepted, rejected, completed_seeds = [], [], []
     def save_report(complete, error=None):

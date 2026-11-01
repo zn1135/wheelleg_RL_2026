@@ -31,8 +31,8 @@ def render(args):
             data[branch]['time']=d['time'].copy()
             data[branch]['wheel_angle_handover_latched']=d['wheel_angle_handover_latched'][:,[case for _,case in selected]].copy()
     args.output.mkdir(parents=True,exist_ok=False)
-    cfg,training=task_registry.get_cfgs('chuanliantui',play=True)
-    env,_=task_registry.make_env('chuanliantui',env_cfg=cfg,train_cfg=training,num_envs=1);renderer=None;movies=[]
+    cfg,training=task_registry.get_cfgs('smp',play=True)
+    env,_=task_registry.make_env('smp',env_cfg=cfg,train_cfg=training,num_envs=1);renderer=None;movies=[]
     try:
         model=env.unwrapped.sim.mj_model;model.vis.global_.offwidth=640;model.vis.global_.offheight=360
         renderer=mujoco.Renderer(model,width=640,height=360);physical=mujoco.MjData(model)

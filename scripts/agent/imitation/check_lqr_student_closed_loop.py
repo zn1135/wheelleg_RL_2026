@@ -225,7 +225,7 @@ def run(args):
     pairs = DELAY_PAIRS if args.mode == 'pd' else ((0., 0.),)
     if args.training_delays or args.stress_10ms:
         assert args.mode == 'pd', 'Training delays certify only the student PD bridge'
-        training_cfg, _ = task_registry.get_cfgs('chuanliantui', play=False)
+        training_cfg, _ = task_registry.get_cfgs('smp', play=False)
         choices = training_cfg.actions['pd'].action_delay_choices_s
         if args.stress_10ms:
             choices = tuple(sorted(set(choices) | {.010}))
@@ -234,7 +234,7 @@ def run(args):
             pairs = tuple(pair for pair in pairs if .010 in pair)
     count = len(episodes)*len(pairs)
     args.output.mkdir(parents=True, exist_ok=False)
-    cfg, train = task_registry.get_cfgs('chuanliantui', play=True)
+    cfg, train = task_registry.get_cfgs('smp', play=True)
     cfg.seed, cfg.auto_reset = 42, False
     cfg.commands['standup'] = SmpCommandCfg()
     cfg.events['reset_pose'] = EventTermCfg(func=reset_pose, mode='reset')
@@ -249,7 +249,7 @@ def run(args):
     cfg.actions['pd'].action_delay_s = None
     cfg.actions['pd'].randomize_delays = False
     cfg.actions['pd'].action_delay_choices_s = tuple(sorted({value for pair in pairs for value in pair}))
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train,
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train,
                                     num_envs=count, device=args.device)
     try:
         raw = env.unwrapped

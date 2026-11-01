@@ -55,17 +55,19 @@ def main():
         row = next(line for line in migration_rows if line.startswith('| `' + Path(entry['old_path']).name + '`'))
         if entry['module']:
             assert entry['module'] in row, ('迁移文档入口不同步', entry['old_path'])
-        if entry['status'] == 'archived':
-            assert '已归档' in row, ('归档状态不同步', entry['old_path'])
+        if entry['status'] in ('archived', 'retired'):
+            assert ('已归档' if entry['status']=='archived' else '已退役') in row, ('处置状态不同步', entry['old_path'])
         assert entry['sha256'] == hashes[entry['old_path']]
         original = ROOT / entry['old_path']
-        if entry.get('runtime_protected'):
+        if entry.get('retained_original'):
+            assert original.is_file() and hashlib.sha256(original.read_bytes()).hexdigest() == entry['live_sha256']
+        elif entry.get('runtime_protected'):
             assert original.is_file() and hashlib.sha256(original.read_bytes()).hexdigest() == entry['sha256'], original
             for name in entry['dependencies']:
                 assert by_name[name].get('runtime_protected'), ('运行中依赖未保护', entry['old_path'], name)
         else:
             assert not original.exists(), entry['old_path']
-        if entry['status'] == 'archived':
+        if entry['status'] in ('archived', 'retired'):
             assert entry['new_path'] is None and entry['module'] is None
         else:
             assert (ROOT / entry['new_path']).is_file(), entry
@@ -109,11 +111,12 @@ def main():
                 continue
             if path.name == 'check_script_merges.py' and relative in hashes:
                 continue  # 此检查显式构造旧报告路径，随后验证来源匹配。
-            assert (ROOT / relative).is_file(), (path, relative)
+            assert (ROOT / relative).is_file() or relative in hashes, (path, relative)
         count += 1
     result = dict(archive_files=len(hashes), original_python_scripts=len(old_names),
                   checked_python_files=count,
                   archived=sum(e['status'] == 'archived' for e in entries),
+                  retired=sum(e['status'] == 'retired' for e in entries),
                   merged=sum(e['status'] == 'merged' for e in entries),
                   runtime_protected=sum(bool(e.get('runtime_protected')) for e in entries))
     print(json.dumps(result, ensure_ascii=False))

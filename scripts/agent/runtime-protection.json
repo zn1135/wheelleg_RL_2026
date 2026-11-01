@@ -1,16 +1,16 @@
 {
-  "reason": "发现既有另一任务正在运行，保护其训练/验收原入口，不由脚本整理任务停止或覆盖。",
+  "reason": "原训练及验收已结束；①～⑤依赖已提取到shared，保留线原入口的未提交改动继续保留",
   "observed_pid": 3872946,
   "training_artifact": "artifacts/supermimic-v13-continuation-20261101-r2",
   "files": [
     "scripts/agent/assess_chuanliantui_supermimic.py",
     "scripts/agent/check_supermimic_v13_continuation.py",
     "scripts/agent/compare_supermimic_behavior.py",
-    "scripts/agent/diagnose_walk_v8_regression.py",
     "scripts/agent/report_supermimic_v13_continuation.py",
     "scripts/agent/report_supermimic_v13_count_budget.py",
     "scripts/agent/train_supermimic_v13_continuation.py"
   ],
-  "cleanup": "待训练及其验收链路结束后，核对无其他调用且原文件未新增修改，再删除清单中的原入口；不自动清理。",
-  "dependency_closure_complete": true
+  "cleanup": "不自动删除保留线未提交改动；该清单不再保护已撤销的旧task专项脚本",
+  "dependency_closure_complete": true,
+  "status": "training_finished"
 }

@@ -37,7 +37,7 @@ def replay(args):
     # 每个延迟组重放相同的完整初态，避免初态差异混入门控/延迟对照。
     cases = [(delay, index) for delay in DELAYS for index in range(len(records))]
     count = len(cases)
-    cfg, train = task_registry.get_cfgs('chuanliantui', play=True)
+    cfg, train = task_registry.get_cfgs('smp', play=True)
     cfg.seed = 42
     cfg.auto_reset = False
     # 只复用SMP初态/命令/终止条件，不依赖或加载评分器权重。
@@ -48,7 +48,7 @@ def replay(args):
     cfg.actions['pd'].action_delay_s = None
     cfg.actions['pd'].randomize_delays = False
     cfg.actions['pd'].action_delay_choices_s = DELAYS
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train,
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train,
                                     num_envs=count, device=args.device)
     args.output.mkdir(parents=True, exist_ok=False)
     report = dict(optimizer_updates=0, policy_dt=.01, physics_dt=.002,

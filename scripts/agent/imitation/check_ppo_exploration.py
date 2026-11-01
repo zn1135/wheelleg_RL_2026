@@ -17,13 +17,13 @@ from scripts.agent.imitation.check_ppo_finetune_resume import equal
 def run(args):
     torch.set_num_threads(1)
     args.output.mkdir(parents=True, exist_ok=False)
-    cfg, train = task_registry.get_cfgs('chuanliantui')
+    cfg, train = task_registry.get_cfgs('smp')
     cfg.seed = train.seed = 42
     configure_smp(cfg, train, args.prior, policy_contract=policy_observation_contract(args.checkpoint),
                   bc_finetune='isaac-standup-v2')
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train, num_envs=20)
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train, num_envs=20)
     try:
-        runner, _ = task_registry.make_alg_runner(env, 'chuanliantui', train_cfg=train)
+        runner, _ = task_registry.make_alg_runner(env, 'smp', train_cfg=train)
         runner.load(str(args.checkpoint))
         original = copy.deepcopy(runner.alg.save())
         with torch.inference_mode():
@@ -47,7 +47,7 @@ def run(args):
                     torch.testing.assert_close(mean, runner.alg.actor(obs), atol=0, rtol=0)
                 path = args.output/f'untrained-wheel-{wheel}.pt'
                 runner.save(str(path)); paths.append(path)
-            resumed, _ = task_registry.make_alg_runner(env, 'chuanliantui', train_cfg=train)
+            resumed, _ = task_registry.make_alg_runner(env, 'smp', train_cfg=train)
             resumed.load(str(paths[-1])); equal(runner.alg.save(), resumed.alg.save())
             assert resumed.alg.recipe['wheel_exploration_std'] == .05
             resumed.load(str(args.checkpoint)); equal(original, resumed.alg.save())

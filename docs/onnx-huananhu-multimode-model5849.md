@@ -231,4 +231,4 @@ last_action = actions[0].copy()  # 保存原始动作，供下一策略周期使
 - [训练侧动作控制](../mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_action.py)：原始动作保存、PD、动作延迟和激活门控。
 - [ONNX 导出器](../mjlab_training/src/ct_mjlab/scripts/export.py)：契约校验、网络结构、固定形状和数值验证（入口 `scripts/mjlab.sh export`）。
 - [独立 CPU sim2sim](../sim2sim/mj_sim2sim_huananhu_multimode.py)：观测打包与仿真控制实现。
-- 训练与包线背景：[mjlab 串联腿训练](mjlab-chuanliantui.md)、[项目记录](ai/project-log.md)。
+- 训练与包线背景：mjlab 串联腿训练（对应旧训练线已清理）、[项目记录](ai/project-log.md)。

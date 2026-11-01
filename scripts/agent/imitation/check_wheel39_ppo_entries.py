@@ -34,7 +34,7 @@ def check(args):
         assert kw['num_learning_iterations']==1 and runner.bc_init
         assert runner.env.unwrapped.common_step_counter==runner._entry_expected_steps and not runner.alg.optimizer.state
         raise BeforeLearn()
-    base=dict(task='chuanliantui',seed=42,num_envs=2,device='cuda:0',smp_prior=args.prior,
+    base=dict(task='smp',seed=42,num_envs=2,device='cuda:0',smp_prior=args.prior,
               bc_finetune=getattr(args,'bc_finetune',False))
     # 真实创建、初始化／恢复并写参数；learn入口即停止，不允许调用优化器。
     with patch.object(task_registry,'make_alg_runner',side_effect=make_runner), \

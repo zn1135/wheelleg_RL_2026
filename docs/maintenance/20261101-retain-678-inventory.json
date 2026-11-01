@@ -1,0 +1,1241 @@
+{
+  "status": "complete",
+  "base_commit": "9f5eacd58ebc813fcf189b1e5cbb7d2ac778cf00",
+  "scope": "mjlab①～⑤独立训练线退出；⑥⑦⑧保留",
+  "no_deletion_performed": false,
+  "records_and_artifact_deletion_scope": "用户明确批准删除①～⑤对应模型、日志和实验产物；保留⑥⑦⑧及MuJoCo必要文件",
+  "script_counts": {
+    "remove_after_review": 109,
+    "retain_shared_or_extract_before_removing": 9
+  },
+  "scripts": [
+    {
+      "path": "scripts/agent/multimode/assess_multimode_cpu_envelope.py",
+      "sha256": "080fc153969b6d6682df4b184eebf0cf694c885eefa5055787126ac2d25f5f9b",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/assess_multimode_cpu_zero_hold.py",
+      "sha256": "9952245f67e36239e52e764e89c206263daa81f3cd144137186bf0c34c8648ea",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/assess_multimode_envelope_friction.py",
+      "sha256": "546f6653bb4e74c433751e19169544c169c8d52ee08897294d636e78d7b7a662",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/assess_multimode_knockdown_recovery.py",
+      "sha256": "5dcf99035fa3d9c8fd3c4c05a7e50cb4eb93183c9c706686b7ea1d820c2edf7a",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/assess_multimode_recovery_height.py",
+      "sha256": "e1a13a1701eec9a95ce21c5c660268fadedc2e1b412b1ccab47c0a8f7ff4290a",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/assess_multimode_tracking.py",
+      "sha256": "d933054b1943b6724370c1e00ba06ec464ad844250cbeeb798d48bbf1d046743",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/assess_multimode_zero_hold.py",
+      "sha256": "bb450879816ad4c17aba4d88ed9e178d06c65f2356bb53e71417fd84d0ac2b0b",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/check_mjlab_multimode.py",
+      "sha256": "29fce14eb3f73afbd9284b1d5a489ccb66e0f786af25b53b83d4b18e594907ad",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/check_multimode_cpu_sim2sim.py",
+      "sha256": "bb1241da48e4f3d9d440ce3cb4b3ce9e4c92c0c5afea3d502a418cfb124f2d15",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/check_multimode_final_balance.py",
+      "sha256": "11998206547cf930859131515ddea4e41b7cffe8b738ebd3987a3ba03738b122",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/check_multimode_ground_ratio.py",
+      "sha256": "7c2fa8a6094a7ca9aada4a00787cbd88e453c242515a8ba13ab9a902378ba60b",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/check_multimode_recovery.py",
+      "sha256": "a8394b5de6b8a11c6c97604040376e64463fc18fb471f655b90573b3ddd026bf",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/compare_6848_leg_oscillation.py",
+      "sha256": "bd6f1eebe26eb9b3bc9225f24d802b1044436bb4bc16842a8a4006a1a7a81331",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/compare_multimode_eval.py",
+      "sha256": "d45a7d622867c27061ff6d9d7c55e209e9608605b6e151f3203fc30ba30ff71d",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/compare_multimode_knockdown.py",
+      "sha256": "8cfe52f40e88c3280c3d297b88dbdcaec6b6d8e44113022594f8be86f7ba6a71",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/inspect_multimode_leg_length.py",
+      "sha256": "0531805401ec98ab687439e69a5ae43eb4e69a6fbfaaf7327800277f5f3a5a82",
+      "category": "multimode",
+      "proposed": "retain_shared_or_extract_before_removing",
+      "reason": "⑥⑦⑧或sim2sim依赖；先保留或拆出共用函数",
+      "direct_keep_callers": [
+        "scripts.agent.isaac.check_zero_hold_training",
+        "scripts.agent.real2sim.check_h7_height_command"
+      ],
+      "final_disposition": "helper_extracted_and_old_cli_deleted",
+      "helper_path": "scripts/agent/shared/geometry.py"
+    },
+    {
+      "path": "scripts/agent/multimode/measure_multimode_leg_motion.py",
+      "sha256": "c5b7f29082dc9f3c2a504f75b1d7751083808bd89edf79db5bdf9b9168e97a95",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/record_multimode_knockdown_failures.py",
+      "sha256": "03303358b66af6a2bfb21ba05a51df1a1710b435e5e0c4570125572285d8df1f",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/render_multimode_leg_length.py",
+      "sha256": "0c291b6b4a8b6ceb4a55247a5b3d177074275beca7137296f725303cfe4abec0",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/multimode/render_multimode_minimum_leg.py",
+      "sha256": "d1870ff9b6924aa12bb58abdd5b6f38aa8d5b9cf5ec8a60868d09f2ec3bb354c",
+      "category": "multimode",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/analyze_walk_shadow_delay.py",
+      "sha256": "44dc1698894fe5529913279ace75ca32eac51ec48d6576ebf27de1551c671f1c",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/analyze_walk_velocity_compensation.py",
+      "sha256": "ed39db86502660c7f7d3b9644b51d1a99d068ca3167a7e3fc0db93e19d8e9f10",
+      "category": "split",
+      "proposed": "retain_shared_or_extract_before_removing",
+      "reason": "⑥⑦⑧或sim2sim依赖；先保留或拆出共用函数",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/assess_chuanliantui_walk.py",
+      "sha256": "19715da23704ad624adb7628257afe79daebb62c9de12b0b38955168a1581d79",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/assess_getup_target_slew.py",
+      "sha256": "8701a2e09a384a44f9425d5559426221c8ea2b0188842dd619eb6c22b4c6248a",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/audit_walk_compensation_startup.py",
+      "sha256": "88a9c4053af2be03a42e99d1c3371aec0de722794af34643e88d521364d43e49",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/audit_walk_estimator_closedloop.py",
+      "sha256": "694a33975636673767c87d0e783dcbf7f7ab6959f6f0ee66a7ac12106b65a932",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/audit_walk_estimator_timing.py",
+      "sha256": "2a7c2856fa73a85c8755d02f2c6d0e3e34f3908d1aefefea395f0557e7077c42",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/audit_walk_estimator_training_data.py",
+      "sha256": "e443c98f53fe128fc079abc064f534ddefb1829f55ced25a884e246905257536",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/audit_walk_goal_feedback.py",
+      "sha256": "7666e02b84cd842450d2c4c59837b218cfbee6372100f3fd059c3305e869c4d3",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/audit_walk_shadow_method.py",
+      "sha256": "b9920854bef9dc14eedebaa112038fa8e7e181a5bbe35b56fbe3cf6d04d1fbba",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/check_chuanliantui_two_policy.py",
+      "sha256": "5e0e4c7d516131eaf681fa905190f0d20474a5fb9a7c80d9e4b617bd824cce4f",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/check_chuanliantui_two_policy_sim2sim.py",
+      "sha256": "4a55a4e2600a5436636ec251ad8d78c166080e215bf66c32c13da84571b26501",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/check_getup_handover.py",
+      "sha256": "5d57b5e83a5161e7e95cb8f7843a962dc4be76ba01fe480fa92a14ea000b99e1",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/check_getup_height_curriculum.py",
+      "sha256": "bdea634afffd033e4936a986b904cd11314925845ba914a3eea20bc3b7aab746",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/check_getup_leg_smoothing.py",
+      "sha256": "cc32d1715fc8899f6e47972d8cd92be1acb6863ebca17b42b2d328fc916c3fd9",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/check_getup_nominal_state.py",
+      "sha256": "5793d4acf17a9b3e667faee9bc10a1ca34de8fadb9c27324a32428803903543c",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/check_getup_target_slew.py",
+      "sha256": "01cb20cdc7440d2b4f5df555090cbde74b04aa7b7e5ccb95d4baa34bddd0ab38",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/check_getup_target_slew_state.py",
+      "sha256": "784ea470aab552738a62c2625dae51fe37ec279c28b45edabea3362957610b47",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/check_getup_torques.py",
+      "sha256": "aa159f2dfbaf7876d5edb4a1e65d860856542e433cefe5e21665eaba60db870f",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/check_walk_command_readiness.py",
+      "sha256": "dfc8f84cfa4786432417a3e4a3b1ec0122ff5a4b1863df05315ca8eeb67969b7",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/check_walk_direction_curriculum.py",
+      "sha256": "a23afed8158d49df57be2a469f81bcd086c4b032c623991dbd9f0920f4b4d2ea",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/check_walk_leg_symmetry.py",
+      "sha256": "96f8f9416c4ec5db7dcc63c0ab6c8603ce388cf6e1ebcdcfe1a39c4b64feb74a",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/check_walk_resume.py",
+      "sha256": "d8ccc0ac9730686694234d0e4308c48d11fbb7bdc982a227d904ea704c94aee9",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/check_walk_tracking_economy.py",
+      "sha256": "0d7dcdea97fc3f8dff38383b62e944ff838def3c903994743813dd4ff9ddc672",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/check_walk_vertical_reward.py",
+      "sha256": "ee83dd9a30fe1c51ab33c2227b82e85fefc7c11e782f4ad4a3f69c76aaa57dcd",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/compare_walk_checkpoints.py",
+      "sha256": "350adc07235afd3c6d455dac220f0423491d5933af348a49da124319a562b3cc",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/compare_walk_estimator_trial.py",
+      "sha256": "cf78313546670d019f8f08e2db73b5dacd6c52e55c31fac1570cb7b9e2feb5aa",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/compare_walk_feedback.py",
+      "sha256": "bbf43764bd4b9f321e2030837af448dac9bb2b67d0016eae5ccac5c931267994",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/compare_walk_height_response.py",
+      "sha256": "342f86a8ebb820637564b500fc2e3a413c435246e4cf1f5099d3659fc1892f75",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/diagnose_getup_release.py",
+      "sha256": "1f8f8cc9e8ff78284ff027b225eed1e3a28f96ee9d0df932739dc4c31e34ebbb",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/diagnose_getup_start.py",
+      "sha256": "1ad70ca638f46bc14f1d9c6f97be5a018d2f53b39737c243afc67d39a035ef6e",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/diagnose_walk_estimator_closedloop.py",
+      "sha256": "f6caa90248aa6503434de3a1e53a6d4dd87943b13c449386d1a168d8503910e0",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/diagnose_walk_forward_failure.py",
+      "sha256": "690c196534233bdd1cc3d1e2f442a34c735c2afb4b569d99a0239df87317e4c6",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/diagnose_walk_goal_feedback.py",
+      "sha256": "68db80c646644c9bbd03d170ae638e207b42b5ff4a642ca4883cb19b8c30d256",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/diagnose_walk_height.py",
+      "sha256": "cbc2058c8302f01bd5653b36ca1de07b359e47be8627dbc046115144f2c4debe",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/diagnose_walk_v8_regression.py",
+      "sha256": "12f1a250c28b9040569a9c8831a22702eb039aa8076c4893b4dd571f3ef63b0a",
+      "category": "split",
+      "proposed": "retain_shared_or_extract_before_removing",
+      "reason": "⑥⑦⑧或sim2sim依赖；先保留或拆出共用函数",
+      "direct_keep_callers": [
+        "scripts.agent.supermimic.assess_chuanliantui_supermimic"
+      ],
+      "final_disposition": "helper_extracted_and_old_cli_deleted",
+      "helper_path": "scripts/agent/shared/recording.py"
+    },
+    {
+      "path": "scripts/agent/split/diagnose_walk_velocity_compensation.py",
+      "sha256": "167c2b33bf5c089d34e3a2aa0b66c5ff9492bea42f650f7e859afd44a511dafa",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/evaluate_walk_estimator_final.py",
+      "sha256": "4c703c002ce81c1737b4cc24e2b6cce828dc391f151ef54dc3994de12dc5bce8",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/probe_getup_torque_rewards.py",
+      "sha256": "7129ae32eb108a73f7f4f7b407b0b7a29c19b8c825528a972876e315b1c1ec5b",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/record_walk_estimator_trial.py",
+      "sha256": "b5a28fb1c70dd4ff75aab5e16281ae076236428f7413ad498e31b8d53ab67998",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/record_walk_shadow_sensors.py",
+      "sha256": "295a048e2498afab0aa40ebb95674f47b174462fb7cc876a66de0ce220b4638f",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/render_getup_target_slew.py",
+      "sha256": "01992297c13617ac673443faf67e157d42b1740c6eebccd938c348945493498d",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/summarize_walk_goal_feedback.py",
+      "sha256": "81fd28ace4f312c3b5c6dd2d48b823319c514c2622c9955e787ebbd758e04da9",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/train_walk_estimator_only.py",
+      "sha256": "258344ddc45853e32a4c31a9bf6ed5e7649c809c487f2e92d6b400ce642b410d",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/walk_estimator_offline.py",
+      "sha256": "09a91e5a5d167b98989943917d04c352a28fcf448c7e49540ebaf590862feb82",
+      "category": "split",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/split/walk_sensor_velocity.py",
+      "sha256": "3e316655851d22a26adde38abc31723dcaf9729698c2ed2f5e49b693a6a1639a",
+      "category": "split",
+      "proposed": "retain_shared_or_extract_before_removing",
+      "reason": "⑥⑦⑧或sim2sim依赖；先保留或拆出共用函数",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand/analyze_chuanliantui_stand.py",
+      "sha256": "784eb394665d0e99f14280786d4d7f2f5e1e7127a5cf091f5e9fb0a1a00a6910",
+      "category": "stand",
+      "proposed": "retain_shared_or_extract_before_removing",
+      "reason": "⑥⑦⑧或sim2sim依赖；先保留或拆出共用函数",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand/assess_chuanliantui_stand.py",
+      "sha256": "58def0596aafac8aba50cc58e289c76f672c86e89eb7156cda4f347450f32d98",
+      "category": "stand",
+      "proposed": "retain_shared_or_extract_before_removing",
+      "reason": "⑥⑦⑧或sim2sim依赖；先保留或拆出共用函数",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand/assess_ground_chuanliantui_stand.py",
+      "sha256": "75a049facdccfe8c6bf1450f4df81ace90f6fbc9082b929e572590f226c34607",
+      "category": "stand",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand/check_chuanliantui_stand.py",
+      "sha256": "7c974a3b0b71b8911b7eb405b75714b136e4fd5b6e22b97caf372f90435ebbcb",
+      "category": "stand",
+      "proposed": "retain_shared_or_extract_before_removing",
+      "reason": "⑥⑦⑧或sim2sim依赖；先保留或拆出共用函数",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand/check_chuanliantui_stand_regressions.py",
+      "sha256": "9e006b467f31fefef03f483028e13f99e82a2ddefcf34eabf0d4075b18bd76b2",
+      "category": "stand",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand/check_chuanliantui_stand_reset_migration.py",
+      "sha256": "2a175e8b966b553c867464dacfc52a109df653ca36b2e666541efe4750a7b523",
+      "category": "stand",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand/check_chuanliantui_stand_velocity.py",
+      "sha256": "bc05f4d87c3e458a9176e9c219ebce1a7fe3193bc4517af276385191153ee9e7",
+      "category": "stand",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand/migrate_chuanliantui_stand_velocity.py",
+      "sha256": "ac61d4814219c2c0387c8dbc3d0c735cecfebaf6127ec5bbcc8779a88bf9c67f",
+      "category": "stand",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand/probe_chuanliantui_stand_rewards.py",
+      "sha256": "8285724b9d2654a86eeb67d779044900a0cca220e589ba69c56432f6d72328bb",
+      "category": "stand",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand/record_chuanliantui_stand.py",
+      "sha256": "d89978e77b41c20af531f6a38673f049dbb98f6bb7f3963d19ffc7e3cc322948",
+      "category": "stand",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand/render_chuanliantui_stand.py",
+      "sha256": "17a412b226650c5c3d788f5eba97b9ce338acec68bd47540f1c15c3d709730c7",
+      "category": "stand",
+      "proposed": "retain_shared_or_extract_before_removing",
+      "reason": "⑥⑦⑧或sim2sim依赖；先保留或拆出共用函数",
+      "direct_keep_callers": [
+        "scripts.agent.supermimic.render_chuanliantui_supermimic"
+      ],
+      "final_disposition": "helper_extracted_and_old_cli_deleted",
+      "helper_path": "scripts/agent/shared/rendering.py"
+    },
+    {
+      "path": "scripts/agent/stand_v2/_contact_diagnostics.py",
+      "sha256": "965170ddf0b375b2590d6c55c5ee2625fdeef6afb5f45d4d1a4e2bd616f69fa3",
+      "category": "stand_v2",
+      "proposed": "retain_shared_or_extract_before_removing",
+      "reason": "⑥⑦⑧或sim2sim依赖；先保留或拆出共用函数",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/assess_chuanliantui_stand_v2.py",
+      "sha256": "f3391705e6f7804640acf46a75721e7024fbeb7e7a6d674d06d1a6312a71a3c9",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/assess_stand_v2_speed_transients.py",
+      "sha256": "0d4848fa651cec4b1cfab04b8a28818dbe35b5c16368f3a0abb25548874da7b9",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/assess_stand_v2_tracking.py",
+      "sha256": "098d2ab462c0cf11fc8dc5d52615c8024a4ab1dcae5646bfc61a51b7f4da9297",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/assess_stand_v2_yaw_control.py",
+      "sha256": "3ec9aa92f110defe160b3a50a9d4ec60ce03bef65eff751063717c4c6df93f9a",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/check_chuanliantui_stand_v2.py",
+      "sha256": "8c29327bd6a1023f1e217db88b8df99e817d51163bf3cbe3ca73ce6f6b132f1e",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/check_h7_stand_v2.py",
+      "sha256": "249803b2bbcd6ac8f361b15c9b8e68f26417b2a065374444fde02a23b85948e3",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/check_stand_v2_active_weight.py",
+      "sha256": "04494d3791964b3730d1241f886c006eba8a94d6c35c9c992a3b6c305c1a268f",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/check_stand_v2_cpu_launch_stability.py",
+      "sha256": "0120fbbf8cd486d696a53924528bc96bc0a0d69b35fa991a6538eb62272e872b",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/check_stand_v2_cpu_sim2sim.py",
+      "sha256": "3ec02dd2e406c0f557984f35481e03986b71bbf98c42d4f2fd057c2758b49b4f",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/check_stand_v2_exploration_resume.py",
+      "sha256": "1a412dc94b714ea0a9532308d746536ad40a1a6bfaabc0d9c480ee9140c15dd5",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/check_stand_v2_late_balance.py",
+      "sha256": "4a56b32133d1c3a13f41ebcec48bd4f2fd5e692e1477f5d3ec05c2df5faaa187",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/check_stand_v2_position_hold.py",
+      "sha256": "7e993cc820e04e80cac04ecd504faf36b30afe55bac0ee2a520ce643958cd4f4",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/check_stand_v2_post_stand_tracking.py",
+      "sha256": "f2a8e3951a4a73af66be32ac1bf1e3a94e031cb0031c136936d25d80a02bf954",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/check_stand_v2_retention_seeds.py",
+      "sha256": "164cdad61fceb844ce16e6116cfe7206188cf9558f6afa07cb65ac17b64dff29",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/check_stand_v2_speed_commands.py",
+      "sha256": "aa706c08fc8b2fb35006b3a90aea726d1e1f1d4a1c9cf6ec668af5c4535ef2da",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/check_stand_v2_tight_term.py",
+      "sha256": "47c2defd278d822c2b88c65cb474044be4304d4e029b5003eb3d8095d7addac6",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/check_stand_v2_yaw_control.py",
+      "sha256": "ae138eacb95f0ff7744e6a689ac0e16e0bc443a2ae34257cc9a74de0e93cf43c",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/compare_stand_v2_acceptance.py",
+      "sha256": "5703db062db2f5e40081a745635df115e9c25853189dac6afc464175263a6f0a",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/compare_stand_v2_active_weight.py",
+      "sha256": "10ab86103d931ae47b8c79fb17a703e7ed50817e818dee211908a72beec015ce",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/compare_stand_v2_nominal_inversion.py",
+      "sha256": "fdefc7405bfd2aff58410fcb889105b49ba7a05023a769fff0d838f569ad85f3",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/compare_stand_v2_phase_mix.py",
+      "sha256": "53eb29f7a0a8ee85ab71824a3a2ad64fd406c481b480310ecdd9895fa28760bb",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/compare_stand_v2_wheel_normal.py",
+      "sha256": "cb1f6b8f13aaea34b2100572f81fd7655f2b6e839cc34980b9edbe8641b31dff",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/diagnose_chuanliantui_stand_v2.py",
+      "sha256": "df2233fd7e991fdf62038f4c5f9e8ef4f0346da6312c7f95df5f18d53adf6d3a",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/diagnose_stand_v2_cpu_launch.py",
+      "sha256": "eaf033f6b695bc692152f467a0869b4e19bc970f605f2860b637dd8b9b8af101",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/diagnose_stand_v2_inversion.py",
+      "sha256": "8f3c21856778ebba8718c8260decf82c564f2aa3f866d06a9b607613cbf6ad41",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/diagnose_stand_v2_late_balance.py",
+      "sha256": "248cfed844bdcf5c2228252fa8637c314b11ef710811e5c5bb5392e5fad5db22",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/diagnose_stand_v2_launch_reference.py",
+      "sha256": "4ebb3b71ca3bdfb8f8d54910a5f4398ac24ae264fa4717ab9f8228c8be03120e",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/diagnose_stand_v2_mode_input.py",
+      "sha256": "b9d26fc6936a846c36ba433b105725002744da911102ce813da475d2d66e64a1",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/diagnose_stand_v2_pitch_progression.py",
+      "sha256": "09ceff2eaa9c5de50cf06d6abe5718e8671f6a5b948fd075bb2513f166b3086c",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/diagnose_stand_v2_rewards_velocity.py",
+      "sha256": "5e1f756119b36d889d05b9f6f67bcc43eee0adce2fd044e26ca375014e4214bf",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/evaluate_stand_v2_phase_mix.py",
+      "sha256": "0000ce874f3e8987d1d5f140b42425a17734bb193a061454acae6965f56b51a3",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/experiment_stand_v2_phase_mix.py",
+      "sha256": "053d21316fad7a6f7a260ac1e4c882d5d4ae8a55d0d10b56d68f18707a6b6d1d",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/record_stand_v2_sample.py",
+      "sha256": "726182175286b6609e5407c1f144c8f2a9c6b28bcdd81b8968cb2d5904ab64c1",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/render_stand_v2_acceptance.py",
+      "sha256": "4a977fe033c51a34a6dd11f437d4498182cbd8449619b061a04fec9b82d78d18",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/render_stand_v2_late_balance.py",
+      "sha256": "8a6c132aa40673df6476a5ba0fed6038da2aa36aee1a0c834714f279ece52854",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/render_stand_v2_sample.py",
+      "sha256": "77001435b38146d3005ee99ed4d3968d750c399efefa54432b03eb3d16bf5e5a",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/render_stand_v2_speed_comparison.py",
+      "sha256": "d4dbb2ee26743e78057477efc9ea363c6593589c1c18390807472858c063f3f1",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/render_stand_v2_tracking.py",
+      "sha256": "a6440a644f23c6200c9425d86e530e52bdb8c432ad62c6bbe1b197d9d36c52dc",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/summarize_stand_v2_split_inversion.py",
+      "sha256": "43350dc7e5a7a7eb42725a9748bc5607e5bbf76c9f1d652752477efd0aa794b4",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    },
+    {
+      "path": "scripts/agent/stand_v2/validate_stand_v2_handover.py",
+      "sha256": "a060d1a076f666a1305fa8d3cc66aa90494dcb3c03cda47e38ab99197b557ca2",
+      "category": "stand_v2",
+      "proposed": "remove_after_review",
+      "reason": "只服务停止维护的①～⑤；仍需复查动态引用",
+      "direct_keep_callers": [],
+      "final_disposition": "deleted"
+    }
+  ],
+  "necessary_core": [
+    "mjlab_training/src/ct_mjlab/envs/__init__.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/__init__.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/gas_spring.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_action.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_env_cfg.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_mdp.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_observations.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_poses.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_randomization.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_rewards.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_runner.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/model.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_env_cfg.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_mdp.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_observations.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_rewards.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_runner.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/pd_action.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/runner.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/standup_mdp.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/standup_randomization.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/v14_observations.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/velocity_env_cfg.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/velocity_mdp.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/__init__.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/action.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/env_cfg.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/export.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/mdp.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/network.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/observations.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/rewards.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/runner.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/switch.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/__init__.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/action.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/env_cfg.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/mdp.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/observations.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/randomization.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/rewards.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/runner.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/__init__.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/action.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/diagnostics.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/env_cfg.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/export.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/mdp.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/network.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/observations.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/rewards.py",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/runner.py"
+  ],
+  "bootstrap_requires_rewrite": "删除五个旧task注册；⑥⑦⑧改用自身配置／构造入口并移除旧task名称调用；sim2sim必要共用模块原路径和行为保留，不留旧task兼容注册",
+  "limitations": [
+    "AST依赖不等于完整运行依赖；动态导入、字符串路径与子进程仍需逐项验证",
+    "maintenance旧验收／迁移检查需随删除清单调整，不能用旧检查反向保留全部旧训练线"
+  ],
+  "task_removal_user_confirmed": true,
+  "tasks_to_remove": [
+    "chuanliantui",
+    "chuanliantui_stand",
+    "chuanliantui_stand_v2",
+    "chuanliantui_getup",
+    "chuanliantui_walk"
+  ],
+  "task_removal_scope": [
+    "registry entries",
+    "standalone training configurations",
+    "CLI task choices and defaults",
+    "corresponding command navigation"
+  ],
+  "experience_approvals": {
+    "E01": {
+      "status": "approved_keep",
+      "evidence": "用户在E01逐条审批上下文中明确回复“保留”",
+      "date": "2026-11-01"
+    },
+    "E02": {
+      "status": "rejected_do_not_keep",
+      "evidence": "用户在E02逐条审批上下文中明确回复“不保留”",
+      "date": "2026-11-01"
+    },
+    "E03": {
+      "status": "rejected_do_not_keep",
+      "evidence": "用户在E03逐条审批上下文中明确回复“不保留”",
+      "date": "2026-11-01"
+    },
+    "E04": {
+      "status": "approved_keep",
+      "evidence": "用户在E04逐条审批上下文中明确回复“，保留”",
+      "date": "2026-11-01"
+    },
+    "E05": {
+      "status": "rejected_do_not_keep",
+      "evidence": "用户在E05逐条审批上下文中明确回复“不保留”",
+      "date": "2026-11-01"
+    },
+    "E06": {
+      "status": "rejected_do_not_keep",
+      "evidence": "用户在E06逐条审批上下文中明确回复“不保留”",
+      "date": "2026-11-01"
+    },
+    "E07": {
+      "status": "approved_keep",
+      "evidence": "用户在E07逐条审批上下文中明确回复“保留”",
+      "date": "2026-11-01"
+    },
+    "E08": {
+      "status": "rejected_do_not_keep",
+      "evidence": "用户在E08逐条审批上下文中明确回复“不保留”",
+      "date": "2026-11-01"
+    },
+    "E09": {
+      "status": "approved_keep",
+      "evidence": "用户在E09逐条审批上下文中明确回复“保留”",
+      "date": "2026-11-01"
+    },
+    "E10": {
+      "status": "approved_keep",
+      "evidence": "用户在E10逐条审批上下文中明确回复“保留”",
+      "date": "2026-11-01"
+    },
+    "E11": {
+      "status": "approved_keep",
+      "evidence": "用户在E11逐条审批上下文中明确回复“保留”",
+      "date": "2026-11-01"
+    },
+    "E12": {
+      "status": "approved_keep",
+      "evidence": "用户在E12逐条审批上下文中明确回复“保留”",
+      "date": "2026-11-01"
+    }
+  },
+  "experience_review_complete": true,
+  "approved_experiences": [
+    "E01",
+    "E04",
+    "E07",
+    "E09",
+    "E10",
+    "E11",
+    "E12"
+  ],
+  "rejected_experiences": [
+    "E02",
+    "E03",
+    "E05",
+    "E06",
+    "E08"
+  ],
+  "asset_deletion_user_confirmed": true,
+  "deletion_performed": true,
+  "final_deletion_plan": "artifacts/retain-678-cleanup-20261101/deletion-plan.json",
+  "verification": "artifacts/retain-678-cleanup-20261101/verification.json"
+}

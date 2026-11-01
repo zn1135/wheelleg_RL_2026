@@ -13,14 +13,14 @@
 
 ## 模型与产物
 
-原始产物位于本机 [导出目录](../../artifacts/model3023-onnx-20261015-FmsnA2/)，被 Git 忽略。为交给 H7 协作者适配，已将模型及参考向量逐字节复制到 [H7 适配交付包](../../exports/chuanliantui_multimode/model3023-h7-20261015/README.md)，随本交付记录一同纳入版本管理，供协作者拉取。
+原始产物位于本机 [导出目录](../../artifacts/model3023-onnx-20261015-FmsnA2/)，被 Git 忽略。为交给 H7 协作者适配，已将模型及参考向量逐字节复制到 H7 适配交付包（对应旧训练线已清理），随本交付记录一同纳入版本管理，供协作者拉取。
 
 交付包另含无表头的 256×39 输入 CSV、256×6 期望输出 CSV，与 NPZ 的 float32 数值逐项一致。导出 JSON 保留原验证结果，将本机绝对路径改为仓库相对路径，并补充导出代码 SHA、工具版本及 H7 待确认状态。`SHA256SUMS` 覆盖交付目录内其他六个文件。源 checkpoint 已在仓库中跟踪，本次无需再次复制。
 
 | 产物 | SHA-256 |
 |---|---|
 | [源 model_3023.pt](../../artifacts/multimode-v1-replay-20261014/models/model_3023.pt) | `624ded630635f0fb51a7378cdd04a7350eee98ffb305acbe1104c3cc7705a88a` |
-| [model_3023_opset13.onnx](../../exports/chuanliantui_multimode/model3023-h7-20261015/model_3023_opset13.onnx) | `fff95187813a11e066a4467db261579cfcfba2ee0e73df8b0d2e06053f2f0777` |
+| model_3023_opset13.onnx（对应旧训练线已清理） | `fff95187813a11e066a4467db261579cfcfba2ee0e73df8b0d2e06053f2f0777` |
 
 ONNX 为 208259 字节，内嵌权重、固定 batch=1、opset 13；输入 `obs: float32[1,39]`，输出 `actions: float32[1,6]`，动作顺序 `[lf0, lf00, lfwheel, rf0, rf00, rfwheel]`。只导出 actor，不含观测构造、PD、限幅或电机映射。
 
@@ -37,7 +37,7 @@ mjlab_training/.venv/bin/python scripts/export_huananhu_multimode_onnx.py \
 ONNX 图检查、固定输入输出形状检查通过。256 组固定随机输入逐个比较 ONNX 参考执行器与 PyTorch，最大绝对误差 `1.9073486328125e-06`，小于容差 `1e-4`。源 checkpoint 哈希由导出器强制检查。
 
 - [导出日志](../../artifacts/model3023-onnx-20261015-FmsnA2/export.log)
-- [形状、校验值及数值结果（可移植交付副本）](../../exports/chuanliantui_multimode/model3023-h7-20261015/model_3023_opset13_export.json)
-- [板端核对参考向量](../../exports/chuanliantui_multimode/model3023-h7-20261015/model_3023_opset13_reference_vectors.npz)
+- 形状、校验值及数值结果（可移植交付副本）（对应旧训练线已清理）
+- 板端核对参考向量（对应旧训练线已清理）
 
 本次未运行训练、MuJoCo 行为回放、Cube.AI 导入、板端数值／时序或真机验证；Isaac 回放不适用。历史仿真证据仅作为源模型已有记录，不表述为本次重跑。H7 的 39 维观测、50 Hz 调度及数值对齐仍由部署负责人待确认；此次导出不代表旧 H7 固件可以直接使用。

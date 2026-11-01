@@ -85,7 +85,7 @@ ARM_CC=/usr/bin/arm-none-eabi-gcc mjlab_training/.venv/bin/python \
 
 ## 行为边界与回退
 
-本次不重跑训练或物理回放。历史仿真见[窄核效果记录](../../artifacts/stand-v2-tight-effect-20261029/README.md)：相对A4999速度跟踪有所改善，但两组零速原成功各丢20例，拒绝作为全面升级替换A。此次为用户指定候选导入，不撤销原行为退化结论。
+本次不重跑训练或物理回放。历史仿真见窄核效果记录（对应旧训练线已清理）：相对A4999速度跟踪有所改善，但两组零速原成功各丢20例，拒绝作为全面升级替换A。此次为用户指定候选导入，不撤销原行为退化结论。
 
 该ONNX与旧39维model13842固件不兼容，不能仅换权重。回退必须成套恢复旧网络及旧观测/策略/恢复代码；旧模型包仍在`models/model13842-20261023/`，本次修改前H7源文件备份及1381项受保护文件哈希在`artifacts/model5999-h7ros-20261029/before/`和`protected-before.json`。UART工程`deployment/H7_RL`未修改。
 

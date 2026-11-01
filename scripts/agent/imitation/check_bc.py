@@ -20,7 +20,7 @@ def main():
     obs,target=dataset.sample('train',256,torch.Generator().manual_seed(71))
     # 与实际PPO的MLP配置核对，不仅核对一个相似网络的张量形状。
     from ct_mjlab.envs import task_registry
-    cfg,train=task_registry.get_cfgs('chuanliantui',play=True)
+    cfg,train=task_registry.get_cfgs('smp',play=True)
     assert tuple(train.actor.hidden_dims)==(256,128,64) and train.actor.activation=='elu'
     assert not train.actor.obs_normalization and not cfg.actions['pd'].motor_randomization
     state={k:v.clone() for k,v in actor.state_dict().items()}

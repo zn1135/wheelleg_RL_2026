@@ -47,7 +47,7 @@ def run(args):
         (args.output/'run.json').write_text(json.dumps(report,indent=2)+'\n')
         return result
     with patch.object(SmpOnPolicyRunner,'learn',learn):
-        train(SimpleNamespace(task='chuanliantui',seed=args.seed,num_envs=args.num_envs,device='cuda:0',
+        train(SimpleNamespace(task='smp',seed=args.seed,num_envs=args.num_envs,device='cuda:0',
             iterations=args.iterations,bc_init=None if args.resume or args.ppo_init else args.bc,
             ppo_init=args.ppo_init,smp_prior=args.prior,smp_weight=0. if args.group=='taskonly' else 1.,
             phase_mix=args.phase_mix,

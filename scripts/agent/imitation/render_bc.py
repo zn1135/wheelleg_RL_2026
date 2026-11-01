@@ -26,7 +26,7 @@ def main():
   rows=[row for row in r['rows'] if row['final_balance_v31'] and not row['qualified'] and row['env'] in matched]
   if rows and all(row['env']!=rows[0]['env'] for _,row,_ in selected):
    selected.append(('balanced-unqualified',rows[0],matched[rows[0]['env']]))
- cfg,train=task_registry.get_cfgs('chuanliantui',play=True);env,_=task_registry.make_env('chuanliantui',env_cfg=cfg,train_cfg=train,num_envs=1)
+ cfg,train=task_registry.get_cfgs('smp',play=True);env,_=task_registry.make_env('smp',env_cfg=cfg,train_cfg=train,num_envs=1)
  renderer=None;metadata=[]
  try:
   model=env.unwrapped.sim.mj_model;model.vis.global_.offwidth=640;model.vis.global_.offheight=360

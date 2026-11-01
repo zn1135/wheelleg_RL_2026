@@ -14,12 +14,12 @@ from ct_mjlab import wheel_angles
 
 @torch.inference_mode()
 def check(args):
-    cfg,train=task_registry.get_cfgs('chuanliantui',play=True)
+    cfg,train=task_registry.get_cfgs('smp',play=True)
     assert not cfg.observations['actor'].terms['proprioception'].params['cfg'].wheel_angle_handover_reset
     cfg.auto_reset=False;cfg.rewards={};cfg.terminations={}
     cfg.commands['standup']=SmpCommandCfg();cfg.events['reset_pose']=EventTermCfg(func=reset_pose,mode='reset')
     observations.configure_wheel_angle_observations(cfg,handover_reset=True)
-    env,_=task_registry.make_env('chuanliantui',env_cfg=cfg,train_cfg=train,num_envs=20,device=args.device)
+    env,_=task_registry.make_env('smp',env_cfg=cfg,train_cfg=train,num_envs=20,device=args.device)
     try:
         raw=env.unwrapped;raw.reset(seed=42);state=observations.get_state(raw);command=state.command
         command.ground_start[:]=True;command.recovered[:]=False

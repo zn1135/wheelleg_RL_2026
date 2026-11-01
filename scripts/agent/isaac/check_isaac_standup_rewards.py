@@ -124,7 +124,7 @@ def check(args):
             new_trace_score=float((new[0]+.2*new[1]).mean()),new_peak=1.,
             interpretation='Re-score stored late velocities with stood=True; not a new policy rollout or learning result.')
     from dataclasses import asdict
-    cfg, train=task_registry.get_cfgs('chuanliantui')
+    cfg, train=task_registry.get_cfgs('smp')
     candidate_cfg, candidate_train=copy.deepcopy((cfg, train))
     configure_smp(cfg, train, args.prior, policy_contract=HANDOVER_OBSERVATION_CONTRACT, bc_finetune='v2')
     old=copy.deepcopy(cfg)
@@ -138,10 +138,10 @@ def check(args):
     old_dict.pop('rewards'); new_dict.pop('rewards')
     assert old_dict==new_dict, {key: (old_dict[key], new_dict[key]) for key in old_dict if old_dict[key] != new_dict[key]}
     cfg.seed=train.seed=42
-    env, _=task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train, num_envs=20)
+    env, _=task_registry.make_env('smp', env_cfg=cfg, train_cfg=train, num_envs=20)
     try:
         raw=env.unwrapped
-        runner, _=task_registry.make_alg_runner(env, 'chuanliantui', train_cfg=train)
+        runner, _=task_registry.make_alg_runner(env, 'smp', train_cfg=train)
         if args.ppo_init:
             critic_before=copy.deepcopy(runner.alg.save()['critic_state_dict'])
             runner.initialize_from_ppo(args.ppo_init)
@@ -192,7 +192,7 @@ def check(args):
             path=args.output/'untrained-interface.pt'
             runner.save(str(path))
             assert checkpoint_bc_finetune(path)==args.variant
-            resumed, _=task_registry.make_alg_runner(env, 'chuanliantui', train_cfg=train)
+            resumed, _=task_registry.make_alg_runner(env, 'smp', train_cfg=train)
             resumed.load(str(path))
             assert resumed.alg.recipe==recipe and not resumed.alg.optimizer.state
             if args.ppo_init:

@@ -23,9 +23,9 @@ def check(args):
                 records[key].append(data[key])
     values = {key: torch.as_tensor(np.concatenate(value), device=args.device).float()
               for key, value in records.items()}
-    cfg, train = task_registry.get_cfgs('chuanliantui', play=True)
+    cfg, train = task_registry.get_cfgs('smp', play=True)
     cfg.actions['pd'].action_delay_s = 0.  # 只隔离数值接口；不声称验证了真实延迟下的动态复现。
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train,
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train,
                                     num_envs=20, device=args.device)
     try:
         raw = env.unwrapped

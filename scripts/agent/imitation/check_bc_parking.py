@@ -127,7 +127,7 @@ def run(args):
     initial=[]
     for e in episodes:
         with np.load(e['path']) as d:initial.append((d['initial_qpos'].copy(),d['initial_qvel'].copy()))
-    cfg,train=task_registry.get_cfgs('chuanliantui',play=True)
+    cfg,train=task_registry.get_cfgs('smp',play=True)
     cfg.auto_reset=False;cfg.seed=42;cfg.episode_length_s=DURATION+1.
     cfg.commands['standup']=SmpCommandCfg();cfg.events['reset_pose']=EventTermCfg(func=reset_pose,mode='reset')
     cfg.terminations['inverted']=TerminationTermCfg(func=inverted);cfg.rewards={}
@@ -136,7 +136,7 @@ def run(args):
     cfg.actions['pd'].action_delay_s=None;cfg.actions['pd'].randomize_delays=False
     cfg.actions['pd'].action_delay_choices_s=(.002,.004)
     count=len(episodes)*len(pairs);args.output.mkdir(parents=True,exist_ok=False)
-    env,_=task_registry.make_env('chuanliantui',env_cfg=cfg,train_cfg=train,num_envs=count,device=args.device)
+    env,_=task_registry.make_env('smp',env_cfg=cfg,train_cfg=train,num_envs=count,device=args.device)
     try:
         raw=env.unwrapped;raw.reset(seed=42);action=raw.action_manager.get_term('pd')
         qpos=torch.tensor(np.asarray([q for pair in pairs for q,v in initial]),device=args.device)

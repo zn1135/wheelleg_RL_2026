@@ -14,7 +14,7 @@ from ct_mjlab.wheel_angles import HANDOVER_OBSERVATION_CONTRACT
 def check(args):
     torch.set_num_threads(1);args.output.mkdir(parents=True,exist_ok=False);initial=[];rows=[]
     for weight in (0.,1.):
-        cfg,train=task_registry.get_cfgs('chuanliantui');cfg.seed=train.seed=42
+        cfg,train=task_registry.get_cfgs('smp');cfg.seed=train.seed=42
         configure_smp(cfg,train,args.prior,policy_contract=HANDOVER_OBSERVATION_CONTRACT,reward_weight=weight)
         if weight==0.:
             baseline=copy.deepcopy(asdict(cfg));agent=copy.deepcopy(asdict(train))
@@ -27,9 +27,9 @@ def check(args):
             baseline['scene']['terrain']['spec_fn']=right
             assert baseline==target
             other=asdict(train);agent['experiment_name']=other['experiment_name'];assert agent==other
-        env,_=task_registry.make_env('chuanliantui',env_cfg=cfg,train_cfg=train,num_envs=20,device='cuda:0')
+        env,_=task_registry.make_env('smp',env_cfg=cfg,train_cfg=train,num_envs=20,device='cuda:0')
         try:
-            runner,_=task_registry.make_alg_runner(env,'chuanliantui',train_cfg=train,device='cuda:0')
+            runner,_=task_registry.make_alg_runner(env,'smp',train_cfg=train,device='cuda:0')
             runner.initialize_from_bc(args.bc);raw=env.unwrapped;obs=env.get_observations()
             state=dict(qpos=raw.sim.data.qpos.clone().cpu(),qvel=raw.sim.data.qvel.clone().cpu(),
                 actor={k:v.cpu().clone() for k,v in runner.alg._raw_actor.state_dict().items()},

@@ -25,8 +25,8 @@ def rejected(call):
 def check(args):
     torch.set_num_threads(1)
     args.output.mkdir(parents=True,exist_ok=False)
-    cfg,train=task_registry.get_cfgs('chuanliantui');cfg.seed=train.seed=42
-    old,old_train=task_registry.get_cfgs('chuanliantui');configure_smp(old,old_train,args.prior)
+    cfg,train=task_registry.get_cfgs('smp');cfg.seed=train.seed=42
+    old,old_train=task_registry.get_cfgs('smp');configure_smp(old,old_train,args.prior)
     contract=policy_observation_contract(args.checkpoint,bc=True)
     assert contract==HANDOVER_OBSERVATION_CONTRACT
     configure_smp(cfg,train,args.prior,policy_contract=contract)
@@ -38,9 +38,9 @@ def check(args):
     assert cfg.actions['pd'].action_delay_choices_s==(.002,.004)
     immutable={str(p):digest(p) for p in (args.checkpoint,args.prior,
         ROOT/'resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml')}
-    env,_=task_registry.make_env('chuanliantui',env_cfg=cfg,train_cfg=train,num_envs=20,device='cuda:0')
+    env,_=task_registry.make_env('smp',env_cfg=cfg,train_cfg=train,num_envs=20,device='cuda:0')
     try:
-        raw=env.unwrapped;runner,_=task_registry.make_alg_runner(env,'chuanliantui',train_cfg=train,device='cuda:0')
+        raw=env.unwrapped;runner,_=task_registry.make_alg_runner(env,'smp',train_cfg=train,device='cuda:0')
         motor_ids=torch.tensor([raw.sim.mj_model.actuator('robot/'+name+'_motor').id
             for name in ACTUATED_JOINTS],device=raw.device)
         critic={k:v.clone() for k,v in runner.alg._raw_critic.state_dict().items()}

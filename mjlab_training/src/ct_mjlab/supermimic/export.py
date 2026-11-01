@@ -6,9 +6,28 @@ from pathlib import Path
 import numpy as np
 import torch
 from .networks import make_actor, act
-from .learner import ACTOR_TRANSFER_CONTRACTS, asset_digest
+from .learner import ACTOR_TRANSFER_CONTRACTS, asset_digest, checkpoint_action_clip
 from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
 from ct_mjlab.envs.chuanliantui_split.runner import contracts
+
+
+class ExportPolicy(torch.nn.Module):
+    """Keep SuperMimic action bounds out of the shared PPO/BC export class."""
+    def __init__(self, actor):
+        super().__init__()
+        self.policy = actor.as_onnx()
+        self.limit = actor.supermimic_action_clip
+        self.input_names = self.policy.input_names
+        self.output_names = self.policy.output_names
+
+    def get_dummy_inputs(self):
+        return self.policy.get_dummy_inputs()
+
+    def forward(self, history):
+        action, velocity = self.policy(history)
+        if self.limit is not None:
+            action = torch.where(torch.isfinite(action), action.clamp(-self.limit,self.limit), action)
+        return action, velocity
 
 
 def export(checkpoint, output):
@@ -27,7 +46,8 @@ def export(checkpoint, output):
         raise ValueError('Not a compatible SuperMimic walk checkpoint')
     actor = make_actor('cpu').eval()
     actor.load_state_dict(saved['actor'])
-    model = actor.as_onnx().eval()
+    actor.supermimic_action_clip = checkpoint_action_clip(saved['algorithm_contract'])
+    model = ExportPolicy(actor).eval()
     output.parent.mkdir(parents=True,exist_ok=True)
     torch.onnx.export(model,model.get_dummy_inputs(),str(output),opset_version=13,dynamo=False,
         input_names=model.input_names,output_names=model.output_names)
@@ -48,6 +68,7 @@ def export(checkpoint, output):
         asset_sha256=saved['asset_sha256'],checkpoint=str(checkpoint),checkpoint_sha256=digest(checkpoint),
         onnx=str(output),onnx_sha256=digest(output),inputs={'observation_history':[1,125]},
         outputs={'actions':[1,6],'velocity':[1,3]},numeric_max_error=errors,
+        action_clip=actor.supermimic_action_clip,
         policy_dt_s=.01,physics_dt_s=.002,h7_owner_review='待确认',
         behavior_acceptance='未验收；导出检查只确认数值和接口',
         scope='Experimental walk-only raw actions; existing CPU/PPO loaders are not adapted')

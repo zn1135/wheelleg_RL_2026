@@ -40,12 +40,12 @@ def passive(args):
         return torch.zeros(env.num_envs, device=env.device)
 
     data = MotionDataset([args.initials])
-    cfg, train = task_registry.get_cfgs('chuanliantui', play=True)
+    cfg, train = task_registry.get_cfgs('smp', play=True)
     cfg.auto_reset = False
     cfg.rewards, cfg.terminations = {}, {}
     cfg.metrics = {'force': MetricsTermCfg(func=verify_force, per_substep=True, reduce='last')}
     cfg.actions['pd'] = PassiveCfg(**{k: v for k, v in vars(cfg.actions['pd']).items() if k != 'class_type'})
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train,
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train,
                                    num_envs=len(data.episodes), device=args.device)
     try:
         raw = env.unwrapped

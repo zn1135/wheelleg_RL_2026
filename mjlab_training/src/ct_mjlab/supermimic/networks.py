@@ -10,6 +10,17 @@ from .state import (StateAdapter, STATE_DIM, PARAM_DIM, PHYS_DIM, DELTA_DIM,
                     SUBSTEPS, PHYSICAL, MEMORY, SENSORS, NOISE, SOLREF,
                     physical_delta, integrate_physical)
 
+ACTION_CLIP = 3.0
+
+
+def clip_action(actor, action):
+    # Historical inference keeps its original unbounded action semantics.
+    limit = actor.supermimic_action_clip
+    if limit is None:
+        return action
+    # Preserve invalid outputs so the existing failure checks still stop the run.
+    return torch.where(torch.isfinite(action), action.clamp(-limit, limit), action)
+
 
 def model_context(context):
     # Unlimited joint bounds stay infinite in the exact reward, but never enter an MLP.
@@ -88,6 +99,7 @@ def make_actor(device):
     dummy = TensorDict(dict(actor=torch.zeros(1,25), history=torch.zeros(1,125)), batch_size=[1])
     actor = HistoryActor(dummy, {'actor':['actor']}, 'actor', 6,
         hidden_dims=cfg.hidden_dims, activation=cfg.activation, distribution_cfg=None)
+    actor.supermimic_action_clip = ACTION_CLIP
     # Start close to zero without importing any PPO weights or optimizer.
     with torch.no_grad():
         actor.mlp[-1].weight.mul_(.01)
@@ -95,10 +107,11 @@ def make_actor(device):
     return actor.to(device)
 
 
-def act(actor, history):
+def act(actor, history, *, unclipped=False):
     # Freeze encoder parameters in imagination, keeping gradients through its input history.
     velocity = actor.encoder(history)
-    return actor.mlp(torch.cat((history[..., -25:], velocity), -1))
+    action = actor.mlp(torch.cat((history[..., -25:], velocity), -1))
+    return action if unclipped else clip_action(actor, action)
 
 
 class WorldModel(nn.Module):
@@ -165,8 +178,8 @@ class Critic(nn.Module):
 
 
 class MotionCritic(nn.Module):
-    """Value inputs share the motion model's available state, including delays."""
-    STATE_WIDTH = 47+162+18+1
+    """Value uses motion/noise/age, without an imagined2ms sensor queue."""
+    STATE_WIDTH = 47+18+1
 
     def __init__(self):
         super().__init__()
@@ -178,7 +191,7 @@ class MotionCritic(nn.Module):
     def inputs(state, parameters, context):
         from .motion import physical47_from_full64
         motion_state = torch.cat((physical47_from_full64(state[...,PHYSICAL]),
-            state[...,SENSORS],state[...,NOISE],state[...,MEMORY][...,:1]),-1)
+            state[...,NOISE],state[...,MEMORY][...,:1]),-1)
         return torch.cat((motion_state,contact_parameters(parameters),model_context(context)),-1)
 
     def forward(self, state, parameters, context):

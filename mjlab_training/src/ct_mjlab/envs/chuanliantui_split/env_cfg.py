@@ -56,16 +56,12 @@ def make_ppo_cfg(role):
     return cfg
 
 
-def make_getup_env_cfg(*, play=False):
-    return make_env_cfg('getup', play=play)
 
 
 def make_walk_env_cfg(*, play=False):
     return make_env_cfg('walk', play=play)
 
 
-def make_getup_ppo_cfg():
-    return make_ppo_cfg('getup')
 
 
 def make_walk_ppo_cfg():

@@ -11,18 +11,20 @@ import torch
 from mjlab.utils.lab_api.math import quat_apply_inverse
 
 from .analytic_reward import WEIGHTS, differentiable_reward, _upright
-from .state import (ACTION_LAGS, KD, KP, MEMORY, NOMINAL, SENSORS,
-                    SENSOR_SAMPLES, STRENGTH, SUBSTEPS, StateAdapter, unit_quat)
+from .state import (KD, KP, MEMORY, NOMINAL, SENSORS, NOISE, PHYSICAL,
+                    STRENGTH, StateAdapter, unit_quat)
 
 
 MOTION_AUXILIARY_RECIPE = dict(
-    version='motion-only-pd-soft-termination-v2',
-    torque='analytic_pd_from_predicted_pre_substep_q_v_not_learned',
+    version='control-endpoint-pd-soft-termination-v3',
+    torque='analytic_pd_from_predicted_endpoint_q_v_current_action_not_learned',
     action_order=['lf0', 'lf00', 'lfwheel', 'rf0', 'rf00', 'rfwheel'],
     leg_position_scale=.5, wheel_velocity_scale=10., max_wheel_velocity=150.,
     wheel_stiffness=.1, wheel_damping=0., motor_response_time_constant_s=0.,
     ground_start_hold_s=.2, leg_target_reference_clip_rad=3.14,
-    action_lag='separate_leg_wheel_physics_ticks_current_if_lag_le_phase_else_previous',
+    action_lag='endpoint_reward_uses_current_action_no_imagined_actuator_queue',
+    observation='endpoint_sensors_plus_noise_no_2ms_delay_queue',
+    reward_time='control_endpoint_10ms',
     torque_limits_before_xml_gain=[40., 40., 3.9, 40., 40., 3.9],
     wheel_response='xml_speed_attenuation_then_xml_fixed_gain_once',
     wheel_response_backward='same_forward_safe_fraction_floor_1e-6',
@@ -36,9 +38,25 @@ MOTION_AUXILIARY_RECIPE = dict(
     disabled_model_reward_terms=[],
     model_reward_differences=['estimated_not_actual_motor_torque',
         'base_height_without_contact_attenuation',
-        'motion_only_soft_termination_not_real_task_failure'],
+        'motion_only_soft_termination_not_real_task_failure',
+        'endpoint_geometry_not_pre_last_physics_step',
+        'current_action_torque_not_delayed_action'],
     height_reward='exp(-(height-target)^2/.0025)*upright_gate; no_contact_factor',
     reward_not_equivalent_to_real_task=True,
+)
+
+
+IMAGINATION_CLAMP_RECIPE = dict(
+    version='control-endpoint-imagination-clamp-v1',
+    height_range_m=[.02, 2.], body_linear_component_limit_m_s=20.,
+    body_angular_component_limit_rad_s=40.,
+    joint_position_limits='compiled_XML_jnt_limited_only',
+    wheel_speed_limit_rad_s=MOTION_AUXILIARY_RECIPE['max_wheel_velocity'],
+    wheel_speed_limit_source='existing_PD_target_bound_used_as_numerical_guard_not_measured_speed_limit',
+    other_joint_speed_limits='unbounded_no_verified_local_limits',
+    nonfinite='preserved_for_existing_failure_checks',
+    application='after_prediction_before_observation_reward_survival_and_next_imagination_step',
+    world_fit_and_real_labels='not_clamped',
 )
 
 
@@ -74,19 +92,51 @@ class MotionStateAdapter(StateAdapter):
         self.register_buffer('pd_response', torch.tensor(model.actuator_gainprm[motors, :3], dtype=torch.float32))
         self.register_buffer('pd_limits', torch.tensor(model.actuator_ctrlrange[motors], dtype=torch.float32))
         self.legs, self.wheel_motor_ids = [0, 1, 3, 4], [2, 5]
+        lower = torch.zeros(18)
+        upper = torch.zeros(18)
+        limited = torch.zeros(18, dtype=torch.bool)
+        for index in range(1, model.njnt):
+            if model.jnt_limited[index]:
+                column = int(model.jnt_qposadr[index])-7
+                lower[column], upper[column] = map(float, model.jnt_range[index])
+                limited[column] = True
+        velocity = torch.zeros(18)
+        velocity[self.motor_v[self.wheel_motor_ids]-31] = IMAGINATION_CLAMP_RECIPE['wheel_speed_limit_rad_s']
+        self.register_buffer('imagination_q_lower', lower)
+        self.register_buffer('imagination_q_upper', upper)
+        self.register_buffer('imagination_q_limited', limited)
+        self.register_buffer('imagination_joint_speed_limit', velocity)
 
-    def estimated_torque(self, physical, parameters, action, previous, phase=4):
-        """Reward-only estimate; delay phase is zero-based within five 2ms ticks."""
+    def sanitize_endpoint(self, physical):
+        """Clamp imagined physical endpoints only; preserve unknown limits and nonfinites."""
+        from mjlab.utils.lab_api.math import quat_apply
+        recipe = IMAGINATION_CLAMP_RECIPE
+        q = unit_quat(physical[..., 3:7])
+        body_velocity = quat_apply_inverse(q, physical[..., 25:28])
+        bound = recipe['body_linear_component_limit_m_s']
+        clipped_body = body_velocity.clamp(-bound, bound)
+        # Keep already-valid world velocities exactly, avoiding rotation roundoff.
+        linear = torch.where((body_velocity.abs()>bound).any(-1, keepdim=True),
+                             quat_apply(q, clipped_body), physical[..., 25:28])
+        angular_bound = recipe['body_angular_component_limit_rad_s']
+        joint_q = torch.where(self.imagination_q_limited,
+            torch.maximum(torch.minimum(physical[..., 7:25], self.imagination_q_upper), self.imagination_q_lower), physical[..., 7:25])
+        joint_v = torch.where(self.imagination_joint_speed_limit>0,
+            torch.maximum(torch.minimum(physical[..., 31:49], self.imagination_joint_speed_limit), -self.imagination_joint_speed_limit), physical[..., 31:49])
+        bounded = torch.cat((physical[..., :2], physical[..., 2:3].clamp(*recipe['height_range_m']),
+            physical[..., 3:7], joint_q, linear, physical[..., 28:31].clamp(-angular_bound, angular_bound),
+            joint_v, physical[..., 49:]), -1)
+        return torch.where(torch.isfinite(physical), bounded, physical)
+
+    def estimated_torque(self, physical, parameters, action):
+        """Reward-only PD estimate at the predicted endpoint using current action."""
         legs, wheels = self.legs, self.wheel_motor_ids
-        lag = parameters[..., ACTION_LAGS]
-        delayed = torch.where(lag[..., :1] <= phase, action, previous)
-        wheel_delayed = torch.where(lag[..., 1:2] <= phase, action, previous)
         q, qd = physical[..., self.motor_q], physical[..., self.motor_v]
         kp, kd = parameters[..., KP], parameters[..., KD]
-        target = (parameters[..., NOMINAL][..., legs]+.5*delayed[..., legs]).clamp(
+        target = (parameters[..., NOMINAL][..., legs]+.5*action[..., legs]).clamp(
             self.pd_reference[legs]-3.14, self.pd_reference[legs]+3.14)
         leg_torque = kp[..., legs]*(target-q[..., legs])-kd[..., legs]*qd[..., legs]
-        velocity = (10.*wheel_delayed[..., wheels]).clamp(-150., 150.)
+        velocity = (10.*action[..., wheels]).clamp(-150., 150.)
         # Captured KD contains kd_scale*(wheel_stiffness+wheel_damping).
         wheel_torque = kd[..., wheels]*(velocity-qd[..., wheels])
         result = torch.stack((leg_torque[..., 0], leg_torque[..., 1], wheel_torque[..., 0],
@@ -107,23 +157,23 @@ class MotionStateAdapter(StateAdapter):
 
     def reward_features(self, path, parameters=None, action=None, previous=None, state=None):
         path = clean_physical(path)
-        current, lagged = path[..., -1, :], path[..., -2, :]
-        q = unit_quat(lagged[..., 3:7])
-        gravity = torch.zeros_like(lagged[..., :3]); gravity[..., 2] = -1.
-        position, _, linear, angular = self.kin(lagged[..., :25], lagged[..., 25:49])
+        current = path[..., -1, :]
+        q = unit_quat(current[..., 3:7])
+        gravity = torch.zeros_like(current[..., :3]); gravity[..., 2] = -1.
+        position, _, linear, angular = self.kin(current[..., :25], current[..., 25:49])
         relative = position[..., self.wheels, :]-position[..., self.hips, :]
         relative = quat_apply_inverse(q[..., None, :].expand(*relative.shape[:-1], 4), relative)
         swing = torch.atan2(-relative[..., 0], -relative[..., 2])
         torque = torch.zeros_like(current[..., :6])
         if parameters is not None:
-            torque = self.estimated_torque(lagged, parameters, action, previous)
+            torque = self.estimated_torque(current, parameters, action)
             if state is not None:
                 hold = (parameters[..., 63] > .5) & (state[..., MEMORY][..., 0] < 20.)
                 torque = torque.masked_fill(hold[..., None], 0.)
         # Last three zero slots mean unavailable, not predicted force/support.
         return torch.cat((quat_apply_inverse(q, linear[..., 1, :]),
             quat_apply_inverse(q, angular[..., 1, :]), quat_apply_inverse(q, gravity),
-            lagged[..., 2:3], swing, current[..., self.leg_q], current[..., self.knee_q],
+            current[..., 2:3], swing, current[..., self.leg_q], current[..., self.knee_q],
             current[..., self.leg_v], torque, torch.zeros_like(current[..., :3])), -1)
 
     def _failure_coordinates(self, physical):
@@ -160,11 +210,9 @@ class MotionStateAdapter(StateAdapter):
 
     def advance(self, state, parameters, path, command, action, previous, previous_previous, context, noise):
         path = clean_physical(path)
-        sensors = self.raw_sensors(path, parameters[..., None, :])
-        ring = state[..., SENSORS].reshape(*state.shape[:-1], SENSOR_SAMPLES, 18)
-        ring = torch.cat((ring[..., SUBSTEPS:, :], sensors), -2)
         memory, failure, numerical = self.advance_memory(state, parameters, path)
-        next_state = torch.cat((path[..., -1, :], ring.flatten(-2), noise, memory), -1)
+        # Keep the recorded-state container, but do not fabricate a2ms sensor queue.
+        next_state = torch.cat((path[..., -1, :], torch.zeros_like(state[..., SENSORS]), noise, memory), -1)
         frame = self.actor_frame(next_state, parameters, command, action)
         features = self.reward_features(path, parameters, action, previous, state)
         active = ~((parameters[..., 63] > .5) & (state[..., MEMORY][..., 0] < 20.))
@@ -181,3 +229,9 @@ class MotionStateAdapter(StateAdapter):
             reward = reward+torch.nan_to_num(values[name]*weight*reward_context[..., 20],
                                            nan=0., posinf=0., neginf=0.)
         return next_state, frame, reward, failure, features
+
+    def actor_frame(self, state, parameters, command, action):
+        sensor = self.raw_sensors(state[..., PHYSICAL], parameters)+state[..., NOISE]
+        return torch.cat((sensor[..., :3]*.25, sensor[..., 3:6], command,
+            sensor[..., 6:10], sensor[..., 12:18][..., (0,1,4,2,3,5)]*.05,
+            action), -1).clamp(-100., 100.)

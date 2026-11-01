@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 ART = ROOT/'artifacts/supermimic-v13-continuation-20261101-r1'
 MAIN = ROOT/'mjlab_training/src/ct_mjlab/supermimic/__main__.py'
 MAIN_SHA = '17051c4a88f66f62be54f17509382588f9620fa6bd959cd0e90a5e14ae76014d'
-TARGETS = (700, 1100, 1500, 2200)
+TARGETS = (700, 1100, 1500, 2200, 5200)
 
 
 def sha(path):
@@ -155,7 +155,7 @@ def source_proof():
     return actual
 
 
-def count_selfcheck():
+def count_selfcheck(start=700, target=2200, thresholds=(1200,1700), world_start=3056):
     # Exercise the real source transformation using integer counters only.
     assert callable(globals().get('count_source')), 'Count-only source transform is missing'
     source = '''def train(args):
@@ -183,7 +183,7 @@ def count_selfcheck():
     args.final = learner.optimizer_update_counts().copy()
 '''
     revised = count_source(source)
-    counts = dict(world=3056, encoder=700, actor=700, critic=700)
+    counts = dict(world=world_start, encoder=start, actor=start, critic=start)
     saved = []
     class Counter:
         def optimizer_update_counts(self):
@@ -193,20 +193,20 @@ def count_selfcheck():
             for key in ('encoder', 'actor', 'critic'):
                 counts[key] += 1
     def checkpoint(learner, command, config, iteration, transitions, world_updates):
-        for threshold in (1200, 1700):
+        for threshold in thresholds:
             if counts['actor'] >= threshold and threshold not in saved:
                 assert counts['actor'] == threshold
                 saved.append(threshold)
-    args = SimpleNamespace(learner=Counter(), stop_actor_updates=2200, seconds=None,
+    args = SimpleNamespace(learner=Counter(), stop_actor_updates=target, seconds=None,
         collected=0, rows=[], periodic_saves=0, final=None)
     env = dict(time=SimpleNamespace(monotonic=lambda:10.**30),
         _continuation_save_milestones=checkpoint)
     exec(compile(revised, '<count-only-boundary-fixture>', 'exec'), env)
     env['train'](args)
-    assert args.final == dict(world=9056, encoder=2200, actor=2200, critic=2200)
-    assert max(row['actor'] for row in args.rows) == 2200 and saved == [1200, 1700]
+    assert args.final == dict(world=world_start+4*(target-start), encoder=target, actor=target, critic=target)
+    assert max(row['actor'] for row in args.rows) == target and saved == list(thresholds)
     assert args.collected > 0 and args.periodic_saves > 0
-    return dict(start_actor=700, additional_actor_updates=1500, final=counts,
+    return dict(start_actor=start, additional_actor_updates=target-start, final=counts,
         saved_first_actor_counts=saved, overshoot=0, seconds=None, hard_deadline_utc=None,
         extreme_clock_does_not_stop_count_mode=True, periodic_save_statement_retained=True,
         model_forwards=0, simulator_steps=0, optimizer_steps=0)
@@ -276,7 +276,9 @@ def selfcheck():
         else:
             raise AssertionError('Nonfinite metric accepted')
     count_checks = count_selfcheck()
+    continuation_checks = count_selfcheck(2200,5200,(3200,4200),9056)
     return dict(all_checks_passed=True, scheduling_fixtures=checks, count_only=count_checks,
+        count_only_2200_to_5200=continuation_checks,
         hard_stop_before_collection=True, guard_sites=3, only_guard_replacements=True,
         production_source_in_memory_transform_parses=True, nonfinite_metrics_rejected=True,
         model_forwards=0, simulator_steps=0, optimizer_steps=0,

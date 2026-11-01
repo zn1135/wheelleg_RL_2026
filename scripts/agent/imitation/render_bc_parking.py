@@ -19,7 +19,7 @@ def render(args):
     for m in MODES:assert digest(out/m/'trace.npz')==reports[m]['trace_sha256']
     with np.load(out/'student-paired/switch-check.npz') as d:invalid=np.flatnonzero(d['teacher_phase']!=3)
     selected=[0]+([int(invalid[0])] if len(invalid) and invalid[0]!=0 else [])
-    cfg,train=task_registry.get_cfgs('chuanliantui',play=True);env,_=task_registry.make_env('chuanliantui',env_cfg=cfg,train_cfg=train,num_envs=1)
+    cfg,train=task_registry.get_cfgs('smp',play=True);env,_=task_registry.make_env('smp',env_cfg=cfg,train_cfg=train,num_envs=1)
     renderer=None;movies=[]
     try:
         model=env.unwrapped.sim.mj_model;model.vis.global_.offwidth=640;model.vis.global_.offheight=360

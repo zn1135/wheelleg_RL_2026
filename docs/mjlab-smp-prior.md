@@ -7,7 +7,7 @@
 
 2026-10-24 清理状态：按用户要求，已删除本地立即出力起立示范 `artifacts/smp-rise-move-20261024/ground-integral-030`、`prior_2000.pt` 及其同权重的 `smp_prior.pt` 副本，并移除三份本地归档包中的对应内容。新 0.2 秒等待起立示范、静站和移动示范保留；远程文件未修改。下文涉及旧数据或 prior2000 的路径仅为历史记录，原命令当前不能直接运行；清理后的归档包也不再对应历史包哈希。新先验仍需另行训练。
 
-第二阶段交付 `collect`、`train-prior` 和运动评分 API；第三阶段通过可选 `--smp-prior` 接入 PPO。仍只有 `chuanliantui` 注册任务，不传该参数时保持原行为。39/82维观测、6维动作、2ms物理／PD和10ms策略接口不变。实验结果统一见[项目实验记录](ai/project-log.md)顶部。
+第二阶段交付 `collect`、`train-prior` 和运动评分 API；第三阶段通过可选 `--smp-prior` 接入 PPO。当前仅保留`smp`与`supermimic`环境注册，不传该参数时保持原行为。39/82维观测、6维动作、2ms物理／PD和10ms策略接口不变。实验结果统一见[项目实验记录](ai/project-log.md)顶部。
 
 新0.2秒等待示范的SMP检查点与来源见[2026-10-25本地prior2000交付](model-deliveries/20261025-smp-hold-prior2000.md)；原立即出力数据的[历史prior2000](model-deliveries/20261024-smp-prior2000.md)本地已清理。训练后可用`scripts/agent/imitation/assess_smp_prior.py`核对预算、连续日志、优化器状态及固定验证窗口去噪误差；该脚本不更新参数。
 

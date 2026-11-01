@@ -15,7 +15,7 @@ from ct_mjlab.envs import task_registry
 from .buffer import ReplayBuffer
 from .learner import (Learner, ALGORITHM_CONTRACT, WORLD_STEPS_PER_UPDATE,
                       WORLD_LOSS_RECIPE, ALTERNATING_RECIPE)
-from .networks import act
+from .networks import act, clip_action
 from .state import capture_state, capture_parameters, physical_snapshot, SUBSTEPS
 
 CONTACT_TRAINING_RECIPE = dict(name='supermimic_real_nominal_solref_mixture',
@@ -117,11 +117,13 @@ def capture_initial_physics(env, buffer, *, task, seed):
 def collect(env, learner, buffer, obs, *, exploration=.2):
     before = dict(history=obs['history'].clone(),privileged=obs['critic'].clone(),
                   velocity=obs['velocity_target'].clone())
-    action = act(learner.actor,before['history'])
+    action = act(learner.actor,before['history'],unclipped=True)
     if exploration:
         action = action + exploration*torch.randn_like(action)
     if not torch.isfinite(action).all():
         raise FloatingPointError('Nonfinite action; not sent to simulation')
+    # Clip after exploration, then use this same action for simulation and replay.
+    action = clip_action(learner.actor,action)
     raw = env.unwrapped
     if buffer is not None:
         before.update(state=capture_state(raw),parameters=capture_parameters(raw))
@@ -163,13 +165,13 @@ def collect(env, learner, buffer, obs, *, exploration=.2):
 
 def make_env(args, *, play=False):
     from mjlab.utils.torch import configure_torch_backends
-    cfg, train = task_registry.get_cfgs(args.task,play=play)
+    cfg, train = task_registry.get_cfgs('supermimic',play=play)
     if not play:
         if 'isaac_domain_randomization' not in cfg.events:
             raise ValueError('SuperMimic contact mixture requires the original training randomization')
         cfg.events['supermimic_nominal_contact'] = EventTermCfg(
             func=supermimic_nominal_contact,mode='startup')
-    env, _ = task_registry.make_env(args.task,env_cfg=cfg,train_cfg=train,
+    env, _ = task_registry.make_env('supermimic',env_cfg=cfg,train_cfg=train,
                                    num_envs=args.num_envs,seed=args.seed,device=args.device)
     configure_torch_backends(allow_tf32=False)
     try:
@@ -291,9 +293,11 @@ def train(args):
             prewarm_saved = True
         started = time.monotonic()
         deadline, last_save = started+args.seconds, started
+        actor_target = (learner.optimizer_update_counts()['actor']+args.actor_updates
+            if getattr(args,'actor_updates',None) is not None else None)
         updates = 0
         with (args.log_dir/'metrics.jsonl').open('x') as metrics_file:
-            while time.monotonic() < deadline:
+            while time.monotonic() < deadline and (actor_target is None or learner.optimizer_update_counts()['actor'] < actor_target):
                 reward_sum = done_sum = 0.
                 collected = 0
                 for _ in range(8):
@@ -306,7 +310,7 @@ def train(args):
                 # Fit dynamics/estimator first; then enable imagined policy/value updates.
                 if buffer.size >= max(128,args.horizon,args.window):
                     for _ in range(4):
-                        if time.monotonic() >= deadline:
+                        if time.monotonic() >= deadline or (actor_target is not None and learner.optimizer_update_counts()['actor'] >= actor_target):
                             break
                         # Source-world training never counts toward these local Adam steps.
                         ready = learner.optimizer_update_counts()['world'] >= args.policy_warmup_updates
@@ -354,7 +358,7 @@ def train(args):
                      transitions=transitions,world_updates=world_updates)
         print(json.dumps(dict(log_dir=str(args.log_dir),elapsed_s=time.monotonic()-started,
                               transitions=transitions,iteration=iteration)),flush=True)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, Exception):
         if started is not None:
             # An interrupt can land between the four model steps; preserve the actual count.
             world_updates = learner.optimizer_update_counts()['world']
@@ -402,12 +406,13 @@ def main():
     for name in ('train','play'):
         p = sub.add_parser(name)
         # Walk only in this first port; get-up has a separate height curriculum and acceptance.
-        p.add_argument('--task',choices=('chuanliantui_walk',),default='chuanliantui_walk')
+        p.set_defaults(task='chuanliantui_walk')  # 已有SM模型的内部合同标识，非公开task选择
         p.add_argument('--num-envs',type=int,default=128 if name=='train' else 20)
         p.add_argument('--seed',type=int,default=42)
         p.add_argument('--device',default='cuda:0')
         if name=='train':
             p.add_argument('--seconds',type=float,required=True,help='Explicit learning budget, including collection')
+            p.add_argument('--actor-updates',type=int,help='Stop after this many additional actual actor Adam updates, or at the time budget')
             p.add_argument('--log-dir',type=Path,required=True)
             initialization = p.add_mutually_exclusive_group()
             initialization.add_argument('--resume',type=Path)
@@ -430,6 +435,8 @@ def main():
     p.add_argument('--output',type=Path,required=True)
     args = parser.parse_args()
     if args.mode=='train':
+        if args.actor_updates is not None and args.actor_updates<1:
+            parser.error('--actor-updates must be positive')
         if not math.isfinite(args.actor_lr) or args.actor_lr<=0:
             parser.error('--actor-lr must be positive and finite')
         if (not math.isfinite(args.seconds) or args.seconds<=0 or args.num_envs<2

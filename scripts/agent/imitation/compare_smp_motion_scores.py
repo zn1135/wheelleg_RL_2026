@@ -49,14 +49,14 @@ def rollout(args):
     else:
         from ct_mjlab.envs import task_registry
         from ct_mjlab.smp.ppo import configure_smp
-        cfg, train_cfg = task_registry.get_cfgs('chuanliantui', play=True)
+        cfg, train_cfg = task_registry.get_cfgs('smp', play=True)
         cfg.seed = 42
         cfg.auto_reset = False
         configure_smp(cfg, train_cfg, args.prior, play=True)
-        env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train_cfg,
+        env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train_cfg,
                                         num_envs=args.num_envs, device=args.device)
         raw = env.unwrapped
-        runner, _ = task_registry.make_alg_runner(env, 'chuanliantui', train_cfg=train_cfg,
+        runner, _ = task_registry.make_alg_runner(env, 'smp', train_cfg=train_cfg,
                                                   device=args.device)
         runner.load(str(args.checkpoint), load_cfg={'actor': True}, map_location=args.device)
         policy = runner.get_inference_policy(device=args.device)

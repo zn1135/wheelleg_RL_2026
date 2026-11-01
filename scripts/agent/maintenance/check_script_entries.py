@@ -9,21 +9,14 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[3]
 MJLAB = (
-    'motion.assess',
-    'multimode.assess_multimode_cpu_envelope', 'multimode.assess_multimode_envelope_friction',
-    'stand_v2.compare_stand_v2_active_weight',
-    'multimode.check_mjlab_multimode', 'multimode.assess_multimode_tracking',
-    'multimode.compare_multimode_knockdown', 'stand.check_chuanliantui_stand',
-    'stand.assess_chuanliantui_stand', 'stand_v2.check_chuanliantui_stand_v2',
-    'stand_v2.diagnose_chuanliantui_stand_v2', 'stand_v2.diagnose_stand_v2_rewards_velocity',
-    'split.check_chuanliantui_two_policy', 'split.check_walk_resume',
-    'split.assess_chuanliantui_walk', 'supermimic.check_chuanliantui_supermimic',
+    'motion.assess', 'supermimic.check_chuanliantui_supermimic',
     'supermimic.check_supermimic_motion_retrain', 'supermimic.score_supermimic_motion',
     'supermimic.score_supermimic_motion_retrain', 'imitation.check_lqr_vmc',
     'imitation.select_preserved_bc', 'imitation.render_preserved_bc',
     'real2sim.check_real2sim_huananhu', 'real2sim.report_fixed_h7_calibration',
     'maintenance.wait_training_completion', 'maintenance.restore_script_archive',
 )
+
 
 
 def check(entry):

@@ -19,13 +19,13 @@ from scripts.agent.imitation.check_lqr_student_closed_loop import digest
 def check(args):
     frozen=torch.load(args.run/'student-paired/switch-state.pt',map_location='cpu',weights_only=True)
     actor,_=load_actor(args.checkpoint,'cuda:0');count=len(frozen['episode'])
-    cfg,train=task_registry.get_cfgs('chuanliantui',play=True);cfg.seed=42;cfg.auto_reset=False;cfg.episode_length_s=31.
+    cfg,train=task_registry.get_cfgs('smp',play=True);cfg.seed=42;cfg.auto_reset=False;cfg.episode_length_s=31.
     cfg.commands['standup']=SmpCommandCfg();cfg.events['reset_pose']=EventTermCfg(func=reset_pose,mode='reset')
     cfg.terminations['inverted']=TerminationTermCfg(func=inverted);cfg.rewards={}
     cfg.metrics['source_balance']=MetricsTermCfg(func=balance_substep,per_substep=True,reduce='last')
     cfg.actions['pd']=ParkingCfg(**{k:v for k,v in vars(cfg.actions['pd']).items() if k!='class_type'},parking_mode='student')
     cfg.actions['pd'].action_delay_s=None;cfg.actions['pd'].randomize_delays=False;cfg.actions['pd'].action_delay_choices_s=(.002,.004)
-    env,_=task_registry.make_env('chuanliantui',env_cfg=cfg,train_cfg=train,num_envs=count,device='cuda:0')
+    env,_=task_registry.make_env('smp',env_cfg=cfg,train_cfg=train,num_envs=count,device='cuda:0')
     try:
         raw=env.unwrapped;raw.reset(seed=42)
         raw._source_weight=float(raw.sim.get_default_field('body_mass')[raw.scene['robot'].indexing.body_ids].sum())*9.81

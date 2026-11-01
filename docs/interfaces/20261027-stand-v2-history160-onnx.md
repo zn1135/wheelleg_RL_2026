@@ -1,6 +1,6 @@
 # 稳站v2：160维历史单输入ONNX
 
-后续NORMAL规则已追加[轮端承重判据](20261027-stand-v2-wheel-load-normal.md)，图形状不变，导出元数据记录checkpoint对应的`recovery_contract`。旧图与新图必须匹配各自的外部模式生成规则。
+后续NORMAL规则已追加轮端承重判据（对应旧训练线已清理），图形状不变，导出元数据记录checkpoint对应的`recovery_contract`。旧图与新图必须匹配各自的外部模式生成规则。
 
 | 项目 | 内容 |
 |---|---|
@@ -47,6 +47,6 @@ scripts/mjlab.sh export \
   --samples 256
 ```
 
-本地退出码0；ONNX结构检查通过，图仅有[1,160]输入。256组各帧独立随机输入下，新包装与原checkpoint策略推理路径的动作/速度最大差均为0；ONNX相对PyTorch最大差分别1.35e-7以内、5.22e-8以内，阈值1e-4。图、checkpoint校验值、参考向量及检查结果见[导出报告](../../artifacts/stand-v2-history160-onnx-20261027/untrained-interface_export.json)，本轮源码快照见同目录snapshot。
+本地退出码0；ONNX结构检查通过，图仅有[1,160]输入。256组各帧独立随机输入下，新包装与原checkpoint策略推理路径的动作/速度最大差均为0；ONNX相对PyTorch最大差分别1.35e-7以内、5.22e-8以内，阈值1e-4。图、checkpoint校验值、参考向量及检查结果见导出报告（对应旧训练线已清理），本轮源码快照见同目录snapshot。
 
 本轮不运行训练、物理行为验收、板端工具转换或真机测试；此次数值等价不代表起立效果或板端兼容性通过。H7部署负责人核对状态为待确认。

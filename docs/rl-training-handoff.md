@@ -24,7 +24,7 @@
 
 ## 3. 当前训练方案
 
-见 [mjlab 串联腿训练](mjlab-chuanliantui.md)：39/82/6，2 ms 物理、50 Hz 策略，flat／slope／step／stair 混合地形，50% 普通／50% 地面初态。基线模型 `model_3023.pt`。
+见 mjlab 串联腿训练（对应旧训练线已清理）：39/82/6，2 ms 物理、50 Hz 策略，flat／slope／step／stair 混合地形，50% 普通／50% 地面初态。基线模型 `model_3023.pt`。
 
 ## 4. H7 必须对齐的策略接口
 

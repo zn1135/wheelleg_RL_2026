@@ -30,10 +30,10 @@ def check(args):
     args.output.mkdir(parents=True, exist_ok=False)
     recipe = RECIPE_V2 if args.variant == 'v2' else RECIPE
     immutable = {str(p): digest(p) for p in (args.checkpoint, args.prior, MODEL_XML)}
-    old, old_train = task_registry.get_cfgs('chuanliantui')
+    old, old_train = task_registry.get_cfgs('smp')
     configure_smp(old, old_train, args.prior, policy_contract=HANDOVER_OBSERVATION_CONTRACT)
     old_snapshot = copy.deepcopy((asdict(old), asdict(old_train)))
-    cfg, train = task_registry.get_cfgs('chuanliantui')
+    cfg, train = task_registry.get_cfgs('smp')
     configure_smp(cfg, train, args.prior, policy_contract=HANDOVER_OBSERVATION_CONTRACT, bc_finetune=args.variant)
     assert (asdict(old), asdict(old_train)) == old_snapshot
     assert cfg.events['reset_pose'].func == old.events['reset_pose'].func
@@ -60,10 +60,10 @@ def check(args):
     cfg.auto_reset = False
     cfg.metrics['finetune_support'] = MetricsTermCfg(func=support, per_substep=True, reduce='last')
     dump_yaml(args.output/'env.yaml', asdict(cfg)); dump_yaml(args.output/'agent.yaml', asdict(train))
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train, num_envs=40)
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train, num_envs=40)
     try:
         raw = env.unwrapped
-        runner, _ = task_registry.make_alg_runner(env, 'chuanliantui', train_cfg=train)
+        runner, _ = task_registry.make_alg_runner(env, 'smp', train_cfg=train)
         assert isinstance(runner.alg, ProtectedPPO)
         runner.initialize_from_bc(args.checkpoint)
         alg = runner.alg
@@ -113,7 +113,7 @@ def check(args):
         path = args.output/'untrained-finetune.pt'; runner.save(str(path))
         assert checkpoint_bc_finetune(path) and policy_observation_contract(path) == HANDOVER_OBSERVATION_CONTRACT
         # 恢复到新的runner，避免同一对象自载掩盖缺失字段。
-        resumed, _ = task_registry.make_alg_runner(env, 'chuanliantui', train_cfg=train)
+        resumed, _ = task_registry.make_alg_runner(env, 'smp', train_cfg=train)
         resumed.load(str(path))
         for key, value in initial['bc_finetune']['reference_state_dict'].items():
             torch.testing.assert_close(resumed.alg.reference.state_dict()[key], value, atol=0, rtol=0)

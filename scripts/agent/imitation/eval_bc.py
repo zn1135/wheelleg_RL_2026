@@ -72,7 +72,7 @@ def run(args):
     count=len(episodes)*len(pairs);records=[]
     for e in episodes:
         with np.load(e['path']) as d:records.append((d['initial_qpos'].copy(),d['initial_qvel'].copy()))
-    cfg,train=task_registry.get_cfgs('chuanliantui',play=True)
+    cfg,train=task_registry.get_cfgs('smp',play=True)
     angle_profile=data.description['observation_contract'] in wheel_angles.PROFILES
     handover_reset=data.description['observation_contract']==wheel_angles.HANDOVER_OBSERVATION_CONTRACT
     if angle_profile:
@@ -93,7 +93,7 @@ def run(args):
     cfg.actions['pd'].action_delay_s=None;cfg.actions['pd'].randomize_delays=False
     cfg.actions['pd'].action_delay_choices_s=(.002,.004)
     args.output.mkdir(parents=True,exist_ok=False)
-    env,_=task_registry.make_env('chuanliantui',env_cfg=cfg,train_cfg=train,num_envs=count,device=args.device)
+    env,_=task_registry.make_env('smp',env_cfg=cfg,train_cfg=train,num_envs=count,device=args.device)
     if args.full_precision:
         from mjlab.utils.torch import configure_torch_backends
         configure_torch_backends(allow_tf32=False)

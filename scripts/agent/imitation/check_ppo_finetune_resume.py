@@ -23,12 +23,12 @@ def equal(left, right):
 def run(args):
     torch.set_num_threads(1); args.output.mkdir(parents=True, exist_ok=False)
     source = torch.load(args.checkpoint, map_location='cpu', weights_only=False)
-    cfg, train = task_registry.get_cfgs('chuanliantui'); cfg.seed = train.seed = 42
+    cfg, train = task_registry.get_cfgs('smp'); cfg.seed = train.seed = 42
     configure_smp(cfg, train, args.prior, policy_contract=policy_observation_contract(args.checkpoint),
                   reward_weight=checkpoint_smp_weight(args.checkpoint), bc_finetune=True)
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train, num_envs=2)
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train, num_envs=2)
     try:
-        runner, _ = task_registry.make_alg_runner(env, 'chuanliantui', train_cfg=train)
+        runner, _ = task_registry.make_alg_runner(env, 'smp', train_cfg=train)
         with patch.object(torch.optim.Adam, 'step', side_effect=AssertionError('No learning')):
             runner.load(str(args.checkpoint))
             state = runner.alg.save()

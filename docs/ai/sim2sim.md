@@ -1,26 +1,26 @@
 # sim2sim 与部署契约
 
-2026-10-30 getup当前恢复[原四腿EMA80平滑](../interfaces/20261030-getup-leg-action-smoothing.md)：100Hz混合新动作80%与上一拍已平滑动作20%，raw观测/ONNX保持，等待期/复位清缓存、轮子不滤波；100ms实测角接管已撤回，图外执行及JSON恢复原v2滤波配置，不再要求锁存角与接管计时。[当前奖励v4](../interfaces/20261030-getup-prestand-torque.md)仅在训练中启用起立前力矩罚，部署不计算奖励。独立CPU仍未实现EMA并明确拒载；H7未改，滤波适配/负责人核对待确认，未交付新权重。
+2026-10-30 getup当前恢复原四腿EMA80平滑（对应旧训练线已清理）：100Hz混合新动作80%与上一拍已平滑动作20%，raw观测/ONNX保持，等待期/复位清缓存、轮子不滤波；100ms实测角接管已撤回，图外执行及JSON恢复原v2滤波配置，不再要求锁存角与接管计时。当前奖励v4（对应旧训练线已清理）仅在训练中启用起立前力矩罚，部署不计算奖励。独立CPU仍未实现EMA并明确拒载；H7未改，滤波适配/负责人核对待确认，未交付新权重。
 
-2026-10-30起立profile v2恢复训练高度课程0.30→0.22m；mjlab单模型play使用checkpoint保存阶段。独立CPU双策略仍固定起立0.22m，明确拒绝未解锁的v2模型，已解锁模型沿原路由；旧v1模型需对应历史源码。其余观测、ONNX、PD/物理及行走不变，H7待确认。[课程记录](../interfaces/20261030-getup-height-curriculum.md)。
+2026-10-30起立profile v2恢复训练高度课程0.30→0.22m；mjlab单模型play使用checkpoint保存阶段。独立CPU双策略仍固定起立0.22m，明确拒绝未解锁的v2模型，已解锁模型沿原路由；旧v1模型需对应历史源码。其余观测、ONNX、PD/物理及行走不变，H7待确认。课程记录（对应旧训练线已清理）。
 
 双策略行走v2新增`--height 0.22～0.30`，指定本次回放固定行走高度；起立始终0.22m。训练仅复位时随机高度，不随机切换高度段；CPU不自动随机，输入vx/yaw原始请求互斥。当前CPU命令版本v2，检查行走profile/命令版本和高度范围，getup v1接口保持。[参数与交付](../interfaces/20261030-chuanliantui-two-policy.md)。
 
 2026-10-30新增[单任务训练、仅CPU双策略切换](../interfaces/20261030-chuanliantui-two-policy.md)：`chuanliantui_getup`和`chuanliantui_walk`均25维帧/125维历史、无模式输入。独立入口`sim2sim/mj_sim2sim_chuanliantui_two_policy.py`读取各自PT对应的两个ONNX，按共同物理条件交接，保持FIFO/上次动作/PD，清航向及停车基准。CPU沿用0.5ms积分/2ms PD/100Hz策略，训练2ms物理不改。当前只有未训练夹具的观测对齐、有限CPU/切换检查，没有双策略行为通过或新训练模型；旧32/160 CPU入口不接新模型，H7待适配。
 
-2026-10-29稳站v2新增[停车位置外环v8](../interfaces/20261029-stand-v2-position-hold.md)：训练命令项使用仿真位置真值；独立冻结评估支持按实际模型轮轴符号/半径的500Hz轮速积分，比较里程计和真值误差。32/160/89/6及ONNX形状保持，停车基准、投影、死区/P限幅及清除由调用方维护。CPU sim2sim和H7尚未适配；H7能否复用LQR速度积分量待确认。
+2026-10-29稳站v2新增停车位置外环v8（对应旧训练线已清理）：训练命令项使用仿真位置真值；独立冻结评估支持按实际模型轮轴符号/半径的500Hz轮速积分，比较里程计和真值误差。32/160/89/6及ONNX形状保持，停车基准、投影、死区/P限幅及清除由调用方维护。CPU sim2sim和H7尚未适配；H7能否复用LQR速度积分量待确认。
 
-稳站v2 CPU后续发现初态17在原2ms积分下数值弹飞。当前仅该入口细分为0.5ms积分（2000Hz），PD/弹簧500Hz、策略/历史100Hz保持；训练及共享XML不改。128初态前5秒异常筛查通过，但CPU与训练引擎起立仍有差异，行为未通过，回放已停止。[异常证据](../../artifacts/stand-v2-cpu-launch-20261028/README.md)。下文500/100Hz CPU描述为原v1记录，当前时序以[本版接口](../interfaces/20261028-stand-v2-native-cpu.md)为准。
+稳站v2 CPU后续发现初态17在原2ms积分下数值弹飞。当前仅该入口细分为0.5ms积分（2000Hz），PD/弹簧500Hz、策略/历史100Hz保持；训练及共享XML不改。128初态前5秒异常筛查通过，但CPU与训练引擎起立仍有差异，行为未通过，回放已停止。异常证据（对应旧训练线已清理）。下文500/100Hz CPU描述为原v1记录，当前时序以[本版接口](../interfaces/20261028-stand-v2-native-cpu.md)为准。
 
 `chuanliantui_stand_v2`自2026-10-27改为32维当前观测＋160维历史编码器；旧39维独立CPU入口不能直接读取本版模型。2026-10-28新增`sim2sim/mj_sim2sim_chuanliantui_stand_v2.py`：原生CPU MuJoCo＋160维ONNX，已解锁0.22m阶段、名义零噪声/零时延，500/100Hz与0.2秒保持、承重NORMAL规则按训练版对齐；从已有名义initial.npz读取初态，浏览器单实例可切换。只有限接口检查和单例回放，未宣称完整行为或H7通过，见[CPU接入记录](../interfaces/20261028-stand-v2-native-cpu.md)与[32维接口](../interfaces/20261027-stand-v2-isaac32-history.md)。
 
-2026-10-25：仅`chuanliantui_stand`动作缓冲改为每环境每回合腿／轮独立随机1或2个策略步，按整数decimation接入原物理队列，无固定秒数。物理／PD仍500Hz、策略仍100Hz，部分复位清空对应队列。multimode、独立CPU和H7保持原时延，未同步此稳站任务改动；模型及行为状态见[项目实验记录](project-log.md)，实现见[稳站任务](../mjlab-chuanliantui-stand.md)。
+2026-10-25：仅`chuanliantui_stand`动作缓冲改为每环境每回合腿／轮独立随机1或2个策略步，按整数decimation接入原物理队列，无固定秒数。物理／PD仍500Hz、策略仍100Hz，部分复位清空对应队列。multimode、独立CPU和H7保持原时延，未同步此稳站任务改动；模型及行为状态见[项目实验记录](project-log.md)，实现见稳站任务（对应旧训练线已清理）。
 
 2026-10-23：mjlab训练／play／eval及独立CPU入口均试用10 ms／100 Hz策略，物理和PD保持2 ms／500 Hz。CPU趴地零力矩仍保持0.2秒（20个策略步），腾空确认仍20 ms，原2 ms动作等待不变，报告中的有效策略周期同步为10 ms；共享H7实测JSON保留原来源。后续USB H7源码随model13842导入同步10 ms／100 Hz，UART工程仍20 ms／50 Hz；烧录及板端待验收状态见[交付记录](../model-deliveries/20261023-model13842-h7-import.md)，不能把名义周期一致当作真实时序已测；旧CPU结果继续只描述当时的50 Hz。见[变频接口与验证](../interfaces/20261023-mjlab-policy100hz.md)。
 
 2026-10-22：华南虎训练动作等待按作者后续要求改为每回合腿/轮独立随机6、8、10 ms；mjlab play及独立CPU回放保持H7实测缓存到首次PD约2.003 ms量化后的固定2 ms。网络调用已包含在此路径中，控制周期仍2 ms，微秒抖动不模拟；传感器数据龄随机化保持原配置。训练随机范围不代表真机实测，行为仍需评估，见[接入与验证](../interfaces/20261022-h7-simulation-timing.md)。
 
-mjlab 串联腿的 multimode 与独立稳站任务共用39维actor／82维critic／六个实体电机，分别见 [multimode训练](../mjlab-chuanliantui.md)与[稳站任务](../mjlab-chuanliantui-stand.md)。现有独立CPU入口只验收multimode配方，不能将稳站任务的mjlab成绩直接当作CPU或真机成绩。本页旧串联／H7策略通道保留历史物理顺序，只适用于 Isaac 旧任务。
+mjlab 串联腿的 multimode 与独立稳站任务共用39维actor／82维critic／六个实体电机，分别见 multimode训练（对应旧训练线已清理）与稳站任务（对应旧训练线已清理）。现有独立CPU入口只验收multimode配方，不能将稳站任务的mjlab成绩直接当作CPU或真机成绩。本页旧串联／H7策略通道保留历史物理顺序，只适用于 Isaac 旧任务。
 
 华南虎 multimode 使用 39 维 actor／82 维 critic（`model_3023` 是历史基线）。其独立 CPU MuJoCo 入口为
 `sim2sim/mj_sim2sim_huananhu_multimode.py`：按契约元数据接受任何 39 维 checkpoint（可用 `--expect-sha256` 钉哈希），

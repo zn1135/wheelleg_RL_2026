@@ -61,7 +61,7 @@ def run(args):
         env = ManagerBasedRlEnv(cfg, device='cuda:0'); raw = env
         train = None
     else:
-        cfg, train = task_registry.get_cfgs('chuanliantui', play=True)
+        cfg, train = task_registry.get_cfgs('smp', play=True)
         contract = policy_observation_contract(args.checkpoint, bc=args.kind == 'bc')
         assert contract == HANDOVER_OBSERVATION_CONTRACT
         configure_smp(cfg, train, args.prior, play=True, policy_contract=contract,
@@ -70,13 +70,13 @@ def run(args):
         cfg.seed = train.seed = 42
         cfg.actions['pd'].randomize_delays = False
         cfg.metrics['comparison'] = MetricsTermCfg(func=balance_probe, per_substep=True, reduce='last')
-        env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train, num_envs=len(indices))
+        env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train, num_envs=len(indices))
         raw = env.unwrapped
     configure_torch_backends(allow_tf32=False)
     try:
         cfg.auto_reset = False; raw.cfg.auto_reset = False
         if args.kind == 'ppo':
-            runner, _ = task_registry.make_alg_runner(env, 'chuanliantui', train_cfg=train)
+            runner, _ = task_registry.make_alg_runner(env, 'smp', train_cfg=train)
             runner.load(str(args.checkpoint), load_cfg={'actor': True})
             actor = runner.alg._raw_actor
         elif args.kind == 'bc':

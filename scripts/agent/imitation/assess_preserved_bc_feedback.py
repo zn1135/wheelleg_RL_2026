@@ -17,7 +17,7 @@ def assess(args):
     actor,saved=load_actor(args.checkpoint,'cuda:0');reference,original=load_actor(args.reference,'cuda:0')
     assert saved['initialization']['sha256']==digest(args.reference) and saved['preservation']['heldout_used'] is False
     before={k:v.clone() for k,v in actor.state_dict().items()}
-    cfg,_=task_registry.get_cfgs('chuanliantui',play=True)
+    cfg,_=task_registry.get_cfgs('smp',play=True)
     source=json.loads((args.anchors/'check.json').read_text());assert source['probes_sha256']==digest(args.anchors/'probes.npz')
     from mjlab.utils.torch import configure_torch_backends
     summaries={}

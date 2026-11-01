@@ -12,7 +12,7 @@ def get_args(description, *, defaults=None, extra=()):
 
     defaults = defaults or {}
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('--task', choices=task_registry.names(), default='chuanliantui')
+    parser.add_argument('--task', choices=task_registry.names(), default='smp')
     parser.add_argument('--num-envs', type=int, default=defaults.get('num_envs'))
     parser.add_argument('--seed', type=int, default=None, help='Override the task PPO seed')
     parser.add_argument('--device', default='cuda:0')

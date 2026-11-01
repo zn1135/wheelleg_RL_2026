@@ -141,7 +141,7 @@ def collect(args):
         group_split=group_split,quality_thresholds={**QUALITY,'last5s_mean_abs_yaw_rate_rad_s':.02},
         checkpoint_sha256=digest(args.checkpoint) if args.checkpoint else None,takeover_s=takeover_s,
         legacy_zero_wheel=getattr(args,'legacy_zero_wheel',False),source_sha256=sources))
-    cfg,train=task_registry.get_cfgs('chuanliantui',play=True)
+    cfg,train=task_registry.get_cfgs('smp',play=True)
     cfg.auto_reset=False;cfg.seed=42;cfg.episode_length_s=duration+1.;cfg.rewards={}
     cfg.commands['standup']=SmpCommandCfg();cfg.events['reset_pose']=EventTermCfg(func=reset_pose,mode='reset')
     cfg.terminations['inverted']=TerminationTermCfg(func=inverted)
@@ -152,7 +152,7 @@ def collect(args):
     cfg.actions['pd'].action_delay_s=None;cfg.actions['pd'].randomize_delays=False
     if angle_profile:observations.configure_wheel_angle_observations(cfg,handover_reset=handover_reset)
     else:observations.configure_reference_observations(cfg,takeover_s=takeover_s if args.mode=='takeover' else None)
-    env,_=task_registry.make_env('chuanliantui',env_cfg=cfg,train_cfg=train,num_envs=len(records),device=args.device)
+    env,_=task_registry.make_env('smp',env_cfg=cfg,train_cfg=train,num_envs=len(records),device=args.device)
     try:
         raw=env.unwrapped;raw.reset(seed=42);action=raw.action_manager.get_term('pd')
         qpos=torch.tensor(np.array([q for q,v in initial]),device=raw.device)

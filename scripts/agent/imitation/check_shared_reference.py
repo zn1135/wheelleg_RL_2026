@@ -14,13 +14,13 @@ from scripts.agent.imitation.check_lqr_student_closed_loop import digest
 
 @torch.inference_mode()
 def check(args):
-    cfg,train=task_registry.get_cfgs('chuanliantui',play=True)
+    cfg,train=task_registry.get_cfgs('smp',play=True)
     assert cfg.observations['actor'].terms['proprioception'].func is obs.actor_observation
     assert cfg.observations['critic'].terms['proprioception'].func is obs.critic_observation
     cfg.auto_reset=False;cfg.rewards={};cfg.terminations={}
     cfg.commands['standup']=SmpCommandCfg();cfg.events['reset_pose']=EventTermCfg(func=reset_pose,mode='reset')
     obs.configure_reference_observations(cfg)
-    env,_=task_registry.make_env('chuanliantui',env_cfg=cfg,train_cfg=train,num_envs=4,device='cuda:0')
+    env,_=task_registry.make_env('smp',env_cfg=cfg,train_cfg=train,num_envs=4,device='cuda:0')
     try:
         raw=env.unwrapped;raw.reset(seed=42);action=raw.action_manager.get_term('pd')
         state=raw._bc_reference_observer

@@ -6,7 +6,7 @@
 
 | 要做什么 | 阅读入口 |
 | --- | --- |
-| 运行串联腿训练、回放、评估与导出 | [mjlab串联腿说明](docs/mjlab-chuanliantui.md) |
+| 运行串联腿训练、回放、评估与导出 | [mjlab串联腿说明](docs/commands/mjlab.md) |
 | 查看当前模型与实验结论 | [项目实验记录顶部](docs/ai/project-log.md) |
 | 在独立MuJoCo中运行策略 | [multimode ONNX使用说明](docs/onnx-huananhu-multimode-model5849.md) |
 | 理解训练代码与修改位置 | [mjlab代码结构](mjlab_training/README.md)、[模块职责](docs/ai/modules.md) |
@@ -37,9 +37,9 @@ H7源码已同步 `model_5849` 的39维观测／6维动作接口，支持公共�
 | Isaac旧任务与旧25/125维工具 | 已安装Isaac Gym的Python 3.8 conda环境 | `wheel_legged_gym/scripts/`；先 `import isaacgym`，再 `import torch` |
 | H7固件 | 部署工程的eIDE/GCC或Keil配置 | [H7构建说明](deployment/H7_RL/md/file-guide.md#build) |
 
-安装与完整命令以 [mjlab说明](docs/mjlab-chuanliantui.md#可执行命令) 和 [COMMANDS.md](COMMANDS.md) 为准。训练默认只交付命令，启动和追加训练需要用户逐次授权。
+安装与完整命令以 [mjlab说明](docs/commands/mjlab.md) 和 [COMMANDS.md](COMMANDS.md) 为准。训练默认只交付命令，启动和追加训练需要用户逐次授权。
 
-本仓没有单元测试框架或CI。`check` 只检查有限物理与张量状态；`eval` 统计地面起立，均不能代替[双轮平衡验收](docs/interfaces/chuanliantui-wheel-balance-acceptance-v2.md)或[平地跟踪测量](docs/interfaces/chuanliantui-huananhu-multimode-tracking-v1.md)。板端和真机验证另行完成。
+本仓没有单元测试框架或CI。`check` 只检查有限物理与张量状态；`eval` 统计地面起立，均不能代替[双轮平衡验收](docs/interfaces/chuanliantui-wheel-balance-acceptance-v2.md)或平地跟踪测量（对应旧训练线已清理）。板端和真机验证另行完成。
 
 ## 目录
 

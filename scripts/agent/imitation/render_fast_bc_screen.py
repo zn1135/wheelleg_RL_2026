@@ -19,7 +19,7 @@ def render(args):
         q[:,:2]-=initial[:2];initial[:2]=0;clips.append((q,v,initial))
     np.testing.assert_array_equal(clips[0][2],clips[1][2])
     args.output.mkdir(parents=True,exist_ok=False)
-    cfg,train=task_registry.get_cfgs('chuanliantui',play=True);env,_=task_registry.make_env('chuanliantui',env_cfg=cfg,train_cfg=train,num_envs=1);renderer=None
+    cfg,train=task_registry.get_cfgs('smp',play=True);env,_=task_registry.make_env('smp',env_cfg=cfg,train_cfg=train,num_envs=1);renderer=None
     try:
         model=env.unwrapped.sim.mj_model;model.vis.global_.offwidth=640;model.vis.global_.offheight=360
         data=mujoco.MjData(model);renderer=mujoco.Renderer(model,width=640,height=360)

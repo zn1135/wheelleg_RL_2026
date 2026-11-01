@@ -8,159 +8,159 @@
 
 | 旧文件 | 新入口／状态 | 环境 | 用途与原因 |
 |---|---|---|---|
-| `assess_multimode_cpu_envelope.py` | `-m scripts.agent.multimode.assess_multimode_cpu_envelope` | mjlab_training/.venv/bin/python | CPU-entry envelope diagnostics: start distribution, friction sweep, engine trace.；保留现有能力；未据名称或无引用推定废弃 |
-| `assess_multimode_cpu_zero_hold.py` | `-m scripts.agent.multimode.assess_multimode_cpu_zero_hold` | mjlab_training/.venv/bin/python | Compare two actors in native CPU MuJoCo from identical seeded ground poses.；保留现有能力；未据名称或无引用推定废弃 |
-| `assess_multimode_envelope_friction.py` | `-m scripts.agent.multimode.assess_multimode_envelope_friction` | mjlab_training/.venv/bin/python | Envelope/start robustness on the training engine under training-time contact materials.；保留现有能力；未据名称或无引用推定废弃 |
-| `assess_multimode_knockdown_recovery.py` | `-m scripts.agent.multimode.assess_multimode_knockdown_recovery` | mjlab_training/.venv/bin/python | 中途倒地恢复验收：结束前连续 1 秒保持双轮平衡（v3）。；保留现有能力；未据名称或无引用推定废弃 |
-| `assess_multimode_recovery_height.py` | `-m scripts.agent.multimode.assess_multimode_recovery_height` | mjlab_training/.venv/bin/python | Paired CPU sim2sim diagnostics before/after the recovery-height change.；保留现有能力；未据名称或无引用推定废弃 |
-| `assess_multimode_tracking.py` | `-m scripts.agent.multimode.assess_multimode_tracking` | mjlab_training/.venv/bin/python | Measure flat-ground linear-velocity and yaw-rate tracking of a multimode checkpoint.；保留现有能力；未据名称或无引用推定废弃 |
-| `assess_multimode_zero_hold.py` | `-m scripts.agent.multimode.assess_multimode_zero_hold` | mjlab_training/.venv/bin/python | Measure 20 s zero-command position holding after normal/ground starts; no learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_mjlab_multimode.py` | `-m scripts.agent.multimode.check_mjlab_multimode` | mjlab_training/.venv/bin/python | Check the single-line mjlab multimode package against the frozen model_3023 snapshot.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_multimode_cpu_sim2sim.py` | `-m scripts.agent.multimode.check_multimode_cpu_sim2sim` | mjlab_training/.venv/bin/python | Check the 39-D multimode CPU sim2sim entry against the training semantics it replays.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_multimode_final_balance.py` | `-m scripts.agent.multimode.check_multimode_final_balance` | mjlab_training/.venv/bin/python | 检查最终 1 秒平衡判据；可用已保存的传感器轨迹重算，不重新仿真。；保留现有能力；未据名称或无引用推定废弃 |
-| `check_multimode_ground_ratio.py` | `-m scripts.agent.multimode.check_multimode_ground_ratio` | mjlab_training/.venv/bin/python | 检查 multimode 复位的地面（recover）初态比例是否等于配置值。；保留现有能力；未据名称或无引用推定废弃 |
-| `check_multimode_recovery.py` | `-m scripts.agent.multimode.check_multimode_recovery` | mjlab_training/.venv/bin/python | 检查 multimode 中途倒地后的 recover 重新触发、恢复窗口与恢复期奖励门控。；保留现有能力；未据名称或无引用推定废弃 |
+| `assess_multimode_cpu_envelope.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `assess_multimode_cpu_zero_hold.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `assess_multimode_envelope_friction.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `assess_multimode_knockdown_recovery.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `assess_multimode_recovery_height.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `assess_multimode_tracking.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `assess_multimode_zero_hold.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_mjlab_multimode.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_multimode_cpu_sim2sim.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_multimode_final_balance.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_multimode_ground_ratio.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_multimode_recovery.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 | `check_multimode_tracking.py` | `-m scripts.agent.motion.assess --selfcheck`（已合并） | mjlab_training/.venv/bin/python | Offline check of the flat tracking criteria used by assess_multimode_tracking.py.；已合并：统一运动判据／离线审计；--selfcheck |
-| `compare_6848_leg_oscillation.py` | `-m scripts.agent.multimode.compare_6848_leg_oscillation` | mjlab_training/.venv/bin/python | Compare saved 6848 real telemetry and measured-start simulation; no dynamics.；保留现有能力；未据名称或无引用推定废弃 |
-| `compare_multimode_eval.py` | `-m scripts.agent.multimode.compare_multimode_eval` | mjlab_training/.venv/bin/python | 配对比较两次 eval（强制初态）输出：验收 v2 的退化否决。；保留现有能力；未据名称或无引用推定废弃 |
-| `compare_multimode_knockdown.py` | `-m scripts.agent.multimode.compare_multimode_knockdown` | mjlab_training/.venv/bin/python | 配对比较两次中途击倒评估：默认用结束前连续 1 秒的最终平衡（v3）。；保留现有能力；未据名称或无引用推定废弃 |
-| `inspect_multimode_leg_length.py` | `-m scripts.agent.multimode.inspect_multimode_leg_length` | mjlab_training/.venv/bin/python | Report static leg reach and height-command semantics; no training or rollout.；保留现有能力；未据名称或无引用推定废弃 |
-| `measure_multimode_leg_motion.py` | `-m scripts.agent.multimode.measure_multimode_leg_motion` | mjlab_training/.venv/bin/python | Measure standing-still leg motion of a 39-D multimode checkpoint in two backends.；保留现有能力；未据名称或无引用推定废弃 |
-| `record_multimode_knockdown_failures.py` | `-m scripts.agent.multimode.record_multimode_knockdown_failures` | mjlab_training/.venv/bin/python | 记录击倒评估；也可按修订的交付定义直接渲染已保存的本次运行轨迹。；保留现有能力；未据名称或无引用推定废弃 |
-| `render_multimode_leg_length.py` | `-m scripts.agent.multimode.render_multimode_leg_length` | mjlab_training/.venv/bin/python | Plot measured leg lengths and render an already recorded mjlab trajectory.；保留现有能力；未据名称或无引用推定废弃 |
-| `render_multimode_minimum_leg.py` | `-m scripts.agent.multimode.render_multimode_minimum_leg` | mjlab_training/.venv/bin/python | Render the closed static pose at lf1=-0.77/rf1=+0.77, without stepping physics.；保留现有能力；未据名称或无引用推定废弃 |
-| `multimode_snapshot_deviations.json` | `scripts/agent/multimode/multimode_snapshot_deviations.json` | 非Python资产 | 辅助资产；随调用方迁移 |
+| `compare_6848_leg_oscillation.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `compare_multimode_eval.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `compare_multimode_knockdown.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `inspect_multimode_leg_length.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `measure_multimode_leg_motion.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `record_multimode_knockdown_failures.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `render_multimode_leg_length.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `render_multimode_minimum_leg.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `multimode_snapshot_deviations.json` | 已退役／删除 | 非Python资产 | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 
 ## 独立稳站
 
 | 旧文件 | 新入口／状态 | 环境 | 用途与原因 |
 |---|---|---|---|
-| `analyze_chuanliantui_stand.py` | `-m scripts.agent.stand.analyze_chuanliantui_stand` | mjlab_training/.venv/bin/python | Read standing-task TensorBoard/assessment artifacts and write an offline report.；保留现有能力；未据名称或无引用推定废弃 |
-| `assess_chuanliantui_stand.py` | `-m scripts.agent.stand.assess_chuanliantui_stand` | mjlab_training/.venv/bin/python | Evaluate the independent standing task; never train or operate hardware.；保留现有能力；未据名称或无引用推定废弃 |
-| `assess_ground_chuanliantui_stand.py` | `-m scripts.agent.stand.assess_ground_chuanliantui_stand` | mjlab_training/.venv/bin/python | Report original-bank ground get-up separately; never replace fixed acceptance.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_chuanliantui_stand.py` | `-m scripts.agent.stand.check_chuanliantui_stand` | mjlab_training/.venv/bin/python | Finite checks for the independent 0.27 m standing task; never calls learn().；保留现有能力；未据名称或无引用推定废弃 |
-| `check_chuanliantui_stand_regressions.py` | `-m scripts.agent.stand.check_chuanliantui_stand_regressions` | mjlab_training/.venv/bin/python | Require every ever-passing fixed case, including successes from separate repeats.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_chuanliantui_stand_reset_migration.py` | `-m scripts.agent.stand.check_chuanliantui_stand_reset_migration` | mjlab_training/.venv/bin/python | Compare the same policy's fixed set before/after adding mixed training resets.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_chuanliantui_stand_velocity.py` | `-m scripts.agent.stand.check_chuanliantui_stand_velocity` | mjlab_training/.venv/bin/python | Historical r25/r26 velocity-profile checks; use its frozen source snapshot.；保留现有能力；未据名称或无引用推定废弃 |
-| `migrate_chuanliantui_stand_velocity.py` | `-m scripts.agent.stand.migrate_chuanliantui_stand_velocity` | mjlab_training/.venv/bin/python | Historical 39-to-41 migration; target is the frozen r25/r26 velocity profile.；保留现有能力；未据名称或无引用推定废弃 |
-| `probe_chuanliantui_stand_rewards.py` | `-m scripts.agent.stand.probe_chuanliantui_stand_rewards` | mjlab_training/.venv/bin/python | Read actual reward rates before first termination; no learning or acceptance.；保留现有能力；未据名称或无引用推定废弃 |
-| `record_chuanliantui_stand.py` | `-m scripts.agent.stand.record_chuanliantui_stand` | mjlab_training/.venv/bin/python | Record a full quiet rollout for diagnosis; never issue an acceptance verdict.；保留现有能力；未据名称或无引用推定废弃 |
-| `render_chuanliantui_stand.py` | `-m scripts.agent.stand.render_chuanliantui_stand` | mjlab_training/.venv/bin/python | Render actual stand-task reset states or saved evaluation states; no learning.；保留现有能力；未据名称或无引用推定废弃 |
+| `analyze_chuanliantui_stand.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `assess_chuanliantui_stand.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `assess_ground_chuanliantui_stand.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_chuanliantui_stand.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_chuanliantui_stand_regressions.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_chuanliantui_stand_reset_migration.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_chuanliantui_stand_velocity.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `migrate_chuanliantui_stand_velocity.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `probe_chuanliantui_stand_rewards.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `record_chuanliantui_stand.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `render_chuanliantui_stand.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 
 ## 稳站v2
 
 | 旧文件 | 新入口／状态 | 环境 | 用途与原因 |
 |---|---|---|---|
-| `assess_chuanliantui_stand_v2.py` | `-m scripts.agent.stand_v2.assess_chuanliantui_stand_v2` | mjlab_training/.venv/bin/python | 20 s stand_v2 acceptance: 500 Hz balance, drift reported separately; no learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `assess_stand_v2_speed_transients.py` | `-m scripts.agent.stand_v2.assess_stand_v2_speed_transients` | mjlab_training/.venv/bin/python | Frozen ±0.5/1/1.5m/s start/stop/reverse acceptance; separate zero-speed v3.1.；保留现有能力；未据名称或无引用推定废弃 |
-| `assess_stand_v2_tracking.py` | `-m scripts.agent.stand_v2.assess_stand_v2_tracking` | mjlab_training/.venv/bin/python | Frozen stand_v2 velocity-command probe after ground get-up; no training.；保留现有能力；未据名称或无引用推定废弃 |
-| `assess_stand_v2_yaw_control.py` | `-m scripts.agent.stand_v2.assess_stand_v2_yaw_control` | mjlab_training/.venv/bin/python | Frozen 500 Hz yaw-rate/heading-hold measurement; separate from balance v3.1.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_chuanliantui_stand_v2.py` | `-m scripts.agent.stand_v2.check_chuanliantui_stand_v2` | mjlab_training/.venv/bin/python | Isaac32 history, get-up boundaries, gradients and finite physics; no parameter updates.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_h7_stand_v2.py` | `-m scripts.agent.stand_v2.check_h7_stand_v2` | mjlab_training/.venv/bin/python | Check actual H7 stand-v2 observation/history/SDK code on a host; no hardware IO.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_stand_v2_active_weight.py` | `-m scripts.agent.stand_v2.check_stand_v2_active_weight` | mjlab_training/.venv/bin/python | Reward-bit equality, command timing and version isolation; frozen policies only.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_stand_v2_cpu_launch_stability.py` | `-m scripts.agent.stand_v2.check_stand_v2_cpu_launch_stability` | mjlab_training/.venv/bin/python | Screen all recorded starts for the reported early native CPU launch; no learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_stand_v2_cpu_sim2sim.py` | `-m scripts.agent.stand_v2.check_stand_v2_cpu_sim2sim` | mjlab_training/.venv/bin/python | Compare native stand_v2 preprocessing/PD/FIFO/mode timers with the real task.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_stand_v2_exploration_resume.py` | `-m scripts.agent.stand_v2.check_stand_v2_exploration_resume` | mjlab_training/.venv/bin/python | Verify the bounded std-floor continuation; no simulation or optimizer updates.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_stand_v2_late_balance.py` | `-m scripts.agent.stand_v2.check_stand_v2_late_balance` | mjlab_training/.venv/bin/python | Audit the detailed rerun, contact kinematics and per-condition late failures offline.；保留现有能力；未据名称或无引用推定废弃 |
+| `assess_chuanliantui_stand_v2.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `assess_stand_v2_speed_transients.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `assess_stand_v2_tracking.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `assess_stand_v2_yaw_control.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_chuanliantui_stand_v2.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_h7_stand_v2.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_stand_v2_active_weight.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_stand_v2_cpu_launch_stability.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_stand_v2_cpu_sim2sim.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_stand_v2_exploration_resume.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_stand_v2_late_balance.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 | `check_stand_v2_nominal_training.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | Check the authorized1999 continuation and source snapshots; no simulation or learning.；已结束实验的固定轮次检查或结果报告；在原源码树复核 |
-| `check_stand_v2_position_hold.py` | `-m scripts.agent.stand_v2.check_stand_v2_position_hold` | mjlab_training/.venv/bin/python | Finite parking command, compatibility and frozen interface checks; no learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_stand_v2_post_stand_tracking.py` | `-m scripts.agent.stand_v2.check_stand_v2_post_stand_tracking` | mjlab_training/.venv/bin/python | Check command gates, reward isolation, resume/export and frozen rollouts; no learning.；保留现有能力；未据名称或无引用推定废弃 |
+| `check_stand_v2_position_hold.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_stand_v2_post_stand_tracking.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 | `check_stand_v2_post_stand_training.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | Verify the authorized tracking1000 continuation and saved recipe; no simulation.；已结束实验的固定轮次检查或结果报告；在原源码树复核 |
-| `check_stand_v2_retention_seeds.py` | `-m scripts.agent.stand_v2.check_stand_v2_retention_seeds` | mjlab_training/.venv/bin/python | Verify matched randomization inputs and compare late-balance failures on new seeds.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_stand_v2_speed_commands.py` | `-m scripts.agent.stand_v2.check_stand_v2_speed_commands` | mjlab_training/.venv/bin/python | Finite command/curriculum/resume checks plus frozen rollout; never learns.；保留现有能力；未据名称或无引用推定废弃 |
+| `check_stand_v2_retention_seeds.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_stand_v2_speed_commands.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 | `check_stand_v2_speed_training.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | Verify speed-v6 continuation budget, optimizer progress, source and curriculum.；已结束实验的固定轮次检查或结果报告；在原源码树复核 |
-| `check_stand_v2_tight_term.py` | `-m scripts.agent.stand_v2.check_stand_v2_tight_term` | mjlab_training/.venv/bin/python | Same-state B/A reward equality, real RewardManager and checkpoint isolation; no learning.；保留现有能力；未据名称或无引用推定废弃 |
+| `check_stand_v2_tight_term.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 | `check_stand_v2_tight_training.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | Verify a completed B continuation from its launch snapshot; never simulates or learns.；已结束实验的固定轮次检查或结果报告；在原源码树复核 |
-| `check_stand_v2_tracking.py` | `-m scripts.agent.motion.assess --audit-tracking <测量目录>`（已合并） | mjlab_training/.venv/bin/python | Independently check delivered commands and summaries of saved stand_v2 tracking.；已合并：统一运动判据／离线审计；--audit-tracking <测量目录> |
-| `check_stand_v2_yaw_control.py` | `-m scripts.agent.stand_v2.check_stand_v2_yaw_control` | mjlab_training/.venv/bin/python | Finite yaw/heading-hold, legacy compatibility and frozen inference checks; no learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `compare_stand_v2_acceptance.py` | `-m scripts.agent.stand_v2.compare_stand_v2_acceptance` | mjlab_training/.venv/bin/python | Verify recorded 500 Hz stand_v2 verdicts and compare identical initial states.；保留现有能力；未据名称或无引用推定废弃 |
-| `compare_stand_v2_active_weight.py` | `-m scripts.agent.stand_v2.compare_stand_v2_active_weight` | mjlab_training/.venv/bin/python | After-training 3999/4999/new paired braking and separate zero-v3.1 report.；保留现有能力；未据名称或无引用推定废弃 |
-| `compare_stand_v2_nominal_inversion.py` | `-m scripts.agent.stand_v2.compare_stand_v2_nominal_inversion` | mjlab_training/.venv/bin/python | Recompute paired500Hz zero-speed inversion branches and v3.1 balance from saved data.；保留现有能力；未据名称或无引用推定废弃 |
-| `compare_stand_v2_phase_mix.py` | `-m scripts.agent.stand_v2.compare_stand_v2_phase_mix` | mjlab_training/.venv/bin/python | Verify paired phase-mix evaluations and aggregate per-seed outcomes, without simulation.；保留现有能力；未据名称或无引用推定废弃 |
-| `compare_stand_v2_wheel_normal.py` | `-m scripts.agent.stand_v2.compare_stand_v2_wheel_normal` | mjlab_training/.venv/bin/python | Compare the wheel-load NORMAL rule on identical recorded stand_v2 first episodes.；保留现有能力；未据名称或无引用推定废弃 |
-| `diagnose_chuanliantui_stand_v2.py` | `-m scripts.agent.stand_v2.diagnose_chuanliantui_stand_v2` | mjlab_training/.venv/bin/python | Measure first-episode stand_v2 motion at 100 Hz; no learning or behavior acceptance.；保留现有能力；未据名称或无引用推定废弃 |
-| `diagnose_stand_v2_cpu_launch.py` | `-m scripts.agent.stand_v2.diagnose_stand_v2_cpu_launch` | mjlab_training/.venv/bin/python | Trace the reported native CPU launch, with fixed initial state and no learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `diagnose_stand_v2_inversion.py` | `-m scripts.agent.stand_v2.diagnose_stand_v2_inversion` | mjlab_training/.venv/bin/python | Trace an existing stand_v2 diagnostic's get-up actions; never update a policy.；保留现有能力；未据名称或无引用推定废弃 |
-| `diagnose_stand_v2_late_balance.py` | `-m scripts.agent.stand_v2.diagnose_stand_v2_late_balance` | mjlab_training/.venv/bin/python | Replay the original ten late-balance cases; record actual contact-point slip, no learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `diagnose_stand_v2_launch_reference.py` | `-m scripts.agent.stand_v2.diagnose_stand_v2_launch_reference` | mjlab_training/.venv/bin/python | Run the reported saved state in the actual training engine without learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `diagnose_stand_v2_mode_input.py` | `-m scripts.agent.stand_v2.diagnose_stand_v2_mode_input` | mjlab_training/.venv/bin/python | Ablate only the policy-visible NORMAL/RECOVER flag of a frozen stand_v2 model.；保留现有能力；未据名称或无引用推定废弃 |
-| `diagnose_stand_v2_pitch_progression.py` | `-m scripts.agent.stand_v2.diagnose_stand_v2_pitch_progression` | mjlab_training/.venv/bin/python | Frozen zero-command pitch measurements and paired checkpoint progression; no training.；保留现有能力；未据名称或无引用推定废弃 |
-| `diagnose_stand_v2_rewards_velocity.py` | `-m scripts.agent.stand_v2.diagnose_stand_v2_rewards_velocity` | mjlab_training/.venv/bin/python | Trace actual reward terms and estimated velocity; optionally replace velocity after 10s. No learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `evaluate_stand_v2_phase_mix.py` | `-m scripts.agent.stand_v2.evaluate_stand_v2_phase_mix` | mjlab_training/.venv/bin/python | Paired 40 s nominal/training-condition evaluation; 500 Hz balance, no updates.；保留现有能力；未据名称或无引用推定废弃 |
-| `experiment_stand_v2_phase_mix.py` | `-m scripts.agent.stand_v2.experiment_stand_v2_phase_mix` | mjlab_training/.venv/bin/python | Physically stagger stand_v2 resets; isolated experiment, production recipe unchanged.；保留现有能力；未据名称或无引用推定废弃 |
-| `record_stand_v2_sample.py` | `-m scripts.agent.stand_v2.record_stand_v2_sample` | mjlab_training/.venv/bin/python | Record one original stand_v2 diagnostic initial state with the same policy.；保留现有能力；未据名称或无引用推定废弃 |
-| `render_stand_v2_acceptance.py` | `-m scripts.agent.stand_v2.render_stand_v2_acceptance` | mjlab_training/.venv/bin/python | Render a passed and failed case from one saved acceptance; never resimulate.；保留现有能力；未据名称或无引用推定废弃 |
-| `render_stand_v2_late_balance.py` | `-m scripts.agent.stand_v2.render_stand_v2_late_balance` | mjlab_training/.venv/bin/python | Plot the ten rerun tails and render saved trajectories; no integration or learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `render_stand_v2_sample.py` | `-m scripts.agent.stand_v2.render_stand_v2_sample` | mjlab_training/.venv/bin/python | Render a recorded stand_v2 sample at its original simulation speed.；保留现有能力；未据名称或无引用推定废弃 |
-| `render_stand_v2_speed_comparison.py` | `-m scripts.agent.stand_v2.render_stand_v2_speed_comparison` | mjlab_training/.venv/bin/python | Render matched old/new frozen transient poses, never re-simulates physics.；保留现有能力；未据名称或无引用推定废弃 |
-| `render_stand_v2_tracking.py` | `-m scripts.agent.stand_v2.render_stand_v2_tracking` | mjlab_training/.venv/bin/python | Render full saved tracking-probe trajectories; no physics integration or learning.；保留现有能力；未据名称或无引用推定废弃 |
+| `check_stand_v2_tracking.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_stand_v2_yaw_control.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `compare_stand_v2_acceptance.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `compare_stand_v2_active_weight.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `compare_stand_v2_nominal_inversion.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `compare_stand_v2_phase_mix.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `compare_stand_v2_wheel_normal.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `diagnose_chuanliantui_stand_v2.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `diagnose_stand_v2_cpu_launch.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `diagnose_stand_v2_inversion.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `diagnose_stand_v2_late_balance.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `diagnose_stand_v2_launch_reference.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `diagnose_stand_v2_mode_input.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `diagnose_stand_v2_pitch_progression.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `diagnose_stand_v2_rewards_velocity.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `evaluate_stand_v2_phase_mix.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `experiment_stand_v2_phase_mix.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `record_stand_v2_sample.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `render_stand_v2_acceptance.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `render_stand_v2_late_balance.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `render_stand_v2_sample.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `render_stand_v2_speed_comparison.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `render_stand_v2_tracking.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 | `summarize_stand_v2_hold_trial.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | Summarize a bounded yaw/parking trial and paired frozen probes; never trains.；已结束实验的固定轮次检查或结果报告；在原源码树复核 |
 | `summarize_stand_v2_post_stand_tracking.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | Join verified rise/balance and matched velocity probes; do not impose a new acceptance rule.；已结束实验的固定轮次检查或结果报告；在原源码树复核 |
 | `summarize_stand_v2_speed_effect.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | Verify paired zero/transient measurements and summarize speed-v6 training effects.；已结束实验的固定轮次检查或结果报告；在原源码树复核 |
-| `summarize_stand_v2_split_inversion.py` | `-m scripts.agent.stand_v2.summarize_stand_v2_split_inversion` | mjlab_training/.venv/bin/python | 按初始左右腿前后分支统计稳站v2配对评估中的倒置（只读已有评估产物，不跑仿真）。；保留现有能力；未据名称或无引用推定废弃 |
+| `summarize_stand_v2_split_inversion.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 | `summarize_stand_v2_tight_effect.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | Summarize 3999/A/B paired precision, braking and retained zero-v3.1 cases.；已结束实验的固定轮次检查或结果报告；在原源码树复核 |
-| `validate_stand_v2_handover.py` | `-m scripts.agent.stand_v2.validate_stand_v2_handover` | mjlab_training/.venv/bin/python | Compare a simulation-only leg-target handover with the same trained policy.；保留现有能力；未据名称或无引用推定废弃 |
+| `validate_stand_v2_handover.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 
 ## 起立／行走双策略
 
 | 旧文件 | 新入口／状态 | 环境 | 用途与原因 |
 |---|---|---|---|
-| `analyze_walk_shadow_delay.py` | `-m scripts.agent.split.analyze_walk_shadow_delay` | mjlab_training/.venv/bin/python | Replay fixed grouped sensor delays through the frozen 2999 encoder only.；保留现有能力；未据名称或无引用推定废弃 |
-| `analyze_walk_velocity_compensation.py` | `-m scripts.agent.split.analyze_walk_velocity_compensation` | mjlab_training/.venv/bin/python | Score a frozen sensor-only velocity formula on two separate saved runs, CPU only.；保留现有能力；未据名称或无引用推定废弃 |
-| `assess_chuanliantui_walk.py` | `-m scripts.agent.split.assess_chuanliantui_walk` | mjlab_training/.venv/bin/python | Diagnose a frozen walk policy over 64 nominal first episodes and render fixed samples.；保留现有能力；未据名称或无引用推定废弃 |
-| `assess_getup_target_slew.py` | `-m scripts.agent.split.assess_getup_target_slew` | mjlab_training/.venv/bin/python | Frozen getup target slew comparison through the original delayed PD.；保留现有能力；未据名称或无引用推定废弃 |
-| `audit_walk_compensation_startup.py` | `-m scripts.agent.split.audit_walk_compensation_startup` | mjlab_training/.venv/bin/python | Audit saved initialization errors and kinematic assumptions without physics steps.；保留现有能力；未据名称或无引用推定废弃 |
-| `audit_walk_estimator_closedloop.py` | `-m scripts.agent.split.audit_walk_estimator_closedloop` | mjlab_training/.venv/bin/python | Independently audit all three saved diagnostic pairs; never runs a policy.；保留现有能力；未据名称或无引用推定废弃 |
+| `analyze_walk_shadow_delay.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `analyze_walk_velocity_compensation.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `assess_chuanliantui_walk.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `assess_getup_target_slew.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `audit_walk_compensation_startup.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `audit_walk_estimator_closedloop.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 | `audit_walk_estimator_final_result.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | Audit saved final-test predictions, phase metrics and gates without inference.；已结束实验的固定轮次检查或结果报告；在原源码树复核 |
 | `audit_walk_estimator_only_result.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | Read-only saved-state audit; no network construction, inference or optimizer.；已结束实验的固定轮次检查或结果报告；在原源码树复核 |
-| `audit_walk_estimator_timing.py` | `-m scripts.agent.split.audit_walk_estimator_timing` | mjlab_training/.venv/bin/python | CPU-only storage/history audit; no simulation, training or optimizer steps.；保留现有能力；未据名称或无引用推定废弃 |
-| `audit_walk_estimator_training_data.py` | `-m scripts.agent.split.audit_walk_estimator_training_data` | mjlab_training/.venv/bin/python | Inventory existing complete2999 runs without fitting, scoring or simulation.；保留现有能力；未据名称或无引用推定废弃 |
-| `audit_walk_goal_feedback.py` | `-m scripts.agent.split.audit_walk_goal_feedback` | mjlab_training/.venv/bin/python | Read saved feedback traces and MuJoCo quaternion math; never step physics.；保留现有能力；未据名称或无引用推定废弃 |
-| `audit_walk_shadow_method.py` | `-m scripts.agent.split.audit_walk_shadow_method` | mjlab_training/.venv/bin/python | CPU source/hash and sentinel audit for the frozen shadow-delay experiment.；保留现有能力；未据名称或无引用推定废弃 |
+| `audit_walk_estimator_timing.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `audit_walk_estimator_training_data.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `audit_walk_goal_feedback.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `audit_walk_shadow_method.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 | `audit_walk_shadow_result.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | Independently verify sealed shadow-delay scores; never rerun policy or physics.；固定旧实验结果审计依赖冻结源码哈希；使用原源码归档复核，不改旧锁值 |
-| `check_chuanliantui_two_policy.py` | `-m scripts.agent.split.check_chuanliantui_two_policy` | mjlab_training/.venv/bin/python | Formal finite/contract/routing check for separate 25/125 get-up and walk tasks; no learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_chuanliantui_two_policy_sim2sim.py` | `-m scripts.agent.split.check_chuanliantui_two_policy_sim2sim` | mjlab_training/.venv/bin/python | CPU dual-ONNX switching/outer-loop/observation checks, separate from single-task training.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_getup_handover.py` | `-m scripts.agent.split.check_getup_handover` | mjlab_training/.venv/bin/python | Check the actual getup PD handover at 2ms resolution without learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_getup_height_curriculum.py` | `-m scripts.agent.split.check_getup_height_curriculum` | mjlab_training/.venv/bin/python | Run the getup curriculum checks independently of concurrent walking changes.；保留现有能力；未据名称或无引用推定废弃 |
+| `check_chuanliantui_two_policy.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_chuanliantui_two_policy_sim2sim.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_getup_handover.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_getup_height_curriculum.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 | `check_getup_height_training.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | Verify an authorized fresh getup training budget and saved recipe; no learning.；已结束实验的固定轮次检查或结果报告；在原源码树复核 |
-| `check_getup_leg_smoothing.py` | `-m scripts.agent.split.check_getup_leg_smoothing` | mjlab_training/.venv/bin/python | Check policy-rate leg smoothing through real getup PD, reset and metadata; no learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_getup_nominal_state.py` | `-m scripts.agent.split.check_getup_nominal_state` | mjlab_training/.venv/bin/python | Check full getup symmetry cost against the original 1999 reward snapshot; no learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_getup_target_slew.py` | `-m scripts.agent.split.check_getup_target_slew` | mjlab_training/.venv/bin/python | Independently check saved target-slew traces; no environment or learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_getup_target_slew_state.py` | `-m scripts.agent.split.check_getup_target_slew_state` | mjlab_training/.venv/bin/python | CPU checks for TargetSlew state only; no simulation or training.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_getup_torques.py` | `-m scripts.agent.split.check_getup_torques` | mjlab_training/.venv/bin/python | Check getup torque penalties before standing and unchanged weights/other rewards; no learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_walk_command_readiness.py` | `-m scripts.agent.split.check_walk_command_readiness` | mjlab_training/.venv/bin/python | Walk-native command gate: synthetic boundaries, archived regression and noisy inference; no learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_walk_direction_curriculum.py` | `-m scripts.agent.split.check_walk_direction_curriculum` | mjlab_training/.venv/bin/python | Walk v8 direction sampling, independent promotion/resume and frozen inference; never learns.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_walk_leg_symmetry.py` | `-m scripts.agent.split.check_walk_leg_symmetry` | mjlab_training/.venv/bin/python | Walk symmetry geometry, unchanged reward terms/contracts and archived v6 poses; no learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_walk_resume.py` | `-m scripts.agent.split.check_walk_resume` | mjlab_training/.venv/bin/python | Check the real walk checkpoint, curriculum boundaries and finite training rollout; never learn.；保留现有能力；未据名称或无引用推定废弃 |
-| `check_walk_tracking_economy.py` | `-m scripts.agent.split.check_walk_tracking_economy` | mjlab_training/.venv/bin/python | Check walk v8 tracking boost, relative vx kernel, 5° tilt band, 75% moving episodes and std floor; no learning.；保留现有能力；未据名称或无引用推定废弃 |
+| `check_getup_leg_smoothing.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_getup_nominal_state.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_getup_target_slew.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_getup_target_slew_state.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_getup_torques.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_walk_command_readiness.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_walk_direction_curriculum.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_walk_leg_symmetry.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_walk_resume.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `check_walk_tracking_economy.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 | `check_walk_training.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | Verify a fresh or resumed walk-v8 budget against launch artifacts; CPU only, no learning.；已结束实验的固定轮次检查或结果报告；在原源码树复核 |
-| `check_walk_vertical_reward.py` | `-m scripts.agent.split.check_walk_vertical_reward` | mjlab_training/.venv/bin/python | CPU synthetic reward equivalence check; no simulator, checkpoints or updates.；保留现有能力；未据名称或无引用推定废弃 |
-| `compare_walk_checkpoints.py` | `-m scripts.agent.split.compare_walk_checkpoints` | mjlab_training/.venv/bin/python | Compare saved fixed-request walk traces on CPU; never simulate or learn.；保留现有能力；未据名称或无引用推定废弃 |
-| `compare_walk_estimator_trial.py` | `-m scripts.agent.split.compare_walk_estimator_trial` | mjlab_training/.venv/bin/python | Saved-trace behavior comparison with parent-locked windows; no simulation.；保留现有能力；未据名称或无引用推定废弃 |
-| `compare_walk_feedback.py` | `-m scripts.agent.split.compare_walk_feedback` | mjlab_training/.venv/bin/python | Compare saved same-checkpoint walk feedback interventions on CPU only.；保留现有能力；未据名称或无引用推定废弃 |
-| `compare_walk_height_response.py` | `-m scripts.agent.split.compare_walk_height_response` | mjlab_training/.venv/bin/python | CPU-only comparison of saved walk height-command interventions.；保留现有能力；未据名称或无引用推定废弃 |
-| `diagnose_getup_release.py` | `-m scripts.agent.split.diagnose_getup_release` | mjlab_training/.venv/bin/python | Frozen getup release diagnosis: actual 500 Hz PD and contact, no learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `diagnose_getup_start.py` | `-m scripts.agent.split.diagnose_getup_start` | mjlab_training/.venv/bin/python | Record first-contact getup failures and first-active PD for a frozen checkpoint.；保留现有能力；未据名称或无引用推定废弃 |
-| `diagnose_walk_estimator_closedloop.py` | `-m scripts.agent.split.diagnose_walk_estimator_closedloop` | mjlab_training/.venv/bin/python | One bounded saved-trace diagnosis; frozen encoder inference, no fitting or physics.；保留现有能力；未据名称或无引用推定废弃 |
-| `diagnose_walk_forward_failure.py` | `-m scripts.agent.split.diagnose_walk_forward_failure` | mjlab_training/.venv/bin/python | Frozen walk-v7 diagnosis: controlled ramps, training-noise rewards and checkpoint comparison.；保留现有能力；未据名称或无引用推定废弃 |
-| `diagnose_walk_goal_feedback.py` | `-m scripts.agent.split.diagnose_walk_goal_feedback` | mjlab_training/.venv/bin/python | Frozen 30s stop/travel/brake comparison of encoder and sensor-wheel vx.；保留现有能力；未据名称或无引用推定废弃 |
-| `diagnose_walk_height.py` | `-m scripts.agent.split.diagnose_walk_height` | mjlab_training/.venv/bin/python | Compare zero/backward requests from matched states using a frozen walk policy.；保留现有能力；未据名称或无引用推定废弃 |
-| `diagnose_walk_v8_regression.py`（运行中原入口暂留） | `-m scripts.agent.split.diagnose_walk_v8_regression` | mjlab_training/.venv/bin/python | Compare frozen walk policies under identical fixed requests; never learn.；保留现有能力；未据名称或无引用推定废弃；运行中续训依赖链所需原文件暂留 |
-| `diagnose_walk_velocity_compensation.py` | `-m scripts.agent.split.diagnose_walk_velocity_compensation` | mjlab_training/.venv/bin/python | Record frozen walk sensor packets for independent velocity-compensation trials.；保留现有能力；未据名称或无引用推定废弃 |
-| `evaluate_walk_estimator_final.py` | `-m scripts.agent.split.evaluate_walk_estimator_final` | mjlab_training/.venv/bin/python | One fixed terminal encoder on two new complete runs; no training or control.；保留现有能力；未据名称或无引用推定废弃 |
-| `probe_getup_torque_rewards.py` | `-m scripts.agent.split.probe_getup_torque_rewards` | mjlab_training/.venv/bin/python | Measure pre-stand torque reward size with the frozen EMA80 actor; never learn.；保留现有能力；未据名称或无引用推定废弃 |
-| `record_walk_estimator_trial.py` | `-m scripts.agent.split.record_walk_estimator_trial` | mjlab_training/.venv/bin/python | Frozen parent/candidate estimator trial, with native500Hz sensors and own feedback.；保留现有能力；未据名称或无引用推定废弃 |
-| `record_walk_shadow_sensors.py` | `-m scripts.agent.split.record_walk_shadow_sensors` | mjlab_training/.venv/bin/python | Record native 500Hz sensor primitives; shadow estimates never control the robot.；保留现有能力；未据名称或无引用推定废弃 |
-| `render_getup_target_slew.py` | `-m scripts.agent.split.render_getup_target_slew` | mjlab_training/.venv/bin/python | Render saved baseline/candidate getup first episodes, without new simulation.；保留现有能力；未据名称或无引用推定废弃 |
+| `check_walk_vertical_reward.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `compare_walk_checkpoints.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `compare_walk_estimator_trial.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `compare_walk_feedback.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `compare_walk_height_response.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `diagnose_getup_release.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `diagnose_getup_start.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `diagnose_walk_estimator_closedloop.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `diagnose_walk_forward_failure.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `diagnose_walk_goal_feedback.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `diagnose_walk_height.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `diagnose_walk_v8_regression.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `diagnose_walk_velocity_compensation.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `evaluate_walk_estimator_final.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `probe_getup_torque_rewards.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `record_walk_estimator_trial.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `record_walk_shadow_sensors.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `render_getup_target_slew.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 | `report_walk_estimator_closedloop.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | Read-only three-seed report of sealed estimator-in-control comparisons.；已结束实验的固定轮次检查或结果报告；在原源码树复核 |
 | `report_walk_estimator_only.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | Plot sealed encoder-only metric files and the optimizer journal, read-only.；已结束实验的固定轮次检查或结果报告；在原源码树复核 |
 | `summarize_getup_release.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | Audit saved getup release traces and plot the release mechanism; no simulation.；已结束实验的固定轮次检查或结果报告；在原源码树复核 |
-| `summarize_walk_goal_feedback.py` | `-m scripts.agent.split.summarize_walk_goal_feedback` | mjlab_training/.venv/bin/python | CPU-only phased summary of saved 30s matched walk-feedback traces.；保留现有能力；未据名称或无引用推定废弃 |
+| `summarize_walk_goal_feedback.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 | `summarize_walk_leg_swing.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | CPU-only audit of saved walk leg motion; no physics step, policy or learning.；已结束实验的固定轮次检查或结果报告；在原源码树复核 |
 | `summarize_walk_v8_regression.py` | 已归档；恢复后使用原路径 | mjlab_training/.venv/bin/python | Read saved fixed-request traces; audit support-trigger timing and plot comparisons.；已结束实验的固定轮次检查或结果报告；在原源码树复核 |
-| `train_walk_estimator_only.py` | `-m scripts.agent.split.train_walk_estimator_only` | mjlab_training/.venv/bin/python | Budgeted offline supervision of the original encoder; never runs PPO or physics.；保留现有能力；未据名称或无引用推定废弃 |
-| `walk_estimator_offline.py` | `-m scripts.agent.split.walk_estimator_offline` | mjlab_training/.venv/bin/python | Locked complete-run data and per-segment scoring for encoder-only experiments.；保留现有能力；未据名称或无引用推定废弃 |
-| `walk_sensor_velocity.py` | `-m scripts.agent.split.walk_sensor_velocity` | mjlab_training/.venv/bin/python | Fixed sensor-only rolling kinematics for the frozen walk velocity diagnosis.；保留现有能力；未据名称或无引用推定废弃 |
+| `train_walk_estimator_only.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `walk_estimator_offline.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
+| `walk_sensor_velocity.py` | 已退役／删除 | mjlab_training/.venv/bin/python | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 
 ## SuperMimic
 
@@ -323,10 +323,10 @@
 | `check_standup_pushes.py` | `-m scripts.agent.isaac.check_standup_pushes` | Isaac Python 3.8 | CPU 检查接地后的分级水平推力；不创建物理仿真，不替代行为验收。；保留现有能力；未据名称或无引用推定废弃 |
 | `check_standup_termination.py` | `-m scripts.agent.isaac.check_standup_termination` | Isaac Python 3.8 | CPU 检查起立任务的接地门控、持续站稳、跌倒及腾空终止；不创建仿真。；保留现有能力；未据名称或无引用推定废弃 |
 | `check_training_resume.py` | `-m scripts.agent.isaac.check_training_resume` | Isaac Python 3.8 | CPU 检查 checkpoint 续训状态；不创建仿真，不读取或改写历史 logs。；保留现有能力；未据名称或无引用推定废弃 |
-| `check_zero_hold_training.py` | `-m scripts.agent.isaac.check_zero_hold_training` | Isaac Python 3.8 | Check zero-command sampling and survey low balanced poses; no learning.；保留现有能力；未据名称或无引用推定废弃 |
+| `check_zero_hold_training.py` | 已退役／删除 | Isaac Python 3.8 | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 | `compose_chuanliantui_factor_videos.py` | `-m scripts.agent.isaac.compose_chuanliantui_factor_videos` | Isaac Python 3.8 | Compose existing paired replay videos with their recorded support forces.；保留现有能力；未据名称或无引用推定废弃 |
 | `diagnose_isaac_ppo_rewards.py` | `-m scripts.agent.isaac.diagnose_isaac_ppo_rewards` | Isaac Python 3.8 | Replay a saved benchmark with exact per-term rewards; forbid learning.；保留现有能力；未据名称或无引用推定废弃 |
-| `diagnose_zero_hold_disturbances.py` | `-m scripts.agent.isaac.diagnose_zero_hold_disturbances` | Isaac Python 3.8 | Measure actual zero-hold reward before/after training disturbances; no learning.；保留现有能力；未据名称或无引用推定废弃 |
+| `diagnose_zero_hold_disturbances.py` | 已退役／删除 | Isaac Python 3.8 | 用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI |
 | `export_chuanliantui_onnx.py` | `-m scripts.agent.isaac.export_chuanliantui_onnx` | Isaac Python 3.8 | 导出完整 chuanliantui ActorCriticSequence 推理策略为 ONNX。；保留现有能力；未据名称或无引用推定废弃 |
 | `generate_chuanliantui_closed_mjcf.py` | `-m scripts.agent.isaac.generate_chuanliantui_closed_mjcf` | Isaac Python 3.8 | 从 chuanliantui_new_1 原始 URDF 生成真实闭链静态 MJCF。；保留现有能力；未据名称或无引用推定废弃 |
 | `generate_chuanliantui_new1_train_urdf.py` | `-m scripts.agent.isaac.generate_chuanliantui_new1_train_urdf` | Isaac Python 3.8 | 由 chuanliantui_new_1 真实源 URDF 生成 6-DOF 串联训练派生资产。；保留现有能力；未据名称或无引用推定废弃 |

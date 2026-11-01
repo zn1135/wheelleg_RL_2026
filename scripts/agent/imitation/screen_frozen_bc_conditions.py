@@ -50,8 +50,8 @@ def run(args):
     weights={k:v.clone() for k,v in actor.state_dict().items()};results={}
     def evaluate(name,kind,leg_std,wheel_std,seconds,indices):
         print('Starting',name,flush=True);wall=time.monotonic();directory=args.output/name;directory.mkdir()
-        nominal,train=task_registry.get_cfgs('chuanliantui',play=True)
-        randomized,_=task_registry.get_cfgs('chuanliantui',play=False)
+        nominal,train=task_registry.get_cfgs('smp',play=True)
+        randomized,_=task_registry.get_cfgs('smp',play=False)
         cfg=copy.deepcopy(randomized if kind=='physics' else nominal)
         cfg.events={k:v for k,v in cfg.events.items() if v.mode!='interval'}
         if kind=='physics':cfg.observations=copy.deepcopy(nominal.observations)
@@ -69,7 +69,7 @@ def run(args):
         cfg.seed=42;cfg.auto_reset=False;cfg.metrics['fast_support']=MetricsTermCfg(func=support,per_substep=True,reduce='last')
         cfg.actions['pd'].action_delay_s=None;cfg.actions['pd'].randomize_delays=False
         cfg.actions['pd'].action_delay_choices_s=(.002,.004)
-        env,_=task_registry.make_env('chuanliantui',env_cfg=cfg,train_cfg=train,num_envs=len(indices));raw=env.unwrapped
+        env,_=task_registry.make_env('smp',env_cfg=cfg,train_cfg=train,num_envs=len(indices));raw=env.unwrapped
         try:
             raw.reset(seed=42);action=raw.action_manager.get_term('pd');ids=torch.tensor(indices)
             q=cached['qpos'][ids].to(raw.device).clone();v=cached['qvel'][ids].to(raw.device).clone()

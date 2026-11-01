@@ -21,14 +21,14 @@ def copy_controller_state(target, source):
 class QueuedPhysicsPredictor:
     def __init__(self, env, action):
         self.live, self.action = env, action
-        cfg, train = task_registry.get_cfgs('chuanliantui', play=True)
+        cfg, train = task_registry.get_cfgs('smp', play=True)
         cfg.seed = 42
         cfg.commands['standup'] = SmpCommandCfg()
         cfg.events['reset_pose'] = EventTermCfg(func=reset_pose, mode='reset')
         cfg.rewards, cfg.metrics, cfg.terminations = {}, {}, {}
         cfg.actions['pd'] = replace(cfg.actions['pd'], action_delay_s=None,
             randomize_delays=False, action_delay_choices_s=(0., .002, .006, .008, .010))
-        self.wrapped, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train,
+        self.wrapped, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train,
                                                num_envs=env.num_envs, device=env.device)
         self.shadow = self.wrapped.unwrapped
         self.shadow.reset(seed=42)

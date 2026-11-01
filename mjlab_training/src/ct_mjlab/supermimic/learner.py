@@ -11,22 +11,33 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 
-from .networks import MotionCritic, make_actor, act
+from .networks import MotionCritic, make_actor, act, ACTION_CLIP
 from .motion import WorldModel, physical47_from_full64, delta46
-from .motion_adapter import MOTION_AUXILIARY_RECIPE
+from .motion_adapter import MOTION_AUXILIARY_RECIPE, IMAGINATION_CLAMP_RECIPE
 from .analytic_reward import return_bounds
 from .state import PHYS_DIM, SUBSTEPS, PHYSICAL, SENSORS, NOISE, MEMORY, WRENCH
 from ct_mjlab.envs.chuanliantui_split.runner import contracts, validate as validate_task_checkpoint
 
 V12_CONTRACT = 'chuanliantui-supermimic-motion-only-pd-reward-soft-termination-v12'
-ALGORITHM_CONTRACT = 'chuanliantui-supermimic-motion-only-alternating-bptt-v13'
-ALTERNATING_RECIPE = dict(version='motion-only-world4-real-encoder-actor-bptt-critic-v1',
-    world_steps_per_update=4,encoder_real_supervision=True,critic_state_dim=324,
-    critic_parameter_offset=228,critic_norm_update_after_actor=True,
-    soft_survival_gradients=True,invalid_replay_rows_not_forwarded=True)
+V13_HISTORY_CONTRACT = 'chuanliantui-supermimic-motion-only-alternating-bptt-v13'
+V13_NO_HISTORY_CONTRACT = 'chuanliantui-supermimic-motion-only-alternating-bptt-v13-no-action-history-v1'
+V13_HEADING_CONTRACT = 'chuanliantui-supermimic-motion-only-alternating-bptt-v13-no-history-heading-invariant-v2'
+V13_ENDPOINT_CONTRACT = 'chuanliantui-supermimic-control-endpoint-heading-invariant-bptt-v13-v3'
+V13_CLAMP_CONTRACT = 'chuanliantui-supermimic-control-endpoint-imagination-clamp-bptt-v13-v4'
+ALGORITHM_CONTRACT = 'chuanliantui-supermimic-control-endpoint-state-action-clamp-bptt-v13-v5'
+ALTERNATING_RECIPE = dict(version='control-endpoint-world4-real-encoder-actor-bptt-critic-action-clamp-v4',
+    world_steps_per_update=4,encoder_real_supervision=True,critic_state_dim=162,
+    critic_parameter_offset=66,critic_norm_update_after_actor=True,
+    soft_survival_gradients=True,invalid_replay_rows_not_forwarded=True,
+    imagination_state_clamp=IMAGINATION_CLAMP_RECIPE,
+    action_clip=ACTION_CLIP,collection_action_clip='after_exploration_before_simulation_and_replay')
 WORLD_STEPS_PER_UPDATE = 4
-WORLD_LOSS_RECIPE = dict(version='motion-only-squared-delta-std-v1',
-    motion_state_dim=47,motion_delta_dim=46,substeps=5,
+WORLD_LOSS_RECIPE = dict(version='control-endpoint-squared-delta-std-heading-invariant-v4',
+    motion_state_dim=47,motion_delta_dim=46,substeps=1,physics_substeps=5,
+    prediction_dt_s=.01,supervision='next_control_endpoint_only',
+    world_input_dim=129,world_action_history_frames=0,
+    input_coordinates='height_yaw_removed_rotation6d_body_v_body_w_nonwheel_q_joint_v',
+    input_wrench_coordinates='body_force_body_torque',
     excluded_full_physical_columns=[9,14,*range(49,64)],
     coordinates='body_local_pose_velocity_and_all_nonwheel_q_all_joint_v',
     penalty='squared_delta_std',output_delta_normalization='motion46_only',
@@ -40,7 +51,12 @@ ACTOR_TRANSFER_CONTRACTS = (
     'chuanliantui-supermimic-canonical-physics-path-derived-observation-reward-termination-v9',
     'chuanliantui-supermimic-canonical-physics-contact-kb-fixed-scale-nominal-mix-v10',
     'chuanliantui-supermimic-canonical-physics-fixed-support-scale-robust-wheel-angle-v11',
-    V12_CONTRACT, ALGORITHM_CONTRACT)
+    V12_CONTRACT, V13_HISTORY_CONTRACT, V13_NO_HISTORY_CONTRACT, V13_HEADING_CONTRACT,
+    V13_ENDPOINT_CONTRACT, V13_CLAMP_CONTRACT, ALGORITHM_CONTRACT)
+
+
+def checkpoint_action_clip(contract):
+    return ACTION_CLIP if contract == ALGORITHM_CONTRACT else None
 
 
 def asset_digest():
@@ -82,8 +98,9 @@ class Learner:
         self.opt_critic = torch.optim.Adam(self.critic.parameters(),lr=3e-4)
 
     def world_loss_terms(self, truth, path):
-        # The target itself has46 coordinates; deleted channels have no loss slot.
-        before,after = physical47_from_full64(truth),physical47_from_full64(path)
+        # Keep one sample axis so callers pool endpoint and46 coordinates identically.
+        before = physical47_from_full64(truth[..., -1:, :])
+        after = physical47_from_full64(path[..., -1:, :])
         return (delta46(before,after)/self.world.delta_norm.std()).square()
 
     @staticmethod
@@ -98,7 +115,7 @@ class Learner:
 
     def world_loss(self, w):
         truth = w['path'].reshape(*w['path'].shape[:-1],SUBSTEPS,PHYS_DIM)
-        valid = (w['mask'].bool() & physical47_from_full64(truth).isfinite().all(dim=(-1,-2))
+        valid = (w['mask'].bool() & physical47_from_full64(truth[..., -1, :]).isfinite().all(-1)
             & (w['context'][...,5] < .5) & w['parameters'].isfinite().all(-1)
             & w['action'].isfinite().all(-1) & w['previous'].isfinite().all(-1)
             & w['previous_previous'].isfinite().all(-1) & w['next_state'][...,NOISE].isfinite().all(-1))
@@ -167,7 +184,8 @@ class Learner:
                 next_command = torch.where(w['done'][rows,t,None],history[rows,-19:-16],
                     w['next_frame'][rows,t,6:9])
                 ns,frame,r,_,_ = self.world.step(state[rows],parameters[rows],action,next_command,
-                    context[rows],previous[rows],previous_previous[rows],w['next_state'][rows,t,NOISE])
+                    context[rows],previous[rows],previous_previous[rows],w['next_state'][rows,t,NOISE],
+                    imagination=True)
                 continuation = continuation.index_copy(0,rows,self.world.adapter.soft_survival(ns[...,PHYSICAL]))
                 reward = reward.index_copy(0,rows,r)
                 state = state.index_copy(0,rows,ns)
@@ -310,11 +328,13 @@ class Learner:
             raise ValueError('Actor transfer requires a matching self-trained SM task/XML/actor checkpoint; PPO is not accepted')
         # Transfer only the full actor state. New world/value/norms/optimizers stay cold.
         self.actor.load_state_dict(actor,strict=True)
+        self.actor.supermimic_action_clip = ACTION_CLIP
         result = dict(kind='actor_transfer_world_coldstart',parent_checkpoint=str(path.resolve()),
             parent_sha256=parent_sha256,parent_algorithm_contract=saved['algorithm_contract'],
             inherited=['actor'],reset=['world','critic','opt_actor','opt_encoder','opt_world',
                 'opt_critic','iteration','transitions','world_updates','curriculum','replay','rng'],
-            fresh_from_zero=False)
+            fresh_from_zero=False,target_action_clip=ACTION_CLIP,
+            source_action_clip=checkpoint_action_clip(saved['algorithm_contract']))
         if reward_transfer is not None:
             result['reward_only_actor_transfer'] = reward_transfer
         return result
@@ -349,7 +369,8 @@ class Learner:
                 or any(not isinstance(world[key],torch.Tensor) or world[key].shape != value.shape
                     or world[key].dtype != value.dtype or not torch.isfinite(world[key]).all()
                     for key,value in expected.items())):
-            raise ValueError('World transfer task/recipe/shape/source/completion mismatch')
+            raise ValueError('World transfer task/recipe/shape/source/completion mismatch; '
+                'Legacy substep world weights cannot initialize control-endpoint dynamics')
         self.world.load_state_dict(world,strict=True)
         return dict(kind='world_transfer_from_completed_v12_final',parent_checkpoint=str(path),
             parent_sha256=source_sha,parent_algorithm_contract=V12_CONTRACT,
@@ -379,6 +400,8 @@ class Learner:
             if counts['world']>=warmup_updates else 'world_warmup')
 
     def save(self, path, command, *, config, iteration, transitions, world_updates, interrupted=False):
+        if self.actor.supermimic_action_clip != ACTION_CLIP:
+            raise ValueError('Legacy inference actor cannot be saved as the bounded-action training recipe')
         if config.get('world_loss_recipe') != WORLD_LOSS_RECIPE or config.get('alternating_recipe') != ALTERNATING_RECIPE:
             raise ValueError('Checkpoint world/alternating recipe mismatch')
         counts = self.optimizer_update_counts()
@@ -471,6 +494,7 @@ class Learner:
                     raise ValueError('Checkpoint CUDA RNG devices/shape mismatch')
         for name in names:
             getattr(self,name).load_state_dict(saved[name])
+        self.actor.supermimic_action_clip = checkpoint_action_clip(saved['algorithm_contract'])
         command.load_checkpoint_state(saved['curriculum'])
         if not inference:
             torch.set_rng_state(saved['torch_rng'])

@@ -51,14 +51,14 @@ def run(args):
     assert counterexample['601']['speed'] > counterexample['401']['speed']
     assert counterexample['601']['old_score'] > counterexample['401']['old_score']
     assert counterexample['601']['new_precision_score'] < counterexample['401']['new_precision_score']
-    cfg, train = task_registry.get_cfgs('chuanliantui')
+    cfg, train = task_registry.get_cfgs('smp')
     cfg.seed = train.seed = 42
     configure_smp(cfg, train, args.prior, policy_contract=policy_observation_contract(args.checkpoint),
                   bc_finetune='isaac-standup-v3')
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train, num_envs=20)
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train, num_envs=20)
     try:
         raw = env.unwrapped
-        runner, _ = task_registry.make_alg_runner(env, 'chuanliantui', train_cfg=train)
+        runner, _ = task_registry.make_alg_runner(env, 'smp', train_cfg=train)
         critic = copy.deepcopy(runner.alg.critic.state_dict())
         runner.initialize_from_ppo(args.checkpoint)
         source = torch.load(args.checkpoint, map_location=raw.device, weights_only=False)
@@ -107,7 +107,7 @@ def run(args):
         equal(initial, runner.alg.save())
         path = args.output/'untrained-v3.pt'; runner.save(str(path))
         assert checkpoint_bc_finetune(path) == 'isaac-standup-v3'
-        resumed, _ = task_registry.make_alg_runner(env, 'chuanliantui', train_cfg=train)
+        resumed, _ = task_registry.make_alg_runner(env, 'smp', train_cfg=train)
         resumed.load(str(path)); equal(initial, resumed.alg.save())
         try:
             resumed.load(str(args.checkpoint))

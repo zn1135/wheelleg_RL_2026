@@ -54,7 +54,7 @@ from ct_mjlab.envs.chuanliantui.multimode_mdp import (MODE_NAMES, OUT_OF_PATCH_R
                                                        TERRAIN_NAMES)
 from ct_mjlab.envs.chuanliantui.multimode_env_cfg import KNOCKDOWN_ANGULAR_SPEED_RANGE
 
-MULTIMODE_TASK_ID = "chuanliantui"
+SMP_TASK_ID = "smp"
 
 ROOT = Path(__file__).resolve().parents[4]
 RECOVER_INDEX = MODE_NAMES.index("recover")
@@ -129,14 +129,14 @@ def git_state() -> dict:
 def evaluate_seed(args, seed: int) -> tuple[dict, list[dict], dict]:
     """Run one seed and return (aggregates, per-episode rows, provenance extras)."""
     configure_torch_backends()
-    cfg, agent = task_registry.get_cfgs(MULTIMODE_TASK_ID, play=True)
+    cfg, agent = task_registry.get_cfgs(SMP_TASK_ID, play=True)
     cfg.scene.num_envs = args.num_envs
     cfg.seed = seed
     cfg.auto_reset = False
     cfg.curriculum = {}
     if args.start_mode == "force":
         cfg.events["reset_pose"] = EventTermCfg(func=force_ground_reset, mode="reset")
-    runner_class = task_registry._task(MULTIMODE_TASK_ID).runner_class
+    runner_class = task_registry._task(SMP_TASK_ID).runner_class
     if args.smp_prior is not None:
         from ct_mjlab.smp.ppo import configure_smp, SmpOnPolicyRunner, policy_observation_contract, checkpoint_smp_weight, checkpoint_bc_finetune
         configure_smp(cfg, agent, args.smp_prior, play=True,
@@ -382,7 +382,7 @@ def evaluate_seed(args, seed: int) -> tuple[dict, list[dict], dict]:
 
 
 def main() -> None:
-    cfg, _ = task_registry.get_cfgs(MULTIMODE_TASK_ID, play=True)
+    cfg, _ = task_registry.get_cfgs(SMP_TASK_ID, play=True)
     policy_dt = cfg.sim.mujoco.timestep * cfg.decimation
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--checkpoint", type=Path, required=True)
@@ -439,7 +439,7 @@ def main() -> None:
 
     summary = {
         "time": datetime.now().astimezone().isoformat(),
-        "task": MULTIMODE_TASK_ID,
+        "task": SMP_TASK_ID,
         "checkpoint": str(args.checkpoint.resolve()),
         "checkpoint_sha256": hashlib.sha256(args.checkpoint.read_bytes()).hexdigest(),
         "smp_prior_sha256": (hashlib.sha256(args.smp_prior.read_bytes()).hexdigest()

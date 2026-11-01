@@ -49,7 +49,7 @@ def run(args):
     frozen_paths = (args.checkpoint, args.prior, MODEL_XML, Path(__file__))
     hashes = {str(p): digest(p) for p in frozen_paths}
     cached = torch.load(args.source/'nominal_mean/initial-state.pt', map_location='cpu', weights_only=False)
-    cfg, train = task_registry.get_cfgs('chuanliantui', play=True)
+    cfg, train = task_registry.get_cfgs('smp', play=True)
     configure_smp(cfg, train, args.prior, play=True,
                   policy_contract=policy_observation_contract(args.checkpoint),
                   reward_weight=checkpoint_smp_weight(args.checkpoint),
@@ -58,11 +58,11 @@ def run(args):
     cfg.auto_reset = False
     cfg.episode_length_s = 61.  # 仅诊断延长观察；原20秒验收不变。
     cfg.actions['pd'].randomize_delays = False
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train, num_envs=160)
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train, num_envs=160)
     configure_torch_backends(allow_tf32=False)
     try:
         raw = env.unwrapped
-        runner, _ = task_registry.make_alg_runner(env, 'chuanliantui', train_cfg=train)
+        runner, _ = task_registry.make_alg_runner(env, 'smp', train_cfg=train)
         runner.load(str(args.checkpoint), load_cfg={'actor': True, 'critic': True})
         actor, critic = runner.alg._raw_actor, runner.alg.critic
         original = {name: {k: v.clone() for k, v in module.state_dict().items()}

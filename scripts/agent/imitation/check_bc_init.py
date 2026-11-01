@@ -10,10 +10,10 @@ from ct_mjlab.smp.ppo import configure_smp
 
 def main():
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--checkpoint',type=Path,required=True);p.add_argument('--prior',type=Path,required=True);p.add_argument('--output',type=Path,required=True);args=p.parse_args()
- cfg,train=task_registry.get_cfgs('chuanliantui',play=True);cfg.seed=42;configure_smp(cfg,train,args.prior,play=True)
- env,_=task_registry.make_env('chuanliantui',env_cfg=cfg,train_cfg=train,num_envs=2,device='cuda:0')
+ cfg,train=task_registry.get_cfgs('smp',play=True);cfg.seed=42;configure_smp(cfg,train,args.prior,play=True)
+ env,_=task_registry.make_env('smp',env_cfg=cfg,train_cfg=train,num_envs=2,device='cuda:0')
  try:
-  runner,_=task_registry.make_alg_runner(env,'chuanliantui',train_cfg=train,device='cuda:0')
+  runner,_=task_registry.make_alg_runner(env,'smp',train_cfg=train,device='cuda:0')
   critic={k:v.clone() for k,v in runner.alg._raw_critic.state_dict().items()}
   runner.initialize_from_bc(args.checkpoint)
   actor,saved=load_actor(args.checkpoint,'cuda:0');obs=env.get_observations()

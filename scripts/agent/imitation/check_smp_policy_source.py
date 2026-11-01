@@ -138,8 +138,8 @@ def render_existing(args):
     report = json.loads((args.render_only/'source-check.json').read_text())
     if not report.get('completed'):
         raise ValueError('Acceptance run is not complete')
-    cfg, train = task_registry.get_cfgs('chuanliantui', play=True)
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train,
+    cfg, train = task_registry.get_cfgs('smp', play=True)
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train,
                                     num_envs=1, device=args.device)
     try:
         save_video(env.unwrapped.sim.mj_model, args.render_only, report)
@@ -187,7 +187,7 @@ def check(args):
         raise ValueError('num-envs must be divisible by ten leg/wheel delay groups')
     args.output.mkdir(parents=True, exist_ok=False)
     checkpoint_hash = digest(args.checkpoint)
-    cfg, train = task_registry.get_cfgs('chuanliantui', play=True)
+    cfg, train = task_registry.get_cfgs('smp', play=True)
     cfg.auto_reset = False
     cfg.commands['standup'] = SmpCommandCfg()
     cfg.events['reset_pose'] = EventTermCfg(func=paired_reset, mode='reset')
@@ -197,7 +197,7 @@ def check(args):
     cfg.actions['pd'].action_delay_s = None
     cfg.actions['pd'].randomize_delays = False
     cfg.actions['pd'].action_delay_choices_s = DELAYS
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train,
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train,
                                     num_envs=args.num_envs, device=args.device)
     report = dict(checkpoint=str(args.checkpoint), checkpoint_sha256=checkpoint_hash,
         xml_sha256=digest(MODEL_XML), pose_bank_sha256=digest(MODEL_XML.with_name('huananhu_pose_bank.npz')),
@@ -207,7 +207,7 @@ def check(args):
     try:
         raw = env.unwrapped
         assert raw.step_dt == .01 and raw.physics_dt == .002
-        runner, _ = task_registry.make_alg_runner(env, 'chuanliantui', train_cfg=train, device=args.device)
+        runner, _ = task_registry.make_alg_runner(env, 'smp', train_cfg=train, device=args.device)
         runner.load(str(args.checkpoint), load_cfg={'actor': True}, strict=True, map_location=args.device)
         policy = runner.get_inference_policy(device=args.device)
         actor = runner.alg._raw_actor

@@ -25,11 +25,11 @@ def run(args):
         def state_dict(self):return holder['runner'].alg._raw_actor.state_dict()
     def make_env(*pos,**kw):
         # BC验收原本不算奖励；此处恢复任务项，再加入SMP，核对完整PPO奖励。
-        kw['env_cfg'].rewards=eval_bc.task_registry.get_cfgs('chuanliantui',play=True)[0].rewards
+        kw['env_cfg'].rewards=eval_bc.task_registry.get_cfgs('smp',play=True)[0].rewards
         configure_smp(kw['env_cfg'],kw['train_cfg'],args.prior,play=True,policy_contract=HANDOVER_OBSERVATION_CONTRACT,
                       reward_weight=weight,bc_finetune=checkpoint_bc_finetune(ppo_path))
         env,cfg=original(*pos,**kw)
-        runner,_=eval_bc.task_registry.make_alg_runner(env,'chuanliantui',train_cfg=kw['train_cfg'],device=args.device)
+        runner,_=eval_bc.task_registry.make_alg_runner(env,'smp',train_cfg=kw['train_cfg'],device=args.device)
         if ppo_path is None:
             runner.initialize_from_bc(args.checkpoint)
             for key,value in actor.state_dict().items():torch.testing.assert_close(runner.alg._raw_actor.state_dict()[key],value,atol=0,rtol=0)

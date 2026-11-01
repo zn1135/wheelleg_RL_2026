@@ -23,8 +23,8 @@ def render(args):
     for q,v,initial in clips:np.testing.assert_array_equal(initial,clips[0][2])
     assert len({(r['group_id'],r['leg_delay_s'],r['wheel_delay_s']) for r in rows})==1
     args.output.mkdir(parents=True,exist_ok=False)
-    cfg,train=task_registry.get_cfgs('chuanliantui',play=True)
-    env,_=task_registry.make_env('chuanliantui',env_cfg=cfg,train_cfg=train,num_envs=1);renderer=None
+    cfg,train=task_registry.get_cfgs('smp',play=True)
+    env,_=task_registry.make_env('smp',env_cfg=cfg,train_cfg=train,num_envs=1);renderer=None
     try:
         model=env.unwrapped.sim.mj_model;model.vis.global_.offwidth=640;model.vis.global_.offheight=360
         data=mujoco.MjData(model);renderer=mujoco.Renderer(model,width=640,height=360)

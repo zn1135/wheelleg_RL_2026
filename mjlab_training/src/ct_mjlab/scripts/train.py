@@ -45,13 +45,13 @@ def training_viewer(env, port):
 
 
 def train(args):
+    if args.task != "smp" or args.smp_prior is None:
+        raise ValueError("Only retained BC/SMP PPO is supported; use --task smp --smp-prior, or ct_mjlab.supermimic")
     env_cfg, train_cfg = task_registry.get_cfgs(args.task)
     if args.seed is not None:
         train_cfg.seed = args.seed
     if args.iterations is not None:
         train_cfg.max_iterations = args.iterations
-    if getattr(args, 'stand_curriculum_stage', None) is not None:
-        env_cfg.commands["standup"].curriculum_stage = args.stand_curriculum_stage
     env_cfg.seed = train_cfg.seed
     if args.smp_prior is not None:
         from ct_mjlab.smp.ppo import (configure_smp, policy_observation_contract,
@@ -86,7 +86,7 @@ def train(args):
         if args.smp_prior is not None:
             import shutil
             shutil.copy2(args.smp_prior, log_dir / 'smp_prior.pt')
-        if args.smp_prior is not None or args.task in ('chuanliantui_stand_v2', 'chuanliantui_getup', 'chuanliantui_walk'):
+        if args.smp_prior is not None:
             import shutil
             source = Path(__file__).resolve().parents[1]
             shutil.copytree(source, log_dir / 'snapshot' / 'ct_mjlab',
@@ -109,8 +109,6 @@ def main():
         (('--viewer',), dict(choices=('viser',), default=None,
                             help='Show the actual training rollouts in a browser')),
         (('--viser-port',), dict(type=int, default=8093)),
-        (('--stand-curriculum-stage',), dict(type=int, choices=(0, 1, 2), default=None,
-            help='Standing-only stage: 0=no pushes, 1=weak pushes, 2=strong/knockdown; default resumes saved stage')),
         (('--resume',), dict(type=Path, default=None, help='Continue from a model_*.pt of the selected task')),
         (('--smp-prior',), dict(type=Path, default=None, help='Frozen prior_N.pt; enable SMP PPO with normal ground starts')),
         (('--smp-weight',), dict(type=float, choices=(0., 1.), default=None,
@@ -124,19 +122,12 @@ def main():
                                 help='Nominal BC refinement; isaac-standup uses Isaac pre-unlock task rewards')),
     ))
     # Fail before building the GPU environment.
-    if args.stand_curriculum_stage is not None and args.task != "chuanliantui_stand":
-        raise SystemExit("--stand-curriculum-stage only applies to chuanliantui_stand")
     if '/' in args.run_name or '\\' in args.run_name:
         raise SystemExit('--run-name must be a label, not a path')
     if args.resume is not None and not args.resume.is_file():
         raise SystemExit(f'--resume checkpoint not found: {args.resume}')
     if args.smp_prior is not None and (args.iterations is None or args.iterations < 1):
         raise SystemExit('SMP PPO requires an explicit positive --iterations budget')
-    if args.task in ('chuanliantui_stand_v2', 'chuanliantui_getup', 'chuanliantui_walk'):
-        if args.iterations is None or args.iterations < 1:
-            raise SystemExit('This task requires an explicit positive --iterations budget')
-        if args.smp_prior is not None:
-            raise SystemExit('This task uses its own history estimator; SMP profiles are incompatible')
     if args.smp_weight is not None and args.smp_prior is None:
         raise SystemExit('--smp-weight requires --smp-prior')
     if args.bc_init is not None and (args.resume is not None or args.smp_prior is None or not args.bc_init.is_file()):

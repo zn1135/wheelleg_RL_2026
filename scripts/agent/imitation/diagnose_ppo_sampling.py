@@ -19,14 +19,14 @@ def digest(path):
 def run(args):
     torch.set_num_threads(1)
     args.output.mkdir(parents=True, exist_ok=False)
-    cfg, train = task_registry.get_cfgs('chuanliantui')
+    cfg, train = task_registry.get_cfgs('smp')
     cfg.seed = train.seed = args.seed
     configure_smp(cfg, train, args.prior, policy_contract=policy_observation_contract(args.checkpoint),
                   bc_finetune=checkpoint_bc_finetune(args.checkpoint))
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train, num_envs=args.num_envs)
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train, num_envs=args.num_envs)
     try:
         raw = env.unwrapped
-        runner, _ = task_registry.make_alg_runner(env, 'chuanliantui', train_cfg=train)
+        runner, _ = task_registry.make_alg_runner(env, 'smp', train_cfg=train)
         runner.load(str(args.checkpoint), load_cfg={'actor': True, 'critic': True})
         alg = runner.alg
         initial = {name: {k: v.clone() for k, v in model.state_dict().items()}

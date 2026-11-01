@@ -4,17 +4,19 @@
   "entries": [
     {
       "old_path": "scripts/agent/analyze_chuanliantui_stand.py",
-      "new_path": "scripts/agent/stand/analyze_chuanliantui_stand.py",
-      "module": "scripts.agent.stand.analyze_chuanliantui_stand",
+      "new_path": null,
+      "module": null,
       "category": "stand",
-      "status": "active",
+      "status": "retired",
       "purpose": "Read standing-task TensorBoard/assessment artifacts and write an offline report.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_chuanliantui_stand"
       ],
-      "sha256": "9e4e4bdd2d964af5d7fecb83173995c12135e0edc6adc0fcb42ec1acff884c16"
+      "sha256": "9e4e4bdd2d964af5d7fecb83173995c12135e0edc6adc0fcb42ec1acff884c16",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/analyze_chuanliantui_vofa_sysid.py",
@@ -90,31 +92,35 @@
     },
     {
       "old_path": "scripts/agent/analyze_walk_shadow_delay.py",
-      "new_path": "scripts/agent/split/analyze_walk_shadow_delay.py",
-      "module": "scripts.agent.split.analyze_walk_shadow_delay",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Replay fixed grouped sensor delays through the frozen 2999 encoder only.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "analyze_walk_velocity_compensation"
       ],
-      "sha256": "5863b4622c189fea877bee58837928dd4f384c7e98caba80aca8adcb78b859ce"
+      "sha256": "5863b4622c189fea877bee58837928dd4f384c7e98caba80aca8adcb78b859ce",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/analyze_walk_velocity_compensation.py",
-      "new_path": "scripts/agent/split/analyze_walk_velocity_compensation.py",
-      "module": "scripts.agent.split.analyze_walk_velocity_compensation",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Score a frozen sensor-only velocity formula on two separate saved runs, CPU only.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "walk_sensor_velocity"
       ],
-      "sha256": "e05d31e2502c44d7782ccf54bd49038a9817b44acfd14d713f2e2b8714745be1"
+      "sha256": "e05d31e2502c44d7782ccf54bd49038a9817b44acfd14d713f2e2b8714745be1",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_aligned_bc_braking.py",
@@ -201,29 +207,33 @@
     },
     {
       "old_path": "scripts/agent/assess_chuanliantui_stand.py",
-      "new_path": "scripts/agent/stand/assess_chuanliantui_stand.py",
-      "module": "scripts.agent.stand.assess_chuanliantui_stand",
+      "new_path": null,
+      "module": null,
       "category": "stand",
-      "status": "active",
+      "status": "retired",
       "purpose": "Evaluate the independent standing task; never train or operate hardware.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "76dc0e7d40bf20af834f3c7dfd0fb4bdde627ab7e1e44af6a4a4f529f595ee13"
+      "sha256": "76dc0e7d40bf20af834f3c7dfd0fb4bdde627ab7e1e44af6a4a4f529f595ee13",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_chuanliantui_stand_v2.py",
-      "new_path": "scripts/agent/stand_v2/assess_chuanliantui_stand_v2.py",
-      "module": "scripts.agent.stand_v2.assess_chuanliantui_stand_v2",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "20 s stand_v2 acceptance: 500 Hz balance, drift reported separately; no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "diagnose_chuanliantui_stand_v2"
       ],
-      "sha256": "c115c9479ba3cb8a1c6030caf81f1b3b36fb8d2721d9f84be0b9968e4af72485"
+      "sha256": "c115c9479ba3cb8a1c6030caf81f1b3b36fb8d2721d9f84be0b9968e4af72485",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_chuanliantui_supermimic.py",
@@ -238,21 +248,25 @@
         "diagnose_walk_v8_regression"
       ],
       "sha256": "49f5ce05b70da55f2d863ed1614c2a17a60cd849405acc5b6f4870ab7a8e56a7",
-      "runtime_protected": true
+      "runtime_protected": false,
+      "retained_original": true,
+      "live_sha256": "9d7c46510d0af8602b6dcf0cd990d6192a9faebb6531d8b5c933623138b369e5"
     },
     {
       "old_path": "scripts/agent/assess_chuanliantui_walk.py",
-      "new_path": "scripts/agent/split/assess_chuanliantui_walk.py",
-      "module": "scripts.agent.split.assess_chuanliantui_walk",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Diagnose a frozen walk policy over 64 nominal first episodes and render fixed samples.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "render_chuanliantui_stand"
       ],
-      "sha256": "ae93e261364e9ab819dba6345764bc776f4a3f10da3bb3a1dbf68ccbe5c3dcf7"
+      "sha256": "ae93e261364e9ab819dba6345764bc776f4a3f10da3bb3a1dbf68ccbe5c3dcf7",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_fast_bc_screen.py",
@@ -284,29 +298,33 @@
     },
     {
       "old_path": "scripts/agent/assess_getup_target_slew.py",
-      "new_path": "scripts/agent/split/assess_getup_target_slew.py",
-      "module": "scripts.agent.split.assess_getup_target_slew",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Frozen getup target slew comparison through the original delayed PD.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "dee870143527babaa6a39c0bd5387eb42ef9efd6584cbfc57b4f0d8d96edb1e5"
+      "sha256": "dee870143527babaa6a39c0bd5387eb42ef9efd6584cbfc57b4f0d8d96edb1e5",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_ground_chuanliantui_stand.py",
-      "new_path": "scripts/agent/stand/assess_ground_chuanliantui_stand.py",
-      "module": "scripts.agent.stand.assess_ground_chuanliantui_stand",
+      "new_path": null,
+      "module": null,
       "category": "stand",
-      "status": "active",
+      "status": "retired",
       "purpose": "Report original-bank ground get-up separately; never replace fixed acceptance.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_chuanliantui_stand"
       ],
-      "sha256": "52d1f20f219f8b52e2428fadaa73bbc5abadefa0f78a4619ced854ecc4500b80"
+      "sha256": "52d1f20f219f8b52e2428fadaa73bbc5abadefa0f78a4619ced854ecc4500b80",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_lqr_delay_compensation.py",
@@ -358,96 +376,110 @@
     },
     {
       "old_path": "scripts/agent/assess_multimode_cpu_envelope.py",
-      "new_path": "scripts/agent/multimode/assess_multimode_cpu_envelope.py",
-      "module": "scripts.agent.multimode.assess_multimode_cpu_envelope",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "CPU-entry envelope diagnostics: start distribution, friction sweep, engine trace.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_multimode_tracking",
         "measure_multimode_leg_motion"
       ],
-      "sha256": "3a9f665cafadd3053149461b7e8ba39760bee77e5adc3b666816ee4d3b976d47"
+      "sha256": "3a9f665cafadd3053149461b7e8ba39760bee77e5adc3b666816ee4d3b976d47",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_multimode_cpu_zero_hold.py",
-      "new_path": "scripts/agent/multimode/assess_multimode_cpu_zero_hold.py",
-      "module": "scripts.agent.multimode.assess_multimode_cpu_zero_hold",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "Compare two actors in native CPU MuJoCo from identical seeded ground poses.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "b1bd94ace36047216b979b3e13b3eee3f40bb87c6cf062df5ec1c1591c4ee919"
+      "sha256": "b1bd94ace36047216b979b3e13b3eee3f40bb87c6cf062df5ec1c1591c4ee919",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_multimode_envelope_friction.py",
-      "new_path": "scripts/agent/multimode/assess_multimode_envelope_friction.py",
-      "module": "scripts.agent.multimode.assess_multimode_envelope_friction",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "Envelope/start robustness on the training engine under training-time contact materials.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_multimode_tracking",
         "measure_multimode_leg_motion"
       ],
-      "sha256": "5a73dad045b03d7b792d53c1c5263ba4fc99d45022523069b7867311887cb0e3"
+      "sha256": "5a73dad045b03d7b792d53c1c5263ba4fc99d45022523069b7867311887cb0e3",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_multimode_knockdown_recovery.py",
-      "new_path": "scripts/agent/multimode/assess_multimode_knockdown_recovery.py",
-      "module": "scripts.agent.multimode.assess_multimode_knockdown_recovery",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "中途倒地恢复验收：结束前连续 1 秒保持双轮平衡（v3）。",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "44c494fb776592de5b6877d96e781f56edb3d6b919908449f85275d125abebff"
+      "sha256": "44c494fb776592de5b6877d96e781f56edb3d6b919908449f85275d125abebff",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_multimode_recovery_height.py",
-      "new_path": "scripts/agent/multimode/assess_multimode_recovery_height.py",
-      "module": "scripts.agent.multimode.assess_multimode_recovery_height",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "Paired CPU sim2sim diagnostics before/after the recovery-height change.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "e16bc43ef10491217c60e88f6df2015b46625f483d43a430324dc387e9945ee8"
+      "sha256": "e16bc43ef10491217c60e88f6df2015b46625f483d43a430324dc387e9945ee8",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_multimode_tracking.py",
-      "new_path": "scripts/agent/multimode/assess_multimode_tracking.py",
-      "module": "scripts.agent.multimode.assess_multimode_tracking",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "Measure flat-ground linear-velocity and yaw-rate tracking of a multimode checkpoint.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_multimode_knockdown_recovery",
         "check_multimode_tracking"
       ],
-      "sha256": "1c269b3b7c3f96289b888e3c02be0558fd0b081c501175371c7638ca15d33391"
+      "sha256": "1c269b3b7c3f96289b888e3c02be0558fd0b081c501175371c7638ca15d33391",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_multimode_zero_hold.py",
-      "new_path": "scripts/agent/multimode/assess_multimode_zero_hold.py",
-      "module": "scripts.agent.multimode.assess_multimode_zero_hold",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "Measure 20 s zero-command position holding after normal/ground starts; no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "fe99cb6559d09802f8af628a0fb5a78665a5445ec63391b17ed8ae8a011d16f8"
+      "sha256": "fe99cb6559d09802f8af628a0fb5a78665a5445ec63391b17ed8ae8a011d16f8",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_ppo400_import.py",
@@ -540,73 +572,83 @@
     },
     {
       "old_path": "scripts/agent/assess_stand_v2_speed_transients.py",
-      "new_path": "scripts/agent/stand_v2/assess_stand_v2_speed_transients.py",
-      "module": "scripts.agent.stand_v2.assess_stand_v2_speed_transients",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Frozen ±0.5/1/1.5m/s start/stop/reverse acceptance; separate zero-speed v3.1.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_chuanliantui_stand_v2",
         "experiment_stand_v2_phase_mix"
       ],
-      "sha256": "1460ed5e1225320f9415b2c60431fcfddd11948a1a479a910b3fc011f3f94d9b"
+      "sha256": "1460ed5e1225320f9415b2c60431fcfddd11948a1a479a910b3fc011f3f94d9b",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_stand_v2_tracking.py",
-      "new_path": "scripts/agent/stand_v2/assess_stand_v2_tracking.py",
-      "module": "scripts.agent.stand_v2.assess_stand_v2_tracking",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Frozen stand_v2 velocity-command probe after ground get-up; no training.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_chuanliantui_stand_v2"
       ],
-      "sha256": "ffa8d6ba60778d64b5c9234c8446a251eda49907e0d2f37d78ce971f70c5dd1e"
+      "sha256": "ffa8d6ba60778d64b5c9234c8446a251eda49907e0d2f37d78ce971f70c5dd1e",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_stand_v2_yaw_control.py",
-      "new_path": "scripts/agent/stand_v2/assess_stand_v2_yaw_control.py",
-      "module": "scripts.agent.stand_v2.assess_stand_v2_yaw_control",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Frozen 500 Hz yaw-rate/heading-hold measurement; separate from balance v3.1.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_chuanliantui_stand_v2",
         "experiment_stand_v2_phase_mix"
       ],
-      "sha256": "1c8601740370ddae95e1bcd9aa0f84f4e5d63e6255de728867d4eaea55c5fcbf"
+      "sha256": "1c8601740370ddae95e1bcd9aa0f84f4e5d63e6255de728867d4eaea55c5fcbf",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/audit_walk_compensation_startup.py",
-      "new_path": "scripts/agent/split/audit_walk_compensation_startup.py",
-      "module": "scripts.agent.split.audit_walk_compensation_startup",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Audit saved initialization errors and kinematic assumptions without physics steps.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "walk_sensor_velocity"
       ],
-      "sha256": "152b3438e7183cd7427c559339a7a89d5836bb94cd285d2d219b2149b5dabfd2"
+      "sha256": "152b3438e7183cd7427c559339a7a89d5836bb94cd285d2d219b2149b5dabfd2",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/audit_walk_estimator_closedloop.py",
-      "new_path": "scripts/agent/split/audit_walk_estimator_closedloop.py",
-      "module": "scripts.agent.split.audit_walk_estimator_closedloop",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Independently audit all three saved diagnostic pairs; never runs a policy.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "a6b4c2fce61e28ac63fb146e5ea81cdc86955f57d9ce3628045e20f51b14688f"
+      "sha256": "a6b4c2fce61e28ac63fb146e5ea81cdc86955f57d9ce3628045e20f51b14688f",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/audit_walk_estimator_final_result.py",
@@ -640,55 +682,63 @@
     },
     {
       "old_path": "scripts/agent/audit_walk_estimator_timing.py",
-      "new_path": "scripts/agent/split/audit_walk_estimator_timing.py",
-      "module": "scripts.agent.split.audit_walk_estimator_timing",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "CPU-only storage/history audit; no simulation, training or optimizer steps.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "3b64f96ccdbe53d1370dc81c6e96028fcd3711cb54f527a5c380b51cdcdcf905"
+      "sha256": "3b64f96ccdbe53d1370dc81c6e96028fcd3711cb54f527a5c380b51cdcdcf905",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/audit_walk_estimator_training_data.py",
-      "new_path": "scripts/agent/split/audit_walk_estimator_training_data.py",
-      "module": "scripts.agent.split.audit_walk_estimator_training_data",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Inventory existing complete2999 runs without fitting, scoring or simulation.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "analyze_walk_velocity_compensation"
       ],
-      "sha256": "56a54d4cd3ed984b98766dfd570e79ec4698036fb57c532ba38eb65b014cf134"
+      "sha256": "56a54d4cd3ed984b98766dfd570e79ec4698036fb57c532ba38eb65b014cf134",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/audit_walk_goal_feedback.py",
-      "new_path": "scripts/agent/split/audit_walk_goal_feedback.py",
-      "module": "scripts.agent.split.audit_walk_goal_feedback",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Read saved feedback traces and MuJoCo quaternion math; never step physics.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "7666e02b84cd842450d2c4c59837b218cfbee6372100f3fd059c3305e869c4d3"
+      "sha256": "7666e02b84cd842450d2c4c59837b218cfbee6372100f3fd059c3305e869c4d3",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/audit_walk_shadow_method.py",
-      "new_path": "scripts/agent/split/audit_walk_shadow_method.py",
-      "module": "scripts.agent.split.audit_walk_shadow_method",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "CPU source/hash and sentinel audit for the frozen shadow-delay experiment.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "record_walk_shadow_sensors"
       ],
-      "sha256": "a9c218ec695d3441bcc76f0ac57e0bc987ed240944dddff1ec509f2af18a4753"
+      "sha256": "a9c218ec695d3441bcc76f0ac57e0bc987ed240944dddff1ec509f2af18a4753",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/audit_walk_shadow_result.py",
@@ -962,74 +1012,84 @@
     },
     {
       "old_path": "scripts/agent/check_chuanliantui_stand.py",
-      "new_path": "scripts/agent/stand/check_chuanliantui_stand.py",
-      "module": "scripts.agent.stand.check_chuanliantui_stand",
+      "new_path": null,
+      "module": null,
       "category": "stand",
-      "status": "active",
+      "status": "retired",
       "purpose": "Finite checks for the independent 0.27 m standing task; never calls learn().",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_chuanliantui_stand"
       ],
-      "sha256": "c9bfeee77d7f725275575d368c6a1e9e35a18628fdb7f82fa752d49cdb77f6c2"
+      "sha256": "c9bfeee77d7f725275575d368c6a1e9e35a18628fdb7f82fa752d49cdb77f6c2",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_chuanliantui_stand_regressions.py",
-      "new_path": "scripts/agent/stand/check_chuanliantui_stand_regressions.py",
-      "module": "scripts.agent.stand.check_chuanliantui_stand_regressions",
+      "new_path": null,
+      "module": null,
       "category": "stand",
-      "status": "active",
+      "status": "retired",
       "purpose": "Require every ever-passing fixed case, including successes from separate repeats.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "analyze_chuanliantui_stand"
       ],
-      "sha256": "4fe3e36fe050111bc44bc1a2cb181f38f0f833a26fbcbbdbbb1002ed41a825fe"
+      "sha256": "4fe3e36fe050111bc44bc1a2cb181f38f0f833a26fbcbbdbbb1002ed41a825fe",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_chuanliantui_stand_reset_migration.py",
-      "new_path": "scripts/agent/stand/check_chuanliantui_stand_reset_migration.py",
-      "module": "scripts.agent.stand.check_chuanliantui_stand_reset_migration",
+      "new_path": null,
+      "module": null,
       "category": "stand",
-      "status": "active",
+      "status": "retired",
       "purpose": "Compare the same policy's fixed set before/after adding mixed training resets.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "analyze_chuanliantui_stand"
       ],
-      "sha256": "622764ac813ef68cbff1856d66995093cee39f79948c175b5edfa107fb9c2f23"
+      "sha256": "622764ac813ef68cbff1856d66995093cee39f79948c175b5edfa107fb9c2f23",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_chuanliantui_stand_v2.py",
-      "new_path": "scripts/agent/stand_v2/check_chuanliantui_stand_v2.py",
-      "module": "scripts.agent.stand_v2.check_chuanliantui_stand_v2",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Isaac32 history, get-up boundaries, gradients and finite physics; no parameter updates.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_isaac_standup_rewards",
         "diagnose_chuanliantui_stand_v2"
       ],
-      "sha256": "b02a7bd479f45659a496bf4d83c5d4e72323542ab5fb680116e4394131597e83"
+      "sha256": "b02a7bd479f45659a496bf4d83c5d4e72323542ab5fb680116e4394131597e83",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_chuanliantui_stand_velocity.py",
-      "new_path": "scripts/agent/stand/check_chuanliantui_stand_velocity.py",
-      "module": "scripts.agent.stand.check_chuanliantui_stand_velocity",
+      "new_path": null,
+      "module": null,
       "category": "stand",
-      "status": "active",
+      "status": "retired",
       "purpose": "Historical r25/r26 velocity-profile checks; use its frozen source snapshot.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_chuanliantui_stand"
       ],
-      "sha256": "061c97c88f1fafb665364000453bd07131d6c0c8a3f3355ba54922a31e14c255"
+      "sha256": "061c97c88f1fafb665364000453bd07131d6c0c8a3f3355ba54922a31e14c255",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_chuanliantui_supermimic.py",
@@ -1057,33 +1117,37 @@
     },
     {
       "old_path": "scripts/agent/check_chuanliantui_two_policy.py",
-      "new_path": "scripts/agent/split/check_chuanliantui_two_policy.py",
-      "module": "scripts.agent.split.check_chuanliantui_two_policy",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Formal finite/contract/routing check for separate 25/125 get-up and walk tasks; no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_chuanliantui_stand",
         "check_walk_direction_curriculum",
         "render_chuanliantui_stand"
       ],
-      "sha256": "0da453cc2f89748d52267e3c246b07a1372106c920757aced3d998e339a9006b"
+      "sha256": "0da453cc2f89748d52267e3c246b07a1372106c920757aced3d998e339a9006b",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_chuanliantui_two_policy_sim2sim.py",
-      "new_path": "scripts/agent/split/check_chuanliantui_two_policy_sim2sim.py",
-      "module": "scripts.agent.split.check_chuanliantui_two_policy_sim2sim",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "CPU dual-ONNX switching/outer-loop/observation checks, separate from single-task training.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_chuanliantui_two_policy"
       ],
-      "sha256": "fbbc0c7cffacd8ac8f9b80beac3be9d35be4f3330c5eb2b17de0f5ee11f4e157"
+      "sha256": "fbbc0c7cffacd8ac8f9b80beac3be9d35be4f3330c5eb2b17de0f5ee11f4e157",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_convex_velocity_rewards.py",
@@ -1152,31 +1216,35 @@
     },
     {
       "old_path": "scripts/agent/check_getup_handover.py",
-      "new_path": "scripts/agent/split/check_getup_handover.py",
-      "module": "scripts.agent.split.check_getup_handover",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Check the actual getup PD handover at 2ms resolution without learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_chuanliantui_two_policy"
       ],
-      "sha256": "daded50aff508b737d8f6b4bb7f3f35c6769a535c5c7b76809187239bab60917"
+      "sha256": "daded50aff508b737d8f6b4bb7f3f35c6769a535c5c7b76809187239bab60917",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_getup_height_curriculum.py",
-      "new_path": "scripts/agent/split/check_getup_height_curriculum.py",
-      "module": "scripts.agent.split.check_getup_height_curriculum",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Run the getup curriculum checks independently of concurrent walking changes.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_chuanliantui_two_policy"
       ],
-      "sha256": "236d5170270067070e6162ed9d754eaae97e3b814b218c3d0b533e46b9eb3d08"
+      "sha256": "236d5170270067070e6162ed9d754eaae97e3b814b218c3d0b533e46b9eb3d08",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_getup_height_training.py",
@@ -1192,74 +1260,84 @@
     },
     {
       "old_path": "scripts/agent/check_getup_leg_smoothing.py",
-      "new_path": "scripts/agent/split/check_getup_leg_smoothing.py",
-      "module": "scripts.agent.split.check_getup_leg_smoothing",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Check policy-rate leg smoothing through real getup PD, reset and metadata; no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_chuanliantui_two_policy"
       ],
-      "sha256": "2b9b9246b067ba73334a27bdd648e6d3c2a9b0b2811df014f136cc65902baee8"
+      "sha256": "2b9b9246b067ba73334a27bdd648e6d3c2a9b0b2811df014f136cc65902baee8",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_getup_nominal_state.py",
-      "new_path": "scripts/agent/split/check_getup_nominal_state.py",
-      "module": "scripts.agent.split.check_getup_nominal_state",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Check full getup symmetry cost against the original 1999 reward snapshot; no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_chuanliantui_two_policy"
       ],
-      "sha256": "2b6853188d922419cc663672a70348410f851e4e303348ec189499b080b11001"
+      "sha256": "2b6853188d922419cc663672a70348410f851e4e303348ec189499b080b11001",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_getup_target_slew.py",
-      "new_path": "scripts/agent/split/check_getup_target_slew.py",
-      "module": "scripts.agent.split.check_getup_target_slew",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Independently check saved target-slew traces; no environment or learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_getup_target_slew"
       ],
-      "sha256": "58f37542dd275f80d108e0ce891709c25430519862b8e669771315b4f3f1a2d7"
+      "sha256": "58f37542dd275f80d108e0ce891709c25430519862b8e669771315b4f3f1a2d7",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_getup_target_slew_state.py",
-      "new_path": "scripts/agent/split/check_getup_target_slew_state.py",
-      "module": "scripts.agent.split.check_getup_target_slew_state",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "CPU checks for TargetSlew state only; no simulation or training.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_getup_target_slew"
       ],
-      "sha256": "34c4a6afee0bd1d5ea882ad32ef79e0c115b6257c1d84ea339b536b240cda940"
+      "sha256": "34c4a6afee0bd1d5ea882ad32ef79e0c115b6257c1d84ea339b536b240cda940",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_getup_torques.py",
-      "new_path": "scripts/agent/split/check_getup_torques.py",
-      "module": "scripts.agent.split.check_getup_torques",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Check getup torque penalties before standing and unchanged weights/other rewards; no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_chuanliantui_two_policy",
         "check_getup_nominal_state"
       ],
-      "sha256": "f4e9e5e70179fb2a13316b1a410d3c6d92762a3305a9feec75d5e0dd5d653b1a"
+      "sha256": "f4e9e5e70179fb2a13316b1a410d3c6d92762a3305a9feec75d5e0dd5d653b1a",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_h7_b_zero_bilateral.py",
@@ -1440,17 +1518,19 @@
     },
     {
       "old_path": "scripts/agent/check_h7_stand_v2.py",
-      "new_path": "scripts/agent/stand_v2/check_h7_stand_v2.py",
-      "module": "scripts.agent.stand_v2.check_h7_stand_v2",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Check actual H7 stand-v2 observation/history/SDK code on a host; no hardware IO.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_real2sim_huananhu"
       ],
-      "sha256": "dd725d28ee994ffa3d2c3573e01568cf64ecbcbb889d2b7596fd050f9a662ced"
+      "sha256": "dd725d28ee994ffa3d2c3573e01568cf64ecbcbb889d2b7596fd050f9a662ced",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_h7_zero_board.py",
@@ -1517,15 +1597,17 @@
     },
     {
       "old_path": "scripts/agent/check_mjlab_multimode.py",
-      "new_path": "scripts/agent/multimode/check_mjlab_multimode.py",
-      "module": "scripts.agent.multimode.check_mjlab_multimode",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "Check the single-line mjlab multimode package against the frozen model_3023 snapshot.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "6eba58a3a9e491a39e80a3b016eb604030a16d348278824c52e5f4284c3cf03d"
+      "sha256": "6eba58a3a9e491a39e80a3b016eb604030a16d348278824c52e5f4284c3cf03d",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_motor_response.py",
@@ -1541,56 +1623,64 @@
     },
     {
       "old_path": "scripts/agent/check_multimode_cpu_sim2sim.py",
-      "new_path": "scripts/agent/multimode/check_multimode_cpu_sim2sim.py",
-      "module": "scripts.agent.multimode.check_multimode_cpu_sim2sim",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "Check the 39-D multimode CPU sim2sim entry against the training semantics it replays.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_multimode_tracking"
       ],
-      "sha256": "e0e41520e8a54f6d22e6f322e290a00450019a77791e04458d9b12e2c848d716"
+      "sha256": "e0e41520e8a54f6d22e6f322e290a00450019a77791e04458d9b12e2c848d716",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_multimode_final_balance.py",
-      "new_path": "scripts/agent/multimode/check_multimode_final_balance.py",
-      "module": "scripts.agent.multimode.check_multimode_final_balance",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "检查最终 1 秒平衡判据；可用已保存的传感器轨迹重算，不重新仿真。",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_multimode_knockdown_recovery",
         "compare_multimode_knockdown"
       ],
-      "sha256": "4513b0a2752461049e094da457e45ca55a3301ad63760b083afcd771006d3cd9"
+      "sha256": "4513b0a2752461049e094da457e45ca55a3301ad63760b083afcd771006d3cd9",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_multimode_ground_ratio.py",
-      "new_path": "scripts/agent/multimode/check_multimode_ground_ratio.py",
-      "module": "scripts.agent.multimode.check_multimode_ground_ratio",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "检查 multimode 复位的地面（recover）初态比例是否等于配置值。",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "2f3082b8291ea144a43b2b2a47fee89f8ab40e8db5aefab53c32fd62aeb142b3"
+      "sha256": "2f3082b8291ea144a43b2b2a47fee89f8ab40e8db5aefab53c32fd62aeb142b3",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_multimode_recovery.py",
-      "new_path": "scripts/agent/multimode/check_multimode_recovery.py",
-      "module": "scripts.agent.multimode.check_multimode_recovery",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "检查 multimode 中途倒地后的 recover 重新触发、恢复窗口与恢复期奖励门控。",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "5765945cbac92adb523b82b72c6d563111ee51c580e669c2fe87bc4fc33d8730"
+      "sha256": "5765945cbac92adb523b82b72c6d563111ee51c580e669c2fe87bc4fc33d8730",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_multimode_tracking.py",
@@ -1877,70 +1967,80 @@
     },
     {
       "old_path": "scripts/agent/check_stand_v2_active_weight.py",
-      "new_path": "scripts/agent/stand_v2/check_stand_v2_active_weight.py",
-      "module": "scripts.agent.stand_v2.check_stand_v2_active_weight",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Reward-bit equality, command timing and version isolation; frozen policies only.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_stand_v2_speed_commands",
         "experiment_stand_v2_phase_mix"
       ],
-      "sha256": "d898569bada67b6d6b2ffb0089ec7f20b40e19cd49b9bf6eac20a2a76edc7e78"
+      "sha256": "d898569bada67b6d6b2ffb0089ec7f20b40e19cd49b9bf6eac20a2a76edc7e78",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_cpu_launch_stability.py",
-      "new_path": "scripts/agent/stand_v2/check_stand_v2_cpu_launch_stability.py",
-      "module": "scripts.agent.stand_v2.check_stand_v2_cpu_launch_stability",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Screen all recorded starts for the reported early native CPU launch; no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "6db0bc94471ab0b23ca2399a10be0d3780dce9a1545c8699ff7ce28059ad81bb"
+      "sha256": "6db0bc94471ab0b23ca2399a10be0d3780dce9a1545c8699ff7ce28059ad81bb",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_cpu_sim2sim.py",
-      "new_path": "scripts/agent/stand_v2/check_stand_v2_cpu_sim2sim.py",
-      "module": "scripts.agent.stand_v2.check_stand_v2_cpu_sim2sim",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Compare native stand_v2 preprocessing/PD/FIFO/mode timers with the real task.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "b95ce8d81196d4322348550398152566c3c44cb1ffb356e8992cd909e986c50b"
+      "sha256": "b95ce8d81196d4322348550398152566c3c44cb1ffb356e8992cd909e986c50b",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_exploration_resume.py",
-      "new_path": "scripts/agent/stand_v2/check_stand_v2_exploration_resume.py",
-      "module": "scripts.agent.stand_v2.check_stand_v2_exploration_resume",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Verify the bounded std-floor continuation; no simulation or optimizer updates.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "experiment_stand_v2_phase_mix"
       ],
-      "sha256": "5bb7bfe062690b0ace32132ff243c5935625d6bc3fe92a31b26c4f7e9543cbab"
+      "sha256": "5bb7bfe062690b0ace32132ff243c5935625d6bc3fe92a31b26c4f7e9543cbab",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_late_balance.py",
-      "new_path": "scripts/agent/stand_v2/check_stand_v2_late_balance.py",
-      "module": "scripts.agent.stand_v2.check_stand_v2_late_balance",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Audit the detailed rerun, contact kinematics and per-condition late failures offline.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "experiment_stand_v2_phase_mix"
       ],
-      "sha256": "3ee81e34ed3919786e6337b8d18369558921e190f527c63712875036805babde"
+      "sha256": "3ee81e34ed3919786e6337b8d18369558921e190f527c63712875036805babde",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_nominal_training.py",
@@ -1956,33 +2056,37 @@
     },
     {
       "old_path": "scripts/agent/check_stand_v2_position_hold.py",
-      "new_path": "scripts/agent/stand_v2/check_stand_v2_position_hold.py",
-      "module": "scripts.agent.stand_v2.check_stand_v2_position_hold",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Finite parking command, compatibility and frozen interface checks; no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_stand_v2_speed_commands",
         "check_stand_v2_yaw_control",
         "experiment_stand_v2_phase_mix"
       ],
-      "sha256": "961361dcc5f73393e4b18a3d14e296528cd9b10b36e84213e7ec105ad70dc60e"
+      "sha256": "961361dcc5f73393e4b18a3d14e296528cd9b10b36e84213e7ec105ad70dc60e",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_post_stand_tracking.py",
-      "new_path": "scripts/agent/stand_v2/check_stand_v2_post_stand_tracking.py",
-      "module": "scripts.agent.stand_v2.check_stand_v2_post_stand_tracking",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Check command gates, reward isolation, resume/export and frozen rollouts; no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "experiment_stand_v2_phase_mix"
       ],
-      "sha256": "5dfec9b4b8b3a166ed7ef89740187459bc72b9aa9158b3b522a532001be2f743"
+      "sha256": "5dfec9b4b8b3a166ed7ef89740187459bc72b9aa9158b3b522a532001be2f743",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_post_stand_training.py",
@@ -2000,31 +2104,35 @@
     },
     {
       "old_path": "scripts/agent/check_stand_v2_retention_seeds.py",
-      "new_path": "scripts/agent/stand_v2/check_stand_v2_retention_seeds.py",
-      "module": "scripts.agent.stand_v2.check_stand_v2_retention_seeds",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Verify matched randomization inputs and compare late-balance failures on new seeds.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "experiment_stand_v2_phase_mix"
       ],
-      "sha256": "78697378d1e2ccba1d74c3407036e64b2ec53f42b608716a59dc5104f86e82cf"
+      "sha256": "78697378d1e2ccba1d74c3407036e64b2ec53f42b608716a59dc5104f86e82cf",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_speed_commands.py",
-      "new_path": "scripts/agent/stand_v2/check_stand_v2_speed_commands.py",
-      "module": "scripts.agent.stand_v2.check_stand_v2_speed_commands",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Finite command/curriculum/resume checks plus frozen rollout; never learns.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "experiment_stand_v2_phase_mix"
       ],
-      "sha256": "e280f7565ae60031c1e4ce210e21241497da7c7e8a5f4e9f5b47495e8d07a256"
+      "sha256": "e280f7565ae60031c1e4ce210e21241497da7c7e8a5f4e9f5b47495e8d07a256",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_speed_training.py",
@@ -2042,18 +2150,20 @@
     },
     {
       "old_path": "scripts/agent/check_stand_v2_tight_term.py",
-      "new_path": "scripts/agent/stand_v2/check_stand_v2_tight_term.py",
-      "module": "scripts.agent.stand_v2.check_stand_v2_tight_term",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Same-state B/A reward equality, real RewardManager and checkpoint isolation; no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_stand_v2_speed_commands",
         "experiment_stand_v2_phase_mix"
       ],
-      "sha256": "fb443657459609fbb8ad8bdcca4a83200c885f02972400823e4287522c7824c3"
+      "sha256": "fb443657459609fbb8ad8bdcca4a83200c885f02972400823e4287522c7824c3",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_tight_training.py",
@@ -2071,33 +2181,37 @@
     },
     {
       "old_path": "scripts/agent/check_stand_v2_tracking.py",
-      "new_path": "scripts/agent/motion/assess.py",
-      "module": "scripts.agent.motion.assess",
+      "new_path": null,
+      "module": null,
       "category": "motion",
-      "status": "merged",
+      "status": "retired",
       "purpose": "Independently check delivered commands and summaries of saved stand_v2 tracking.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "已合并：统一运动判据／离线审计；--audit-tracking <测量目录>",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_chuanliantui_stand_v2"
       ],
       "sha256": "acf951787ce1ce335636455e4bd5d3f2ba3152ea722f4e9b728585476492e4fe",
-      "merged_snapshot": "scripts/archive/20261101-motion-normalization"
+      "merged_snapshot": "scripts/archive/20261101-motion-normalization",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_yaw_control.py",
-      "new_path": "scripts/agent/stand_v2/check_stand_v2_yaw_control.py",
-      "module": "scripts.agent.stand_v2.check_stand_v2_yaw_control",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Finite yaw/heading-hold, legacy compatibility and frozen inference checks; no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_stand_v2_speed_commands",
         "experiment_stand_v2_phase_mix"
       ],
-      "sha256": "91433b0197b0e743a533fb2d25ba0f9974e18342391b24d118dbf4fc6f71a2a5"
+      "sha256": "91433b0197b0e743a533fb2d25ba0f9974e18342391b24d118dbf4fc6f71a2a5",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_standing_push_schedule.py",
@@ -2286,7 +2400,9 @@
       "reason": "已结束实验的固定轮次检查或结果报告；在原源码树复核；另一任务正在续训及验收，原字节入口暂留，禁止本次移除",
       "dependencies": [],
       "sha256": "e2bccb70ab264b124b1d91596b8507cf5d67dd3c3aa4b3b97f2a1ef1201841ec",
-      "runtime_protected": true
+      "runtime_protected": false,
+      "retained_original": true,
+      "live_sha256": "e2bccb70ab264b124b1d91596b8507cf5d67dd3c3aa4b3b97f2a1ef1201841ec"
     },
     {
       "old_path": "scripts/agent/check_supermimic_world_only.py",
@@ -2354,78 +2470,88 @@
     },
     {
       "old_path": "scripts/agent/check_walk_command_readiness.py",
-      "new_path": "scripts/agent/split/check_walk_command_readiness.py",
-      "module": "scripts.agent.split.check_walk_command_readiness",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Walk-native command gate: synthetic boundaries, archived regression and noisy inference; no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_chuanliantui_two_policy"
       ],
-      "sha256": "0ea58bb3794e317d4932b4c9a95d27bdafd23a457c9387dd0c7b8274e039b5da"
+      "sha256": "0ea58bb3794e317d4932b4c9a95d27bdafd23a457c9387dd0c7b8274e039b5da",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_walk_direction_curriculum.py",
-      "new_path": "scripts/agent/split/check_walk_direction_curriculum.py",
-      "module": "scripts.agent.split.check_walk_direction_curriculum",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Walk v8 direction sampling, independent promotion/resume and frozen inference; never learns.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_chuanliantui_two_policy",
         "check_walk_command_readiness"
       ],
-      "sha256": "9636a5649e88e17d45ee9daec09969d0617886ed7805606ffabf4a9d4ee4a33e"
+      "sha256": "9636a5649e88e17d45ee9daec09969d0617886ed7805606ffabf4a9d4ee4a33e",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_walk_leg_symmetry.py",
-      "new_path": "scripts/agent/split/check_walk_leg_symmetry.py",
-      "module": "scripts.agent.split.check_walk_leg_symmetry",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Walk symmetry geometry, unchanged reward terms/contracts and archived v6 poses; no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_chuanliantui_two_policy",
         "check_walk_command_readiness",
         "check_walk_tracking_economy"
       ],
-      "sha256": "dfd57f0b01a07c69e5136d11a98a6e1f63dbba6336aeec75d8774920c7fed9db"
+      "sha256": "dfd57f0b01a07c69e5136d11a98a6e1f63dbba6336aeec75d8774920c7fed9db",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_walk_resume.py",
-      "new_path": "scripts/agent/split/check_walk_resume.py",
-      "module": "scripts.agent.split.check_walk_resume",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Check the real walk checkpoint, curriculum boundaries and finite training rollout; never learn.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_chuanliantui_two_policy",
         "check_walk_direction_curriculum"
       ],
-      "sha256": "71d1f6ffcda4a25024756869863575b81e2f7380cbb72b000719dcbbe511b16a"
+      "sha256": "71d1f6ffcda4a25024756869863575b81e2f7380cbb72b000719dcbbe511b16a",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_walk_tracking_economy.py",
-      "new_path": "scripts/agent/split/check_walk_tracking_economy.py",
-      "module": "scripts.agent.split.check_walk_tracking_economy",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Check walk v8 tracking boost, relative vx kernel, 5° tilt band, 75% moving episodes and std floor; no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_chuanliantui_two_policy",
         "check_getup_nominal_state"
       ],
-      "sha256": "5e4fc005f2a31152de805d27dcce4efb0162efb50ce383124871e00dadfdb2f3"
+      "sha256": "5e4fc005f2a31152de805d27dcce4efb0162efb50ce383124871e00dadfdb2f3",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_walk_training.py",
@@ -2441,17 +2567,19 @@
     },
     {
       "old_path": "scripts/agent/check_walk_vertical_reward.py",
-      "new_path": "scripts/agent/split/check_walk_vertical_reward.py",
-      "module": "scripts.agent.split.check_walk_vertical_reward",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "CPU synthetic reward equivalence check; no simulator, checkpoints or updates.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_supermimic_motion"
       ],
-      "sha256": "4763da14f58d9759e4fc990fc36d3e9623ca550c1832cb0e91e5541fe0b982c1"
+      "sha256": "4763da14f58d9759e4fc990fc36d3e9623ca550c1832cb0e91e5541fe0b982c1",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_wheel39_ppo.py",
@@ -2578,17 +2706,19 @@
     },
     {
       "old_path": "scripts/agent/check_zero_hold_training.py",
-      "new_path": "scripts/agent/isaac/check_zero_hold_training.py",
-      "module": "scripts.agent.isaac.check_zero_hold_training",
+      "new_path": null,
+      "module": null,
       "category": "isaac",
-      "status": "active",
+      "status": "retired",
       "purpose": "Check zero-command sampling and survey low balanced poses; no learning.",
       "environment": "Isaac Python 3.8",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "inspect_multimode_leg_length"
       ],
-      "sha256": "d59869f585564f3fbc412eff984db5b8e0dfdce906299dca6cbda56dc551e8c8"
+      "sha256": "d59869f585564f3fbc412eff984db5b8e0dfdce906299dca6cbda56dc551e8c8",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/collect_bc_braking.py",
@@ -2640,15 +2770,17 @@
     },
     {
       "old_path": "scripts/agent/compare_6848_leg_oscillation.py",
-      "new_path": "scripts/agent/multimode/compare_6848_leg_oscillation.py",
-      "module": "scripts.agent.multimode.compare_6848_leg_oscillation",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "Compare saved 6848 real telemetry and measured-start simulation; no dynamics.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "cca5bcebf503fe0807428a648b4c9021d3712e32e86658803b099b3aa52ef454"
+      "sha256": "cca5bcebf503fe0807428a648b4c9021d3712e32e86658803b099b3aa52ef454",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_h7_measured_start.py",
@@ -2676,27 +2808,31 @@
     },
     {
       "old_path": "scripts/agent/compare_multimode_eval.py",
-      "new_path": "scripts/agent/multimode/compare_multimode_eval.py",
-      "module": "scripts.agent.multimode.compare_multimode_eval",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "配对比较两次 eval（强制初态）输出：验收 v2 的退化否决。",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "f0cb5b46db56d68ed375ecb203d3d5146136ac562cc8b9bbb9c0cf885e3264d6"
+      "sha256": "f0cb5b46db56d68ed375ecb203d3d5146136ac562cc8b9bbb9c0cf885e3264d6",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_multimode_knockdown.py",
-      "new_path": "scripts/agent/multimode/compare_multimode_knockdown.py",
-      "module": "scripts.agent.multimode.compare_multimode_knockdown",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "配对比较两次中途击倒评估：默认用结束前连续 1 秒的最终平衡（v3）。",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "5aa9e9961dddaac72f9562f79f2c170c57e067477a1053b927a629e25703a256"
+      "sha256": "5aa9e9961dddaac72f9562f79f2c170c57e067477a1053b927a629e25703a256",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_smp_motion_scores.py",
@@ -2714,73 +2850,83 @@
     },
     {
       "old_path": "scripts/agent/compare_stand_v2_acceptance.py",
-      "new_path": "scripts/agent/stand_v2/compare_stand_v2_acceptance.py",
-      "module": "scripts.agent.stand_v2.compare_stand_v2_acceptance",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Verify recorded 500 Hz stand_v2 verdicts and compare identical initial states.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_chuanliantui_stand_v2"
       ],
-      "sha256": "08ef6b0fa81093154167332f9f2c74e9f28364568454dc435dff8c196a3ef47b"
+      "sha256": "08ef6b0fa81093154167332f9f2c74e9f28364568454dc435dff8c196a3ef47b",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_stand_v2_active_weight.py",
-      "new_path": "scripts/agent/stand_v2/compare_stand_v2_active_weight.py",
-      "module": "scripts.agent.stand_v2.compare_stand_v2_active_weight",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "After-training 3999/4999/new paired braking and separate zero-v3.1 report.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_chuanliantui_stand_v2",
         "assess_stand_v2_speed_transients",
         "experiment_stand_v2_phase_mix"
       ],
-      "sha256": "64cf53acc002bd66863206a1022c9b58995bd908de39c74962a0eb1bb5e36a08"
+      "sha256": "64cf53acc002bd66863206a1022c9b58995bd908de39c74962a0eb1bb5e36a08",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_stand_v2_nominal_inversion.py",
-      "new_path": "scripts/agent/stand_v2/compare_stand_v2_nominal_inversion.py",
-      "module": "scripts.agent.stand_v2.compare_stand_v2_nominal_inversion",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Recompute paired500Hz zero-speed inversion branches and v3.1 balance from saved data.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "summarize_stand_v2_split_inversion"
       ],
-      "sha256": "438e1c44674be920059822042d30075f80ca21471b2cf8f1a8bc08d128f89ed7"
+      "sha256": "438e1c44674be920059822042d30075f80ca21471b2cf8f1a8bc08d128f89ed7",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_stand_v2_phase_mix.py",
-      "new_path": "scripts/agent/stand_v2/compare_stand_v2_phase_mix.py",
-      "module": "scripts.agent.stand_v2.compare_stand_v2_phase_mix",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Verify paired phase-mix evaluations and aggregate per-seed outcomes, without simulation.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "experiment_stand_v2_phase_mix"
       ],
-      "sha256": "60197c6219b4ecdcb10083e029069502903e37838ba8456fff17d75abd737314"
+      "sha256": "60197c6219b4ecdcb10083e029069502903e37838ba8456fff17d75abd737314",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_stand_v2_wheel_normal.py",
-      "new_path": "scripts/agent/stand_v2/compare_stand_v2_wheel_normal.py",
-      "module": "scripts.agent.stand_v2.compare_stand_v2_wheel_normal",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Compare the wheel-load NORMAL rule on identical recorded stand_v2 first episodes.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "cb1f6b8f13aaea34b2100572f81fd7655f2b6e839cc34980b9edbe8641b31dff"
+      "sha256": "cb1f6b8f13aaea34b2100572f81fd7655f2b6e839cc34980b9edbe8641b31dff",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_supermimic_behavior.py",
@@ -2795,58 +2941,68 @@
         "assess_chuanliantui_supermimic"
       ],
       "sha256": "e88b119ac65b5fad0ad22ec3e51f94c997ff16ebe7dc9f5aa4ea6ba412942105",
-      "runtime_protected": true
+      "runtime_protected": false,
+      "retained_original": true,
+      "live_sha256": "e88b119ac65b5fad0ad22ec3e51f94c997ff16ebe7dc9f5aa4ea6ba412942105"
     },
     {
       "old_path": "scripts/agent/compare_walk_checkpoints.py",
-      "new_path": "scripts/agent/split/compare_walk_checkpoints.py",
-      "module": "scripts.agent.split.compare_walk_checkpoints",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Compare saved fixed-request walk traces on CPU; never simulate or learn.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "350adc07235afd3c6d455dac220f0423491d5933af348a49da124319a562b3cc"
+      "sha256": "350adc07235afd3c6d455dac220f0423491d5933af348a49da124319a562b3cc",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_walk_estimator_trial.py",
-      "new_path": "scripts/agent/split/compare_walk_estimator_trial.py",
-      "module": "scripts.agent.split.compare_walk_estimator_trial",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Saved-trace behavior comparison with parent-locked windows; no simulation.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "analyze_walk_velocity_compensation",
         "summarize_walk_goal_feedback"
       ],
-      "sha256": "89fe74747496847e5b6d64a38d050566873a5742bfe5875046887b53c010fd71"
+      "sha256": "89fe74747496847e5b6d64a38d050566873a5742bfe5875046887b53c010fd71",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_walk_feedback.py",
-      "new_path": "scripts/agent/split/compare_walk_feedback.py",
-      "module": "scripts.agent.split.compare_walk_feedback",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Compare saved same-checkpoint walk feedback interventions on CPU only.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "bbf43764bd4b9f321e2030837af448dac9bb2b67d0016eae5ccac5c931267994"
+      "sha256": "bbf43764bd4b9f321e2030837af448dac9bb2b67d0016eae5ccac5c931267994",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_walk_height_response.py",
-      "new_path": "scripts/agent/split/compare_walk_height_response.py",
-      "module": "scripts.agent.split.compare_walk_height_response",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "CPU-only comparison of saved walk height-command interventions.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "342f86a8ebb820637564b500fc2e3a413c435246e4cf1f5099d3659fc1892f75"
+      "sha256": "342f86a8ebb820637564b500fc2e3a413c435246e4cf1f5099d3659fc1892f75",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compose_chuanliantui_factor_videos.py",
@@ -2893,39 +3049,45 @@
     },
     {
       "old_path": "scripts/agent/diagnose_chuanliantui_stand_v2.py",
-      "new_path": "scripts/agent/stand_v2/diagnose_chuanliantui_stand_v2.py",
-      "module": "scripts.agent.stand_v2.diagnose_chuanliantui_stand_v2",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Measure first-episode stand_v2 motion at 100 Hz; no learning or behavior acceptance.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "c99943e0434de6c16d440280db9078253f36a81e83c446dcb707cd761c412889"
+      "sha256": "c99943e0434de6c16d440280db9078253f36a81e83c446dcb707cd761c412889",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_getup_release.py",
-      "new_path": "scripts/agent/split/diagnose_getup_release.py",
-      "module": "scripts.agent.split.diagnose_getup_release",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Frozen getup release diagnosis: actual 500 Hz PD and contact, no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "0064ff42ede77444acadf5beb96c2b77a9fa83878b2ba5fedc0785c8507e72e2"
+      "sha256": "0064ff42ede77444acadf5beb96c2b77a9fa83878b2ba5fedc0785c8507e72e2",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_getup_start.py",
-      "new_path": "scripts/agent/split/diagnose_getup_start.py",
-      "module": "scripts.agent.split.diagnose_getup_start",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Record first-contact getup failures and first-active PD for a frozen checkpoint.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "1ad70ca638f46bc14f1d9c6f97be5a018d2f53b39737c243afc67d39a035ef6e"
+      "sha256": "1ad70ca638f46bc14f1d9c6f97be5a018d2f53b39737c243afc67d39a035ef6e",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_isaac_ppo_rewards.py",
@@ -2979,96 +3141,110 @@
     },
     {
       "old_path": "scripts/agent/diagnose_stand_v2_cpu_launch.py",
-      "new_path": "scripts/agent/stand_v2/diagnose_stand_v2_cpu_launch.py",
-      "module": "scripts.agent.stand_v2.diagnose_stand_v2_cpu_launch",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Trace the reported native CPU launch, with fixed initial state and no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "336044a2dcd5e8b4b94f78608be77013290258a14d5df29393aa4278db8f6cf8"
+      "sha256": "336044a2dcd5e8b4b94f78608be77013290258a14d5df29393aa4278db8f6cf8",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_stand_v2_inversion.py",
-      "new_path": "scripts/agent/stand_v2/diagnose_stand_v2_inversion.py",
-      "module": "scripts.agent.stand_v2.diagnose_stand_v2_inversion",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Trace an existing stand_v2 diagnostic's get-up actions; never update a policy.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "diagnose_chuanliantui_stand_v2"
       ],
-      "sha256": "0dfe37270d2f85800074f4a40b9589b64c9dcd3f68162d15361d01ad388e7200"
+      "sha256": "0dfe37270d2f85800074f4a40b9589b64c9dcd3f68162d15361d01ad388e7200",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_stand_v2_late_balance.py",
-      "new_path": "scripts/agent/stand_v2/diagnose_stand_v2_late_balance.py",
-      "module": "scripts.agent.stand_v2.diagnose_stand_v2_late_balance",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Replay the original ten late-balance cases; record actual contact-point slip, no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "evaluate_stand_v2_phase_mix",
         "experiment_stand_v2_phase_mix"
       ],
-      "sha256": "51f8766911b8dd8be786042537045e3c3a0df6a633e1d95d8358869d04ba7259"
+      "sha256": "51f8766911b8dd8be786042537045e3c3a0df6a633e1d95d8358869d04ba7259",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_stand_v2_launch_reference.py",
-      "new_path": "scripts/agent/stand_v2/diagnose_stand_v2_launch_reference.py",
-      "module": "scripts.agent.stand_v2.diagnose_stand_v2_launch_reference",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Run the reported saved state in the actual training engine without learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "4ebb3b71ca3bdfb8f8d54910a5f4398ac24ae264fa4717ab9f8228c8be03120e"
+      "sha256": "4ebb3b71ca3bdfb8f8d54910a5f4398ac24ae264fa4717ab9f8228c8be03120e",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_stand_v2_mode_input.py",
-      "new_path": "scripts/agent/stand_v2/diagnose_stand_v2_mode_input.py",
-      "module": "scripts.agent.stand_v2.diagnose_stand_v2_mode_input",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Ablate only the policy-visible NORMAL/RECOVER flag of a frozen stand_v2 model.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_chuanliantui_stand_v2"
       ],
-      "sha256": "f5bb55436f82f75e94c8e53189167cb25540493758ee7151bd8f21b1b4899fff"
+      "sha256": "f5bb55436f82f75e94c8e53189167cb25540493758ee7151bd8f21b1b4899fff",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_stand_v2_pitch_progression.py",
-      "new_path": "scripts/agent/stand_v2/diagnose_stand_v2_pitch_progression.py",
-      "module": "scripts.agent.stand_v2.diagnose_stand_v2_pitch_progression",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Frozen zero-command pitch measurements and paired checkpoint progression; no training.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "evaluate_stand_v2_phase_mix"
       ],
-      "sha256": "bee31da7e25836ee5f71a9d8120252fb36d8aa2df68b9b7fe4a72a1794798d8d"
+      "sha256": "bee31da7e25836ee5f71a9d8120252fb36d8aa2df68b9b7fe4a72a1794798d8d",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_stand_v2_rewards_velocity.py",
-      "new_path": "scripts/agent/stand_v2/diagnose_stand_v2_rewards_velocity.py",
-      "module": "scripts.agent.stand_v2.diagnose_stand_v2_rewards_velocity",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Trace actual reward terms and estimated velocity; optionally replace velocity after 10s. No learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "04f51567e153b6489ce1d0d0266a1c99089ba952c8d3e415b46d63219d54272e"
+      "sha256": "04f51567e153b6489ce1d0d0266a1c99089ba952c8d3e415b46d63219d54272e",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_supermimic_rollout_drift.py",
@@ -3086,88 +3262,99 @@
     },
     {
       "old_path": "scripts/agent/diagnose_walk_estimator_closedloop.py",
-      "new_path": "scripts/agent/split/diagnose_walk_estimator_closedloop.py",
-      "module": "scripts.agent.split.diagnose_walk_estimator_closedloop",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "One bounded saved-trace diagnosis; frozen encoder inference, no fitting or physics.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "evaluate_walk_estimator_final",
         "train_walk_estimator_only",
         "walk_estimator_offline"
       ],
-      "sha256": "2fdf6b7b3bdf763ba64fd83616137556e963b91b597206b133848651dbf285de"
+      "sha256": "2fdf6b7b3bdf763ba64fd83616137556e963b91b597206b133848651dbf285de",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_walk_forward_failure.py",
-      "new_path": "scripts/agent/split/diagnose_walk_forward_failure.py",
-      "module": "scripts.agent.split.diagnose_walk_forward_failure",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Frozen walk-v7 diagnosis: controlled ramps, training-noise rewards and checkpoint comparison.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "690c196534233bdd1cc3d1e2f442a34c735c2afb4b569d99a0239df87317e4c6"
+      "sha256": "690c196534233bdd1cc3d1e2f442a34c735c2afb4b569d99a0239df87317e4c6",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_walk_goal_feedback.py",
-      "new_path": "scripts/agent/split/diagnose_walk_goal_feedback.py",
-      "module": "scripts.agent.split.diagnose_walk_goal_feedback",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Frozen 30s stop/travel/brake comparison of encoder and sensor-wheel vx.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "diagnose_walk_v8_regression"
       ],
-      "sha256": "0187f3323795f155163c7f49c0885c9098a649e438cfc54bff35c35dfbf31887"
+      "sha256": "0187f3323795f155163c7f49c0885c9098a649e438cfc54bff35c35dfbf31887",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_walk_height.py",
-      "new_path": "scripts/agent/split/diagnose_walk_height.py",
-      "module": "scripts.agent.split.diagnose_walk_height",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Compare zero/backward requests from matched states using a frozen walk policy.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "diagnose_walk_v8_regression"
       ],
-      "sha256": "81be2ada185b44e27e2b4378cab8d3a283813707d3c4917e2adf8098668dd0f8"
+      "sha256": "81be2ada185b44e27e2b4378cab8d3a283813707d3c4917e2adf8098668dd0f8",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_walk_v8_regression.py",
-      "new_path": "scripts/agent/split/diagnose_walk_v8_regression.py",
-      "module": "scripts.agent.split.diagnose_walk_v8_regression",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Compare frozen walk policies under identical fixed requests; never learn.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃；运行中续训依赖链所需原文件暂留",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
       "sha256": "2e914f1d04aee46c1d9e5013a5ebd1bae7a4664001ba2c29722b9e39d8dc768a",
-      "runtime_protected": true
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_walk_velocity_compensation.py",
-      "new_path": "scripts/agent/split/diagnose_walk_velocity_compensation.py",
-      "module": "scripts.agent.split.diagnose_walk_velocity_compensation",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Record frozen walk sensor packets for independent velocity-compensation trials.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "diagnose_walk_goal_feedback",
         "diagnose_walk_v8_regression",
         "walk_sensor_velocity"
       ],
-      "sha256": "67bc4058334e146ca06897b97cca6a30a5f60b1135781336bd1101eaf1c2a2a3"
+      "sha256": "67bc4058334e146ca06897b97cca6a30a5f60b1135781336bd1101eaf1c2a2a3",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_wheel_angle_bc.py",
@@ -3198,15 +3385,17 @@
     },
     {
       "old_path": "scripts/agent/diagnose_zero_hold_disturbances.py",
-      "new_path": "scripts/agent/isaac/diagnose_zero_hold_disturbances.py",
-      "module": "scripts.agent.isaac.diagnose_zero_hold_disturbances",
+      "new_path": null,
+      "module": null,
       "category": "isaac",
-      "status": "active",
+      "status": "retired",
       "purpose": "Measure actual zero-hold reward before/after training disturbances; no learning.",
       "environment": "Isaac Python 3.8",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "d2404b0d0b06af59f60ce54ec87ba030a88158e214da4d967775675577084068"
+      "sha256": "d2404b0d0b06af59f60ce54ec87ba030a88158e214da4d967775675577084068",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/eval_bc.py",
@@ -3267,44 +3456,50 @@
     },
     {
       "old_path": "scripts/agent/evaluate_stand_v2_phase_mix.py",
-      "new_path": "scripts/agent/stand_v2/evaluate_stand_v2_phase_mix.py",
-      "module": "scripts.agent.stand_v2.evaluate_stand_v2_phase_mix",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Paired 40 s nominal/training-condition evaluation; 500 Hz balance, no updates.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "experiment_stand_v2_phase_mix"
       ],
-      "sha256": "f8b728ad8ec3693359e0414c8341916629b6670d95ffcc9bd5d70dfde0029e6d"
+      "sha256": "f8b728ad8ec3693359e0414c8341916629b6670d95ffcc9bd5d70dfde0029e6d",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/evaluate_walk_estimator_final.py",
-      "new_path": "scripts/agent/split/evaluate_walk_estimator_final.py",
-      "module": "scripts.agent.split.evaluate_walk_estimator_final",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "One fixed terminal encoder on two new complete runs; no training or control.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "train_walk_estimator_only",
         "walk_estimator_offline"
       ],
-      "sha256": "a5c4c6aa5d6a38e0a16740e508af4356ee2434fd4eda397ef0591989452e27b1"
+      "sha256": "a5c4c6aa5d6a38e0a16740e508af4356ee2434fd4eda397ef0591989452e27b1",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/experiment_stand_v2_phase_mix.py",
-      "new_path": "scripts/agent/stand_v2/experiment_stand_v2_phase_mix.py",
-      "module": "scripts.agent.stand_v2.experiment_stand_v2_phase_mix",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Physically stagger stand_v2 resets; isolated experiment, production recipe unchanged.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "053d21316fad7a6f7a260ac1e4c882d5d4ae8a55d0d10b56d68f18707a6b6d1d"
+      "sha256": "053d21316fad7a6f7a260ac1e4c882d5d4ae8a55d0d10b56d68f18707a6b6d1d",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/export_bc_braking_takeover.py",
@@ -3394,15 +3589,17 @@
     },
     {
       "old_path": "scripts/agent/inspect_multimode_leg_length.py",
-      "new_path": "scripts/agent/multimode/inspect_multimode_leg_length.py",
-      "module": "scripts.agent.multimode.inspect_multimode_leg_length",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "Report static leg reach and height-command semantics; no training or rollout.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "28e4ab61855fa2becebe66fa0ba13bef8906f3883211145c5db328d8f0d3eccf"
+      "sha256": "28e4ab61855fa2becebe66fa0ba13bef8906f3883211145c5db328d8f0d3eccf",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/inspect_supermimic_motion_milestone.py",
@@ -3432,29 +3629,33 @@
     },
     {
       "old_path": "scripts/agent/measure_multimode_leg_motion.py",
-      "new_path": "scripts/agent/multimode/measure_multimode_leg_motion.py",
-      "module": "scripts.agent.multimode.measure_multimode_leg_motion",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "Measure standing-still leg motion of a 39-D multimode checkpoint in two backends.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_multimode_tracking"
       ],
-      "sha256": "54aa3c700d5111bd798b5576abd6d058bc59775dcae3b0e20a7feb1f523d157c"
+      "sha256": "54aa3c700d5111bd798b5576abd6d058bc59775dcae3b0e20a7feb1f523d157c",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/migrate_chuanliantui_stand_velocity.py",
-      "new_path": "scripts/agent/stand/migrate_chuanliantui_stand_velocity.py",
-      "module": "scripts.agent.stand.migrate_chuanliantui_stand_velocity",
+      "new_path": null,
+      "module": null,
       "category": "stand",
-      "status": "active",
+      "status": "retired",
       "purpose": "Historical 39-to-41 migration; target is the frozen r25/r26 velocity profile.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "0333455fe2a2e316834e4927187b9739a601d81a6bc648d5a464f690d9f0802b"
+      "sha256": "0333455fe2a2e316834e4927187b9739a601d81a6bc648d5a464f690d9f0802b",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/plot_chuanliantui_ablation_evaluation.py",
@@ -3544,32 +3745,36 @@
     },
     {
       "old_path": "scripts/agent/probe_chuanliantui_stand_rewards.py",
-      "new_path": "scripts/agent/stand/probe_chuanliantui_stand_rewards.py",
-      "module": "scripts.agent.stand.probe_chuanliantui_stand_rewards",
+      "new_path": null,
+      "module": null,
       "category": "stand",
-      "status": "active",
+      "status": "retired",
       "purpose": "Read actual reward rates before first termination; no learning or acceptance.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_chuanliantui_stand"
       ],
-      "sha256": "863c120cf74eff58d19ea28de335af61df1a9d7f2c25607b070cb2e32ea8cb85"
+      "sha256": "863c120cf74eff58d19ea28de335af61df1a9d7f2c25607b070cb2e32ea8cb85",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/probe_getup_torque_rewards.py",
-      "new_path": "scripts/agent/split/probe_getup_torque_rewards.py",
-      "module": "scripts.agent.split.probe_getup_torque_rewards",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Measure pre-stand torque reward size with the frozen EMA80 actor; never learn.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_chuanliantui_two_policy",
         "check_getup_nominal_state"
       ],
-      "sha256": "b9ad02484cf41cb36241c979ebe0c8e501ab9e613cc2502477f046228e68963c"
+      "sha256": "b9ad02484cf41cb36241c979ebe0c8e501ab9e613cc2502477f046228e68963c",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/probe_supermimic_action_gradient.py",
@@ -3599,45 +3804,51 @@
     },
     {
       "old_path": "scripts/agent/record_chuanliantui_stand.py",
-      "new_path": "scripts/agent/stand/record_chuanliantui_stand.py",
-      "module": "scripts.agent.stand.record_chuanliantui_stand",
+      "new_path": null,
+      "module": null,
       "category": "stand",
-      "status": "active",
+      "status": "retired",
       "purpose": "Record a full quiet rollout for diagnosis; never issue an acceptance verdict.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_chuanliantui_stand"
       ],
-      "sha256": "56d012a5c7e1dc8a5aaa284b16ff64fb71458b650dbe422e240e0487cac437e0"
+      "sha256": "56d012a5c7e1dc8a5aaa284b16ff64fb71458b650dbe422e240e0487cac437e0",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/record_multimode_knockdown_failures.py",
-      "new_path": "scripts/agent/multimode/record_multimode_knockdown_failures.py",
-      "module": "scripts.agent.multimode.record_multimode_knockdown_failures",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "记录击倒评估；也可按修订的交付定义直接渲染已保存的本次运行轨迹。",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "assess_multimode_knockdown_recovery"
       ],
-      "sha256": "ecee4166a917af97c02401981a3b0608fbd18f598b670daf9b2cae519f3df8fe"
+      "sha256": "ecee4166a917af97c02401981a3b0608fbd18f598b670daf9b2cae519f3df8fe",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/record_stand_v2_sample.py",
-      "new_path": "scripts/agent/stand_v2/record_stand_v2_sample.py",
-      "module": "scripts.agent.stand_v2.record_stand_v2_sample",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Record one original stand_v2 diagnostic initial state with the same policy.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "diagnose_chuanliantui_stand_v2"
       ],
-      "sha256": "86343b80a612a6b8e23f63d0507fca397f5d87e57c6c5f1bfa4d025bb40888a9"
+      "sha256": "86343b80a612a6b8e23f63d0507fca397f5d87e57c6c5f1bfa4d025bb40888a9",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/record_supermimic_physical_prediction.py",
@@ -3655,34 +3866,38 @@
     },
     {
       "old_path": "scripts/agent/record_walk_estimator_trial.py",
-      "new_path": "scripts/agent/split/record_walk_estimator_trial.py",
-      "module": "scripts.agent.split.record_walk_estimator_trial",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Frozen parent/candidate estimator trial, with native500Hz sensors and own feedback.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "diagnose_walk_goal_feedback",
         "diagnose_walk_v8_regression"
       ],
-      "sha256": "658d95573beebcb9060c77f52dbdef0ab45976b5499162315112010d7971417a"
+      "sha256": "658d95573beebcb9060c77f52dbdef0ab45976b5499162315112010d7971417a",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/record_walk_shadow_sensors.py",
-      "new_path": "scripts/agent/split/record_walk_shadow_sensors.py",
-      "module": "scripts.agent.split.record_walk_shadow_sensors",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Record native 500Hz sensor primitives; shadow estimates never control the robot.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "diagnose_walk_goal_feedback",
         "diagnose_walk_v8_regression",
         "diagnose_walk_velocity_compensation"
       ],
-      "sha256": "3c18a30e0274b1c856830093c91e8a270c44146721e5e87a72d4b58aab34e4e0"
+      "sha256": "3c18a30e0274b1c856830093c91e8a270c44146721e5e87a72d4b58aab34e4e0",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_aligned_bc_braking.py",
@@ -3769,17 +3984,19 @@
     },
     {
       "old_path": "scripts/agent/render_chuanliantui_stand.py",
-      "new_path": "scripts/agent/stand/render_chuanliantui_stand.py",
-      "module": "scripts.agent.stand.render_chuanliantui_stand",
+      "new_path": null,
+      "module": null,
       "category": "stand",
-      "status": "active",
+      "status": "retired",
       "purpose": "Render actual stand-task reset states or saved evaluation states; no learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "check_chuanliantui_stand"
       ],
-      "sha256": "e10422ef5b5c3f764c65e99590695fecbb342f0be2a52a57928afa052b6bfb89"
+      "sha256": "e10422ef5b5c3f764c65e99590695fecbb342f0be2a52a57928afa052b6bfb89",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_chuanliantui_supermimic.py",
@@ -3825,17 +4042,19 @@
     },
     {
       "old_path": "scripts/agent/render_getup_target_slew.py",
-      "new_path": "scripts/agent/split/render_getup_target_slew.py",
-      "module": "scripts.agent.split.render_getup_target_slew",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Render saved baseline/candidate getup first episodes, without new simulation.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "render_chuanliantui_stand"
       ],
-      "sha256": "7bf3d429a81dcb3995d0633db5457eebf59c66921b7b7cf082bd55e97ce1f46f"
+      "sha256": "7bf3d429a81dcb3995d0633db5457eebf59c66921b7b7cf082bd55e97ce1f46f",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_h7_zero_command.py",
@@ -3899,29 +4118,33 @@
     },
     {
       "old_path": "scripts/agent/render_multimode_leg_length.py",
-      "new_path": "scripts/agent/multimode/render_multimode_leg_length.py",
-      "module": "scripts.agent.multimode.render_multimode_leg_length",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "Plot measured leg lengths and render an already recorded mjlab trajectory.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "0c291b6b4a8b6ceb4a55247a5b3d177074275beca7137296f725303cfe4abec0"
+      "sha256": "0c291b6b4a8b6ceb4a55247a5b3d177074275beca7137296f725303cfe4abec0",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_multimode_minimum_leg.py",
-      "new_path": "scripts/agent/multimode/render_multimode_minimum_leg.py",
-      "module": "scripts.agent.multimode.render_multimode_minimum_leg",
+      "new_path": null,
+      "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "Render the closed static pose at lf1=-0.77/rf1=+0.77, without stepping physics.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "inspect_multimode_leg_length"
       ],
-      "sha256": "ad8042e214b0392e1280cfe8e8d3c96336960b73843c7ec39d5f5473717aa1db"
+      "sha256": "ad8042e214b0392e1280cfe8e8d3c96336960b73843c7ec39d5f5473717aa1db",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_ppo_smp_comparison.py",
@@ -3954,75 +4177,85 @@
     },
     {
       "old_path": "scripts/agent/render_stand_v2_acceptance.py",
-      "new_path": "scripts/agent/stand_v2/render_stand_v2_acceptance.py",
-      "module": "scripts.agent.stand_v2.render_stand_v2_acceptance",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Render a passed and failed case from one saved acceptance; never resimulate.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "render_chuanliantui_stand"
       ],
-      "sha256": "7d214b318e2851f60ce240e10344991557bce44ef41fe6f9f50ef6a6fe7944fc"
+      "sha256": "7d214b318e2851f60ce240e10344991557bce44ef41fe6f9f50ef6a6fe7944fc",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_stand_v2_late_balance.py",
-      "new_path": "scripts/agent/stand_v2/render_stand_v2_late_balance.py",
-      "module": "scripts.agent.stand_v2.render_stand_v2_late_balance",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Plot the ten rerun tails and render saved trajectories; no integration or learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "experiment_stand_v2_phase_mix",
         "render_chuanliantui_stand"
       ],
-      "sha256": "a1a23a1c880ef500947b9bebd733dd69d9d4035886cedd0eda48f2b085108f8e"
+      "sha256": "a1a23a1c880ef500947b9bebd733dd69d9d4035886cedd0eda48f2b085108f8e",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_stand_v2_sample.py",
-      "new_path": "scripts/agent/stand_v2/render_stand_v2_sample.py",
-      "module": "scripts.agent.stand_v2.render_stand_v2_sample",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Render a recorded stand_v2 sample at its original simulation speed.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "render_chuanliantui_stand"
       ],
-      "sha256": "04c7d554a9cb5bed62fe8a38ead8120e669dc7df466a3f9e760790575c88f73f"
+      "sha256": "04c7d554a9cb5bed62fe8a38ead8120e669dc7df466a3f9e760790575c88f73f",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_stand_v2_speed_comparison.py",
-      "new_path": "scripts/agent/stand_v2/render_stand_v2_speed_comparison.py",
-      "module": "scripts.agent.stand_v2.render_stand_v2_speed_comparison",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Render matched old/new frozen transient poses, never re-simulates physics.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "experiment_stand_v2_phase_mix",
         "render_chuanliantui_stand"
       ],
-      "sha256": "3616c0b82c28e88c628344a0bac68210f0e28c9216d949edbd9c15743c1be548"
+      "sha256": "3616c0b82c28e88c628344a0bac68210f0e28c9216d949edbd9c15743c1be548",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_stand_v2_tracking.py",
-      "new_path": "scripts/agent/stand_v2/render_stand_v2_tracking.py",
-      "module": "scripts.agent.stand_v2.render_stand_v2_tracking",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Render full saved tracking-probe trajectories; no physics integration or learning.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "render_chuanliantui_stand"
       ],
-      "sha256": "389a21048b27923e68b5bef1de5239fc4a8d2d1aae00d56f63b040ead6052a2d"
+      "sha256": "389a21048b27923e68b5bef1de5239fc4a8d2d1aae00d56f63b040ead6052a2d",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/replay_teacher_pd.py",
@@ -4064,7 +4297,9 @@
         "compare_supermimic_behavior"
       ],
       "sha256": "b166f3c841dd09ff8b223d66c9de8cfc923c242de2f7fc0c45f97a53acc8f863",
-      "runtime_protected": true
+      "runtime_protected": false,
+      "retained_original": true,
+      "live_sha256": "b166f3c841dd09ff8b223d66c9de8cfc923c242de2f7fc0c45f97a53acc8f863"
     },
     {
       "old_path": "scripts/agent/report_supermimic_v13_count_budget.py",
@@ -4079,7 +4314,9 @@
         "report_supermimic_v13_continuation"
       ],
       "sha256": "cb81c42b99faeaf65b2151cb9d35794c747cfdeb46265ebd834cad645757289a",
-      "runtime_protected": true
+      "runtime_protected": false,
+      "retained_original": true,
+      "live_sha256": "cb81c42b99faeaf65b2151cb9d35794c747cfdeb46265ebd834cad645757289a"
     },
     {
       "old_path": "scripts/agent/report_walk_estimator_closedloop.py",
@@ -4295,15 +4532,17 @@
     },
     {
       "old_path": "scripts/agent/summarize_stand_v2_split_inversion.py",
-      "new_path": "scripts/agent/stand_v2/summarize_stand_v2_split_inversion.py",
-      "module": "scripts.agent.stand_v2.summarize_stand_v2_split_inversion",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "按初始左右腿前后分支统计稳站v2配对评估中的倒置（只读已有评估产物，不跑仿真）。",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "43350dc7e5a7a7eb42725a9748bc5607e5bbf76c9f1d652752477efd0aa794b4"
+      "sha256": "43350dc7e5a7a7eb42725a9748bc5607e5bbf76c9f1d652752477efd0aa794b4",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/summarize_stand_v2_tight_effect.py",
@@ -4319,15 +4558,17 @@
     },
     {
       "old_path": "scripts/agent/summarize_walk_goal_feedback.py",
-      "new_path": "scripts/agent/split/summarize_walk_goal_feedback.py",
-      "module": "scripts.agent.split.summarize_walk_goal_feedback",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "CPU-only phased summary of saved 30s matched walk-feedback traces.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "81fd28ace4f312c3b5c6dd2d48b823319c514c2622c9955e787ebbd758e04da9"
+      "sha256": "81fd28ace4f312c3b5c6dd2d48b823319c514c2622c9955e787ebbd758e04da9",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/summarize_walk_leg_swing.py",
@@ -4376,36 +4617,42 @@
       "reason": "已结束实验的固定轮次检查或结果报告；在原源码树复核；另一任务正在续训及验收，原字节入口暂留，禁止本次移除",
       "dependencies": [],
       "sha256": "d4011fb3a0d4d615bc73405e158042b4f9a2437fd347364211ffefa67d94f580",
-      "runtime_protected": true
+      "runtime_protected": false,
+      "retained_original": true,
+      "live_sha256": "bfab070c77dba41a6cbc92076ea607ed8c557ba5960b261f20f10ecb79e06a16"
     },
     {
       "old_path": "scripts/agent/train_walk_estimator_only.py",
-      "new_path": "scripts/agent/split/train_walk_estimator_only.py",
-      "module": "scripts.agent.split.train_walk_estimator_only",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Budgeted offline supervision of the original encoder; never runs PPO or physics.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "analyze_walk_velocity_compensation",
         "walk_estimator_offline"
       ],
-      "sha256": "9301fd2aed6727a4f8697679842790d558a0c044effa69f046abe338ff831eec"
+      "sha256": "9301fd2aed6727a4f8697679842790d558a0c044effa69f046abe338ff831eec",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/validate_stand_v2_handover.py",
-      "new_path": "scripts/agent/stand_v2/validate_stand_v2_handover.py",
-      "module": "scripts.agent.stand_v2.validate_stand_v2_handover",
+      "new_path": null,
+      "module": null,
       "category": "stand_v2",
-      "status": "active",
+      "status": "retired",
       "purpose": "Compare a simulation-only leg-target handover with the same trained policy.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "diagnose_chuanliantui_stand_v2"
       ],
-      "sha256": "690122468bad602be0a4a84faf3a156ae2ba253eb4065010cbab067af6ed4ffd"
+      "sha256": "690122468bad602be0a4a84faf3a156ae2ba253eb4065010cbab067af6ed4ffd",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/wait_training_completion.py",
@@ -4421,29 +4668,33 @@
     },
     {
       "old_path": "scripts/agent/walk_estimator_offline.py",
-      "new_path": "scripts/agent/split/walk_estimator_offline.py",
-      "module": "scripts.agent.split.walk_estimator_offline",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Locked complete-run data and per-segment scoring for encoder-only experiments.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [
         "analyze_walk_velocity_compensation"
       ],
-      "sha256": "73e362a49a1029c9bb3ed64e2c41082d8ec3685585a060b29bd599fd44aa74c6"
+      "sha256": "73e362a49a1029c9bb3ed64e2c41082d8ec3685585a060b29bd599fd44aa74c6",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/walk_sensor_velocity.py",
-      "new_path": "scripts/agent/split/walk_sensor_velocity.py",
-      "module": "scripts.agent.split.walk_sensor_velocity",
+      "new_path": null,
+      "module": null,
       "category": "split",
-      "status": "active",
+      "status": "retired",
       "purpose": "Fixed sensor-only rolling kinematics for the frozen walk velocity diagnosis.",
       "environment": "mjlab_training/.venv/bin/python",
-      "reason": "保留现有能力；未据名称或无引用推定废弃",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "522be70ee5e35960441d241d9bf69643464609eeff281a166a106493324bdb19"
+      "sha256": "522be70ee5e35960441d241d9bf69643464609eeff281a166a106493324bdb19",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/lqr_vmc_reference.c",
@@ -4459,15 +4710,17 @@
     },
     {
       "old_path": "scripts/agent/multimode_snapshot_deviations.json",
-      "new_path": "scripts/agent/multimode/multimode_snapshot_deviations.json",
+      "new_path": null,
       "module": null,
       "category": "multimode",
-      "status": "active",
+      "status": "retired",
       "purpose": "辅助资产",
       "environment": "非Python资产",
-      "reason": "随调用方迁移",
+      "reason": "用户明确停止①～⑤；task及专属脚本删除，保留必要共用函数不保留旧CLI",
       "dependencies": [],
-      "sha256": "533293bda55a7f540d31841f13e544b67e8a82a9355deff9be67fa77e4946222"
+      "sha256": "533293bda55a7f540d31841f13e544b67e8a82a9355deff9be67fa77e4946222",
+      "runtime_protected": false,
+      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/reproduce_fixed_h7_calibration.sh",

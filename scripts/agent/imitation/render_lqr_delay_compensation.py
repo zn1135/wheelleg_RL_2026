@@ -52,7 +52,7 @@ def main():
     initial[:, :2] -= origin
     titles = ['原LQR | 1ms直接力矩', '补偿前 | 学生PD | 腿/轮6/10ms', 'LQR预览补偿 | 学生PD | 腿/轮6/10ms']
     passed = [episode['quality']['final_balance_v31'], row['final_balance_v31'], improved['final_balance_v31']]
-    env, _ = task_registry.make_env('chuanliantui', play=True, num_envs=1)
+    env, _ = task_registry.make_env('smp', play=True, num_envs=1)
     renderer = None
     try:
         width, height, header, fps = 640, 448, 112, 60

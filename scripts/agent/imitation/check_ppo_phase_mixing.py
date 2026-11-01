@@ -17,14 +17,14 @@ from scripts.agent.imitation.check_ppo_finetune_resume import equal
 def run(args):
     torch.set_num_threads(1)
     args.output.mkdir(parents=True, exist_ok=False)
-    cfg, train = task_registry.get_cfgs('chuanliantui')
+    cfg, train = task_registry.get_cfgs('smp')
     cfg.seed = train.seed = 42
     configure_smp(cfg, train, args.prior, policy_contract=policy_observation_contract(args.checkpoint),
                   bc_finetune=checkpoint_bc_finetune(args.checkpoint))
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train, num_envs=20)
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train, num_envs=20)
     try:
         raw = env.unwrapped
-        runner, _ = task_registry.make_alg_runner(env, 'chuanliantui', train_cfg=train)
+        runner, _ = task_registry.make_alg_runner(env, 'smp', train_cfg=train)
         runner.load(str(args.checkpoint))
         before = copy.deepcopy(runner.alg.save())
         counter = raw.common_step_counter
@@ -67,7 +67,7 @@ def run(args):
                 assert not raw.action_manager.get_term('pd').torques[ages < 20].any()
                 assert torch.isfinite(obs['actor']).all() and torch.isfinite(obs['critic']).all()
         equal(before, runner.alg.save())
-        resumed, _ = task_registry.make_alg_runner(env, 'chuanliantui', train_cfg=train)
+        resumed, _ = task_registry.make_alg_runner(env, 'smp', train_cfg=train)
         resumed.load(str(args.output/'untrained-phase.pt'))
         equal(before, resumed.alg.save())
         assert resumed.phase_mixing == stats and not resumed._phase_mixing_ready

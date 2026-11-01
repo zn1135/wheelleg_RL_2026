@@ -24,8 +24,8 @@ def render(args):
         clips.append((q, v, initial, alive))
     for clip in clips: np.testing.assert_array_equal(clip[2], clips[0][2])
     args.output.mkdir(parents=True, exist_ok=False)
-    cfg, train = task_registry.get_cfgs('chuanliantui', play=True)
-    env, _ = task_registry.make_env('chuanliantui', env_cfg=cfg, train_cfg=train, num_envs=1)
+    cfg, train = task_registry.get_cfgs('smp', play=True)
+    env, _ = task_registry.make_env('smp', env_cfg=cfg, train_cfg=train, num_envs=1)
     renderer = None
     try:
         model = env.unwrapped.sim.mj_model; model.vis.global_.offwidth = 640; model.vis.global_.offheight = 360
