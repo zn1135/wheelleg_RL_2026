@@ -49,6 +49,7 @@ from mjlab.managers.event_manager import EventTermCfg
 from mjlab.rl import RslRlVecEnvWrapper
 from mjlab.utils.torch import configure_torch_backends
 from ct_mjlab.envs import task_registry
+from ct_mjlab.validation import require_gpu
 from ct_mjlab.envs.chuanliantui.huananhu_poses import sample_reset_state
 from ct_mjlab.envs.chuanliantui.multimode_mdp import (MODE_NAMES, OUT_OF_PATCH_RADIUS_M,
                                                        TERRAIN_NAMES)
@@ -128,6 +129,7 @@ def git_state() -> dict:
 
 def evaluate_seed(args, seed: int) -> tuple[dict, list[dict], dict]:
     """Run one seed and return (aggregates, per-episode rows, provenance extras)."""
+    require_gpu(args.device)
     configure_torch_backends()
     cfg, agent = task_registry.get_cfgs(SMP_TASK_ID, play=True)
     cfg.scene.num_envs = args.num_envs
@@ -408,6 +410,7 @@ def main() -> None:
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--capture", action="store_true", help="save env 0's first-episode qpos")
     args = parser.parse_args()
+    validation = require_gpu(args.device)
     if not args.checkpoint.is_file():
         raise FileNotFoundError(args.checkpoint)
     seeds = [int(s) for s in args.seeds.split(",") if s.strip()]
@@ -438,6 +441,7 @@ def main() -> None:
                 "min": float(np.min(values)), "max": float(np.max(values))}
 
     summary = {
+        **validation,
         "time": datetime.now().astimezone().isoformat(),
         "task": SMP_TASK_ID,
         "checkpoint": str(args.checkpoint.resolve()),

@@ -19,6 +19,7 @@ import torch
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT/'mjlab_training/src'))
+from ct_mjlab.validation import require_gpu
 from scripts.agent.shared.recording import Recorder, digest, sample_physics
 
 
@@ -279,6 +280,7 @@ def summarize(values, layout, cases, ends, reasons, weight, dt, seconds, height=
 
 @torch.inference_mode()
 def run(args):
+    validation=require_gpu(args.device)
     from dataclasses import asdict
     import mujoco
     from mjlab.managers.metrics_manager import MetricsTermCfg
@@ -431,7 +433,7 @@ def run(args):
             manifest = Path(physical_sources['manifest'])
             assert digest(manifest) == physical_sources['manifest_sha256']
             assert all(digest(ROOT/name) == sha for name,sha in json.loads(manifest.read_text()).items())
-        result = dict(task='chuanliantui_walk',policy_kind=args.policy_kind,algorithm_contract=algorithm_contract,
+        result = dict(**validation,task='chuanliantui_walk',policy_kind=args.policy_kind,algorithm_contract=algorithm_contract,
             checkpoint_load_method=load_method,
             checkpoint=str(args.checkpoint),checkpoint_sha256=checkpoint_sha,
             checkpoint_iteration=checkpoint_iteration,checkpoint_transitions=checkpoint_transitions,

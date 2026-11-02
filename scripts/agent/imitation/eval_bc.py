@@ -11,6 +11,7 @@ from mjlab.managers.metrics_manager import MetricsTermCfg
 from mjlab.managers.termination_manager import TerminationTermCfg
 from ct_mjlab.bc import ActionDataset,load_actor,LEGACY_SAMPLING
 from ct_mjlab.envs import task_registry
+from ct_mjlab.validation import require_gpu
 from ct_mjlab import wheel_angles
 from ct_mjlab.envs.chuanliantui.model import ACTUATED_JOINTS
 from ct_mjlab.envs.chuanliantui import multimode_observations
@@ -54,6 +55,7 @@ class QueryCfg(BridgeCfg):
 
 @torch.inference_mode()
 def run(args):
+    validation=require_gpu(args.device)
     if args.collect_corrections and args.split!='train':
         raise ValueError('Do not turn heldout evaluation poses into training corrections')
     actor,saved=load_actor(args.checkpoint,args.device)
@@ -120,7 +122,7 @@ def run(args):
             strict_ever=torch.zeros(count,dtype=torch.bool,device=args.device))
         raw._collection_probe=dict(contact=torch.zeros(count,dtype=torch.bool,device=args.device),tilt=torch.zeros(count,device=args.device))
         reader=MotionStateReader(raw)
-        buffers={k:[] for k in ('qpos','qvel','motor_dq','features','observation','action','alive','done')}
+        buffers={k:[] for k in ('qpos','qvel','motor_dq','features','observation','action','alive','done','command')}
         if args.collect_corrections:buffers.update(label=[],label_valid=[])
         if data.observation_dim==41:
             buffers.update(reference_error=[],reference_state=[],reference_events=[],source_q=[],source_dq=[],actuator_torque=[])
@@ -147,7 +149,8 @@ def run(args):
             obs,_,done,_=env.step(outputs)
             state=reader.read()
             values=dict(qpos=raw.sim.data.qpos,qvel=raw.sim.data.qvel,motor_dq=state['motor_dq'],
-                features=reader.features(),observation=inputs,action=outputs,alive=live,done=done.bool())
+                features=reader.features(),observation=inputs,action=outputs,alive=live,done=done.bool(),
+                command=raw.command_manager.get_term('standup').command.clone())
             if args.collect_corrections:
                 phase=action.teacher_phase_used if data.observation_dim==41 else action.teacher.controller.standup.phase
                 values.update(label=action.label,label_valid=live & (phase!=FAILED))
@@ -212,6 +215,7 @@ def run(args):
             report.update(evaluation_pose_manifest_sha256=digest(pose_manifest),
                           evaluation_pose_dataset_fingerprint=pose_data.motion.fingerprint,
                           evaluation_pose_manifest_scope='Initial qpos/qvel and heldout membership only; no training labels imported')
+        report.update(validation)
         (args.output/'result.json').write_text(json.dumps(report,indent=2)+'\n')
         from mjlab.utils.os import dump_yaml
         dump_yaml(args.output/'env.yaml',asdict(cfg))

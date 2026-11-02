@@ -1,8 +1,10 @@
 # 架构与数据流
 
-仅维护SuperMimic、BC与SMP；模块入口见[模块职责](modules.md)，当前模型结论见[项目实验记录](project-log.md)。
+最终验收现统一为GPU、共用运动门槛及报告，见[统一GPU验收](../interfaces/20261102-unified-gpu-acceptance.md)。主线统一入口为`scripts/mjlab.sh accept --task <任务> --recording <GPU记录> --output <新目录>`；起立单列，旧CPU流程仅保留历史含义。
 
-## 三条训练流程
+维护SuperMimic、BC、SMP及独立复旦PPO行走适配；模块入口见[模块职责](modules.md)，当前模型结论见[项目实验记录](project-log.md)。
+
+## 训练流程
 
 SuperMimic当前世界模型使用129维输入：47维航向无关运动特征＋75参数＋当前6动作＋1年龄，不读取前两拍动作。运动特征为高度、去航向旋转6D、机体系线/角速度和关节状态；参数中的外力/力矩也转为机体系。真实状态和输出积分仍用原物理坐标。策略仍为Actor25/历史125，真实回放保留动作历史。即使同为129维，旧绝对坐标模型也不能直接续训；见[坐标接口记录](../interfaces/20261101-supermimic-v13-heading-invariant.md)。
 
@@ -16,7 +18,7 @@ SuperMimic当前世界模型使用129维输入：47维航向无关运动特征�
 - BC：传统控制器经学生动作／PD链路生成示范 → 观测与动作同拍配对 → BC actor监督学习 → 独立闭环评估；可再初始化⑦⑧中的PPO。
 - SMP：合格运动示范 → 先验模型训练 → 冻结先验给运动评分 → SMP辅助PPO训练 → 独立行为验收。
 
-共用真实XML、控制时序、观测和模型接口按各自合同核对；不同接口不能互套。注册环境只有`smp`和`supermimic`；五个旧独立训练task退出。
+共用真实XML、控制时序、观测和模型接口按各自合同核对；不同接口不能互套。注册环境为`smp`、`supermimic`和`fudan_ppo_walk`；五个旧独立训练task退出。
 
 ## 仿真与真机
 
@@ -27,3 +29,7 @@ SuperMimic当前世界模型使用129维输入：47维航向无关运动特征�
 ## 源码与模型来源
 
 旧SuperMimic模型保存的任务／算法合同继续严格验证；撤销入口导致的源码变动通过明确的逐文件before／after SHA映射核对，原训练快照逐字节校验。未知修改继续拒绝，不跳过源码验证。记录见[清理范围](../maintenance/20261101-retain-678-review.md)。
+
+复旦最终验证只用MuJoCo Warp GPU，原生CPU物理入口已撤销，共用模型加载在`policy.py`，见[约定](../interfaces/20261102-fudan-gpu-validation.md)。历史CPU产物保留，其他任务sim2sim保持。
+
+复旦PPO独立线：真实10ms采样48步→PPO更新actor/critic/std→另一个Adam监督encoder估速；实体闭链机器人/PD沿用本机，命令、奖励、历史和域随机化独立配置，不经过旧起立/停车外环。Critic环境141维＋encoder3维；Actor不读真值线速度。[规格与差异](../mjlab-fudan-ppo-walk.md)。

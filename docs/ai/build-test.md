@@ -1,5 +1,11 @@
 # 构建与验证
 
+最终验收现统一为GPU、共用运动门槛及报告，见[统一GPU验收](../interfaces/20261102-unified-gpu-acceptance.md)。主线统一入口为`scripts/mjlab.sh accept --task <任务> --recording <GPU记录> --output <新目录>`；起立单列，旧CPU流程仅保留历史含义。
+
+复旦当前最终验证仅GPU：[约定](../interfaces/20261102-fudan-gpu-validation.md)。`check_gpu_validation --migration artifacts/fudan-gpu-only-validation-20261102 --output <新JSON>`检查默认GPU、拒绝CPU参数、几何预检及导出依赖，0物理/NN/更新。历史CPU只读报告不再提供动态入口。
+
+复旦延迟／推扰开关：`PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_walk.check_disturbances --output <新JSON>`，覆盖实际PD前动作队列、传感槽位／Critic、局部复位、单拍推力、CPU/CUDA一致性、GPU夹具条件、checkpoint及预检条件核对；全部真实物理／网络前向／优化器更新为0。动态预检与行为另行验收，见[配置和时序](../interfaces/20261102-fudan-disturbance-switches.md)。
+
 SuperMimic V13 r2已按实际更新数完成：从A700完整恢复后恰新增1500次actor Adam到A2200，无用户时长上限，不因摔倒或平衡丢失早停；精确封存A1200/A1700，训练结束后才串行评估。正式训练/完成审计、三次固定seed43/96例评估及pipeline均退出0；累计W9056/E/A/C各2200，新增W6000/E/A/C各1500、新399360/累计642048转移，学习循环4509.199秒/训练进程4522.847秒。A1200/A1700均存活0/96、平衡0/96，阶段128/384与112/384；A2200存活96/96、平衡仍0/96、384/384完整，数值异常均0。A2200前进vx −.493～−.492/MAE .992～.993m/s，后退vx −.684～−.683/MAE .183～.184m/s；停车水平mean .553～.589/peak .795～.850m/s、高度.303～.305m。末1秒每轮/总承重持续条件均96例失败，机身离地/姿态/角速度各0例失败；不能写成整段无接触。仅存活和部分跟踪恢复，平衡未恢复，不推断更多更新必然有效或无效。[r2实际命令、退出与结果](../../artifacts/supermimic-v13-continuation-20261101-r2/README.md)。101生产源/算法/物理不改；固定入口及Recorder兼容副本恢复另存属于目录迁移维护，不作算法证据。
 
 按任务选择正式入口；检查输出必须注明模型、配方和覆盖范围。旧实验的详细命令保留在[历史专项检查登记](script-check-reference.md)，脚本旧路径统一查[迁移表](../../scripts/agent/MIGRATION.md)。
@@ -53,3 +59,27 @@ mjlab_training/.venv/bin/python -m scripts.agent.maintenance.check_script_entrie
 第一项检查五个旧task拒绝、普通PPO训练拒绝、⑥⑦⑧导入、共用环境源码／MuJoCo保护哈希、共用函数AST和实际删除清单。后续检查覆盖迁移表、内部导入、保存的SuperMimic预测／阶段指标、计数舍入与入口参数；均不训练、不推进物理，不证明行为通过。
 
 统一运动复算：`python -m scripts.agent.motion.assess --measurement <SuperMimic测量目录> --output <新结果.json>`；算术检查用`--selfcheck`。原stand_v2专属审计入口随任务清理删除。完整范围见[保留线清理记录](../maintenance/20261101-retain-678-review.md)。
+
+复旦PPO新增正式入口：`scripts.agent.fudan_ppo_walk.check`（静态几何/接口/梯度路由，0物理步/0优化器更新）、`check_scoring`（合成轨迹评分）、`precheck --viewer viser`（20环境可视物理预检）、`probe`（并行规模）、`evaluate [gpu]`、`score`、`render`。物理入口均计本轮3600秒，命令及门槛见[规格](../mjlab-fudan-ppo-walk.md)，程序检查通过不能代表行为通过。
+
+复旦v2正式零物理入口：`scripts.agent.fudan_ppo_walk.check_reset_geometry`（含float32写回）与`check_reset_v2`（真实控制流/替代物理、计划热步1次但实际0）；`check_initialization`当时指向后者，当前默认检查已升history v3。动态20环境预检尚未运行，见[交付](../../artifacts/fudan-reset-v2-20261101/README.md)。
+
+复旦验收v2（独立于reset/history版本）：`fudan_ppo_walk.check_scoring_v2 --output <新JSON>`合成70项边界与拒绝检查；`score_v2 --recording <既有目录> --output <新JSON>`；`compare_scoring_v2 --before <6000录制> --after <7000录制> --height030 <可选另列录制> --protected-source-manifest <本次源SHA清单> --output <新目录>`。只读既有记录，无物理/策略前向/优化器更新，不代表新行为或实机验收；[独立协议](../interfaces/20261102-fudan-walk-acceptance-v2.md)。
+
+复旦history v3正式零物理入口：`fudan_ppo_walk.check_history_v3 --output <新JSON>`（当前27项真实输入/复位/CLI控制流，替代后端，无NN前向）；`check_history_migration --checkpoint <7000模型> --baseline-source <修改前fudan_ppo_walk目录> --output <新JSON>`（CPU/CUDA模型/两Adam/学习率/RNG/计数，受限显式v2→v3迁入及拒绝检查，0更新/0前向）。当前`check_initialization`指向v3；历史`check_reset_v2`仍可验证旧语义。无物理夹具不批准真实预检或训练，详见[接口](../interfaces/20261102-fudan-history-rollback-v3.md)。
+
+复旦原生sim2sim只读对照：`fudan_ppo_walk.compare_native_replay --experiment <配对录制目录> --gpu-score <GPU-v2分数> --output <新JSON>`核对同15例/初态并列指标；`compare_native_video --experiment <配对目录> --output <新目录>`只处理已编码GPU/CPU视频帧，0物理/0NN/0网格渲染。`check_scoring_v2`增至71项，补不完整数值终止的标志保留检查，不改门槛。[本次实际两组15例及预算](../../artifacts/fudan-sim2sim-7000-h030-20261102/README.md)。
+
+复旦后退起步只读分析：`fudan_ppo_walk.diagnose_reverse_startup --experiment <既有原生配对目录> --output <新目录>`核对旧轨迹/源码哈希、倾斜与触地先后、姿态罚饱和及CPU/GPU forward/力记录相位；不导入策略或推进物理，不以时间先后代替唯一因果证明。[此次结果](../../artifacts/fudan-sim2sim-7000-h030-20261102/reverse-startup-analysis-r3/README.md)。
+
+复旦历史刷新时序诊断的动态入口`probe_refresh_timing`、`check_refresh_probe`、`audit_refresh_repeat`已随CPU后端撤销；原源码保存在[清理前快照](../../artifacts/fudan-gpu-only-validation-20261102/before/)，只读`report_refresh_probe`与[原结果](../../artifacts/fudan-refresh-timing-7000-20261102/README.md)保留。
+
+复旦估速只读核查：`fudan_ppo_walk.diagnose_estimator --experiment <既有refresh探针目录> --output <新目录>`检查7000归档的标签/倍率/真实storage随机批配对、初始速度可观测性、25维打包及125维v3重建；复用已保存预测，不执行模型前向或新物理。[证据](../../artifacts/fudan-refresh-timing-7000-20261102/estimator-analysis-r2/README.md)。
+
+复旦估速输入归因：`fudan_ppo_walk.attribute_estimator_inputs --check-only`做12项分组/替换/线性与交互归因合成检查，0物理/NN；`--budget <新窗口JSON> --output <新结果目录>`从原7000归档构造冻结encoder，仅对既有历史做同CPU复算和7组128子集离线替换，禁止复用过期窗口；`--report-only <已有实验根目录>`只读预测绘图，0新增NN。归因解释网络输出差，不能代替新物理闭环因果实验。[此次结果](../../artifacts/fudan-estimator-input-cause-7000-20261102/README.md)。
+
+复旦CPU/GPU分叉追溯：`fudan_ppo_walk.diagnose_engine_divergence --experiment <已有refresh探针目录> --output <新目录>`只读取5条状态/动作/实际力矩记录及7000封存弹簧公式，加载mjb仅取关节/选项元数据；核对初态、同GPU动作、早期转移与GPU重复性，0物理步/0NN/0更新。不以相位未对齐的接触力判断先触地，不代表完成同状态单步物理干预。[本次结果](../../artifacts/fudan-engine-divergence-7000-20261102/README.md)。
+
+复旦历史同状态单2ms动态入口`probe_single_step`已撤销，原源码见[清理前快照](../../artifacts/fudan-gpu-only-validation-20261102/before/)；`report_single_step`仍可只读已有记录，0新增物理/NN。[历史结果](../../artifacts/fudan-single-step-7000-20261102/report-final/README.md)保持，不作为当前CPU入口。
+
+统一验收正式程序检查：`PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.motion.check_acceptance --baseline artifacts/unified-gpu-acceptance-20261102 --output <新JSON>`，核对四项边界、CPU拒绝、丢样本/缺字段、任务适配及同初态退化否决，0物理/NN/更新。Isaac仅检查新增GPU守卫AST，未运行旧环境动态。旧评分v2检查仍单独保留。

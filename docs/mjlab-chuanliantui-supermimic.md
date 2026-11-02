@@ -1,5 +1,7 @@
 # 串联腿 SuperMimic 范式适配实验
 
+当前最终验收统一使用GPU与[统一GPU验收标准](interfaces/20261102-unified-gpu-acceptance.md)，各任务保留自己的模型接口，统一用`scripts/mjlab.sh accept`评分。原play/recover/qualified只保留任务诊断含义；起立与完整运动能力分别报告。
+
 辅助脚本已按用途迁移；下文固定旧实验保留其历史配方，旧路径查[迁移表](../scripts/agent/MIGRATION.md)，归档复核不代表当前版本验收。
 
 ## 当前结构：控制步终态预测＋想象状态夹紧＋动作±3（2026-11-01）

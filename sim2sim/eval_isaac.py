@@ -235,6 +235,10 @@ def main():
             argv.append(a)
     sys.argv = ["eval_isaac", "--task=mini_wheel_legged", "--headless"] + argv
     args = get_args()
+    if not args.sim_device.startswith('cuda') or not args.rl_device.startswith('cuda'):
+        raise ValueError('Final validation requires GPU simulation and policy devices')
+    args.use_gpu = True
+    args.use_gpu_pipeline = True
     args.headless = not render
     if not math.isfinite(sim_seconds) or sim_seconds <= 0:
         raise ValueError("--sim_time 必须是正有限数")
@@ -475,6 +479,9 @@ def main():
     print("未触发重置不等于稳定；结合高度、位移、速度、姿态和稳站判据判断。")
     if metrics:
         metrics.save(metrics_report, {
+            "validation_backend": "physx_gpu", "validation_engine": "gpu",
+            "validation_standard": "wheelleg-unified-gpu-acceptance-v1",
+            "validation_device": args.sim_device,
             "task": args.task, "load_run": train_cfg.runner.load_run,
             "checkpoint": train_cfg.runner.checkpoint, "seed": env_cfg.seed,
             "cmd_vx": cmd_vx, "cmd_yaw": cmd_yaw, "cmd_height": cmd_height,
@@ -504,6 +511,9 @@ def main():
         })
     if recorder:
         recorder.save(pd_error_report, {
+            "validation_backend": "physx_gpu", "validation_engine": "gpu",
+            "validation_standard": "wheelleg-unified-gpu-acceptance-v1",
+            "validation_device": args.sim_device,
             "task": args.task, "load_run": train_cfg.runner.load_run,
             "checkpoint": train_cfg.runner.checkpoint, "seed": env_cfg.seed,
             "stochastic": stochastic, "noise": with_noise, "domain_rand": with_dr,

@@ -1,12 +1,14 @@
 # Isaac 旧任务与历史入口
 
+最终验收现统一为GPU、共用运动门槛及报告，见[统一GPU验收](../interfaces/20261102-unified-gpu-acceptance.md)。主线统一入口为`scripts/mjlab.sh accept --task <任务> --recording <GPU记录> --output <新目录>`；起立单列，旧CPU流程仅保留历史含义。
+
 涉及 `wheel_legged_gym/`、Isaac 历史模型或对应 sim2sim 时先读本文；mjlab 当前任务无需例行读取。本文件由根 AGENTS.md 的旧任务说明迁移而来，保护要求继续适用。
 
 ## 环境与验证
 
 - 只用已安装 Isaac Gym 的 Python 3.8 环境，禁止系统 Python；`import isaacgym` 必须早于 `import torch`，不得把 mjlab 新依赖装进该环境。
 - 环境激活、训练、TensorBoard、回放和 sim2sim 命令统一查 [COMMANDS.md](../../COMMANDS.md) 的“Isaac旧环境准备”及后续章节；本机路径按其当前配置核对。
-- 正式流程查[构建与测试](build-test.md)的“环境”“正式流程”：策略／控制改动按对应任务执行训练 → Isaac 回放 → MuJoCo sim2sim；imcawl sim2sim 按自检 → 站立 → 行走执行。执行训练仍须用户逐次授权明确预算。
+- 正式流程查[构建与测试](build-test.md)的“环境”“正式流程”：策略／控制改动按对应任务执行训练 → Isaac GPU回放与验收；imcawl sim2sim 按自检 → 站立 → 行走执行。执行训练仍须用户逐次授权明确预算。
 - `--selfcheck` 只验网络形状；没有单元测试框架或 CI，不得据此宣称行为通过。失稳对照用 `sim2sim/eval_isaac.py`，改机器人模型后用 `sim2sim/check_model.py`，具体参数见上述文档。
 
 ## 必须保留的保护规则

@@ -1,5 +1,7 @@
 # 保留训练线命令
 
+当前统一验收流程：各模型自己的GPU采集入口→`scripts/mjlab.sh accept --task <任务> --recording <记录> --output <新目录>`→正常速度完整视频确认，见[统一标准](../interfaces/20261102-unified-gpu-acceptance.md)。CPU物理不再作为最终验证；普通eval的起立统计不能代替完整运动验收。
+
 仅⑥SuperMimic、⑦BC、⑧SMP。所有命令从仓库根目录执行；先设置数据、模型与本次授权预算，输出目录必须新建。
 
 ## BC与SMP先验
@@ -41,4 +43,4 @@ mjlab_training/.venv/bin/python -m tensorboard.main --logdir "$SM_RUN" --port 80
 scripts/mjlab.sh play --task smp --num-envs 20 --smp-prior "$SMP_PRIOR" --checkpoint "$PPO_CHECKPOINT"
 ```
 
-成功判据：观察20个环境的初态无穿地、弹飞或非预期分布。SuperMimic按其自身play入口和对应模型合同检查；不将其他模型互套。MuJoCo独立仿真仍使用原`sim2sim/`入口。
+成功判据：观察20个环境的初态无穿地、弹飞或非预期分布。SuperMimic按其自身play入口和对应模型合同检查；不将其他模型互套。最终验证使用各task的GPU后端；旧原生CPU独立仿真只作历史复现。

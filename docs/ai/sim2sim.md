@@ -1,5 +1,13 @@
 # sim2sim 与部署契约
 
+最终验收现统一为GPU、共用运动门槛及报告，见[统一GPU验收](../interfaces/20261102-unified-gpu-acceptance.md)。主线统一入口为`scripts/mjlab.sh accept --task <任务> --recording <GPU记录> --output <新目录>`；起立单列，旧CPU流程仅保留历史含义。
+
+复旦`fudan_ppo_walk`当前最终验证仅使用mjlab / MuJoCo Warp GPU，原生CPU入口与活动动态诊断已删除，见[GPU验证约定](../interfaces/20261102-fudan-gpu-validation.md)。其他任务的CPU sim2sim保持；下文复旦CPU描述仅为历史实现，旧结果不改写。
+
+复旦任务新增[三个独立延迟／推扰开关](../interfaces/20261102-fudan-disturbance-switches.md)。GPU夹具保存实际2ms延迟拍数和推扰种子／尺度，Native按夹具执行同一条件；当前`config.py`与CPU夹具不匹配时拒绝。默认全关及旧模型记录语义保持；新开关的动态效果未验收，H7未改。
+
+2026-11-02复旦[history v3](../interfaces/20261102-fudan-history-rollback-v3.md)只改变历史填充和clip顺序；GPU评估按模型v2/v3标记选输入，Native按对应夹具标记构造，导出保留源模型实际标识。当前只完成无物理/无模型前向检查，CPU弹飞未修复，未新仿真/训练/部署。该版本不适用于下文其他任务的25维模型。
+
 2026-10-30 getup当前恢复原四腿EMA80平滑（对应旧训练线已清理）：100Hz混合新动作80%与上一拍已平滑动作20%，raw观测/ONNX保持，等待期/复位清缓存、轮子不滤波；100ms实测角接管已撤回，图外执行及JSON恢复原v2滤波配置，不再要求锁存角与接管计时。当前奖励v4（对应旧训练线已清理）仅在训练中启用起立前力矩罚，部署不计算奖励。独立CPU仍未实现EMA并明确拒载；H7未改，滤波适配/负责人核对待确认，未交付新权重。
 
 2026-10-30起立profile v2恢复训练高度课程0.30→0.22m；mjlab单模型play使用checkpoint保存阶段。独立CPU双策略仍固定起立0.22m，明确拒绝未解锁的v2模型，已解锁模型沿原路由；旧v1模型需对应历史源码。其余观测、ONNX、PD/物理及行走不变，H7待确认。课程记录（对应旧训练线已清理）。

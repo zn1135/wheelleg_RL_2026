@@ -1,9 +1,9 @@
 {
-  "reason": "只撤销旧入口/注册、迁移保留线调用，额外删除两个未调用的getup工厂包装；物理函数不变",
+  "reason": "只撤销旧入口/注册、迁移保留线调用，额外删除两个未调用的getup工厂包装；物理函数不变；用户另授权新增独立复旦PPO任务，仅扩注册/CLI及新包，保留共享物理/旧任务保护；2026-11-02用户确认统一GPU与通用验收；相对本次before训练函数/物理不变，历史HEAD已存在的动作clip/更新预算差异不归入本次实现，逐文件证据见artifacts/unified-gpu-acceptance-20261102/source-migration.json",
   "changed": {
     "envs/__init__.py": {
       "before": "9a610103c4f559e0b2df27e40d847ae6aeb795b6adab38cacfbc54e637ed14d9",
-      "after": "0236d63ab7be333c268e884d3fa959802a2ec374c29e670b8d6d7b9ebbf83d2e"
+      "after": "49c9a82cda72a4f716e1924ba530e4e127e32ea241e057676d0811f32dfa3082"
     },
     "envs/chuanliantui_split/env_cfg.py": {
       "before": "cb422a3667346bb5385cf2975c745c27b4fc9468a0b0240ff3f35c95940c2c3f",
@@ -15,11 +15,11 @@
     },
     "scripts/eval.py": {
       "before": "4ad511219cd806f78c56e43af152cf2633fe6b7ad84f2dee86f24b0bdb3fc2b9",
-      "after": "29d759b369aa6dc7c557f66a00ac21c286ea8991b24c963f8a9a2be0320720d9"
+      "after": "7ab7518d5e786415104da80298f2849f6a4dd96c4adb6a72dcff7b94d972e4cf"
     },
     "scripts/play.py": {
       "before": "c67f8d5e967a6db76a0537a000e5ff65d4c236c759d8ae8df8020f4ea2cb148c",
-      "after": "317084cd29d10bc19ffbabd8ee6a7301aa01fd8ebec18f255c97784c987b4693"
+      "after": "5baa7406328b52277e33ac28adcad5b52af0c035ee1f1173d51d4463d00da929"
     },
     "scripts/train.py": {
       "before": "1ae7e051676298da9435ddfa09195df14b95afabf63b6d633edeab2b0fb03fba",
@@ -27,19 +27,42 @@
     },
     "supermimic/__main__.py": {
       "before": "17051c4a88f66f62be54f17509382588f9620fa6bd959cd0e90a5e14ae76014d",
-      "after": "e9f8238c53ede2b5ffceea6b87c458f84e03f1af71f63f316ac1da4655177540"
+      "after": "1ef9b3de44cb9bd9bc8542fbb966a9b0a8547c3279422c63b48a95cce3b12598"
     },
     "utils/helpers.py": {
       "before": "4f9c5e0ee95d682cce8ec92deb798f31ff66c2548aa7532f8e748c4bd6b3f1bc",
       "after": "41b8e144601b68ea5c9d6bfb45584b1acce60d9c4aeb0080e4cd42f8451ece18"
+    },
+    "cli.py": {
+      "before": "4eaaf02a311b793dd7d638268f3cd60fd3cfa0be6233df5c7476599793727703",
+      "after": "35da51c272a6995ae797facbfb40f53162019eace6f5538535b2065fb5207898"
     }
   },
   "added": {
-    "utils/source_migration.py": "48d153524dcd31f432116db493c28795a5e8926ee88d37b234124c4fdb773cc1"
+    "utils/source_migration.py": "48d153524dcd31f432116db493c28795a5e8926ee88d37b234124c4fdb773cc1",
+    "fudan_ppo_walk/__main__.py": "d1da7d184f0c1605c22e756889b7c5d504a94b9b8a349752b4398bc01a56d253",
+    "fudan_ppo_walk/network.py": "4bf37d25b0949ca3a569692c2bffac23fff1e5007e84405801a15887714c998e",
+    "fudan_ppo_walk/protocol.py": "15694f86141cf56417fb7891e12fb4031bd88675a695638ab5ded71978501ac0",
+    "fudan_ppo_walk/storage.py": "13a040641aeaebcea24bca9aed390315b331c716eadf12bafb2e16ada7d90273",
+    "fudan_ppo_walk/runner.py": "60e1070ffc722c874931fe6fdd27bc84941371caaff1ec8dc8181ecce7f4b59f",
+    "fudan_ppo_walk/export.py": "a3360c9e85a96fb337662826980ce8f087b9156c299517d374a479be60fe8fa4",
+    "fudan_ppo_walk/native.py": "be9bc2f4b899231214ba5e137aca057d3f29f37813099a0d53de98efcbc0a055",
+    "fudan_ppo_walk/measurement.py": "cc28a84df5f749cc1893f09c9bac8abcbbbb56ef10fe22bf35ed22f1663d8ea7",
+    "fudan_ppo_walk/ppo.py": "92e58a560d49abba47b92bb310932accafd344ce8672f2054825cbdd56e2fd23",
+    "fudan_ppo_walk/env.py": "21d668c95d786a7acacdd55dc8067fdf353d517c6edf55ba65b94930ba13c383",
+    "fudan_ppo_walk/contract.py": "3bc4f58f3fd460a8af2562362d7341d3912245ec43ac5cf98044c2cd00716a2e",
+    "fudan_ppo_walk/__init__.py": "283b9f1d5441f60e93ffe954dd05fd9133a33600e79194e85e074b177173b2a2",
+    "fudan_ppo_walk/utils.py": "c58812eeb36fb48b287187cf6bbf15f51b3c3ec3f535b03547a5aa65c5d9d639",
+    "fudan_ppo_walk/reset_geometry.py": "eab27ba0e9351aafc0383b643defbab97984e66b55f4ba2bf7f65ecd744c1d84",
+    "validation.py": "67b1c8bd1eddd9e0f20c361fb7e5ce700e05088750c6f237d7dfcbdcf23f0b95",
+    "scripts/accept.py": "19198cc9e29a26085270fabfbdfdedfa3fb53ad5dca9f75561caf38bff0da61f",
+    "fudan_ppo_walk/policy.py": "ff9148bc21e072a7d3b8d7a10e14602e644f8b714cac2e171b63ae92a4635a73",
+    "fudan_ppo_walk/disturbances.py": "c05a0550c478b20bf79751d02d6ac59e8c43ef21e23241e628fee9dfc4ef5a9f",
+    "fudan_ppo_walk/config.py": "870d251fb5e892d6ce1da001fd9eeb0dbd8e37e1619c055469e7907a53c511ec"
   },
   "known_sources": {
     "reference_contract.py": "b0d0e01aff62eda7fbe57211b76b5a5791c9e555288c4a969e2c60d51962e2b3",
-    "cli.py": "4eaaf02a311b793dd7d638268f3cd60fd3cfa0be6233df5c7476599793727703",
+    "cli.py": "35da51c272a6995ae797facbfb40f53162019eace6f5538535b2065fb5207898",
     "wheel_odometry.py": "d4c8a6a0fb3a1073452cce6c139222ad1247a5313bcb06340a5ee43569cf4e50",
     "wheel_angles.py": "0dae70801893a390b7703070e105dd969f18f940ad75945a99ecb0df7c93071a",
     "bc_preservation.py": "ab0243a15fcf3e41f55ef1e4be9cc650167e00be7a4e99417715656287a2e1c1",
@@ -65,18 +88,18 @@
     "smp/ppo.py": "1daab26f387013241a6a875a2038e217cda42bb226a2f895d886d8f6c7b7852f",
     "smp/phase_sampling.py": "560136498c7f4fd68217b2d2cacd9376b3cc0ce3b36293b88cee0e45ec427df9",
     "smp/__init__.py": "51ebd637bb1d381796f42413dac95430916b2583402ee932190177f29f0c0b3a",
-    "envs/__init__.py": "0236d63ab7be333c268e884d3fa959802a2ec374c29e670b8d6d7b9ebbf83d2e",
+    "envs/__init__.py": "49c9a82cda72a4f716e1924ba530e4e127e32ea241e057676d0811f32dfa3082",
     "scripts/teacher.py": "e317582e3fbaa6680c5bedb77310c8596c7f6a97bd3346841099c9ce399c03ad",
     "scripts/collect.py": "70aa407a1a8719e01cf64396ba6b1d8f0e985ac38b5774bd13c1110c4ecbecab",
     "scripts/train_bc.py": "e2f532c2ad4762cc0787ff12a778dd5533978faf2f7d27c983735dad9cfcb0a5",
     "scripts/export.py": "1f57a0dab4b1657106ec332eea7f6c595bb23f262ec2fee0c5128c16f327a939",
     "scripts/train.py": "ccbd872a3d0ae7634076a4ac27288698317b93bff846befce293df2c2891608d",
-    "scripts/play.py": "317084cd29d10bc19ffbabd8ee6a7301aa01fd8ebec18f255c97784c987b4693",
+    "scripts/play.py": "5baa7406328b52277e33ac28adcad5b52af0c035ee1f1173d51d4463d00da929",
     "scripts/__init__.py": "4f695356a9589039a8269b131b703cb1f4ae66897cdf885d4ab4bf366bd8130a",
     "scripts/check.py": "ecf7a3c70353a39bc321b80070c57ae434720e4788b315c468a44c9569fde0f6",
-    "scripts/eval.py": "29d759b369aa6dc7c557f66a00ac21c286ea8991b24c963f8a9a2be0320720d9",
+    "scripts/eval.py": "7ab7518d5e786415104da80298f2849f6a4dd96c4adb6a72dcff7b94d972e4cf",
     "scripts/train_prior.py": "e3080b599d1dd6889292a3c976bd1be7789f8c43853ffad292d6e7123f15f99e",
-    "supermimic/__main__.py": "e9f8238c53ede2b5ffceea6b87c458f84e03f1af71f63f316ac1da4655177540",
+    "supermimic/__main__.py": "1ef9b3de44cb9bd9bc8542fbb966a9b0a8547c3279422c63b48a95cce3b12598",
     "supermimic/state.py": "85d6932e59ea419bad278ad8dddb54404280e85dd5cbf36d25e52426c44b89ab",
     "supermimic/learner.py": "eef649a03aaf33d316f26706f145102d9f0641f8dab0a353188cefe961ca48af",
     "supermimic/export.py": "1f25b932770cc7d1ec6bd039a6f63ff098af995265d786a21eee29604299012c",
@@ -139,6 +162,24 @@
     "envs/chuanliantui_split/rewards.py": "0128333915b48dd9e808e9e96b864fb034a8ca5beab6e8a40176fa89804a3757",
     "envs/chuanliantui_split/__init__.py": "fe9e5414dc62c68e8c392421440f49ed3564cd8f51181fb61a0573a257e2b49d",
     "envs/chuanliantui_split/action.py": "e48641a218bb7599daf2be0d467e42cb4c399a9c28853695c50dfa6b2aa2ab9d",
-    "utils/source_migration.py": "48d153524dcd31f432116db493c28795a5e8926ee88d37b234124c4fdb773cc1"
+    "utils/source_migration.py": "48d153524dcd31f432116db493c28795a5e8926ee88d37b234124c4fdb773cc1",
+    "validation.py": "67b1c8bd1eddd9e0f20c361fb7e5ce700e05088750c6f237d7dfcbdcf23f0b95",
+    "scripts/accept.py": "19198cc9e29a26085270fabfbdfdedfa3fb53ad5dca9f75561caf38bff0da61f",
+    "fudan_ppo_walk/__main__.py": "d1da7d184f0c1605c22e756889b7c5d504a94b9b8a349752b4398bc01a56d253",
+    "fudan_ppo_walk/network.py": "4bf37d25b0949ca3a569692c2bffac23fff1e5007e84405801a15887714c998e",
+    "fudan_ppo_walk/policy.py": "ff9148bc21e072a7d3b8d7a10e14602e644f8b714cac2e171b63ae92a4635a73",
+    "fudan_ppo_walk/disturbances.py": "c05a0550c478b20bf79751d02d6ac59e8c43ef21e23241e628fee9dfc4ef5a9f",
+    "fudan_ppo_walk/protocol.py": "15694f86141cf56417fb7891e12fb4031bd88675a695638ab5ded71978501ac0",
+    "fudan_ppo_walk/storage.py": "13a040641aeaebcea24bca9aed390315b331c716eadf12bafb2e16ada7d90273",
+    "fudan_ppo_walk/runner.py": "60e1070ffc722c874931fe6fdd27bc84941371caaff1ec8dc8181ecce7f4b59f",
+    "fudan_ppo_walk/export.py": "a3360c9e85a96fb337662826980ce8f087b9156c299517d374a479be60fe8fa4",
+    "fudan_ppo_walk/measurement.py": "cc28a84df5f749cc1893f09c9bac8abcbbbb56ef10fe22bf35ed22f1663d8ea7",
+    "fudan_ppo_walk/config.py": "870d251fb5e892d6ce1da001fd9eeb0dbd8e37e1619c055469e7907a53c511ec",
+    "fudan_ppo_walk/ppo.py": "92e58a560d49abba47b92bb310932accafd344ce8672f2054825cbdd56e2fd23",
+    "fudan_ppo_walk/env.py": "21d668c95d786a7acacdd55dc8067fdf353d517c6edf55ba65b94930ba13c383",
+    "fudan_ppo_walk/contract.py": "3bc4f58f3fd460a8af2562362d7341d3912245ec43ac5cf98044c2cd00716a2e",
+    "fudan_ppo_walk/__init__.py": "283b9f1d5441f60e93ffe954dd05fd9133a33600e79194e85e074b177173b2a2",
+    "fudan_ppo_walk/reset_geometry.py": "eab27ba0e9351aafc0383b643defbab97984e66b55f4ba2bf7f65ecd744c1d84",
+    "fudan_ppo_walk/utils.py": "c58812eeb36fb48b287187cf6bbf15f51b3c3ec3f535b03547a5aa65c5d9d639"
   }
 }

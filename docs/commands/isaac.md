@@ -1,5 +1,7 @@
 # Isaac 历史任务命令
 
+当前最终验收使用原Isaac GPU仿真/策略设备，建议显式`--sim_device cuda:0 --rl_device cuda:0 --pipeline gpu`，仍须独立Isaac Python3.8并先导入isaacgym。旧CPU MuJoCo命令下文仅作历史复现，不再作为最终验收；指标按[统一GPU验收](../interfaces/20261102-unified-gpu-acceptance.md)，缺逐步指标不宣称通过。
+
 以下命令均从仓库根目录执行。模型采纳状态以[项目实验记录](../ai/project-log.md)为准，示例模型不代表当前推荐。
 
 ## Isaac旧环境准备

@@ -12,6 +12,7 @@ import torch
 
 from mjlab.managers.event_manager import EventTermCfg, requires_model_fields
 from ct_mjlab.envs import task_registry
+from ct_mjlab.validation import require_gpu
 from .buffer import ReplayBuffer
 from .learner import (Learner, ALGORITHM_CONTRACT, WORLD_STEPS_PER_UPDATE,
                       WORLD_LOSS_RECIPE, ALTERNATING_RECIPE)
@@ -373,6 +374,7 @@ def train(args):
 
 @torch.inference_mode()
 def play(args):
+    validation = require_gpu(args.device)
     env, _ = make_env(args,play=True)
     try:
         learner = Learner(args.device)
@@ -387,7 +389,7 @@ def play(args):
             obs, reward, _ = collect(env,learner,None,obs,exploration=0.)
             total += float(reward.mean())
             failures += int(env.unwrapped.reset_terminated.sum())
-        report = dict(steps=args.steps,num_envs=args.num_envs,mean_return=total,
+        report = dict(**validation,steps=args.steps,num_envs=args.num_envs,mean_return=total,
                       physical_failures=failures,wall_seconds=time.monotonic()-started,
                       scope='Frozen-policy mjlab rollout; not wheel-balance behavior acceptance')
         if args.report:

@@ -4,7 +4,7 @@
 
 ## 项目与文档入口
 
-- **mjlab 当前主线**：`mjlab_training/`，入口 `scripts/mjlab.sh`；仅维护SuperMimic、BC与SMP；注册环境为`supermimic`和`smp`，五个旧独立task已撤销。任务配方、接口与日志分别核对，不互套模型。
+- **mjlab 当前主线**：`mjlab_training/`，入口 `scripts/mjlab.sh`；维护SuperMimic、BC、SMP及独立复旦PPO行走适配；注册环境为`supermimic`、`smp`和`fudan_ppo_walk`，五个旧独立task已撤销。任务配方、接口与日志分别核对，不互套模型。
 - **Isaac 旧任务**：`wheel_legged_gym/`，用于 imcawl、旧串联腿与历史模型；与 mjlab 环境隔离。
 - 当前最好模型、验收结论和逐日实验只记录在[项目实验记录](docs/ai/project-log.md)顶部；此文件不重复任务参数或实验状态。
 
@@ -22,6 +22,7 @@
 
 ## 运行与验证约束
 
+- 最终验收统一使用GPU和[统一验收标准](docs/interfaces/20261102-unified-gpu-acceptance.md)：mjlab用MuJoCo Warp GPU，Isaac在自身GPU环境验证；通过`scripts/mjlab.sh accept`输出共用运动判据/报告，起立单列、缺测不通过。旧CPU仿真只作历史复现/诊断，不能作为最终验收入口。
 - **不得用系统 Python 或混用环境**：mjlab 只用 `scripts/mjlab.sh` 或 `mjlab_training/.venv/bin/python`；Isaac 只用已安装 Isaac Gym 的 Python 3.8 环境，且先导入 `isaacgym` 再导入 `torch`。不得向旧环境安装新依赖。
 - 默认交付命令，不自行启动训练或 TensorBoard。只有用户明确授权本次训练并给定预算才启动；预算到达即停止，检查通过不授权追加。
 - 每次交付训练命令，同时提供 TensorBoard 命令，`--logdir` 指向实际训练的 `logs/` 子目录；mjlab 使用本仓虚拟环境的 `python -m tensorboard.main`。仅改初始位置或根复位分布时，交付训练命令前先给出20环境可视预检命令；其他情况可直接 headless，具体命令查对应任务文档。

@@ -8,7 +8,7 @@
     "sim2sim/chuanliantui_closed_adapter.py": "9e0c51d7699e1e753a58a75afedaeab6fca47a710deaea87b7394e7eefa56e0f",
     "sim2sim/chuanliantui_h7_adapter.py": "5c484bc9732aada3b63a0a4ad46871ab38c57728740f6ddcc34a53f6f3005796",
     "sim2sim/chuanliantui_train_proxy.xml": "986ec47008faebbde904fa7b8d346244bfd24de0fa627f336e12c5d4681a4451",
-    "sim2sim/eval_isaac.py": "b4d88cbca87d91cb06e051888ec67f84f172c6bea5e9d4ad135be0fc5f13fe7e",
+    "sim2sim/eval_isaac.py": "f8b5b5f2453b4524949df070e6c7b05941c71dc5e334408aac0d803dface1038",
     "sim2sim/fit_joint_usb.py": "e55aca91133df5174af861f95674370e5054f02ca35b33711d9a5a1fbc3f9264",
     "sim2sim/h7_drive_response.c": "3b2cfa17f1ec748d09360aabe2bb59ba949ab9f582b1e52b6901dc6bad0ac255",
     "sim2sim/h7_latency_capture.py": "ac2bd6f8dfde7c88ed235e0c459074372c1d0cb9340f7c3ee892707e94fef0f8",
@@ -114,5 +114,14 @@
     "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/observations.py",
     "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/rewards.py",
     "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/runner.py"
+  ],
+  "authorized_updates": [
+    {
+      "path": "sim2sim/eval_isaac.py",
+      "before": "b4d88cbca87d91cb06e051888ec67f84f172c6bea5e9d4ad135be0fc5f13fe7e",
+      "after": "f8b5b5f2453b4524949df070e6c7b05941c71dc5e334408aac0d803dface1038",
+      "reason": "User requested GPU final validation and unified reports; CPU rejection, GPU pipeline and read-only report metadata",
+      "source_archive": "artifacts/unified-gpu-acceptance-20261102/before/sim2sim/eval_isaac.py"
+    }
   ]
 }

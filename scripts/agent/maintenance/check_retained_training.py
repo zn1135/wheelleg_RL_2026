@@ -22,7 +22,7 @@ def digest(path):
 
 def main():
     from ct_mjlab.envs import task_registry
-    assert task_registry.names() == ('smp', 'supermimic')
+    assert task_registry.names() == ('smp', 'supermimic', 'fudan_ppo_walk')
     for task in OLD_TASKS:
         try:
             task_registry.get_cfgs(task)
