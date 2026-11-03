@@ -17,17 +17,18 @@ LOG_ROOT = ROOT / 'logs' / 'mjlab'
 class TaskDefinition:
     env_cfg: Callable  # (play: bool) -> ManagerBasedRlEnvCfg
     train_cfg: Callable  # () -> RslRlOnPolicyRunnerCfg
-    runner_class: type
+    runner_class: type | str
+    task_class: str | None = None
 
 
 class TaskRegistry:
     def __init__(self):
         self._tasks = {}
 
-    def register(self, name, *, env_cfg, train_cfg, runner_class):
+    def register(self, name, *, env_cfg, train_cfg, runner_class, task_class=None):
         if name in self._tasks:
             raise ValueError(f'Task already registered: {name}')
-        self._tasks[name] = TaskDefinition(env_cfg, train_cfg, runner_class)
+        self._tasks[name] = TaskDefinition(env_cfg, train_cfg, runner_class, task_class)
 
     def names(self):
         return tuple(self._tasks)
@@ -46,6 +47,21 @@ class TaskRegistry:
     def make_env(self, name, *, env_cfg=None, train_cfg=None, play=False, num_envs=None,
                  seed=None, device='cuda:0', render_mode=None):
         """Create the wrapped vector environment; returns (env, env_cfg)."""
+        task = self._task(name)
+        if task.task_class is not None:
+            from importlib import import_module
+            from ct_mjlab.fudan_ppo_walk.contract import RESET_CONTRACT
+            default_env_cfg, default_train_cfg = self.get_cfgs(name, play=play)
+            env_cfg = default_env_cfg if env_cfg is None else env_cfg
+            train_cfg = default_train_cfg if train_cfg is None else train_cfg
+            module, class_name = task.task_class.rsplit('.', 1)
+            env_class = getattr(import_module(module), class_name)
+            # 独立复旦环境保留自己的复位/历史循环，不再套通用PPO适配器。
+            env = env_class(num_envs=env_cfg.env.num_envs if num_envs is None else num_envs,
+                            seed=train_cfg.seed if seed is None else seed, device=device,
+                            randomized=not play, cfg=env_cfg,
+                            reset_contract=getattr(env_cfg, 'reset_contract', RESET_CONTRACT))
+            return env, env_cfg
         from mjlab.envs import ManagerBasedRlEnv
         from mjlab.rl import RslRlVecEnvWrapper
         from mjlab.utils.torch import configure_torch_backends
@@ -62,9 +78,20 @@ class TaskRegistry:
         return RslRlVecEnvWrapper(env, clip_actions=train_cfg.clip_actions), env_cfg
 
     def make_alg_runner(self, env, name, *, train_cfg=None, log_dir=None, resume=None,
-                        run_name='', device='cuda:0'):
+                        run_name='', device='cuda:0', resume_options=None):
         """Create the PPO runner; log_dir='default' uses logs/mjlab/<experiment>/<time>."""
         train_cfg = self.get_cfgs(name)[1] if train_cfg is None else train_cfg
+        task = self._task(name)
+        if task.task_class is not None:
+            from importlib import import_module
+            module, class_name = task.runner_class.rsplit('.', 1)
+            runner_class = getattr(import_module(module), class_name)
+            runner = runner_class(env, train_cfg=train_cfg, log_dir=log_dir, device=device)
+            if resume is not None:
+                restored = runner.load(resume, **(resume_options or {}))
+                import json
+                print(json.dumps(restored, indent=2), flush=True)
+            return runner, train_cfg
         # Validate before creating log_dir so a bad call leaves no empty run directory.
         if resume is not None and not Path(resume).is_file():
             raise FileNotFoundError(f'Resume checkpoint not found: {resume}')

@@ -1,0 +1,50 @@
+{
+  "created_local": "2026-11-03T16:02:21.358273+08:00",
+  "task": "fudan_ppo_walk",
+  "iterations": 8000,
+  "checkpoint": "logs/mjlab/fudan_ppo_walk/20261102_parking_resume7000_to8000/model_final.pt",
+  "checkpoint_sha256": "39fa104d176f82a33db8317a75b4db28749362daf6bc4d2e06cb83d2c5ae32c9",
+  "onnx": "exports/fudan_ppo_walk/20261103_model8000_v2/policy.onnx",
+  "onnx_sha256": "ceccf25e06f0f2598c498c35ad58942423ae344050bb888d7f5009104c0e5fcb",
+  "branch": "26_wheelleg",
+  "head": "7e8903308160b9d3a9505838d45c7eac322f96d3",
+  "dirty": true,
+  "source_manifest_sha256": "043be905a1747b630ccde1aad3674070879adbacb0459c7abe6201298216f138",
+  "working_tree_patch_sha256": "a8066bc9987fb4fc338d9ccf655fe5a4d6c82de2ae0fc594347da7c84eb9166d",
+  "versions": {
+    "torch": "2.14.0",
+    "onnx": "1.22.0",
+    "mujoco": "3.11.0"
+  },
+  "numeric_check": {
+    "backend": "ONNX ReferenceEvaluator vs CPU PyTorch",
+    "samples": 1,
+    "maximum_absolute_error": 9.5367431640625e-07,
+    "tolerance": 1e-05,
+    "passed": true
+  },
+  "inputs": {
+    "obs": [
+      1,
+      25
+    ],
+    "obs_history": [
+      1,
+      125
+    ]
+  },
+  "outputs": {
+    "actions": [
+      1,
+      6
+    ]
+  },
+  "opset": 17,
+  "exit_code": 0,
+  "physics_steps": 0,
+  "optimizer_updates": 0,
+  "integral_in_graph": false,
+  "h7": "pending_owner_confirmation_not_deployed",
+  "physical_xml": "resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml",
+  "physical_xml_sha256": "cac8061de2850602bfd1421fc856bf217c4e5040a11c8f5d33cf1abe61d5f0cf"
+}

@@ -6,11 +6,12 @@ import time
 import numpy as np
 import torch
 import mujoco
-from ct_mjlab.fudan_ppo_walk.env import FudanEnv
-from ct_mjlab.fudan_ppo_walk.contract import RESET_CONTRACT
+from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.fudan_ppo_walk.contract import RESET_CONTRACT,RESET_V2_CONTRACT
 from ct_mjlab.fudan_ppo_walk.measurement import configure_samples,gpu_row,arrays
 from ct_mjlab.fudan_ppo_walk.protocol import samples
-from ct_mjlab.fudan_ppo_walk.disturbances import from_task_config
+from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config
+from ct_mjlab.envs.fudan_ppo_walk.commands import command_config
 
 
 def initial_geometry(env,items):
@@ -35,12 +36,15 @@ def main():
     p=argparse.ArgumentParser(__doc__);p.add_argument('--output',type=Path,required=True)
     p.add_argument('--deadline',type=float,required=True);p.add_argument('--viewer',choices=['viser'],required=True)
     p.add_argument('--port',type=int,default=8768)
+    p.add_argument('--history-version',choices=('v2','v3'),default='v3')
     a=p.parse_args();disturbances=from_task_config();a.output.mkdir(parents=True,exist_ok=False)
-    started=time.time();env=None;server=None;report=dict(passed=False,kind='physical-visible-precheck',num_envs=20,reset_contract=RESET_CONTRACT,optimizer_updates=0,physics_steps=0)
+    reset_contract=RESET_V2_CONTRACT if a.history_version=='v2' else RESET_CONTRACT
+    started=time.time();env=None;server=None;report=dict(passed=False,kind='physical-visible-precheck',num_envs=20,reset_contract=reset_contract,optimizer_updates=0,physics_steps=0)
     report['disturbances']=disturbances.record()
+    report['command_sampling']=command_config()
     try:
         if time.time()>=a.deadline:raise TimeoutError('Precheck quota reached before initialization')
-        env=FudanEnv(20,seed=30001,randomized=True,disturbances=disturbances)
+        env=FudanEnv(20,seed=30001,randomized=True,reset_contract=reset_contract,disturbances=disturbances)
         fixture=a.output/'fixtures'
         # 预检用独立种子，不提前使用正式留出初态。
         items=[]

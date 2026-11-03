@@ -5,7 +5,7 @@ from unittest.mock import patch
 import numpy as np
 import mujoco
 from ct_mjlab.envs.chuanliantui.model import ACTUATED_JOINTS,standing_motor_positions,closed_chain_residual
-from ct_mjlab.fudan_ppo_walk.reset_geometry import ResetGeometry
+from ct_mjlab.envs.fudan_ppo_walk.reset_geometry import ResetGeometry
 
 
 def main():
@@ -33,7 +33,7 @@ def main():
             for name in solver.joint_names:
                 joint=model.joint(name);value=data.qpos[solver.qaddr[name]]
                 assert not joint.limited or joint.range[0]-1e-8<=value<=joint.range[1]+1e-8
-            from ct_mjlab.fudan_ppo_walk.reset_geometry import mesh_vertices
+            from ct_mjlab.envs.fudan_ppo_walk.reset_geometry import mesh_vertices
             minimum32=min(float(mesh_vertices(model,data,g)[:,2].min()) for g in solver.collision)
             assert residual32<=1e-6 and minimum32>=0.
             assert np.array_equal(data.qpos[[solver.qaddr[n] for n in ACTUATED_JOINTS]],(nominal+offset).astype(np.float32))

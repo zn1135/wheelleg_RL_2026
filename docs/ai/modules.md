@@ -26,3 +26,5 @@ SuperMimic使用原walk环境结构，其split实现仍复用stand_v2及stand的
 当前维护分支为`26_wheelleg`；H7分工、Git操作与Isaac保护规则仍按根AGENTS.md及[CONTRIBUTING](../../CONTRIBUTING.md)。
 
 `ct_mjlab/fudan_ppo_walk/`新增固定复旦plane配方的实体接口适配：独立PPO/估速优化器、25/125/141+3输入、物理控制复用、独立命令/奖励/GPU最终验证；`scripts/agent/fudan_ppo_walk/`负责正式检查、有限预算预检、两引擎测量/评分/视频。规格见[复旦PPO](../mjlab-fudan-ppo-walk.md)。
+
+复旦当前唯一环境/配置在`envs/fudan_ppo_walk/`，算法/网络/存储/runner在`rsl_rl/`；旧`fudan_ppo_walk/`保留合同、模型/评估工具与导入兼容，不再维护另一套训练器。新入口及职责详见[结构整理记录](../maintenance/20261103-fudan-structure-alignment.md)。

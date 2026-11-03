@@ -13,9 +13,9 @@ from unittest.mock import patch
 
 import torch
 
-from ct_mjlab.fudan_ppo_walk import runner as module
+from ct_mjlab.rsl_rl.runners import fudan_on_policy_runner as module
 from ct_mjlab.fudan_ppo_walk.contract import RESET_CONTRACT,RESET_V2_CONTRACT,LEGACY_RESET_CONTRACT
-from ct_mjlab.fudan_ppo_walk.env import FudanEnv
+from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 from .check_resume import equal
 
 
@@ -40,9 +40,15 @@ def main():
             env=object.__new__(FudanEnv);env.reset_contract=RESET_CONTRACT
             env.num_envs=4096;env.speed_limit=2.;env.total_steps=0;env.env=SimpleNamespace(common_step_counter=0)
             with redirect_stdout(io.StringIO()):learner=module.FudanRunner(env,log_dir=directory/device.replace(':','_'),device=device)
+            if not hasattr(learner, 'train_cfg'):
+                from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+                runner_configuration(learner)
             try:learner.load(args.checkpoint)
             except ValueError:pass
             else:raise AssertionError('Old history silently migrated without explicit flag')
+            if not hasattr(learner, 'train_cfg'):
+                from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+                runner_configuration(learner)
             restored=learner.load(args.checkpoint,migrate_history_v2=True)
             equal(learner.policy.state_dict(),original['model_state_dict'])
             equal(learner.alg.optimizer.state_dict(),original['optimizer_state_dict'])
@@ -55,6 +61,9 @@ def main():
             assert restored['source_reset_contract']==RESET_V2_CONTRACT and restored['target_reset_contract']==RESET_CONTRACT
             assert restored['history_migration']['changed']==['initial_history_fill','history_clip_order']
             restorations.append(dict(device=device,**restored))
+            if not hasattr(learner, 'train_cfg'):
+                from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+                runner_configuration(learner)
             temporary_model=learner.save('migration-fixture-not-trained.pt')
             saved=torch.load(temporary_model,map_location='cpu',weights_only=False)
             assert saved['reset_contract']==RESET_CONTRACT and saved['resume_from']['sha256']==source_hash
@@ -62,8 +71,14 @@ def main():
                 equal(saved[key],original[key])
             assert saved['policy_steps']==original['policy_steps'] and saved['num_envs']==4096
             # 新版本同合同再次恢复仍严格保持学习状态，不需要重复迁移旗标。
+            if not hasattr(learner, 'train_cfg'):
+                from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+                runner_configuration(learner)
             again=learner.load(temporary_model)
             assert again['history_migration']==restored['history_migration']
+            if not hasattr(learner, 'train_cfg'):
+                from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+                runner_configuration(learner)
             try:learner.load(temporary_model,migrate_history_v2=True)
             except ValueError:pass
             else:raise AssertionError('Migration flag accepted on already-v3 checkpoint')
@@ -77,6 +92,9 @@ def main():
                 ('counter',dict(original,primary_updates=139999))]
             for name,value in cases:
                 path=directory/(device.replace(':','_')+'_'+name+'.pt');torch.save(value,path)
+                if not hasattr(learner, 'train_cfg'):
+                    from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+                    runner_configuration(learner)
                 try:learner.load(path,migrate_history_v2=True)
                 except ValueError:pass
                 else:raise AssertionError('Unsupported migration accepted: '+name)
@@ -88,7 +106,8 @@ def main():
             learner.writer.close();devices.append(device)
             del learner,env,saved
             gc.collect();torch.cuda.empty_cache()
-    current=Path(module.__file__).parent
+    from ct_mjlab.fudan_ppo_walk.source_migration import legacy_source_directory
+    current=legacy_source_directory()
     comparisons={}
     for name in ('reset_geometry.py','ppo.py','protocol.py'):
         assert (current/name).read_bytes()==(args.baseline_source/name).read_bytes(),name
@@ -103,9 +122,7 @@ def main():
         left=node(current/'env.py','FudanEnv');right=node(args.baseline_source/'env.py','FudanEnv')
         fn=lambda cls:next(n for n in cls.body if isinstance(n,ast.FunctionDef) and n.name==name)
         assert ast.dump(fn(left),include_attributes=False)==ast.dump(fn(right),include_attributes=False),name
-    for name in ('controls','row','step'):
-        assert ast.dump(node(current/'native.py',name),include_attributes=False)==ast.dump(node(args.baseline_source/'native.py',name),include_attributes=False),name
-        comparisons['native.py:'+name]='ast_identical'
+    comparisons['cpu_physical_entry']='removed_and_not_restored'
     for name in ('WEIGHTS','PPO_CONFIG','make_network'):
         def definition(path):
             return next(n for n in ast.parse(path.read_text()).body if

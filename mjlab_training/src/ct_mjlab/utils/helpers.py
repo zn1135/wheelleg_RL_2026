@@ -3,7 +3,7 @@ import argparse
 from pathlib import Path
 
 
-def get_args(description, *, defaults=None, extra=()):
+def get_args(description, *, defaults=None, extra=(), argv=None):
     """Parse the common task/device/seed arguments plus script-specific ones.
 
     extra: iterable of (flags, kwargs) passed to add_argument.
@@ -18,7 +18,7 @@ def get_args(description, *, defaults=None, extra=()):
     parser.add_argument('--device', default='cuda:0')
     for flags, kwargs in extra:
         parser.add_argument(*flags, **kwargs)
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def checkpoint_arg(required=False):

@@ -9,7 +9,7 @@ from ct_mjlab.fudan_ppo_walk.protocol import samples,manifest
 from ct_mjlab.fudan_ppo_walk.policy import load_policy
 from ct_mjlab.fudan_ppo_walk.measurement import configure_samples,gpu_row,arrays,update_evaluation_commands
 from ct_mjlab.fudan_ppo_walk.contract import RESET_CONTRACT,RESET_V2_CONTRACT
-from ct_mjlab.fudan_ppo_walk.disturbances import from_task_config,from_record
+from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config,from_record
 
 
 def command(case,t):
@@ -41,7 +41,7 @@ def protocol_record(items,diagnostic):
 
 
 def gpu(args):
-    from ct_mjlab.fudan_ppo_walk.env import FudanEnv
+    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
     policy,metadata=load_policy(args.checkpoint,'cuda:0')
     disturbances=from_task_config()
     if metadata.get('reset_contract') not in (RESET_CONTRACT,RESET_V2_CONTRACT):

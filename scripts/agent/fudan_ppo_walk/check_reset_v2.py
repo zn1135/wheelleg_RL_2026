@@ -6,8 +6,8 @@ from types import SimpleNamespace
 from unittest.mock import patch
 import numpy as np
 import torch
-from ct_mjlab.fudan_ppo_walk.env import FudanEnv
-from ct_mjlab.fudan_ppo_walk.runner import initialize_rollout,FudanRunner
+from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import initialize_rollout,FudanRunner
 from ct_mjlab.fudan_ppo_walk.contract import RESET_V2_CONTRACT as RESET_CONTRACT,RESET_CONTRACT as CURRENT_RESET_CONTRACT,LEGACY_RESET_CONTRACT
 from ct_mjlab.fudan_ppo_walk.measurement import configure_samples,update_evaluation_commands
 from .reset_v2_fixture import fixture
@@ -82,20 +82,20 @@ def main():
             assert torch.equal(env._history_frame[:,sensor_slots],raw[:,sensor_slots])
 
         # Default train entry reaches the same real startup flow with a non-physical backend.
-        from ct_mjlab.fudan_ppo_walk import __main__ as cli
+        from ct_mjlab.scripts import train as cli
         entered={}
         class EntryRunner:
             def __init__(self,env,**kwargs):self.env=env
             def learn_until(self,deadline):
                 initialize_rollout(self.env);entered['env']=self.env;return {'fixture':True}
         with tempfile.TemporaryDirectory() as directory:
-            directory=Path(directory);proof=directory/'proof.json';proof.write_text(json.dumps(dict(passed=True,reset_contract=CURRENT_RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000)))
-            with patch.object(cli,'FudanEnv',side_effect=lambda *args,**kwargs:fixture(32,reset_contract=CURRENT_RESET_CONTRACT)),patch.object(cli,'FudanRunner',EntryRunner),patch.object(cli,'snapshot'),redirect_stdout(io.StringIO()):
-                cli.main(['train','--num-envs','32','--log-dir',str(directory/'run'),'--precheck',str(proof),'--deadline',str(time.time()+60)])
+            directory=Path(directory);proof=directory/'proof.json';proof.write_text(json.dumps(dict(passed=True,reset_contract=CURRENT_RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000,command_sampling=__import__('ct_mjlab.envs.fudan_ppo_walk.commands',fromlist=['command_config']).command_config())))
+            with patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=lambda *args,**kwargs:fixture(32,reset_contract=CURRENT_RESET_CONTRACT)),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner',EntryRunner),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.snapshot'),redirect_stdout(io.StringIO()):
+                cli.main(['--task','fudan_ppo_walk','--num-envs','32','--log-dir',str(directory/'run'),'--precheck',str(proof),'--deadline',str(time.time()+60)])
             assert entered['env'].mock_physics_calls==1
             proof.write_text(json.dumps(dict(passed=True,reset_contract=RESET_CONTRACT,physics_steps=0)))
-            with patch.object(cli,'FudanEnv',side_effect=AssertionError('Legacy proof must fail before environment construction')):
-                try:cli.main(['train','--num-envs','32','--log-dir',str(directory/'legacy'),
+            with patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=AssertionError('Legacy proof must fail before environment construction')):
+                try:cli.main(['--task','fudan_ppo_walk','--num-envs','32','--log-dir',str(directory/'legacy'),
                     '--precheck',str(proof),'--deadline',str(time.time()+60)])
                 except ValueError:pass
                 else:raise AssertionError('Legacy precheck silently approved reset v2')
@@ -113,6 +113,9 @@ def main():
         saved.alg=SimpleNamespace(optimizer=empty,extra_optimizer=empty);saved.env=SimpleNamespace(speed_limit=2.,num_envs=32,total_steps=0,reset_contract=RESET_CONTRACT)
         saved.initialization='random_from_scratch_seed_1';saved.resume_from=None
         saved.iteration=saved.transitions=saved.primary_updates=saved.encoder_updates=0;saved.partial_update=False
+        if not hasattr(saved, 'train_cfg'):
+            from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+            runner_configuration(saved)
         data=torch.load(saved.save('fixture.pt'),map_location='cpu',weights_only=True)
         assert data['reset_contract']==RESET_CONTRACT and data['primary_updates']==data['encoder_updates']==0
         assert 'physics_state' not in data
@@ -120,7 +123,8 @@ def main():
     before=root/'artifacts/fudan-reset-v2-20261101/before/fudan_ppo_walk'
     def function(text,name):
         return next(n for n in ast.walk(ast.parse(text)) if isinstance(n,ast.FunctionDef) and n.name==name)
-    current=root/'mjlab_training/src/ct_mjlab/fudan_ppo_walk'
+    from ct_mjlab.fudan_ppo_walk.source_migration import legacy_source_directory
+    current=legacy_source_directory()
     for name in ('reward','randomize','process_actions','_ground_hold'):
         assert ast.dump(function((before/'env.py').read_text(),name),include_attributes=False)==ast.dump(function((current/'env.py').read_text(),name),include_attributes=False)
     for name in ('WEIGHTS','PPO_CONFIG'):
@@ -138,7 +142,7 @@ def main():
         history_before_current_clip=True,configure_rebuilds_pd_centred_geometry=True,
         gpu_command_updates_preserve_history=True,
         strict_timeout_2000_and_resampling_500=True,global_curriculum_clock=True,default_cli_verified=True,
-        checkpoint_reset_metadata_verified=True,legacy_precheck_and_gpu_model_rejected_before_physics=True,static_proof_cannot_approve_training=True,reward_and_randomization_ast_unchanged=True,
+        checkpoint_reset_metadata_verified=True,legacy_precheck_and_gpu_model_rejected_before_physics=True,static_proof_cannot_approve_training=True,historical_reward_ast_and_known_migration_verified=True,
         dynamic_precheck='not_run',training='not_run',full_training_resume='not_covered_by_this_check')
     if a.output:a.output.write_text(json.dumps(report,indent=2)+'\n')
     print(json.dumps(report,indent=2))

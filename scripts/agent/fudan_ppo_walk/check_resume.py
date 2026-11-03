@@ -12,9 +12,9 @@ from unittest.mock import patch
 import mujoco
 import torch
 
-from ct_mjlab.fudan_ppo_walk import __main__ as cli
-from ct_mjlab.fudan_ppo_walk import runner as module
-from ct_mjlab.fudan_ppo_walk.env import FudanEnv
+from ct_mjlab.scripts import train as cli
+from ct_mjlab.rsl_rl.runners import fudan_on_policy_runner as module
+from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 
 
 def equal(a, b):
@@ -57,6 +57,9 @@ def main():
             env.env = SimpleNamespace(common_step_counter=0)
             with redirect_stdout(io.StringIO()):
                 learner = module.FudanRunner(env, log_dir=Path(temporary)/device.replace(':', '_'), device=device)
+                if not hasattr(learner, 'train_cfg'):
+                    from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+                    runner_configuration(learner)
                 restored = learner.load(args.checkpoint)
             equal(learner.policy.state_dict(), original['model_state_dict'])
             equal(learner.alg.optimizer.state_dict(), original['optimizer_state_dict'])
@@ -68,6 +71,9 @@ def main():
             assert learner.iteration == 3000 and learner.primary_updates == learner.encoder_updates == 60000
             assert env.speed_limit == 2.5 and env.total_steps == env.env.common_step_counter == 144001
             assert learner.alg.storage.step == 0 and learner.alg.storage.num_envs == 4096
+            if not hasattr(learner, 'train_cfg'):
+                from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+                runner_configuration(learner)
             saved = torch.load(learner.save('loaded.pt'), map_location='cpu', weights_only=False)
             for key in ('model_state_dict', 'optimizer_state_dict', 'encoder_optimizer_state_dict', 'torch_rng', 'cuda_rng'):
                 equal(saved[key], original[key])
@@ -78,6 +84,9 @@ def main():
                 path = Path(temporary)/(name+'.pt')
                 torch.save(dict(original, **changes), path)
                 try:
+                    if not hasattr(learner, 'train_cfg'):
+                        from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+                        runner_configuration(learner)
                     learner.load(path)
                 except ValueError:
                     pass
@@ -125,6 +134,9 @@ def main():
         r.policy = SimpleNamespace(encode=lambda h:torch.zeros(4,3))
         r.writer = SimpleNamespace(add_scalar=scalar,flush=lambda:None,close=lambda:None)
         with patch.object(module,'initialize_rollout',return_value=(obs,critic,history)),redirect_stdout(io.StringIO()):
+            if not hasattr(r, 'train_cfg'):
+                from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+                runner_configuration(r)
             report = r.learn_until(float('inf'), max_iterations=6000)
         assert report['iterations'] == 6000 and report['iterations_added'] == report['iteration_budget'] == 3000
         assert report['transitions_added'] == 589824000 and report['transitions'] == 663552000
@@ -141,10 +153,10 @@ def main():
             def learn_until(self,deadline,max_iterations=None):
                 entered.update(deadline=deadline,target=max_iterations)
                 return {}
-        with patch.object(cli,'FudanEnv',return_value=SimpleNamespace(close=lambda:None)),patch.object(cli,'FudanRunner',EntryRunner),patch.object(cli,'snapshot'),redirect_stdout(io.StringIO()):
+        with patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',return_value=SimpleNamespace(close=lambda:None)),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner',EntryRunner),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.snapshot'),redirect_stdout(io.StringIO()):
             proof=Path(temporary)/'fixture-proof.json'
-            proof.write_text(json.dumps(dict(passed=True,reset_contract=module.RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000)))
-            cli.main(['train','--num-envs','4096','--iterations','3000','--resume',str(args.checkpoint),
+            proof.write_text(json.dumps(dict(passed=True,reset_contract=module.RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000,command_sampling=__import__('ct_mjlab.envs.fudan_ppo_walk.commands',fromlist=['command_config']).command_config())))
+            cli.main(['--task','fudan_ppo_walk','--num-envs','4096','--iterations','3000','--resume',str(args.checkpoint),
                 '--precheck',str(proof),
                 '--log-dir',str(Path(temporary)/'entry')])
         assert entered['target']==6000 and entered['deadline']==float('inf')

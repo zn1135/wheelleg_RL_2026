@@ -11,13 +11,13 @@ from unittest.mock import patch
 import numpy as np
 import mujoco
 import torch
-from ct_mjlab.fudan_ppo_walk.disturbances import DisturbanceConfig,DisturbanceState,from_task_config,from_record
-from ct_mjlab.fudan_ppo_walk.config import FudanWalkCfg
-from ct_mjlab.fudan_ppo_walk.env import PhysicalAction,PhysicalActionCfg,sample_substep,make_env_cfg
+from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig,DisturbanceState,from_task_config,from_record
+from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import PhysicalAction,PhysicalActionCfg,sample_substep,make_env_cfg
 from ct_mjlab.fudan_ppo_walk.contract import RESET_CONTRACT
 from ct_mjlab.fudan_ppo_walk.measurement import configure_samples
-from ct_mjlab.fudan_ppo_walk import __main__ as cli
-from ct_mjlab.fudan_ppo_walk.runner import FudanRunner
+from ct_mjlab.scripts import train as cli
+from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import FudanRunner
 from .reset_v2_fixture import fixture
 
 
@@ -145,10 +145,10 @@ def main():
 
         # 入口读取代码配置，并拒绝不同条件的预检；配置变更记录到恢复报告。
         proof=directory/'proof.json';parent=directory/'parent.pt'
-        proof.write_text(json.dumps(dict(passed=True,reset_contract=RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000)))
+        proof.write_text(json.dumps(dict(passed=True,reset_contract=RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000,command_sampling=__import__('ct_mjlab.envs.fudan_ppo_walk.commands',fromlist=['command_config']).command_config())))
         torch.save({},parent)
-        argv=['train','--num-envs','4','--iterations','1','--precheck',str(proof),'--log-dir',str(directory/'run')]
-        with patch.object(cli,'FudanEnv',side_effect=forbidden),patch.object(domain,'randomize_action_delay',True):
+        argv=['--task','fudan_ppo_walk','--num-envs','4','--iterations','1','--precheck',str(proof),'--log-dir',str(directory/'run')]
+        with patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=forbidden),patch.object(domain,'randomize_action_delay',True):
             try:cli.main(argv)
             except ValueError as exc:rejected='precheck' in str(exc)
             else:rejected=False
@@ -160,7 +160,7 @@ def main():
             def __init__(self,env,**kw):pass
             def load(self,path,**kw):entered.update(kw);return {}
             def learn_until(self,*a,**kw):return {}
-        with patch.object(cli,'FudanEnv',return_value=SimpleNamespace(close=lambda:None)),patch.object(cli,'FudanRunner',EntryRunner),patch.object(cli,'snapshot'),patch.object(domain,'randomize_action_delay',True),redirect_stdout(io.StringIO()):
+        with patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',return_value=SimpleNamespace(close=lambda:None)),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner',EntryRunner),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.snapshot'),patch.object(domain,'randomize_action_delay',True),redirect_stdout(io.StringIO()):
             cli.main(argv+['--resume',str(parent)])
         verify('code_config_resume_condition_change_recorded',entered=={'allow_disturbance_change':True})
 
@@ -173,18 +173,33 @@ def main():
             extra_optimizer=torch.optim.Adam(encoder.parameters(),lr=.001),learning_rate=.001)
         learner.iteration=1;learner.transitions=96;learner.primary_updates=learner.encoder_updates=20
         learner.partial_update=False;learner.initialization='random_from_scratch_seed_1';learner.resume_from=None
+        if not hasattr(learner, 'train_cfg'):
+            from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+            runner_configuration(learner)
         saved=learner.save('condition-check.pt')
         verify('checkpoint_saves_full_config',torch.load(saved,weights_only=False)['disturbances']==cfg.record())
+        if not hasattr(learner, 'train_cfg'):
+            from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+            runner_configuration(learner)
         restored=learner.load(saved)
         verify('checkpoint_restores_condition_record',restored['disturbances']==cfg.record())
         learner.env.disturbance_config=default
+        if not hasattr(learner, 'train_cfg'):
+            from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+            runner_configuration(learner)
         try:learner.load(saved)
         except ValueError:rejected=True
         else:rejected=False
         verify('silent_resume_condition_change_rejected',rejected)
+        if not hasattr(learner, 'train_cfg'):
+            from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+            runner_configuration(learner)
         restored=learner.load(saved,allow_disturbance_change=True)
         verify('explicit_resume_reports_both_conditions',restored['source_disturbances']==cfg.record() and restored['disturbances']==default.record())
         legacy=torch.load(saved,weights_only=False);legacy.pop('disturbances');torch.save(legacy,directory/'legacy.pt')
+        if not hasattr(learner, 'train_cfg'):
+            from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+            runner_configuration(learner)
         restored=learner.load(directory/'legacy.pt')
         verify('legacy_checkpoint_loads_all_off',restored['disturbances']==default.record())
 

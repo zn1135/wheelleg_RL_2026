@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import mujoco
 import numpy as np
-from ct_mjlab.fudan_ppo_walk.reset_geometry import mesh_vertices
+from ct_mjlab.envs.fudan_ppo_walk.reset_geometry import mesh_vertices
 
 
 def main():

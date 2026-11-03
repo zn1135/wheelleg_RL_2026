@@ -23,6 +23,6 @@
 
 最终sim2sim验证仅用GPU，CPU物理入口已删除。`PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_walk.evaluate --checkpoint <model.pt> --output <新GPU目录> --deadline <本次截止Unix秒>`；完整987例，`--diagnostic`另列诊断。评分/视频和边界见[GPU验证约定](docs/interfaces/20261102-fudan-gpu-validation.md)。
 
-独立任务 `fudan_ppo_walk`，使用 `scripts/mjlab.sh fudan-ppo-walk {train,export}`；20环境可视预检、期限参数、GPU987样本矩阵与TensorBoard命令见[冻结规格](docs/mjlab-fudan-ppo-walk.md)。普通SMP训练入口及五个旧任务禁用规则保持。
+任务 `fudan_ppo_walk`训练统一使用 `scripts/mjlab.sh train --task fudan_ppo_walk`（仍须明确预算、预检和新log-dir）；旧`fudan-ppo-walk train`只兼容转入同一注册链路，导出仍用`fudan-ppo-walk export`；20环境可视预检、期限参数、GPU987样本矩阵与TensorBoard命令见[冻结规格](docs/mjlab-fudan-ppo-walk.md)。普通SMP训练入口及五个旧任务禁用规则保持。
 
 复旦初始化修正版本为reset/history v2；新20环境可视预检尚未执行，旧trial01预检不能放行。命令和新预算建议见[修正交付](artifacts/fudan-reset-v2-20261101/README.md)。

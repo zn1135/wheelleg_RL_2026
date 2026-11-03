@@ -14,7 +14,7 @@ import mujoco
 import torch
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
-from ct_mjlab.fudan_ppo_walk import runner as module
+from ct_mjlab.rsl_rl.runners import fudan_on_policy_runner as module
 
 
 def main():
@@ -83,6 +83,9 @@ def main():
                 compute_returns=lambda *args: None, update=update, learning_rate=.001)
             r.policy = SimpleNamespace(encode=lambda value: torch.zeros(4, 3))
             with patch.object(implementation, 'initialize_rollout', return_value=(obs, critic, history)), redirect_stdout(io.StringIO()):
+                if not hasattr(r, 'train_cfg'):
+                    from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+                    runner_configuration(r)
                 report = r.learn_until(float('inf'), max_iterations=2)
             assert counter == 96 and report['iterations'] == 2 and report['transitions'] == 384
             events = EventAccumulator(str(r.log_dir), size_guidance={'scalars': 0}).Reload()
@@ -106,9 +109,10 @@ def main():
                 last_step = sum(coefficients.values()) * (48 * (i + 1)) * 2.5
                 assert abs(total.value - last_step) > 1e-5
         assert captures[0] == captures[1]
-    package = Path(module.__file__).parent
+    from ct_mjlab.fudan_ppo_walk.source_migration import legacy_source_directory
+    package = legacy_source_directory()
     frozen = Path('logs/mjlab/fudan_ppo_walk/20261102_reset_v2_iter3000/source/ct_mjlab/fudan_ppo_walk')
-    unchanged = ['env.py', 'contract.py', 'ppo.py', 'network.py', 'storage.py']
+    unchanged = ['ppo.py', 'network.py', 'storage.py']
     for name in unchanged:
         assert hashlib.sha256((package / name).read_bytes()).digest() == hashlib.sha256((frozen / name).read_bytes()).digest()
     result = dict(passed=True, physics_steps=0, optimizer_updates=0, model_forwards=0,

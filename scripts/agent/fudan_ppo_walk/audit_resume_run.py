@@ -53,6 +53,14 @@ def main():
     assert final['policy_steps'] == source_steps + 1 + additional*48
     assert not final['partial_update'] and not report['partial_update']
     assert report['checkpoint_sha256'] == sha(run/'model_final.pt')
+    restore=json.loads((run/'restore_report.json').read_text())
+    if 'expected_reset_contract' in budget:
+        target_reset=budget['expected_reset_contract']
+        assert initial['reset_contract']==final['reset_contract']==report['reset_contract']==target_reset
+        assert restore['source_reset_contract']==restore['target_reset_contract']==target_reset
+        assert restore['history_migration'] is None
+        assert initial['command_sampling']==final['command_sampling']==report['command_sampling']==budget['command_sampling']
+        assert initial['disturbances']==final['disturbances']==report['disturbances']==budget['disturbances']
     for key, count in [('optimizer_state_dict',total_primary),('encoder_optimizer_state_dict',total_encoder)]:
         assert {int(state['step']) for state in final[key]['state'].values()} == {count}
     assert all(torch.isfinite(value).all() for value in final['model_state_dict'].values())
@@ -77,6 +85,14 @@ def main():
         assert saved['iterations'] == iteration
         assert saved['primary_updates'] == saved['encoder_updates'] == iteration*20
         checkpoints.append(dict(iteration=iteration,sha256=sha(path)))
+    source_manifest=json.loads((run/'source_sha256.json').read_text());verified_source=0
+    prefix='mjlab_training/src/ct_mjlab/'
+    for name,digest in source_manifest.items():
+        if name.startswith(prefix):
+            assert sha(run/'source/ct_mjlab'/name.removeprefix(prefix))==digest,name
+            verified_source+=1
+    if 'source_manifest' in budget:
+        assert source_manifest==json.loads(Path(budget['source_manifest']).read_text())
     result = dict(passed=True,physics_steps=0,model_forwards=0,optimizer_updates=0,
         num_envs=num_envs,initial_iteration=start,additional_iterations=additional,final_iteration=target,
         additional_transitions=new_transitions,final_transitions=final['transitions'],
@@ -84,6 +100,7 @@ def main():
         initial_learner_and_rng_identical_to_source=True,full_physics_state_restored=False,
         reward_tags=tags,logged_steps=[start+1,target],maximum_reward_sum_error=maximum_sum_error,
         model_sha256=sha(run/'model_final.pt'),checkpoints=checkpoints,training=report,
+        source_files_verified=verified_source,restore=restore,
         behavior_accepted=False,cpu_launch_resolved=False)
     args.output.write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps({key:value for key,value in result.items() if key not in ('checkpoints','training')},indent=2))

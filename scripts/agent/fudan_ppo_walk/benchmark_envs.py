@@ -11,8 +11,8 @@ import mujoco
 import torch
 
 from ct_mjlab.fudan_ppo_walk.contract import CONTRACT, RESET_CONTRACT, WEIGHTS
-from ct_mjlab.fudan_ppo_walk.env import FudanEnv
-from ct_mjlab.fudan_ppo_walk.runner import FudanRunner, initialize_rollout
+from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import FudanRunner, initialize_rollout
 
 
 def main():

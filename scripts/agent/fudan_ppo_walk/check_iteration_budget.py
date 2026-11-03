@@ -7,8 +7,8 @@ from types import SimpleNamespace
 from unittest.mock import patch
 import mujoco
 import torch
-from ct_mjlab.fudan_ppo_walk import runner as module
-from ct_mjlab.fudan_ppo_walk import __main__ as cli
+from ct_mjlab.rsl_rl.runners import fudan_on_policy_runner as module
+from ct_mjlab.scripts import train as cli
 
 
 def main():
@@ -40,6 +40,9 @@ def main():
                 path=r.log_dir/name;path.write_text(str(r.iteration));return path
             r.save=save
             with patch.object(module,'initialize_rollout',return_value=(obs,critic,history)),redirect_stdout(io.StringIO()):
+                if not hasattr(r, 'train_cfg'):
+                    from scripts.agent.fudan_ppo_walk.reset_v2_fixture import runner_configuration
+                    runner_configuration(r)
                 report=r.learn_until(float('inf') if limit is not None else time.time()+1,max_iterations=limit)
             expected=limit or 0
             assert report['iterations']==counts['update']==expected
@@ -54,9 +57,11 @@ def main():
             def learn_until(self,deadline,max_iterations=None):
                 recorded.update(deadline=deadline,max_iterations=max_iterations);return {}
         fake_env=SimpleNamespace(close=lambda:None)
-        with patch.object(cli,'FudanEnv',return_value=fake_env),patch.object(cli,'FudanRunner',EntryRunner),patch.object(cli,'snapshot'),redirect_stdout(io.StringIO()):
-            cli.main(['train','--num-envs','512','--log-dir',str(Path(temporary)/'cli'),
-                '--precheck','artifacts/fudan-reset-v2-20261101/precheck-v2-all-inputs/report.json','--iterations','3000'])
+        proof=Path(temporary)/'precheck.json'
+        proof.write_text(json.dumps(dict(passed=True,reset_contract=__import__('ct_mjlab.fudan_ppo_walk.contract',fromlist=['RESET_CONTRACT']).RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000,command_sampling=__import__('ct_mjlab.envs.fudan_ppo_walk.commands',fromlist=['command_config']).command_config())))
+        with patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',return_value=fake_env),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner',EntryRunner),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.snapshot'),redirect_stdout(io.StringIO()):
+            cli.main(['--task','fudan_ppo_walk','--num-envs','512','--log-dir',str(Path(temporary)/'cli'),
+                '--precheck',str(proof),'--iterations','3000'])
         assert recorded['deadline']==float('inf') and recorded['max_iterations']==3000
     report=dict(passed=True,physics_steps=0,optimizer_updates=0,network_forwards=0,
         scope='Real loop/CLI using fake collection and update; not behavioral validation',cases=results,

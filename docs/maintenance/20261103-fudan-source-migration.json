@@ -1,0 +1,1558 @@
+{
+  "version": "fudan-structure-alignment-20261103-v1",
+  "files": [
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/reference_contract.py",
+      "new_path": "mjlab_training/src/ct_mjlab/reference_contract.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/reference_contract.py",
+      "old_sha256": "b0d0e01aff62eda7fbe57211b76b5a5791c9e555288c4a969e2c60d51962e2b3",
+      "new_sha256": "b0d0e01aff62eda7fbe57211b76b5a5791c9e555288c4a969e2c60d51962e2b3",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/cli.py",
+      "new_path": "mjlab_training/src/ct_mjlab/cli.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/cli.py",
+      "old_sha256": "35da51c272a6995ae797facbfb40f53162019eace6f5538535b2065fb5207898",
+      "new_sha256": "35da51c272a6995ae797facbfb40f53162019eace6f5538535b2065fb5207898",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/validation.py",
+      "new_path": "mjlab_training/src/ct_mjlab/validation.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/validation.py",
+      "old_sha256": "67b1c8bd1eddd9e0f20c361fb7e5ce700e05088750c6f237d7dfcbdcf23f0b95",
+      "new_sha256": "67b1c8bd1eddd9e0f20c361fb7e5ce700e05088750c6f237d7dfcbdcf23f0b95",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/wheel_odometry.py",
+      "new_path": "mjlab_training/src/ct_mjlab/wheel_odometry.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/wheel_odometry.py",
+      "old_sha256": "d4c8a6a0fb3a1073452cce6c139222ad1247a5313bcb06340a5ee43569cf4e50",
+      "new_sha256": "d4c8a6a0fb3a1073452cce6c139222ad1247a5313bcb06340a5ee43569cf4e50",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/wheel_angles.py",
+      "new_path": "mjlab_training/src/ct_mjlab/wheel_angles.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/wheel_angles.py",
+      "old_sha256": "0dae70801893a390b7703070e105dd969f18f940ad75945a99ecb0df7c93071a",
+      "new_sha256": "0dae70801893a390b7703070e105dd969f18f940ad75945a99ecb0df7c93071a",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/bc_preservation.py",
+      "new_path": "mjlab_training/src/ct_mjlab/bc_preservation.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/bc_preservation.py",
+      "old_sha256": "ab0243a15fcf3e41f55ef1e4be9cc650167e00be7a4e99417715656287a2e1c1",
+      "new_sha256": "ab0243a15fcf3e41f55ef1e4be9cc650167e00be7a4e99417715656287a2e1c1",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/bc.py",
+      "new_path": "mjlab_training/src/ct_mjlab/bc.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/bc.py",
+      "old_sha256": "d16e475feb0f784b49582598aad4eba67fb73762686b45381b42dc51a17ef17a",
+      "new_sha256": "d16e475feb0f784b49582598aad4eba67fb73762686b45381b42dc51a17ef17a",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/__init__.py",
+      "new_path": "mjlab_training/src/ct_mjlab/__init__.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/__init__.py",
+      "old_sha256": "24a01d5d9223340ae8f2a1a6af88f0db69a9cad05355c6367c5c29b45d8b1ae5",
+      "new_sha256": "24a01d5d9223340ae8f2a1a6af88f0db69a9cad05355c6367c5c29b45d8b1ae5",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/utils/source_migration.py",
+      "new_path": "mjlab_training/src/ct_mjlab/utils/source_migration.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/utils/source_migration.py",
+      "old_sha256": "48d153524dcd31f432116db493c28795a5e8926ee88d37b234124c4fdb773cc1",
+      "new_sha256": "48d153524dcd31f432116db493c28795a5e8926ee88d37b234124c4fdb773cc1",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/utils/task_registry.py",
+      "new_path": "mjlab_training/src/ct_mjlab/utils/task_registry.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/utils/task_registry.py",
+      "old_sha256": "21744bbdff2a8e14c0ca71b99f323142e05727f2388314cef08584582602e70f",
+      "new_sha256": "e2ee0a7654ada4cb223eb35d77e4c4dca6e13b08e483606c479dd87c7501ea65",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/utils/helpers.py",
+      "new_path": "mjlab_training/src/ct_mjlab/utils/helpers.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/utils/helpers.py",
+      "old_sha256": "41b8e144601b68ea5c9d6bfb45584b1acce60d9c4aeb0080e4cd42f8451ece18",
+      "new_sha256": "6618d7e29522ce388973c1e34d1b885bc4386b5d302557cdfbe029b9a9b600a3",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/utils/__init__.py",
+      "new_path": "mjlab_training/src/ct_mjlab/utils/__init__.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/utils/__init__.py",
+      "old_sha256": "c5e801b7489cd39da57035a5d7a0d2e77b0a4e902133d545076cfa531590837e",
+      "new_sha256": "c5e801b7489cd39da57035a5d7a0d2e77b0a4e902133d545076cfa531590837e",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/teacher/gains.py",
+      "new_path": "mjlab_training/src/ct_mjlab/teacher/gains.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/teacher/gains.py",
+      "old_sha256": "451b1c257b41aeaf4d64386b4689a4e51369eb5a8b9055646f3cc496f42fb48d",
+      "new_sha256": "451b1c257b41aeaf4d64386b4689a4e51369eb5a8b9055646f3cc496f42fb48d",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/teacher/standup.py",
+      "new_path": "mjlab_training/src/ct_mjlab/teacher/standup.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/teacher/standup.py",
+      "old_sha256": "45aaf092db320e778dd5b4aabcaeade3102add681a3e68b925cf77d26b0c70ca",
+      "new_sha256": "45aaf092db320e778dd5b4aabcaeade3102add681a3e68b925cf77d26b0c70ca",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/teacher/mechanics.py",
+      "new_path": "mjlab_training/src/ct_mjlab/teacher/mechanics.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/teacher/mechanics.py",
+      "old_sha256": "fe88482049a15c71fe5586aa0d34eb8fc6d248ac4948c9991fe450f563514ff0",
+      "new_sha256": "fe88482049a15c71fe5586aa0d34eb8fc6d248ac4948c9991fe450f563514ff0",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/teacher/reference.py",
+      "new_path": "mjlab_training/src/ct_mjlab/teacher/reference.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/teacher/reference.py",
+      "old_sha256": "33d4b490abe24148d2184e6cabf5d5070b5cecdc7ebc5991b3052b2d6cc96832",
+      "new_sha256": "33d4b490abe24148d2184e6cabf5d5070b5cecdc7ebc5991b3052b2d6cc96832",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/teacher/estimators.py",
+      "new_path": "mjlab_training/src/ct_mjlab/teacher/estimators.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/teacher/estimators.py",
+      "old_sha256": "97c01e8cbaa30a69748404cd3c04a70cde67693aa1b6e3d21237e4149cf44016",
+      "new_sha256": "97c01e8cbaa30a69748404cd3c04a70cde67693aa1b6e3d21237e4149cf44016",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/teacher/controller.py",
+      "new_path": "mjlab_training/src/ct_mjlab/teacher/controller.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/teacher/controller.py",
+      "old_sha256": "495e7e0b8fe8bf1505d771df0996b95bf408aa8064960b9afe7745eef85302b8",
+      "new_sha256": "495e7e0b8fe8bf1505d771df0996b95bf408aa8064960b9afe7745eef85302b8",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/teacher/env.py",
+      "new_path": "mjlab_training/src/ct_mjlab/teacher/env.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/teacher/env.py",
+      "old_sha256": "8f13bab0b07eff4e6573f2bef527d69162d197b34b266aa75ec8992e24d6c81e",
+      "new_sha256": "8f13bab0b07eff4e6573f2bef527d69162d197b34b266aa75ec8992e24d6c81e",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/teacher/__init__.py",
+      "new_path": "mjlab_training/src/ct_mjlab/teacher/__init__.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/teacher/__init__.py",
+      "old_sha256": "7e3628420d9ad80c1393234806df6278676545abf1b821db8b96907f5b34ec2d",
+      "new_sha256": "7e3628420d9ad80c1393234806df6278676545abf1b821db8b96907f5b34ec2d",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/smp/isaac_standup_rewards.py",
+      "new_path": "mjlab_training/src/ct_mjlab/smp/isaac_standup_rewards.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/smp/isaac_standup_rewards.py",
+      "old_sha256": "6dc2c91f9279baa2dfe260a0fcd96d623bfd519c50aa91281b74e07a9fd5001c",
+      "new_sha256": "6dc2c91f9279baa2dfe260a0fcd96d623bfd519c50aa91281b74e07a9fd5001c",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/smp/dataset.py",
+      "new_path": "mjlab_training/src/ct_mjlab/smp/dataset.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/smp/dataset.py",
+      "old_sha256": "8d06490b3ee222e2b981078713e0403e7193d0e49f5ba89ace8dffd80202505f",
+      "new_sha256": "8d06490b3ee222e2b981078713e0403e7193d0e49f5ba89ace8dffd80202505f",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/smp/features.py",
+      "new_path": "mjlab_training/src/ct_mjlab/smp/features.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/smp/features.py",
+      "old_sha256": "822a81a9fc8ea2859e03483a883514990a87e01fe7cd11fe40569a020de636ff",
+      "new_sha256": "822a81a9fc8ea2859e03483a883514990a87e01fe7cd11fe40569a020de636ff",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/smp/finetune.py",
+      "new_path": "mjlab_training/src/ct_mjlab/smp/finetune.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/smp/finetune.py",
+      "old_sha256": "0786d9fc432cc701290673e5d9702ebf297293c1f3e697fcd7b914754afcc2d8",
+      "new_sha256": "0786d9fc432cc701290673e5d9702ebf297293c1f3e697fcd7b914754afcc2d8",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/smp/prior.py",
+      "new_path": "mjlab_training/src/ct_mjlab/smp/prior.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/smp/prior.py",
+      "old_sha256": "ddb19e928b97cd3ba604242d1b36c286eb276dea7982f60187d9ebdab98d30c7",
+      "new_sha256": "ddb19e928b97cd3ba604242d1b36c286eb276dea7982f60187d9ebdab98d30c7",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/smp/dit.py",
+      "new_path": "mjlab_training/src/ct_mjlab/smp/dit.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/smp/dit.py",
+      "old_sha256": "2e0341575e35b391af52b4f3975939a9f14ee7aa2c22c040760834ce98a1adef",
+      "new_sha256": "2e0341575e35b391af52b4f3975939a9f14ee7aa2c22c040760834ce98a1adef",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/smp/ppo.py",
+      "new_path": "mjlab_training/src/ct_mjlab/smp/ppo.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/smp/ppo.py",
+      "old_sha256": "1daab26f387013241a6a875a2038e217cda42bb226a2f895d886d8f6c7b7852f",
+      "new_sha256": "1daab26f387013241a6a875a2038e217cda42bb226a2f895d886d8f6c7b7852f",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/smp/phase_sampling.py",
+      "new_path": "mjlab_training/src/ct_mjlab/smp/phase_sampling.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/smp/phase_sampling.py",
+      "old_sha256": "560136498c7f4fd68217b2d2cacd9376b3cc0ce3b36293b88cee0e45ec427df9",
+      "new_sha256": "560136498c7f4fd68217b2d2cacd9376b3cc0ce3b36293b88cee0e45ec427df9",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/smp/__init__.py",
+      "new_path": "mjlab_training/src/ct_mjlab/smp/__init__.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/smp/__init__.py",
+      "old_sha256": "51ebd637bb1d381796f42413dac95430916b2583402ee932190177f29f0c0b3a",
+      "new_sha256": "51ebd637bb1d381796f42413dac95430916b2583402ee932190177f29f0c0b3a",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/__main__.py",
+      "new_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/__main__.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/__main__.py",
+      "old_sha256": "19dd2f3ba542254b7dc862b4b81671e1080db2ac20902c5701b1e1d2bc0d49c4",
+      "new_sha256": "76151db7311fd346c3925ce67c5cc4216d7e8385a22444dfa03b5ce3b73ece7d",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/network.py",
+      "new_path": "mjlab_training/src/ct_mjlab/rsl_rl/modules/actor_critic_sequence.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/network.py",
+      "old_sha256": "4bf37d25b0949ca3a569692c2bffac23fff1e5007e84405801a15887714c998e",
+      "new_sha256": "445ca35f937e2ca4ad0a65dcdf5fd9dd414da60c34ff799b3a3b443b5d7701ad",
+      "change": "moved_to_single_implementation",
+      "compatibility_sha256": "64dd04db1b56f6a86174278246052f96add33e99309b02e7366217be49f31a13"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/policy.py",
+      "new_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/policy.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/policy.py",
+      "old_sha256": "ff9148bc21e072a7d3b8d7a10e14602e644f8b714cac2e171b63ae92a4635a73",
+      "new_sha256": "d2ef6c212241c7c67546663d68e850c40f6ece568905f65990cac57069d18424",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/disturbances.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/disturbances.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/disturbances.py",
+      "old_sha256": "c05a0550c478b20bf79751d02d6ac59e8c43ef21e23241e628fee9dfc4ef5a9f",
+      "new_sha256": "5dbc90ef4caed3b3f1be5d12b7626b14f5094dd6992fdd8cb0d5d9de03769ca9",
+      "change": "moved_to_single_implementation",
+      "compatibility_sha256": "4a69f94cdce58bcc1ae0bd82465db9a4642618b44eedb7cca576ae7bf1b61151"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/protocol.py",
+      "new_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/protocol.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/protocol.py",
+      "old_sha256": "15694f86141cf56417fb7891e12fb4031bd88675a695638ab5ded71978501ac0",
+      "new_sha256": "15694f86141cf56417fb7891e12fb4031bd88675a695638ab5ded71978501ac0",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/storage.py",
+      "new_path": "mjlab_training/src/ct_mjlab/rsl_rl/storage/fudan_rollout_storage.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/storage.py",
+      "old_sha256": "13a040641aeaebcea24bca9aed390315b331c716eadf12bafb2e16ada7d90273",
+      "new_sha256": "421ad776eac643014ad70a041261a1b9717a9783f8e276cdcaae45b08bc4f99c",
+      "change": "moved_to_single_implementation",
+      "compatibility_sha256": "f66ef14831019a85c3bb503716f7604cb0076aabc3ff785578e516f061e0dfe1"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/runner.py",
+      "new_path": "mjlab_training/src/ct_mjlab/rsl_rl/runners/fudan_on_policy_runner.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/runner.py",
+      "old_sha256": "401e4e319ddd032fb0e07a00cbb3129c3b3d06ce513f4f37f42f7b06869fb154",
+      "new_sha256": "9d22933b2772394cb3705f86598a000c65fd828db7ed1f7f5c67ce9d8012ac38",
+      "change": "moved_to_single_implementation",
+      "compatibility_sha256": "8d46fb0d02a3621acfa4079edc5d2730f9304b0a4e693aa016ef981f3dd015ac"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/export.py",
+      "new_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/export.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/export.py",
+      "old_sha256": "0b82366b8a8b490c550e6d2725a9b96edfaa5f6079a1e433efbe92722fde77bc",
+      "new_sha256": "d10fc04e58616522131c29bbb9aff268118cca758b52e9e329a0ac59b90eb9c1",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/parking_integral.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/parking_integral.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/parking_integral.py",
+      "old_sha256": "010b04164054e2b3599201ae021912aa07e93fb8e92469a87be5a3ce812b1325",
+      "new_sha256": "125dbbe89b31973178971295d7a0ea5e96568036be4fca0dc0e919f5ed2a44d3",
+      "change": "moved_to_single_implementation",
+      "compatibility_sha256": "60f74db65fcd43eb80540ee45a19e734809df4d484173604caa0d363d9232db3"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/measurement.py",
+      "new_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/measurement.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/measurement.py",
+      "old_sha256": "10ef8e66ffc2f45cd23d2b0f8022cf1e2b9c704fcd95ae0a9cf5764649eeeafb",
+      "new_sha256": "750f8c90d6073cbe303b6ad5d9ccba52210657dfd71bf7407efcc9e16f462d41",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/config.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/config.py",
+      "old_sha256": "486a54e0568f08607db6ba93cb0a4a2419be9c816b076bad489ce704f972b594",
+      "new_sha256": "9d0580839232d4957c12f06be3bf21e834b37fe0ac435f18a2102605ddba98ff",
+      "change": "moved_to_single_implementation",
+      "compatibility_sha256": "3b7d79f972efbd68e78d85637e98cfa1d5ef0526bb5b8e03bd974b51b1deefb3"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/commands.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/commands.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/commands.py",
+      "old_sha256": "7e95e88b011e99d00f3ddc9b692ad37acbc760144048aa8febeaa7fff50ddb6a",
+      "new_sha256": "cbcc09b7fa7c362d985d63e36d13f74e4d5b550b5b79b59361127662498b8d50",
+      "change": "moved_to_single_implementation",
+      "compatibility_sha256": "1b5444d508761944419794839b0897173d108bf85be0cc54f196980699ac7d32"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/ppo.py",
+      "new_path": "mjlab_training/src/ct_mjlab/rsl_rl/algorithms/fudan_ppo.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/ppo.py",
+      "old_sha256": "92e58a560d49abba47b92bb310932accafd344ce8672f2054825cbdd56e2fd23",
+      "new_sha256": "e0fe23c26861b133d571fd8761754e74c36ad44b19a9aed028334cdd9e577b07",
+      "change": "moved_to_single_implementation",
+      "compatibility_sha256": "c419601c86595ec743b717534d1de8cb10846aa9a54e3adc0f08f5c3b4360955"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/env.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/env.py",
+      "old_sha256": "dbb945e061584f0e2cb79767d09d827f2d161d19133ecb5fe6d4945811caeb21",
+      "new_sha256": "dfdee1538c6dbaaf5ed66178f5935453099005804f66ee4b4fdb7ed47ea75966",
+      "change": "moved_to_single_implementation",
+      "compatibility_sha256": "967c53bdb75f1e493ffe50e88a142dde1268ead0156d8d1801dc3ac96218459e"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/contract.py",
+      "new_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/contract.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/contract.py",
+      "old_sha256": "3bc4f58f3fd460a8af2562362d7341d3912245ec43ac5cf98044c2cd00716a2e",
+      "new_sha256": "17468f9467b2123e862499e02f0e6d662ec0d98eee75d66114397a2c1d59645a",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/__init__.py",
+      "new_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/__init__.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/__init__.py",
+      "old_sha256": "283b9f1d5441f60e93ffe954dd05fd9133a33600e79194e85e074b177173b2a2",
+      "new_sha256": "854fe8c63135243bb1461976407a8a228ada0a9fccb170146a1ee943322a32f8",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/reset_geometry.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/reset_geometry.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/reset_geometry.py",
+      "old_sha256": "eab27ba0e9351aafc0383b643defbab97984e66b55f4ba2bf7f65ecd744c1d84",
+      "new_sha256": "f9591c7fea0a97bbf7b58edbf1c6b952394597e365435f076642040ef6c34272",
+      "change": "moved_to_single_implementation",
+      "compatibility_sha256": "5e2d31cb7ad8884b6260a141dd024070b7c38aece0f111f2faa6a542674137c7"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/utils.py",
+      "new_path": "mjlab_training/src/ct_mjlab/rsl_rl/utils.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/utils.py",
+      "old_sha256": "c58812eeb36fb48b287187cf6bbf15f51b3c3ec3f535b03547a5aa65c5d9d639",
+      "new_sha256": "35c230bb25c6429f06aac4276b96dde88a01c14806775023f4365f60e623678d",
+      "change": "moved_to_single_implementation",
+      "compatibility_sha256": "47e5984866fb1cbef47a9a43363c6d9081308b0ef61a2fca56f5aea5ba6e18d8"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/__init__.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/__init__.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/__init__.py",
+      "old_sha256": "49c9a82cda72a4f716e1924ba530e4e127e32ea241e057676d0811f32dfa3082",
+      "new_sha256": "f5b66cd9aca417a55bb733b2f395f83a50c0a6e2ec399fd19a2592e3da4dd6e7",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/scripts/teacher.py",
+      "new_path": "mjlab_training/src/ct_mjlab/scripts/teacher.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/scripts/teacher.py",
+      "old_sha256": "e317582e3fbaa6680c5bedb77310c8596c7f6a97bd3346841099c9ce399c03ad",
+      "new_sha256": "e317582e3fbaa6680c5bedb77310c8596c7f6a97bd3346841099c9ce399c03ad",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/scripts/collect.py",
+      "new_path": "mjlab_training/src/ct_mjlab/scripts/collect.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/scripts/collect.py",
+      "old_sha256": "70aa407a1a8719e01cf64396ba6b1d8f0e985ac38b5774bd13c1110c4ecbecab",
+      "new_sha256": "70aa407a1a8719e01cf64396ba6b1d8f0e985ac38b5774bd13c1110c4ecbecab",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/scripts/train_bc.py",
+      "new_path": "mjlab_training/src/ct_mjlab/scripts/train_bc.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/scripts/train_bc.py",
+      "old_sha256": "e2f532c2ad4762cc0787ff12a778dd5533978faf2f7d27c983735dad9cfcb0a5",
+      "new_sha256": "e2f532c2ad4762cc0787ff12a778dd5533978faf2f7d27c983735dad9cfcb0a5",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/scripts/export.py",
+      "new_path": "mjlab_training/src/ct_mjlab/scripts/export.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/scripts/export.py",
+      "old_sha256": "1f57a0dab4b1657106ec332eea7f6c595bb23f262ec2fee0c5128c16f327a939",
+      "new_sha256": "1f57a0dab4b1657106ec332eea7f6c595bb23f262ec2fee0c5128c16f327a939",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/scripts/train.py",
+      "new_path": "mjlab_training/src/ct_mjlab/scripts/train.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/scripts/train.py",
+      "old_sha256": "ccbd872a3d0ae7634076a4ac27288698317b93bff846befce293df2c2891608d",
+      "new_sha256": "fcf68411eec16101358ad4269bab42648c3800c33bd877533567477c75c11897",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/scripts/play.py",
+      "new_path": "mjlab_training/src/ct_mjlab/scripts/play.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/scripts/play.py",
+      "old_sha256": "5baa7406328b52277e33ac28adcad5b52af0c035ee1f1173d51d4463d00da929",
+      "new_sha256": "5baa7406328b52277e33ac28adcad5b52af0c035ee1f1173d51d4463d00da929",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/scripts/accept.py",
+      "new_path": "mjlab_training/src/ct_mjlab/scripts/accept.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/scripts/accept.py",
+      "old_sha256": "19198cc9e29a26085270fabfbdfdedfa3fb53ad5dca9f75561caf38bff0da61f",
+      "new_sha256": "19198cc9e29a26085270fabfbdfdedfa3fb53ad5dca9f75561caf38bff0da61f",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/scripts/__init__.py",
+      "new_path": "mjlab_training/src/ct_mjlab/scripts/__init__.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/scripts/__init__.py",
+      "old_sha256": "4f695356a9589039a8269b131b703cb1f4ae66897cdf885d4ab4bf366bd8130a",
+      "new_sha256": "4f695356a9589039a8269b131b703cb1f4ae66897cdf885d4ab4bf366bd8130a",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/scripts/check.py",
+      "new_path": "mjlab_training/src/ct_mjlab/scripts/check.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/scripts/check.py",
+      "old_sha256": "ecf7a3c70353a39bc321b80070c57ae434720e4788b315c468a44c9569fde0f6",
+      "new_sha256": "ecf7a3c70353a39bc321b80070c57ae434720e4788b315c468a44c9569fde0f6",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/scripts/eval.py",
+      "new_path": "mjlab_training/src/ct_mjlab/scripts/eval.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/scripts/eval.py",
+      "old_sha256": "7ab7518d5e786415104da80298f2849f6a4dd96c4adb6a72dcff7b94d972e4cf",
+      "new_sha256": "7ab7518d5e786415104da80298f2849f6a4dd96c4adb6a72dcff7b94d972e4cf",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/scripts/train_prior.py",
+      "new_path": "mjlab_training/src/ct_mjlab/scripts/train_prior.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/scripts/train_prior.py",
+      "old_sha256": "e3080b599d1dd6889292a3c976bd1be7789f8c43853ffad292d6e7123f15f99e",
+      "new_sha256": "e3080b599d1dd6889292a3c976bd1be7789f8c43853ffad292d6e7123f15f99e",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/supermimic/__main__.py",
+      "new_path": "mjlab_training/src/ct_mjlab/supermimic/__main__.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/supermimic/__main__.py",
+      "old_sha256": "1ef9b3de44cb9bd9bc8542fbb966a9b0a8547c3279422c63b48a95cce3b12598",
+      "new_sha256": "1ef9b3de44cb9bd9bc8542fbb966a9b0a8547c3279422c63b48a95cce3b12598",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/supermimic/state.py",
+      "new_path": "mjlab_training/src/ct_mjlab/supermimic/state.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/supermimic/state.py",
+      "old_sha256": "85d6932e59ea419bad278ad8dddb54404280e85dd5cbf36d25e52426c44b89ab",
+      "new_sha256": "85d6932e59ea419bad278ad8dddb54404280e85dd5cbf36d25e52426c44b89ab",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/supermimic/learner.py",
+      "new_path": "mjlab_training/src/ct_mjlab/supermimic/learner.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/supermimic/learner.py",
+      "old_sha256": "fb13104382279c3ed53fba05d2c4c3c70fc35ce581e09077128a1a84aa24992c",
+      "new_sha256": "fb13104382279c3ed53fba05d2c4c3c70fc35ce581e09077128a1a84aa24992c",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/supermimic/export.py",
+      "new_path": "mjlab_training/src/ct_mjlab/supermimic/export.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/supermimic/export.py",
+      "old_sha256": "2d07f1a61cbaddbea51c1764327bdc34a3579aee8f8a5ad053e69e19a592c267",
+      "new_sha256": "2d07f1a61cbaddbea51c1764327bdc34a3579aee8f8a5ad053e69e19a592c267",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/supermimic/networks.py",
+      "new_path": "mjlab_training/src/ct_mjlab/supermimic/networks.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/supermimic/networks.py",
+      "old_sha256": "de7d42a8419a2b6332547ad27236f66784952e99da43c4c91785c42e2b871e4d",
+      "new_sha256": "de7d42a8419a2b6332547ad27236f66784952e99da43c4c91785c42e2b871e4d",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/supermimic/motion_adapter.py",
+      "new_path": "mjlab_training/src/ct_mjlab/supermimic/motion_adapter.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/supermimic/motion_adapter.py",
+      "old_sha256": "4fe65abdd38595cf09cb51106ea09abe3c1d5e5d3d20a5999ecdf93311d0db4b",
+      "new_sha256": "4fe65abdd38595cf09cb51106ea09abe3c1d5e5d3d20a5999ecdf93311d0db4b",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/supermimic/kinematics.py",
+      "new_path": "mjlab_training/src/ct_mjlab/supermimic/kinematics.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/supermimic/kinematics.py",
+      "old_sha256": "06f918239d221213ed8e7815ca1f12050bdaaa9c9d1cc514d88c9db184ea42a9",
+      "new_sha256": "06f918239d221213ed8e7815ca1f12050bdaaa9c9d1cc514d88c9db184ea42a9",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/supermimic/buffer.py",
+      "new_path": "mjlab_training/src/ct_mjlab/supermimic/buffer.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/supermimic/buffer.py",
+      "old_sha256": "dc1ecb7572db180ea1ba8303b4f9b90de588418ead3aca803937c6e4ac28d752",
+      "new_sha256": "dc1ecb7572db180ea1ba8303b4f9b90de588418ead3aca803937c6e4ac28d752",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/supermimic/motion.py",
+      "new_path": "mjlab_training/src/ct_mjlab/supermimic/motion.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/supermimic/motion.py",
+      "old_sha256": "ddd0742adb21dfa4c161bbf9079218ce5cc0281bfecd833f687796dd5216bc2a",
+      "new_sha256": "ddd0742adb21dfa4c161bbf9079218ce5cc0281bfecd833f687796dd5216bc2a",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/supermimic/__init__.py",
+      "new_path": "mjlab_training/src/ct_mjlab/supermimic/__init__.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/supermimic/__init__.py",
+      "old_sha256": "f77da4b5fe44fa282ec200acebe1fb02864a004d7fe16640f1e95c6f2f31f672",
+      "new_sha256": "f77da4b5fe44fa282ec200acebe1fb02864a004d7fe16640f1e95c6f2f31f672",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/supermimic/analytic_reward.py",
+      "new_path": "mjlab_training/src/ct_mjlab/supermimic/analytic_reward.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/supermimic/analytic_reward.py",
+      "old_sha256": "eaeb060864a7b9637cbf9e287a6651df0560a7d513abfd62b80715e2ee3cf327",
+      "new_sha256": "eaeb060864a7b9637cbf9e287a6651df0560a7d513abfd62b80715e2ee3cf327",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/standup_mdp.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/standup_mdp.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/standup_mdp.py",
+      "old_sha256": "43a86e00e398f99d9dc5a5a5085e0c167452ecdfc6eb5b56ea4d5e558367a045",
+      "new_sha256": "43a86e00e398f99d9dc5a5a5085e0c167452ecdfc6eb5b56ea4d5e558367a045",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/pd_action.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/pd_action.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/pd_action.py",
+      "old_sha256": "8e87a7dd5c2d2245e2b1b962ca585dd1a9096e3016f48f22b71b2f171692506d",
+      "new_sha256": "8e87a7dd5c2d2245e2b1b962ca585dd1a9096e3016f48f22b71b2f171692506d",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_env_cfg.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_env_cfg.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_env_cfg.py",
+      "old_sha256": "0a26fd64ed4a10498274f55819dc08cfef46559c7a3b80e878e5bfd2e131a76e",
+      "new_sha256": "0a26fd64ed4a10498274f55819dc08cfef46559c7a3b80e878e5bfd2e131a76e",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/model.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/model.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/model.py",
+      "old_sha256": "ebd9c037963122ca16d87b6b7d366a3de64e0c36114a2fc8ad06492a2ae90bc6",
+      "new_sha256": "ebd9c037963122ca16d87b6b7d366a3de64e0c36114a2fc8ad06492a2ae90bc6",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/velocity_mdp.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/velocity_mdp.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/velocity_mdp.py",
+      "old_sha256": "992dd2767c1d675805e0616e206b4d1c9de4b66c6164cb83feb2f99b9b12c8dc",
+      "new_sha256": "992dd2767c1d675805e0616e206b4d1c9de4b66c6164cb83feb2f99b9b12c8dc",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/standup_randomization.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/standup_randomization.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/standup_randomization.py",
+      "old_sha256": "0c7af188444d115fab38e554194b130decc4c37ad29a2c46348646ed59dc1d79",
+      "new_sha256": "0c7af188444d115fab38e554194b130decc4c37ad29a2c46348646ed59dc1d79",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/v14_observations.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/v14_observations.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/v14_observations.py",
+      "old_sha256": "e65286a13c6d0b9e66633f56f08903d6061ff352168bd252f957ad0ec351288f",
+      "new_sha256": "e65286a13c6d0b9e66633f56f08903d6061ff352168bd252f957ad0ec351288f",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/runner.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/runner.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/runner.py",
+      "old_sha256": "9fa68365b2139778fb2ea90f20501141631931002d1d0be7783fdcc4cbd4b3e9",
+      "new_sha256": "9fa68365b2139778fb2ea90f20501141631931002d1d0be7783fdcc4cbd4b3e9",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_runner.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_runner.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_runner.py",
+      "old_sha256": "da8796450f4638bcfd0e8df3e33786ce4d84790082660a8b87551fed70e8b5f4",
+      "new_sha256": "da8796450f4638bcfd0e8df3e33786ce4d84790082660a8b87551fed70e8b5f4",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_mdp.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_mdp.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_mdp.py",
+      "old_sha256": "9f9c1833a93e609ae99d06b3c5feb60bf198374c5497aa31dbefa03d2fad10ed",
+      "new_sha256": "9f9c1833a93e609ae99d06b3c5feb60bf198374c5497aa31dbefa03d2fad10ed",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_poses.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_poses.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_poses.py",
+      "old_sha256": "be5ee05224ab52038d19df4c53706f59a55de5582ebf23c2c24f95d9111293fa",
+      "new_sha256": "be5ee05224ab52038d19df4c53706f59a55de5582ebf23c2c24f95d9111293fa",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_action.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_action.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_action.py",
+      "old_sha256": "9b0658f51d24aaf5e63839ab346d912fbab49a09e044a0216961ef811f748f86",
+      "new_sha256": "9b0658f51d24aaf5e63839ab346d912fbab49a09e044a0216961ef811f748f86",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_env_cfg.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_env_cfg.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_env_cfg.py",
+      "old_sha256": "509842e50dab512a4b05fab80b721ef4207ae2caa0767115dd8fb7fb8b012cfb",
+      "new_sha256": "509842e50dab512a4b05fab80b721ef4207ae2caa0767115dd8fb7fb8b012cfb",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_randomization.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_randomization.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_randomization.py",
+      "old_sha256": "b828e0f42a53d2d623989681f6e6a2043e4408191796c1e7d37fb5285386c2e8",
+      "new_sha256": "b828e0f42a53d2d623989681f6e6a2043e4408191796c1e7d37fb5285386c2e8",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_mdp.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_mdp.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_mdp.py",
+      "old_sha256": "66e54adfa916e8b2b7bcbccdd64f2c1db3655f890fd639bab17650aec9e883bd",
+      "new_sha256": "66e54adfa916e8b2b7bcbccdd64f2c1db3655f890fd639bab17650aec9e883bd",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_rewards.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_rewards.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_rewards.py",
+      "old_sha256": "9300624a04a2a3d388a9c0d2a747427f9b0f32f53808d7047f4d658b01002322",
+      "new_sha256": "9300624a04a2a3d388a9c0d2a747427f9b0f32f53808d7047f4d658b01002322",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_runner.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_runner.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_runner.py",
+      "old_sha256": "ef580d18a76d9e6f8f12ca4475ed0878388220116073fb2e651988b6e1674de2",
+      "new_sha256": "ef580d18a76d9e6f8f12ca4475ed0878388220116073fb2e651988b6e1674de2",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_observations.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_observations.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_observations.py",
+      "old_sha256": "6fe807812da76f3f26cbb2727ce6e2152fc97b813d0787166b89f251ec1cc760",
+      "new_sha256": "6fe807812da76f3f26cbb2727ce6e2152fc97b813d0787166b89f251ec1cc760",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/gas_spring.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/gas_spring.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/gas_spring.py",
+      "old_sha256": "e5e104066a12e511ea145dbe74b04357541ec03f9e5919063dfd6ae7f16d787a",
+      "new_sha256": "e5e104066a12e511ea145dbe74b04357541ec03f9e5919063dfd6ae7f16d787a",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/velocity_env_cfg.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/velocity_env_cfg.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/velocity_env_cfg.py",
+      "old_sha256": "5a380a7fcc6e93e7eaff3d93a8df09292ea7dcf036930000d67dc00b1aaca5e6",
+      "new_sha256": "5a380a7fcc6e93e7eaff3d93a8df09292ea7dcf036930000d67dc00b1aaca5e6",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_observations.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_observations.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_observations.py",
+      "old_sha256": "cec4d05bd089a5139faade265c2858e2865d23ce54ea28187f20a9a8665e806b",
+      "new_sha256": "cec4d05bd089a5139faade265c2858e2865d23ce54ea28187f20a9a8665e806b",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_terrains.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_terrains.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_terrains.py",
+      "old_sha256": "156fefda351ecc24e3fcca3e63112aad80e02bcb66227c48bf0f15ecda936bb3",
+      "new_sha256": "156fefda351ecc24e3fcca3e63112aad80e02bcb66227c48bf0f15ecda936bb3",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/__init__.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/__init__.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/__init__.py",
+      "old_sha256": "9da736f8422c6f778ab2a7f5df50f6b232774533bf954e3d4bc0cdf4b37676eb",
+      "new_sha256": "9da736f8422c6f778ab2a7f5df50f6b232774533bf954e3d4bc0cdf4b37676eb",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_rewards.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_rewards.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_rewards.py",
+      "old_sha256": "d2b9d2683fc9cc3e5d18a689bf77b9ed801d6a8152e593d9e4c36186119fcbd8",
+      "new_sha256": "d2b9d2683fc9cc3e5d18a689bf77b9ed801d6a8152e593d9e4c36186119fcbd8",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/network.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/network.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/network.py",
+      "old_sha256": "5378a73ea1159b5cb0679a6f5f6a49124516ade4abbee1867167c52640cc55a9",
+      "new_sha256": "5378a73ea1159b5cb0679a6f5f6a49124516ade4abbee1867167c52640cc55a9",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/diagnostics.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/diagnostics.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/diagnostics.py",
+      "old_sha256": "f4799d760aa5dd24f095d5ed09040db6670d0c7a93a98dd63bdafb8d93ae89d2",
+      "new_sha256": "f4799d760aa5dd24f095d5ed09040db6670d0c7a93a98dd63bdafb8d93ae89d2",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/observations.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/observations.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/observations.py",
+      "old_sha256": "395f00a7acf5c08efb311b6f68bbba769dc7f890e10f16372715cdd786c191df",
+      "new_sha256": "395f00a7acf5c08efb311b6f68bbba769dc7f890e10f16372715cdd786c191df",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/runner.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/runner.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/runner.py",
+      "old_sha256": "a10a5e0484fcb9f8fc6c346eb90cb63f20b725df36099714810f81e07804bca3",
+      "new_sha256": "a10a5e0484fcb9f8fc6c346eb90cb63f20b725df36099714810f81e07804bca3",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/export.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/export.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/export.py",
+      "old_sha256": "5338e203cd50023144073fb787beb3ab05333c765f12381544dd15f04a1c7892",
+      "new_sha256": "5338e203cd50023144073fb787beb3ab05333c765f12381544dd15f04a1c7892",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/mdp.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/mdp.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/mdp.py",
+      "old_sha256": "b73518d86b7343f1fd8e38d10ec3ab83dfd7bef3df6568d92ee90ec26f3f8d10",
+      "new_sha256": "b73518d86b7343f1fd8e38d10ec3ab83dfd7bef3df6568d92ee90ec26f3f8d10",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/env_cfg.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/env_cfg.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/env_cfg.py",
+      "old_sha256": "58b2659c945f06d582fc969bbfe1bd5229757431599fc368e45c07adf6ba7ed5",
+      "new_sha256": "58b2659c945f06d582fc969bbfe1bd5229757431599fc368e45c07adf6ba7ed5",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/rewards.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/rewards.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/rewards.py",
+      "old_sha256": "4e13d082c64aa582979bdac4a1b81142d5206b748dbc481dce18056c7e13cd27",
+      "new_sha256": "4e13d082c64aa582979bdac4a1b81142d5206b748dbc481dce18056c7e13cd27",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/__init__.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/__init__.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/__init__.py",
+      "old_sha256": "04b25060168d96dd83b7bd83b8d7255a7cc540507ed90474a4e4aaed998c194c",
+      "new_sha256": "04b25060168d96dd83b7bd83b8d7255a7cc540507ed90474a4e4aaed998c194c",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/action.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/action.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/action.py",
+      "old_sha256": "8e8925b1f297f13fa6adddab324865c0fc93b466b2f9eca049d4099024c7d3aa",
+      "new_sha256": "8e8925b1f297f13fa6adddab324865c0fc93b466b2f9eca049d4099024c7d3aa",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/observations.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/observations.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/observations.py",
+      "old_sha256": "89622e84105c847501069b9878cbf889e745a93e9063fcf98912b5cafbc9242f",
+      "new_sha256": "89622e84105c847501069b9878cbf889e745a93e9063fcf98912b5cafbc9242f",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/runner.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/runner.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/runner.py",
+      "old_sha256": "8fe755001dcdf1dc96108a92718e40747d21ec4ba19c36dcdfcc97680aa393eb",
+      "new_sha256": "8fe755001dcdf1dc96108a92718e40747d21ec4ba19c36dcdfcc97680aa393eb",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/mdp.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/mdp.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/mdp.py",
+      "old_sha256": "af3e5b4bd32cbd482da49fbd81c083f8bc3ac9caef98dc042bbb497c1623d9ec",
+      "new_sha256": "af3e5b4bd32cbd482da49fbd81c083f8bc3ac9caef98dc042bbb497c1623d9ec",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/env_cfg.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/env_cfg.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/env_cfg.py",
+      "old_sha256": "a66487714e6706da1f750c876ad8a334b8b25a07ff065d9dc5b84618c2a14f5e",
+      "new_sha256": "a66487714e6706da1f750c876ad8a334b8b25a07ff065d9dc5b84618c2a14f5e",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/rewards.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/rewards.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/rewards.py",
+      "old_sha256": "847a2d2cc67d3bf7ea63b2ddfc77f1f0d3ce0d3d1123242f10d867d61e273652",
+      "new_sha256": "847a2d2cc67d3bf7ea63b2ddfc77f1f0d3ce0d3d1123242f10d867d61e273652",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/__init__.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/__init__.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/__init__.py",
+      "old_sha256": "860626c4d4964558b0ab82f4ff487f1cb7d106999bc94891f0699041a2d1a2f4",
+      "new_sha256": "860626c4d4964558b0ab82f4ff487f1cb7d106999bc94891f0699041a2d1a2f4",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/randomization.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/randomization.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/randomization.py",
+      "old_sha256": "0fecf8f3c1df3bd40c64ac38294b6ee0902d08759d4f059e36b29f0333e75c7a",
+      "new_sha256": "0fecf8f3c1df3bd40c64ac38294b6ee0902d08759d4f059e36b29f0333e75c7a",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/action.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/action.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/action.py",
+      "old_sha256": "ea4bb8cdb370b5dc101c6c971aeff38f91833a61fb11a212b241d0fd268a94c8",
+      "new_sha256": "ea4bb8cdb370b5dc101c6c971aeff38f91833a61fb11a212b241d0fd268a94c8",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/switch.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/switch.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_split/switch.py",
+      "old_sha256": "5a5d2e2b2c71ddb9619c24730986f7938dd42dc05918aac06d31659909986f88",
+      "new_sha256": "5a5d2e2b2c71ddb9619c24730986f7938dd42dc05918aac06d31659909986f88",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/network.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/network.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_split/network.py",
+      "old_sha256": "71757db536c77737a025dd027112f3201305ff1a9208e4ca0b97231266bc28d8",
+      "new_sha256": "71757db536c77737a025dd027112f3201305ff1a9208e4ca0b97231266bc28d8",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/observations.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/observations.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_split/observations.py",
+      "old_sha256": "42be7b513ad16d49349bb0a6bdbc758158643f4d568f5089cf50a62fe89b2c32",
+      "new_sha256": "42be7b513ad16d49349bb0a6bdbc758158643f4d568f5089cf50a62fe89b2c32",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/runner.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/runner.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_split/runner.py",
+      "old_sha256": "6f9b5c9588fb3ff35171072e6af530f4d79fa0559e6901b1c505560ae5e1841f",
+      "new_sha256": "6f9b5c9588fb3ff35171072e6af530f4d79fa0559e6901b1c505560ae5e1841f",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/export.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/export.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_split/export.py",
+      "old_sha256": "7f7cb84765bce470bc41863a60a78b00ee5eace175671f1a70f22f1238b64629",
+      "new_sha256": "7f7cb84765bce470bc41863a60a78b00ee5eace175671f1a70f22f1238b64629",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/mdp.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/mdp.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_split/mdp.py",
+      "old_sha256": "8fcc7f77fa52712d5702808784629367db18179bc37f0947595b55392e2ba955",
+      "new_sha256": "8fcc7f77fa52712d5702808784629367db18179bc37f0947595b55392e2ba955",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/env_cfg.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/env_cfg.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_split/env_cfg.py",
+      "old_sha256": "6bf2d36f69483da3f4dca15f6c07346ca6b02fd3b1cbcdd63ec252477b70b601",
+      "new_sha256": "6bf2d36f69483da3f4dca15f6c07346ca6b02fd3b1cbcdd63ec252477b70b601",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/rewards.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/rewards.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_split/rewards.py",
+      "old_sha256": "0128333915b48dd9e808e9e96b864fb034a8ca5beab6e8a40176fa89804a3757",
+      "new_sha256": "0128333915b48dd9e808e9e96b864fb034a8ca5beab6e8a40176fa89804a3757",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/__init__.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/__init__.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_split/__init__.py",
+      "old_sha256": "fe9e5414dc62c68e8c392421440f49ed3564cd8f51181fb61a0573a257e2b49d",
+      "new_sha256": "fe9e5414dc62c68e8c392421440f49ed3564cd8f51181fb61a0573a257e2b49d",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/action.py",
+      "new_path": "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/action.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/envs/chuanliantui_split/action.py",
+      "old_sha256": "e48641a218bb7599daf2be0d467e42cb4c399a9c28853695c50dfa6b2aa2ab9d",
+      "new_sha256": "e48641a218bb7599daf2be0d467e42cb4c399a9c28853695c50dfa6b2aa2ab9d",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/report_parking_integral.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/report_parking_integral.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/report_parking_integral.py",
+      "old_sha256": "df51076ab9d3240721f57e10571b53c8b6419bcb4cf413986568716b28789555",
+      "new_sha256": "5fad7a70574143035161ba5e26317b5fec793d5f8111cce1b4a118d75017f8f2",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/diagnose_body_support.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/diagnose_body_support.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/diagnose_body_support.py",
+      "old_sha256": "2d49287d7402c969cbb3f55faaefd159c5e0587f1ea201848e3fe037c416332c",
+      "new_sha256": "2d49287d7402c969cbb3f55faaefd159c5e0587f1ea201848e3fe037c416332c",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_iteration_budget.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_iteration_budget.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_iteration_budget.py",
+      "old_sha256": "95e675d84817d70c7eb419e597cd01f91c702984225fdc07612218fcd3c1b7a7",
+      "new_sha256": "1f4fb2391b97c4cb0862b314122348fa925da5ec1bade208158e00edfe02c4fc",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/compare_native_replay.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/compare_native_replay.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/compare_native_replay.py",
+      "old_sha256": "d728e39ed41af5b2d98dc61af87a89021a8158c8fbb0220cac15f88f32fd79e7",
+      "new_sha256": "d728e39ed41af5b2d98dc61af87a89021a8158c8fbb0220cac15f88f32fd79e7",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_isolation.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_isolation.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_isolation.py",
+      "old_sha256": "a3a4eb48e5e57a86803d63535aea39562323fbda03afea9744a3101b45cde8cb",
+      "new_sha256": "a3a4eb48e5e57a86803d63535aea39562323fbda03afea9744a3101b45cde8cb",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/render.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/render.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/render.py",
+      "old_sha256": "33f4f6c1792634f73d5f5ea2d32596925b48abab8d24fdc1057adcb2b6adad4f",
+      "new_sha256": "e95bc6eb1285c23d197cf6b2138f2a7fbde393d618e8cf92b591e8afe7f0b279",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/compare_native_video.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/compare_native_video.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/compare_native_video.py",
+      "old_sha256": "7a4b53050f3bbe13d74256804cdb721add8418667d567e8af9ee1dc5e7897c34",
+      "new_sha256": "7a4b53050f3bbe13d74256804cdb721add8418667d567e8af9ee1dc5e7897c34",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_gpu_validation.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_gpu_validation.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_gpu_validation.py",
+      "old_sha256": "2b1695e1f4639b8270ba1db0adb181c8a997591bb3da2fc5fd98910e347827d0",
+      "new_sha256": "a277fed239f2641f6c35ac3a9c6e768bd11c666f153975ce1674eb85540767ff",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/attribute_estimator_inputs.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/attribute_estimator_inputs.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/attribute_estimator_inputs.py",
+      "old_sha256": "ec2a45ae562afd9a65e32b5e8c3db467d5b878f677a5e932d2bc0163f7923554",
+      "new_sha256": "ec2a45ae562afd9a65e32b5e8c3db467d5b878f677a5e932d2bc0163f7923554",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_videos.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_videos.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_videos.py",
+      "old_sha256": "c8540b670277468ff684dbcdf0b108f256e6ccdd23f9b3448ed2b25192311895",
+      "new_sha256": "c8540b670277468ff684dbcdf0b108f256e6ccdd23f9b3448ed2b25192311895",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/score_v2.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/score_v2.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/score_v2.py",
+      "old_sha256": "cea3ac55e9a04a4b197bb49eb3177d49002221abcd38ecf613e26ccd383cb55d",
+      "new_sha256": "cea3ac55e9a04a4b197bb49eb3177d49002221abcd38ecf613e26ccd383cb55d",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/render_failed_replays.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/render_failed_replays.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/render_failed_replays.py",
+      "old_sha256": "ef58e2b89c5d1dfcffc31f74be2a9cfbbe62c46c2d170916c206596ee4690061",
+      "new_sha256": "ef58e2b89c5d1dfcffc31f74be2a9cfbbe62c46c2d170916c206596ee4690061",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_initialization.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_initialization.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_initialization.py",
+      "old_sha256": "fb22e381bc948a2223fe09a04ee75dd4cb0150407af3f9fa92c4854ef91570d6",
+      "new_sha256": "fb22e381bc948a2223fe09a04ee75dd4cb0150407af3f9fa92c4854ef91570d6",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/audit_reference.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/audit_reference.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/audit_reference.py",
+      "old_sha256": "d25d52f48db72f65b539bfddd57b619fec7b35c4bd6ea9b0e5fec38e6ead6eec",
+      "new_sha256": "d25d52f48db72f65b539bfddd57b619fec7b35c4bd6ea9b0e5fec38e6ead6eec",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_parking_commands.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_parking_commands.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_parking_commands.py",
+      "old_sha256": "ccdb90bb4c5c1ef4974dea9d530a8dd75374c23eebd43afd4ae2ec21b765f679",
+      "new_sha256": "125c890728fce5c1bdbdaca52dca609cac6fce52217a7f648892492bd26c5e3b",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/precheck.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/precheck.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/precheck.py",
+      "old_sha256": "dc08d6b8dd7b5af7ca2b12322d0c2812231623088cbb1f93779c37bb312a1d7c",
+      "new_sha256": "cd09360e6b4e3d3226d4f92d6ad39ceb19b9b0199719d941c85697851f2b69ae",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/report_replay_rewards.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/report_replay_rewards.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/report_replay_rewards.py",
+      "old_sha256": "97d9f75a3416d72bbb2c2505d44c3df57c740aa6448e458bef18afcda30ad182",
+      "new_sha256": "97d9f75a3416d72bbb2c2505d44c3df57c740aa6448e458bef18afcda30ad182",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/render_suite.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/render_suite.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/render_suite.py",
+      "old_sha256": "c2d0279d8bcba7612c6f7cc6dba04983441fe5ffac5e8426f6b03a376b646b9d",
+      "new_sha256": "238b616886d96528b94f641820e80719a96924c7c34e531e559ed67e367b0ebe",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_parking_integral.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_parking_integral.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_parking_integral.py",
+      "old_sha256": "ef59458ec77898c608ad32eeabf8d07cd80e4bc82f0908f36d42afc9c0b7d09f",
+      "new_sha256": "967cb96922bce753c8cb048ff40f79d3ad6dfb6f12eb7ba7cc20b36785815033",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/score.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/score.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/score.py",
+      "old_sha256": "a81304c43a5394fa9df49ea8027447723fb2d206e1acff54823289ddc6178155",
+      "new_sha256": "a81304c43a5394fa9df49ea8027447723fb2d206e1acff54823289ddc6178155",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/diagnose_reverse_startup.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/diagnose_reverse_startup.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/diagnose_reverse_startup.py",
+      "old_sha256": "35dbb0a64c9e8adfe06ff0592141b1271f9177c2d193afcf0310bb67b96848eb",
+      "new_sha256": "35dbb0a64c9e8adfe06ff0592141b1271f9177c2d193afcf0310bb67b96848eb",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/run_parking_continuation.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/run_parking_continuation.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/run_parking_continuation.py",
+      "old_sha256": "2aa82e0fb07dd146b8231187d2f6957e0e86d5e9877fd79c3329283f42205b30",
+      "new_sha256": "2aa82e0fb07dd146b8231187d2f6957e0e86d5e9877fd79c3329283f42205b30",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/run_parking_integral.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/run_parking_integral.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/run_parking_integral.py",
+      "old_sha256": "1b0303d57c6d471b1dd628f7781084489fb05aa1b1057cf9473a83335a706917",
+      "new_sha256": "ccf889bc84e88051799ed465593b9d7e0cd0619efa4a80b021f5f7e9707de4b0",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/report.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/report.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/report.py",
+      "old_sha256": "297a7138fac82f61059f51faf1e7c5466ad7d4306c65f58e4b60f6f308a1a577",
+      "new_sha256": "297a7138fac82f61059f51faf1e7c5466ad7d4306c65f58e4b60f6f308a1a577",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_reset_geometry.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_reset_geometry.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_reset_geometry.py",
+      "old_sha256": "158ecaeb43b1c6584e540228af8628ccc5d7b82c983f7dd5cc738efaf853ae9b",
+      "new_sha256": "0a0591a22ce9267a05754c05717bba697cf0724fbdff72b5fe272bc909da8bde",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/compare_scoring_v2.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/compare_scoring_v2.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/compare_scoring_v2.py",
+      "old_sha256": "1d1b551aba7c138ccca569844c0065fc23e125c35b11ad51c5436ef82318174b",
+      "new_sha256": "1d1b551aba7c138ccca569844c0065fc23e125c35b11ad51c5436ef82318174b",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/diagnose_precheck_launch.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/diagnose_precheck_launch.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/diagnose_precheck_launch.py",
+      "old_sha256": "8fc08f939d20e833a138700169b6197b959be84503059505fe2229b62f313f7b",
+      "new_sha256": "70c6f5f64adf3c8f1bb78edeee0b3a0a7bc09e552e34393376cf896b1df3a39e",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/diagnose_parking.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/diagnose_parking.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/diagnose_parking.py",
+      "old_sha256": "079961822bf20513e1554a83395056868677cae8b2f8e856911a7cc01c51a96b",
+      "new_sha256": "b71055dde4b846734c2891f06d688a03535dbabe3c5f7799218ac5285327ddf0",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_preserve_v2.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_preserve_v2.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_preserve_v2.py",
+      "old_sha256": "5c9b85a42742ffcead6e88914e484539197cacab53e061b8bbad950ca0000b19",
+      "new_sha256": "88a657ee81da987cc86c4686506457f0cec9e44d6b12e07ac83a6af4b0a38bc6",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/diagnose_estimator.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/diagnose_estimator.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/diagnose_estimator.py",
+      "old_sha256": "cac214e8135d48e92fd19270d62773898b7c6dc3da0bbffe61e209a2aa09e714",
+      "new_sha256": "2666f670815eb2afe469acf10189acd2e9e7fa2f5790f150cf5ac4306085ec2d",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/summarize_diagnostic.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/summarize_diagnostic.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/summarize_diagnostic.py",
+      "old_sha256": "8759110ecbb53afae6826ec86f13f9bbece407762211cebdb021919267d7a7fe",
+      "new_sha256": "8759110ecbb53afae6826ec86f13f9bbece407762211cebdb021919267d7a7fe",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_history_migration.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_history_migration.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_history_migration.py",
+      "old_sha256": "d1100964c982b3c94e3e960de9add63cd973d38090a440431026d15c317cf3e0",
+      "new_sha256": "1a57e0ad32be727988e0bd01a4986cfb47ebbff7541e13dcb3a5dc48618d4d03",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/audit_resume_run.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/audit_resume_run.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/audit_resume_run.py",
+      "old_sha256": "750a7ee97498612e4eb3c27b15bda3620db9a3d39e9153085c0c90301f4f1858",
+      "new_sha256": "750a7ee97498612e4eb3c27b15bda3620db9a3d39e9153085c0c90301f4f1858",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/reset_v2_fixture.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/reset_v2_fixture.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/reset_v2_fixture.py",
+      "old_sha256": "49f885ee1b5967bf2182f12dfa36fe4bbf639a54b777a297e465aea42de81263",
+      "new_sha256": "e647649d33ac1b60b9d7c19fa1b904d95ffb8efc8b4993be8a92514e4d165f86",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/evaluate.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/evaluate.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/evaluate.py",
+      "old_sha256": "a4ae9d8d69aed011f3dda85a29880ae3c14b946f40cb4e8bc507126896954729",
+      "new_sha256": "cb057872544b1bc94949db6f447c4dd2cf8161c6ae2d794df32ef469b944c555",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/review_video_flags.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/review_video_flags.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/review_video_flags.py",
+      "old_sha256": "415fd51fca97d81092c3412d8f730a83b461e834504f629d51ce12dba99d96c8",
+      "new_sha256": "415fd51fca97d81092c3412d8f730a83b461e834504f629d51ce12dba99d96c8",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/compare_replays.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/compare_replays.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/compare_replays.py",
+      "old_sha256": "642d51fa1ce4d3b207fa2db0163b84aa0bc7795526abba4764636078d53446c7",
+      "new_sha256": "642d51fa1ce4d3b207fa2db0163b84aa0bc7795526abba4764636078d53446c7",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_disturbances.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_disturbances.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_disturbances.py",
+      "old_sha256": "b011903caa07089c5f35a307b93d4e611e22f59d26346449421b360d3cc3fee6",
+      "new_sha256": "35231bcf684a319dfce0af1dccf66ec63e4e934b3d6cd8f1ffe895c0937e9599",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_scoring.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_scoring.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_scoring.py",
+      "old_sha256": "75617a43e3b6e26bb64fe6fd9204659d6a8cd84ed54b0b091b1aec65d76647af",
+      "new_sha256": "75617a43e3b6e26bb64fe6fd9204659d6a8cd84ed54b0b091b1aec65d76647af",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/report_parking.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/report_parking.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/report_parking.py",
+      "old_sha256": "f09b300c1be8bcc9c249484ff897b8eee1e1b41af6366099a378c5a7ec8917d8",
+      "new_sha256": "f09b300c1be8bcc9c249484ff897b8eee1e1b41af6366099a378c5a7ec8917d8",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/probe.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/probe.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/probe.py",
+      "old_sha256": "d8f897aacbffc5c65ba464cb08ff7017153ead6b6dc1172b9508321c162834b0",
+      "new_sha256": "45d971a4f9b7c7ed5ed8356104a666099a89eabb1f904310d7f092a92ccff15c",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/diagnose_parking_integral.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/diagnose_parking_integral.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/diagnose_parking_integral.py",
+      "old_sha256": "801af9e47cea8f5acad24a73f4e01c04ed47458f49b79b4a294211daa172d8f0",
+      "new_sha256": "41f804021b67e4dcf1321cba3e8b10ad3c7bb63e1fc3bcd3d91e44f0690cd130",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/report_refresh_probe.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/report_refresh_probe.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/report_refresh_probe.py",
+      "old_sha256": "98eb061a25af180a862e6efeb365c5f0be3e805c9ec0766ce3484235367d5abe",
+      "new_sha256": "98eb061a25af180a862e6efeb365c5f0be3e805c9ec0766ce3484235367d5abe",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_reward_logging.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_reward_logging.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_reward_logging.py",
+      "old_sha256": "2656022ea1161add4218fdf11c04ae458fac0e6a4a4737566f7765117150b2ce",
+      "new_sha256": "10156cebbf310dcc81ab89401cb5ff2f078ac4896e7ae1e25466c1da828f31c3",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_diagnostic_video.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_diagnostic_video.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_diagnostic_video.py",
+      "old_sha256": "6e67e0aa5f4b5862837227ed5185a303b4b8420c01fc6ec5391c0bf4e15c77c8",
+      "new_sha256": "6e67e0aa5f4b5862837227ed5185a303b4b8420c01fc6ec5391c0bf4e15c77c8",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/benchmark_envs.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/benchmark_envs.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/benchmark_envs.py",
+      "old_sha256": "842ffe33a8a993e1d6c82ba846f054a25312b25f01ee34791fd05ad2871ddf7d",
+      "new_sha256": "f1b0cd32b9190fdabf954e1a57a2191cb53fd2543072c5965521625348b428de",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/audit_reference_geometry.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/audit_reference_geometry.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/audit_reference_geometry.py",
+      "old_sha256": "5aaaa36712de65e245dfb1fc4075aa9c0576141a48a8335d233462e4cf6d9953",
+      "new_sha256": "5aaaa36712de65e245dfb1fc4075aa9c0576141a48a8335d233462e4cf6d9953",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_resume.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_resume.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_resume.py",
+      "old_sha256": "a61428b7ee9792c0e757e2cbe7e6aab5a93c89c0ffb6ac03abd7a762140aa7b1",
+      "new_sha256": "f4059afccc044ed8db056ca563b6d144d3b5fd3bc0995b441e1c8d8bca232aaa",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/diagnose_launch_cause.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/diagnose_launch_cause.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/diagnose_launch_cause.py",
+      "old_sha256": "ad3f9f70c019dbf279e10248bce52af8c5b7623a9125a38f3b87185f6fab1611",
+      "new_sha256": "ad3f9f70c019dbf279e10248bce52af8c5b7623a9125a38f3b87185f6fab1611",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/render_numerical.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/render_numerical.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/render_numerical.py",
+      "old_sha256": "ba65e6429579d5fa09b2cb33b74fee19b182b9612386f1567e29f313555a1ef1",
+      "new_sha256": "959a889068a69af36c0cf1d8257c2ed9022e49492bdba1775a2094385a8ce8d1",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/diagnose_engine_divergence.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/diagnose_engine_divergence.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/diagnose_engine_divergence.py",
+      "old_sha256": "fba1c12b4df4ac4db1abc89e42ed0ad98fe9876384cba9ce3ff175ae5db2a446",
+      "new_sha256": "fba1c12b4df4ac4db1abc89e42ed0ad98fe9876384cba9ce3ff175ae5db2a446",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_reset_v2.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_reset_v2.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_reset_v2.py",
+      "old_sha256": "ecdc13743b2f287b62e5232e2eecdce11eafcb32672caf5bcf41da91844a621a",
+      "new_sha256": "ec9a8b19562bdba3562fd0d81a5a90af4864d296282179cda966e267840ab96d",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/diagnose_load_failures.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/diagnose_load_failures.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/diagnose_load_failures.py",
+      "old_sha256": "813c8732f40b8adbefd4d81f5d988dfbb266b74ce2853b161705f0da94f9429a",
+      "new_sha256": "813c8732f40b8adbefd4d81f5d988dfbb266b74ce2853b161705f0da94f9429a",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_history_v3.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_history_v3.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_history_v3.py",
+      "old_sha256": "0ad067e12946b27adc136b9a491ea003f8a21603621d1e4059625e14cb880846",
+      "new_sha256": "069302d40316c4b717207c724d1cbc974881a29537493fbebe711903443d0ff8",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/audit_iteration_run.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/audit_iteration_run.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/audit_iteration_run.py",
+      "old_sha256": "2ca2cfd784f7b799946c7618e82d39284a39626c9622b17d7dd11cd798eb792c",
+      "new_sha256": "2ca2cfd784f7b799946c7618e82d39284a39626c9622b17d7dd11cd798eb792c",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check.py",
+      "old_sha256": "25ba0e10b6f0aa73fe70d49e1830895a3cc77b85b8531689e794d22199b61e02",
+      "new_sha256": "38132c0de5d59025e10409386aaa00edd6c5cabb3f4004e0a2946cbafcf38693",
+      "change": "known_structural_config_or_dependency_change"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/render_parking_integral.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/render_parking_integral.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/render_parking_integral.py",
+      "old_sha256": "2b761c8c27958b6e8104b25be3b298d5e83d7f506b85184e0afb10293de20e06",
+      "new_sha256": "2b761c8c27958b6e8104b25be3b298d5e83d7f506b85184e0afb10293de20e06",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/check_scoring_v2.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/check_scoring_v2.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/check_scoring_v2.py",
+      "old_sha256": "c7703e26a5644ba1136effe606a2a79eea93c157135519dd46b4279c2941b8cf",
+      "new_sha256": "c7703e26a5644ba1136effe606a2a79eea93c157135519dd46b4279c2941b8cf",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/agent/fudan_ppo_walk/report_single_step.py",
+      "new_path": "scripts/agent/fudan_ppo_walk/report_single_step.py",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/report_single_step.py",
+      "old_sha256": "799fc947129e50e783440d408f7535764f33901ebeff2cb2dedb05877821c862",
+      "new_sha256": "799fc947129e50e783440d408f7535764f33901ebeff2cb2dedb05877821c862",
+      "change": "unchanged"
+    },
+    {
+      "old_path": "scripts/mjlab.sh",
+      "new_path": "scripts/mjlab.sh",
+      "before_snapshot": "artifacts/fudan-structure-alignment-20261103/before/scripts/mjlab.sh",
+      "old_sha256": "d8ea642e28f1f38515d1fa5f2d77a219dd1e1a74869d117c9579fa5dc55dca22",
+      "new_sha256": "d8ea642e28f1f38515d1fa5f2d77a219dd1e1a74869d117c9579fa5dc55dca22",
+      "change": "unchanged"
+    }
+  ],
+  "new_files": [
+    {
+      "path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/source_migration.py",
+      "sha256": "025d3ff819113c8de51eca8fed642bda05224261576a3cdaf2812e26a340b037"
+    },
+    {
+      "path": "mjlab_training/src/ct_mjlab/rsl_rl/__init__.py",
+      "sha256": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8"
+    },
+    {
+      "path": "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/__init__.py",
+      "sha256": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8"
+    },
+    {
+      "path": "mjlab_training/src/ct_mjlab/rsl_rl/algorithms/__init__.py",
+      "sha256": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8"
+    },
+    {
+      "path": "mjlab_training/src/ct_mjlab/rsl_rl/modules/__init__.py",
+      "sha256": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8"
+    },
+    {
+      "path": "mjlab_training/src/ct_mjlab/rsl_rl/runners/__init__.py",
+      "sha256": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8"
+    },
+    {
+      "path": "mjlab_training/src/ct_mjlab/rsl_rl/storage/__init__.py",
+      "sha256": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8"
+    },
+    {
+      "path": "scripts/agent/fudan_ppo_walk/check_structure_alignment.py",
+      "sha256": "37ac4411ca4f4f9b3ae769beea14c79357f1f5af1a7c3ab3e7fb3652f369d940"
+    },
+    {
+      "path": "scripts/agent/fudan_ppo_walk/check_structure_suite.py",
+      "sha256": "e0bd1d0a40fac91948fe92a8d5553d199ec33b2dda7410e249e7e50b748ced34"
+    },
+    {
+      "path": "scripts/agent/fudan_ppo_walk/check_algorithm_alignment.py",
+      "sha256": "cde881a4dfcf131e43935e0932d5ff2f23730c618db668e26bba2f86371922d7"
+    },
+    {
+      "path": "scripts/agent/fudan_ppo_walk/check_structure_tools.py",
+      "sha256": "cf1c6a4e21af0295fc37d7760cef019ff21b3ba667f802dcd8e4ae47f682b407"
+    }
+  ],
+  "preexisting_changes": [
+    {
+      "path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/__main__.py",
+      "old_sha256": "d1da7d184f0c1605c22e756889b7c5d504a94b9b8a349752b4398bc01a56d253",
+      "old_snapshot": "artifacts/fudan-gpu-only-validation-20261102/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/__main__.py",
+      "pre_migration_sha256": "19dd2f3ba542254b7dc862b4b81671e1080db2ac20902c5701b1e1d2bc0d49c4",
+      "reason": "Already present before this task: parking sampling, explicit v2 continuation and integral diagnosis; preserved"
+    },
+    {
+      "path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/runner.py",
+      "old_sha256": "60e1070ffc722c874931fe6fdd27bc84941371caaff1ec8dc8181ecce7f4b59f",
+      "old_snapshot": "artifacts/fudan-gpu-only-validation-20261102/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/runner.py",
+      "pre_migration_sha256": "401e4e319ddd032fb0e07a00cbb3129c3b3d06ce513f4f37f42f7b06869fb154",
+      "reason": "Already present before this task: parking sampling, explicit v2 continuation and integral diagnosis; preserved"
+    },
+    {
+      "path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/measurement.py",
+      "old_sha256": "cc28a84df5f749cc1893f09c9bac8abcbbbb56ef10fe22bf35ed22f1663d8ea7",
+      "old_snapshot": "artifacts/fudan-gpu-only-validation-20261102/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/measurement.py",
+      "pre_migration_sha256": "10ef8e66ffc2f45cd23d2b0f8022cf1e2b9c704fcd95ae0a9cf5764649eeeafb",
+      "reason": "Already present before this task: parking sampling, explicit v2 continuation and integral diagnosis; preserved"
+    },
+    {
+      "path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/config.py",
+      "old_sha256": "870d251fb5e892d6ce1da001fd9eeb0dbd8e37e1619c055469e7907a53c511ec",
+      "old_snapshot": "artifacts/fudan-gpu-only-validation-20261102/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/config.py",
+      "pre_migration_sha256": "486a54e0568f08607db6ba93cb0a4a2419be9c816b076bad489ce704f972b594",
+      "reason": "Already present before this task: parking sampling, explicit v2 continuation and integral diagnosis; preserved"
+    },
+    {
+      "path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/env.py",
+      "old_sha256": "21d668c95d786a7acacdd55dc8067fdf353d517c6edf55ba65b94930ba13c383",
+      "old_snapshot": "artifacts/fudan-gpu-only-validation-20261102/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/env.py",
+      "pre_migration_sha256": "dbb945e061584f0e2cb79767d09d827f2d161d19133ecb5fe6d4945811caeb21",
+      "reason": "Already present before this task: parking sampling, explicit v2 continuation and integral diagnosis; preserved"
+    }
+  ],
+  "algorithm_validation": "scripts.agent.fudan_ppo_walk.check_structure_alignment",
+  "historical_snapshots_modified": false,
+  "unknown_hashes_rejected": true
+}

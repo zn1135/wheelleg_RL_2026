@@ -45,6 +45,8 @@ def training_viewer(env, port):
 
 
 def train(args):
+    if args.task == "fudan_ppo_walk":
+        return train_fudan(args)
     if args.task != "smp" or args.smp_prior is None:
         raise ValueError("Only retained BC/SMP PPO is supported; use --task smp --smp-prior, or ct_mjlab.supermimic")
     env_cfg, train_cfg = task_registry.get_cfgs(args.task)
@@ -102,8 +104,101 @@ def train(args):
         env.close()
 
 
-def main():
-    args = get_args(__doc__, extra=(
+
+def train_fudan(args):
+    import json
+    import time
+    import torch
+    from ct_mjlab.fudan_ppo_walk.contract import RESET_CONTRACT, RESET_V2_CONTRACT
+    from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config, from_record
+    from ct_mjlab.envs.fudan_ppo_walk.commands import command_config, LEGACY_COMMAND_SAMPLING
+    from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import snapshot
+    if args.smp_weight is not None or any(getattr(args, name, None) for name in ('smp_prior', 'bc_init', 'ppo_init', 'phase_mix', 'wheel_std', 'bc_finetune', 'viewer')):
+        raise ValueError('SMP/BC options and the generic viewer do not apply to Fudan training')
+    if args.num_envs is None or args.log_dir is None or args.precheck is None:
+        raise ValueError('Fudan training requires --num-envs, --log-dir and --precheck')
+    if (args.deadline is None) == (args.iterations is None):
+        raise ValueError('Fudan training requires exactly one deadline or iteration budget')
+    if args.preserve_history_v2 and args.migrate_history_v2:
+        raise ValueError('History preservation and migration are mutually exclusive')
+    if not args.device.startswith('cuda'):
+        raise ValueError('Fudan training requires the GPU physical backend')
+    torch.set_num_threads(1)
+    source = torch.load(args.resume, map_location='cpu', weights_only=False) if args.resume is not None else {}
+    if args.preserve_history_v2 and (args.resume is None or source.get('reset_contract') != RESET_V2_CONTRACT):
+        raise ValueError('--preserve-history-v2 requires a source v2 checkpoint')
+    target_reset = RESET_V2_CONTRACT if args.preserve_history_v2 else RESET_CONTRACT
+    env_cfg, train_cfg = task_registry.get_cfgs(args.task)
+    if args.seed is not None:
+        train_cfg.seed = args.seed
+    env_cfg.reset_contract = target_reset
+    disturbances = from_task_config(env_cfg)
+    proof = json.loads(args.precheck.read_text())
+    if not proof['passed'] or proof.get('reset_contract') != target_reset or proof.get('kind') != 'physical-visible-precheck' or (proof.get('num_envs') != 20) or (proof.get('physics_steps', 0) <= 0):
+        raise ValueError('A passed current reset/history physical precheck is required; older prechecks cannot approve this recipe')
+    if from_record(proof.get('disturbances')) != disturbances:
+        raise ValueError('Physical precheck disturbance settings differ from the requested training settings')
+    if proof.get('command_sampling', LEGACY_COMMAND_SAMPLING) != command_config(env_cfg):
+        raise ValueError('Physical precheck command sampling differs from the requested training settings')
+    if args.migrate_history_v2 and args.resume is None:
+        raise ValueError('--migrate-history-v2 requires --resume')
+    if args.num_envs % train_cfg.algorithm.num_mini_batches:
+        raise ValueError('Four equal reference minibatches required')
+    if args.iterations is not None and args.iterations <= 0:
+        raise ValueError('Iteration budget must be positive')
+    if args.deadline is not None and time.time() >= args.deadline:
+        raise ValueError('Training budget already expired')
+    torch.manual_seed(train_cfg.seed)
+    args.log_dir.mkdir(parents=True, exist_ok=False)
+    snapshot(args.log_dir)
+    env = None
+    try:
+        env, env_cfg = task_registry.make_env(
+            args.task,
+            env_cfg=env_cfg,
+            train_cfg=train_cfg,
+            num_envs=args.num_envs,
+            seed=train_cfg.seed,
+            device=args.device
+        )
+        options = {}
+        if args.migrate_history_v2:
+            options['migrate_history_v2'] = True
+        if from_record(source.get('disturbances')) != disturbances:
+            options['allow_disturbance_change'] = True
+        runner, train_cfg = task_registry.make_alg_runner(
+            env,
+            args.task,
+            train_cfg=train_cfg,
+            log_dir=args.log_dir,
+            resume=args.resume,
+            resume_options=options,
+            device=args.device
+        )
+        report = runner.learn_until(float('inf'), max_iterations=runner.iteration + args.iterations) if args.iterations is not None else runner.learn_until(args.deadline)
+        print(json.dumps(report, indent=2), flush=True)
+    except BaseException as exc:
+        (args.log_dir / 'failure.json').write_text(json.dumps(dict(error=repr(exc), time=time.time()), indent=2) + '\n')
+        if env is not None:
+            import numpy as np
+            np.savez_compressed(
+                args.log_dir / 'failure_state.npz',
+                qpos=env.env.sim.data.qpos.cpu().numpy(),
+                qvel=env.env.sim.data.qvel.cpu().numpy()
+            )
+        raise
+    finally:
+        if env is not None:
+            env.close()
+
+
+def main(argv=None):
+    args = get_args(__doc__, argv=argv, extra=(
+        (('--log-dir',), dict(type=Path, default=None)),
+        (('--deadline',), dict(type=float, default=None)),
+        (('--precheck',), dict(type=Path, default=None)),
+        (('--preserve-history-v2',), dict(action='store_true')),
+        (('--migrate-history-v2',), dict(action='store_true')),
         (('--iterations',), dict(type=int, default=None, help='Override max_iterations')),
         (('--run-name',), dict(default='')),
         (('--viewer',), dict(choices=('viser',), default=None,
@@ -121,6 +216,10 @@ def main():
         (('--bc-finetune',), dict(nargs='?', const='v1', default=False, choices=('v1', 'v2', 'isaac-standup', 'isaac-standup-v2', 'isaac-standup-v3'),
                                 help='Nominal BC refinement; isaac-standup uses Isaac pre-unlock task rewards')),
     ))
+    if args.task == 'fudan_ppo_walk':
+        if args.preserve_history_v2 and args.migrate_history_v2:
+            raise SystemExit(2)
+        return train(args)
     # Fail before building the GPU environment.
     if '/' in args.run_name or '\\' in args.run_name:
         raise SystemExit('--run-name must be a label, not a path')

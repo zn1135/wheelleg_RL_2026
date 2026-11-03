@@ -11,9 +11,9 @@ from unittest.mock import patch
 import numpy as np
 import torch
 
-from ct_mjlab.fudan_ppo_walk.env import FudanEnv
+from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 from ct_mjlab.fudan_ppo_walk.contract import RESET_V2_CONTRACT
-from ct_mjlab.fudan_ppo_walk.storage import RolloutStorage
+from ct_mjlab.rsl_rl.storage.fudan_rollout_storage import RolloutStorage
 
 
 def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()

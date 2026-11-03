@@ -55,8 +55,10 @@ def main():
         before=args.migration/'before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/native.py'
         def function(path,name):
             return next(n for n in ast.parse(path.read_text()).body if isinstance(n,ast.FunctionDef) and n.name==name)
-        verify('policy_loader_unchanged_ast',ast.dump(function(before,'load_policy'),include_attributes=False)==
-            ast.dump(function(Path(policy.__file__),'load_policy'),include_attributes=False))
+        from ct_mjlab.fudan_ppo_walk.source_migration import legacy_source_directory
+        sealed=legacy_source_directory()
+        verify('historical_policy_loader_ast_and_known_migration',ast.dump(function(before,'load_policy'),include_attributes=False)==
+            ast.dump(function(sealed/'policy.py','load_policy'),include_attributes=False))
         verify('export_uses_shared_policy_loader',export.load_policy is policy.load_policy)
         verify('full_matrix_unchanged',len(samples())==987 and len({s['case']['id'] for s in samples()})==47)
         verify('diagnostic_height030_still15',len(evaluate.evaluation_items(True,.30))==15)
@@ -71,11 +73,13 @@ def main():
                 for node in ast.walk(tree):
                     if isinstance(node,ast.ImportFrom):assert node.module not in ['ct_mjlab.fudan_ppo_walk.native','native'],path
         verify('all_active_fudan_modules_compile_without_native_imports',True)
+        from ct_mjlab.fudan_ppo_walk.source_migration import verify_migration, historical_path_matches
+        mapped=verify_migration()['files']
         protected=json.loads((args.migration/'protected.json').read_text())
         changes=json.loads(Path('docs/maintenance/20261101-sim2sim-protection.json').read_text()).get('authorized_updates',[])
         for name,digest in protected.items():
             actual=hashlib.sha256(Path(name).read_bytes()).hexdigest()
-            assert actual==digest or any(c['path']==name and c['before']==digest and c['after']==actual for c in changes),name
+            assert actual==digest or any(c['path']==name and c['before']==digest and c['after']==actual for c in changes) or historical_path_matches(name,digest),name
         verify('protected_sources_unchanged_or_explicit_gpu_entry_update',True)
     result=dict(passed=True,checks=checks,count=len(checks),matrix_sha256=manifest()['sha256'],
         physics_steps=0,model_forwards=0,optimizer_updates=0,

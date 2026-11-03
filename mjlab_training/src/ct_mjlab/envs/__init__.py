@@ -9,8 +9,10 @@ task_registry.register('smp', env_cfg=make_multimode_env_cfg,
     train_cfg=make_multimode_ppo_cfg, runner_class=MultimodeOnPolicyRunner)
 task_registry.register('supermimic', env_cfg=make_walk_env_cfg,
     train_cfg=make_walk_ppo_cfg, runner_class=SplitOnPolicyRunner)
-from ..fudan_ppo_walk import make_env_cfg as make_fudan_env_cfg, make_train_cfg as make_fudan_train_cfg, make_runner as FudanRunner
+from .fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, FudanWalkCfgPPO
 
-task_registry.register('fudan_ppo_walk', env_cfg=make_fudan_env_cfg,
-    train_cfg=make_fudan_train_cfg, runner_class=FudanRunner)
+task_registry.register('fudan_ppo_walk', env_cfg=lambda play=False: FudanWalkCfg(),
+    train_cfg=FudanWalkCfgPPO,
+    task_class='ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',
+    runner_class='ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner')
 __all__ = ['task_registry']

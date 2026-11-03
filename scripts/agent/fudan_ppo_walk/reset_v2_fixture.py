@@ -2,9 +2,10 @@
 from types import SimpleNamespace, MethodType
 import numpy as np
 import torch
-from ct_mjlab.fudan_ppo_walk.env import FudanEnv,PhysicalAction,reset_pose
-from ct_mjlab.fudan_ppo_walk.reset_geometry import ResetGeometry
+from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv,PhysicalAction,reset_pose
+from ct_mjlab.envs.fudan_ppo_walk.reset_geometry import ResetGeometry
 from ct_mjlab.fudan_ppo_walk.contract import MOTORS,RESET_V2_CONTRACT
+from ct_mjlab.envs.fudan_ppo_walk.commands import initialize,LEGACY_COMMAND_SAMPLING
 
 
 class ModelFacade:
@@ -18,8 +19,13 @@ def fixture(n=4,reset_contract=RESET_V2_CONTRACT):
     solver=ResetGeometry();model=solver.model
     pose=solver.solve([solver.baseline[name] for name in MOTORS])
     env=object.__new__(FudanEnv)
+    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, policy_dt, episode_steps
+    env.cfg=FudanWalkCfg()
+    env.dt=policy_dt(env.cfg)
+    env.max_episode_length=episode_steps(env.cfg)
     env.reset_contract=reset_contract
     env.num_envs=n;env.device='cpu';env.total_steps=0;env.speed_limit=2.;env.randomized=True
+    initialize(env,dict(LEGACY_COMMAND_SAMPLING))
     env.episode_steps=torch.zeros(n,dtype=torch.long);env.fail_ticks=torch.zeros(n,dtype=torch.long)
     env.commands=torch.zeros(n,3);env.history=torch.zeros(n,125)
     env._history_needs_fill=torch.zeros(n,dtype=torch.bool)
@@ -54,6 +60,8 @@ def fixture(n=4,reset_contract=RESET_V2_CONTRACT):
     robot=SimpleNamespace(data=data,joint_names=names,body_names=[model.body(i).name for i in range(1,model.nbody)],
         indexing=SimpleNamespace(joint_q_adr=joint_q,body_ids=torch.arange(1,model.nbody)),
         write_root_state_to_sim=write_root,write_joint_state_to_sim=write_joints)
+    from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig
+    action.cfg=SimpleNamespace(task_cfg=env.cfg,disturbances=DisturbanceConfig())
     action._entity=robot;action._raw_actions=action.raw_action
     action.rebuild_reset_poses=MethodType(PhysicalAction.rebuild_reset_poses,action)
     scene={'robot':robot};scene=Scene(scene);scene.env_origins=origins;scene.update=lambda **kw:None
@@ -62,6 +70,7 @@ def fixture(n=4,reset_contract=RESET_V2_CONTRACT):
         recompute_constants=lambda *a:None,forward=lambda:None,sense=lambda:None)
     env.action=action;env.robot=robot;env.events=[];env.mock_physics_calls=0;env.reset_calls=[];env.resample_calls=[]
     env.env=SimpleNamespace(sim=sim,scene=scene,device='cpu',num_envs=n,
+        cfg=SimpleNamespace(_fudan_task_cfg=env.cfg),
         episode_length_buf=torch.zeros(n,dtype=torch.long),common_step_counter=0,
         action_manager=SimpleNamespace(get_term=lambda name:action))
     def physics_step(actions):
@@ -88,3 +97,13 @@ def fixture(n=4,reset_contract=RESET_V2_CONTRACT):
 
 class Scene(dict):
     pass
+
+
+def runner_configuration(runner):
+    """给object.__new__构造的检查夹具补齐生产runner配置，不执行优化器。"""
+    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, FudanWalkCfgPPO, section_dict
+    runner.train_cfg = FudanWalkCfgPPO()
+    runner.ppo_config = section_dict(runner.train_cfg.algorithm)
+    runner.num_steps_per_env = runner.train_cfg.runner.num_steps_per_env
+    if hasattr(runner, 'env') and not hasattr(runner.env, 'cfg'):
+        runner.env.cfg = FudanWalkCfg()

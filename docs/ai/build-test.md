@@ -1,5 +1,11 @@
 # 构建与验证
 
+复旦原并联模型零速诊断：`scripts.agent.fudan_ppo_walk.probe_reference_zero check --output <新目录>`仅核对原脚本观测/历史/动作和资产指纹；`run`须另获600秒授权，使用原默认ONNX和控制函数，Warp GPU物理，不与本仓串联策略混载。原场景在30cm平台上，窗口内用`report_reference_zero --recording <目录>`对已保存姿态核对支撑面、生成高度修正的派生记录，再用`scripts/mjlab.sh accept --task fudan_ppo_walk --recording <目录>/platform-relative --output <新评分目录>`统一评分。原世界坐标、原评分和视频保留；实际控制周期、证据及复现命令见[本次记录](../../artifacts/fudan-original-parallel-zero-20261103/run/README.md)。
+
+复旦显式v2保留续训：`check_preserve_v2 --checkpoint <原7000模型> --output <新JSON>`验证24项实际CPU/CUDA学习状态/RNG恢复、预检合同与采样拒绝、默认v3保留及真实循环7000→8000边界（采样/更新替代，0物理/NN/Adam）；`precheck --history-version v2 --viewer viser ...`才生成本次匹配的真实20环境预检。训练入口显式`--preserve-history-v2`，与`--migrate-history-v2`互斥。完成后`audit_resume_run`核对1000轮、v2→v2、源快照、16项日志与两Adam计数。[实际命令及授权](../../artifacts/fudan-parking-resume7000-to8000-20261102/RUNNING.md)。
+
+复旦停车诊断：`fudan_ppo_walk.diagnose_parking --check-only`只检查替换倍率和作用行；动态入口须另获最多300秒预算，记录同初态原模型／停车前向真值／三轴真值三组，冻结权重。`report_parking --experiment <记录> --output <新报告目录>`仅离线CSV／绘图。`check_parking_commands --output <新JSON>`检查实际复位／步进中的10%保持＋10%停车采样、时间边界、关闭回退及保存恢复，物理／前向／更新0；[接口和命令](../interfaces/20261102-fudan-parking-commands.md)。
+
 最终验收现统一为GPU、共用运动门槛及报告，见[统一GPU验收](../interfaces/20261102-unified-gpu-acceptance.md)。主线统一入口为`scripts/mjlab.sh accept --task <任务> --recording <GPU记录> --output <新目录>`；起立单列，旧CPU流程仅保留历史含义。
 
 复旦当前最终验证仅GPU：[约定](../interfaces/20261102-fudan-gpu-validation.md)。`check_gpu_validation --migration artifacts/fudan-gpu-only-validation-20261102 --output <新JSON>`检查默认GPU、拒绝CPU参数、几何预检及导出依赖，0物理/NN/更新。历史CPU只读报告不再提供动态入口。
@@ -83,3 +89,6 @@ mjlab_training/.venv/bin/python -m scripts.agent.maintenance.check_script_entrie
 复旦历史同状态单2ms动态入口`probe_single_step`已撤销，原源码见[清理前快照](../../artifacts/fudan-gpu-only-validation-20261102/before/)；`report_single_step`仍可只读已有记录，0新增物理/NN。[历史结果](../../artifacts/fudan-single-step-7000-20261102/report-final/README.md)保持，不作为当前CPU入口。
 
 统一验收正式程序检查：`PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.motion.check_acceptance --baseline artifacts/unified-gpu-acceptance-20261102 --output <新JSON>`，核对四项边界、CPU拒绝、丢样本/缺字段、任务适配及同初态退化否决，0物理/NN/更新。Isaac仅检查新增GPU守卫AST，未运行旧环境动态。旧评分v2检查仍单独保留。
+复旦8000停车积分：`fudan_ppo_walk.check_parking_integral --output <新目录>/checks.json`做门控/20ms均值/限幅/局部复位/非有限/真实v2历史推进、135归档初态替代恢复、严格差值留证、步后反馈时序及失败报告的无物理检查；`run_parking_integral --output <同目录>`仅在当次授权内执行135条GPU三分支、统一评分和三份并排视频。默认关闭，不加功能CLI，不训练；单一600秒及360秒回放硬截止，具体反馈相位、固定窗口和边界见[独立协议](../interfaces/20261103-fudan-parking-integral.md)。
+
+复旦结构整理正式入口：`PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_walk.check_structure_suite --output <新检查目录>`。外层禁止真实物理环境构造、积分及Adam更新；覆盖注册链路、配置消费者、迁移前后逐值比较、冻结8000模型、PPO梯度/顺序、两优化器恢复、v2/v3/预算/日志、积分r2及GPU入口。源迁移用明确哈希链核对，不能关闭来源校验；[说明与证据](../maintenance/20261103-fudan-structure-alignment.md)。

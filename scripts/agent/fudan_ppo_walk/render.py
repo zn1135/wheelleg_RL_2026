@@ -5,7 +5,7 @@ import numpy as np
 import mujoco
 import imageio.v2 as imageio
 from PIL import Image,ImageDraw
-from ct_mjlab.fudan_ppo_walk.runner import sha
+from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import sha
 
 
 def main():

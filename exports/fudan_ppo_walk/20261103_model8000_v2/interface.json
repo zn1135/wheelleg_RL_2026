@@ -1,0 +1,69 @@
+{
+  "contract": "fudan-ppo-walk-physical25-history125-critic144-v1",
+  "reset_contract": "fudan-physical-pd-centred-warmup-clean4-noisy1-unclipped-history-v2",
+  "history_preprocessing": {
+    "frames": 5,
+    "order": "oldest_to_newest",
+    "frame_size": 25,
+    "clip": 100.0,
+    "initial_fill": "clean4_noisy1",
+    "history_before_clip": true,
+    "runtime_sensor_noise": "use_sensor_readings; do_not_add_simulation_noise_on_hardware"
+  },
+  "checkpoint_sha256": "39fa104d176f82a33db8317a75b4db28749362daf6bc4d2e06cb83d2c5ae32c9",
+  "onnx_sha256": "ceccf25e06f0f2598c498c35ad58942423ae344050bb888d7f5009104c0e5fcb",
+  "cpu_onnx_max_abs_error": 9.5367431640625e-07,
+  "input": {
+    "obs": [
+      1,
+      25
+    ],
+    "obs_history": [
+      1,
+      125
+    ]
+  },
+  "output": {
+    "actions": [
+      1,
+      6
+    ]
+  },
+  "policy_dt_s": 0.01,
+  "pd_dt_s": 0.002,
+  "additional_action_delay_s": 0.0,
+  "additional_sensor_delay_s": 0.0,
+  "training_disturbances": {
+    "version": "fudan-optional-disturbances-v1",
+    "action_delay": false,
+    "sensor_delay": false,
+    "pushes": false,
+    "action_delay_ms": [
+      0.0,
+      10.0
+    ],
+    "sensor_delay_ms": null,
+    "push_interval_s": 7.0,
+    "max_push_vel": 2.0
+  },
+  "training_command_sampling": {
+    "version": "fudan-parking-commands-v1",
+    "standstill_env_ratio": 0.1,
+    "stop_env_ratio": 0.1,
+    "stop_drive_time_s": [
+      3.0,
+      5.0
+    ],
+    "stop_speed_range": [
+      0.25,
+      1.0
+    ],
+    "parking_heights": [
+      0.22,
+      0.26,
+      0.3
+    ]
+  },
+  "runtime_disturbances": "simulation_only; queues and forces are outside ONNX; measure real hardware timing",
+  "h7": "not_adapted_pending_owner_confirmation"
+}

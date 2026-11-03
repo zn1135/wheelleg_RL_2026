@@ -1,5 +1,9 @@
 # 复旦 PPO 行走配方适配规格（fudan-ppo-walk-physical-v1）
 
+当前训练已统一进入`mjlab.sh train --task fudan_ppo_walk → scripts/train.py → task_registry → 任务环境/配置 → runner → PPO`。环境与集中配置在`envs/fudan_ppo_walk/`，训练算法组件在`rsl_rl/`；旧命令只作兼容转入。最新模型仍8000轮/v2，独立积分默认关闭；本轮仅无物理等价验证，未训练/评估。下文历史命令及记录按原日期保留，实际日常位置见[迁移与验证说明](maintenance/20261103-fudan-structure-alignment.md)。
+
+2026-11-02新增[停车命令采样v1](interfaces/20261102-fudan-parking-commands.md)：`config.py/FudanWalkCfg.commands`默认10%原地保持、10%行驶3～5秒后停车至复位，停车回合覆盖0.22/0.26/0.30m；其余80%沿用原命令采样。两个比例设0可恢复原采样。只做代码准备与无物理检查，未训练新权重；16奖励、网络、PD与历史定义不变，固定评估命令不变。
+
 当前最终评分改用[统一GPU验收](interfaces/20261102-unified-gpu-acceptance.md)：`scripts/mjlab.sh accept --task fudan_ppo_walk --recording <GPU目录> --output <新验收目录>`。运动门槛0.10m/s、0.10rad/s、停车峰值0.05m/s、俯仰5°，旧v2宽门槛保留历史，轮载/短触地/高度/矩阵保持。
 
 2026-11-02按用户要求，复旦最终sim2sim验证统一使用GPU，CPU物理入口已删除，见[GPU最终验证约定](interfaces/20261102-fudan-gpu-validation.md)。当前`evaluate`默认GPU，也兼容显式`evaluate gpu`；原CPU成绩与下文首轮双引擎描述仅属历史，不是当前验收要求。训练／模型／物理和v2评分门槛保持。
