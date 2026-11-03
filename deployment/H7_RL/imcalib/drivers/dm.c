@@ -1,9 +1,6 @@
 /*
- * 文件职责：达妙髋电机MIT协议与状态/使能管理（dm.c）。
- * 输入/来源：CAN反馈、机器ID/极性/零点/MIT量程与四髋力矩请求。
- * 输出/去向：解析物理角/速/矩和接收时间，维护在线/故障/使能，量化MIT命令并发送。
- * 关键边界：所有实体极性/零点在驱动边界统一处理；控制层传物理量，不再重复乘符号。
- * 阅读入口：md/file-guide.md；参数当前值以源码为准。
+ * 解析达妙MIT反馈并按机器配置生成髋角rad、速度rad/s、力矩N·m和在线/使能状态。
+ * 力矩命令经既定极性和MIT量程编码发送；使能/失能看门狗负责补发状态命令。
  */
 
 #include "dm.h"
@@ -57,35 +54,25 @@ uint16_t Dm_Float_To_Uint(float value, float min, float max, uint8_t bits)
     return (uint16_t)(uint32_t)scaled;
 }
 
-/* 计圈数 */
+/* 解码方向下跨边界计圈；LQR使用的pos_zero_rad保持原值。 */
 static void Dm_Update_Angle(uint8_t index)
 {
     static uint16_t last_angle[DM_MOTOR_NUM];
     static int32_t turns[DM_MOTOR_NUM];
-    static uint32_t inited;
+    static uint8_t initialized[DM_MOTOR_NUM];
     dm_motor_feedback_t *feedback = &dm_motor_feedback[index];
     int32_t delta;
 
-    if (!(inited & (1UL << index)))
+    if (initialized[index])
     {
-        last_angle[index] = feedback->angle_raw;
-        feedback->angle_total = feedback->angle_raw;
-        inited |= 1UL << index;
-        return;
+        delta = (int32_t)feedback->angle_raw - (int32_t)last_angle[index];
+        if (delta > DM_ANGLE_CPR / 2L) { turns[index]--; }
+        else if (delta < -DM_ANGLE_CPR / 2L) { turns[index]++; }
     }
-
-    delta = (int32_t)feedback->angle_raw - (int32_t)last_angle[index];
-    if (delta > (DM_ANGLE_CPR / 2L))
-    {
-        turns[index]--;
-    }
-    else if (delta < -(DM_ANGLE_CPR / 2L))
-    {
-        turns[index]++;
-    }
-
     last_angle[index] = feedback->angle_raw;
+    initialized[index] = 1u;
     feedback->angle_total = turns[index] * DM_ANGLE_CPR + feedback->angle_raw;
+    feedback->pos_continuous_rad = feedback->pos_zero_rad + (float)turns[index] * (2.0f * machine->hip.dm_pos_max);
 }
 
 /* 中断收 */
@@ -113,7 +100,7 @@ void Dm_Init(void)
     for (uint8_t i = 0; i < DM_MOTOR_NUM; i++)
     {
         const dm_motor_config_t *config = &dm_motor_config[i];
-        FDCAN_HandleTypeDef *handle = Can_Bus_Handle(machine->dm_bus[i]);
+        FDCAN_HandleTypeDef *handle = Can_Bus_Handle(machine->hip.dm_bus[i]);
 
         /* 总线/报文ID直接取固定表；接收帧与实际发送结果仍由CAN层处理。 */
         /* 反馈 ID 兼容两种 Master ID: 0x10+ID (表里值) 与 0+ID (等同控制 ID) */
@@ -125,7 +112,6 @@ void Dm_Init(void)
     }
 }
 
-/* 解码值 */
 /*
  * CAN协议反馈先解量程，再按机器表零点/极性转物理量，保存真实接收时刻。
  * 状态、故障和在线由驱动维护；未更新的报文不能冒充新力反馈。
@@ -158,19 +144,17 @@ void Dm_Parse(void)
         feedback->trq_raw    = ((uint16_t)(raw_data[4] & 0x0Fu) << 8) | raw_data[5];
         feedback->temp_mos   = raw_data[6];
         feedback->temp_rotor = raw_data[7];
-        if (machine->dm_sign[i].fb < 0)
+        if (machine->hip.dm_sign[i].fb < 0)
         {
             feedback->angle_raw = (uint16_t)(DM_ANGLE_CPR - 1L - feedback->angle_raw);
             feedback->vel_raw = (uint16_t)(DM_MIT_FIELD_MAX - feedback->vel_raw);
             feedback->trq_raw = (uint16_t)(DM_MIT_FIELD_MAX - feedback->trq_raw);
         }
-        feedback->pos_rad = Dm_Uint_To_Float(feedback->angle_raw, -machine->dm_pos_max, machine->dm_pos_max, 16u);
-        feedback->pos_zero_rad = feedback->pos_rad + machine->dm_zero[i];
-        feedback->vel_rad_s = Dm_Uint_To_Float(feedback->vel_raw, -machine->dm_vel_max, machine->dm_vel_max, 12u);
-        feedback->trq_nm = Dm_Uint_To_Float(feedback->trq_raw, -machine->dm_trq_max, machine->dm_trq_max, 12u);
+        feedback->pos_rad = Dm_Uint_To_Float(feedback->angle_raw, -machine->hip.dm_pos_max, machine->hip.dm_pos_max, 16u);
+        feedback->pos_zero_rad = feedback->pos_rad + machine->hip.dm_zero[i];
         Dm_Update_Angle(i);
-        /* 原单圈标定角加计圈量得到RL连续角，避免跨±π产生跳变；旧几何反馈保持原值。 */
-        feedback->pos_continuous_rad = feedback->pos_zero_rad + (float)((feedback->angle_total - (int32_t)feedback->angle_raw) / DM_ANGLE_CPR) * (2.0f * machine->dm_pos_max);
+        feedback->vel_rad_s = Dm_Uint_To_Float(feedback->vel_raw, -machine->hip.dm_vel_max, machine->hip.dm_vel_max, 12u);
+        feedback->trq_nm = Dm_Uint_To_Float(feedback->trq_raw, -machine->hip.dm_trq_max, machine->hip.dm_trq_max, 12u);
         feedback->parsed_rx_ns = rx_ns;
         feedback->parsed_seen = 1u;
     }
@@ -271,7 +255,7 @@ HAL_StatusTypeDef Dm_Mit_Control(uint8_t index, uint16_t angle_raw,
     data[6] = (uint8_t)((kd_raw << 4) | (trq_raw >> 8));
     data[7] = (uint8_t)trq_raw;
 
-    return Can_Bus_Transmit(Can_Bus_Handle(machine->dm_bus[index]), config->control_id, data, sizeof(data));
+    return Can_Bus_Transmit(Can_Bus_Handle(machine->hip.dm_bus[index]), config->control_id, data, sizeof(data));
 }
 
 /* 发命令 */
@@ -292,7 +276,7 @@ HAL_StatusTypeDef Dm_Send_Command(uint8_t index, uint8_t command)
 
     config = &dm_motor_config[index];
     data[7] = command;
-    return Can_Bus_Transmit(Can_Bus_Handle(machine->dm_bus[index]), config->control_id, data, sizeof(data));
+    return Can_Bus_Transmit(Can_Bus_Handle(machine->hip.dm_bus[index]), config->control_id, data, sizeof(data));
 }
 
 /* 广播状态命令 */
@@ -325,7 +309,7 @@ HAL_StatusTypeDef Dm_All_Disable(void)
 /* 全部零力矩 */
 HAL_StatusTypeDef Dm_Send_Zero(void)
 {
-    const uint16_t zero_trq_raw = Dm_Float_To_Uint(0.0f, -machine->dm_trq_max, machine->dm_trq_max, 12u);
+    const uint16_t zero_trq_raw = Dm_Float_To_Uint(0.0f, -machine->hip.dm_trq_max, machine->hip.dm_trq_max, 12u);
     HAL_StatusTypeDef status = HAL_OK;
 
     for (uint8_t i = 0u; i < DM_MOTOR_NUM; i++)
@@ -338,11 +322,7 @@ HAL_StatusTypeDef Dm_Send_Zero(void)
     return status;
 }
 
-/* 全部力矩 */
-/*
- * 接收四髋物理力矩，在MIT发送边界按既有输出标定量化并发帧。
- * 控制器不需要再次乘电机极性；返回状态只表示底层发送调用结果。
- */
+/* 将四髋物理力矩按配置极性/MIT量程编码成纯力矩命令，依次提交到各电机总线。 */
 HAL_StatusTypeDef Dm_Send_Torque(const float torque[DM_MOTOR_NUM])
 {
     HAL_StatusTypeDef status = HAL_OK;
@@ -351,11 +331,11 @@ HAL_StatusTypeDef Dm_Send_Torque(const float torque[DM_MOTOR_NUM])
     for (uint8_t i = 0u; i < DM_MOTOR_NUM; i++)
     {
         command_torque = torque[i];
-        if (machine->dm_sign[i].out < 0)
+        if (machine->hip.dm_sign[i].out < 0)
         {
             command_torque = -command_torque;
         }
-        uint16_t trq_raw = Dm_Float_To_Uint(command_torque, -machine->dm_trq_max, machine->dm_trq_max, 12u);
+        uint16_t trq_raw = Dm_Float_To_Uint(command_torque, -machine->hip.dm_trq_max, machine->hip.dm_trq_max, 12u);
         if (Dm_Mit_Control(i, DM_MIT_FIELD_MAX, DM_MIT_FIELD_MAX, 0u, 0u, trq_raw) != HAL_OK)
         {
             status = HAL_ERROR;

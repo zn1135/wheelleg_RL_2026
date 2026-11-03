@@ -1,9 +1,6 @@
 /*
- * 文件职责：DJI轮电机反馈与力矩到电流发送（dji.c）。
- * 输入/来源：CAN编码器/RPM/电流反馈、机器型号/减速比/极性与轮矩命令。
- * 输出/去向：解析连续角和轮速；换算力矩对应raw电流，按反馈ID槽位发送。
- * 关键边界：反馈极性与发送极性分别适用；零力矩是零电流指令，不代表轮子立即停止。
- * 阅读入口：md/file-guide.md；参数当前值以源码为准。
+ * 解析轮电机编码器、RPM和电流反馈，按减速比及极性生成轮轴物理量。
+ * 将请求轮矩N·m换算为raw电流槽位后发送；All_Stop发送零电流，不表示轮轴立即静止。
  */
 
 #include "dji.h"
@@ -40,13 +37,13 @@ volatile int16_t wheel_current[4];
 /* 转换角度 */
 float Dji_Encoder_To_Rad(int32_t encoder_count)
 {
-    return (float)encoder_count * (0.0007669903939f / machine->dji_gear_ratio);
+    return (float)encoder_count * (0.0007669903939f / machine->wheel.dji_gear_ratio);
 }
 
 /* 转换速度 */
 float Dji_Rpm_To_Rad_S(int16_t rpm)
 {
-    return (float)rpm * (0.1047197551f / machine->dji_gear_ratio);
+    return (float)rpm * (0.1047197551f / machine->wheel.dji_gear_ratio);
 }
 
 /* 力矩转电流 */
@@ -60,15 +57,15 @@ int16_t Dji_Torque_To_Current(uint8_t index, float torque_nm)
     {
         return 0;
     }
-    if (machine->dji_type == (uint8_t)DJI_M2006)
+    if (machine->wheel.dji_type == (uint8_t)DJI_M2006)
     {
         /* 输出轴刻度: 满电流堵转力矩 / 满raw, 再按实机总减速比缩放 */
-        per_raw = DJI_NM_FULL_M2006 / (float)DJI_CURRENT_MAX_M2006 * (machine->dji_gear_ratio / DJI_RATIO_STD_M2006);
+        per_raw = DJI_NM_FULL_M2006 / (float)DJI_CURRENT_MAX_M2006 * (machine->wheel.dji_gear_ratio / DJI_RATIO_STD_M2006);
         raw_max = DJI_CURRENT_MAX_M2006;
     }
     else
     {
-        per_raw = DJI_NM_FULL_M3508 / (float)DJI_CURRENT_MAX_M3508 * (machine->dji_gear_ratio / DJI_RATIO_STD_M3508);
+        per_raw = DJI_NM_FULL_M3508 / (float)DJI_CURRENT_MAX_M3508 * (machine->wheel.dji_gear_ratio / DJI_RATIO_STD_M3508);
         raw_max = DJI_CURRENT_MAX_M3508;
     }
     raw = (int32_t)(torque_nm / per_raw);
@@ -123,7 +120,7 @@ void Dji_Init(void)
         const dji_motor_config_t *config = &dji_motor_config[i];
         dji_motor_feedback_t *feedback = &dji_motor_feedback[i];
 
-        FDCAN_HandleTypeDef *handle = Can_Bus_Handle(machine->dji_bus);
+        FDCAN_HandleTypeDef *handle = Can_Bus_Handle(machine->wheel.dji_bus);
 
         /* 固定总线/反馈ID不做初始化合法性扫描，CAN层负责实际收发边界。 */
         Can_Bus_Register(handle, config->feedback_id, Dji_Read, feedback);
@@ -160,7 +157,7 @@ void Dji_Parse(void)
         feedback->current_raw = (int16_t)(((uint16_t)raw_data[4] << 8) | (uint16_t)raw_data[5]);
         feedback->temp_raw    = (int8_t)raw_data[6];
 
-        if (machine->dji_sign[i].fb < 0)
+        if (machine->wheel.dji_sign[i].fb < 0)
         {
             if (feedback->angle_raw != 0u)
             {
@@ -238,11 +235,7 @@ HAL_StatusTypeDef Dji_Send_Current(FDCAN_HandleTypeDef *hfdcan, uint32_t can_id,
     return Can_Bus_Transmit(hfdcan, can_id, data, sizeof(data));
 }
 
-/* 按 ID 选槽 */
-/*
- * 左右物理轮矩转换为电流raw，再按本机反馈ID映射到正确CAN槽位。
- * 发送极性在此边界应用；左右ID在两机器上可能不同，不能直接假定数组槽位相同。
- */
+/* 将左右轮轴力矩N·m换成驱动raw电流并填反馈ID对应槽位，提交轮电机控制帧。 */
 HAL_StatusTypeDef Dji_Send_Wheel_Torque(float left_torque_nm,
                                         float right_torque_nm)
 {
@@ -255,9 +248,9 @@ HAL_StatusTypeDef Dji_Send_Wheel_Torque(float left_torque_nm,
     wheel_current[1] = 0;
     wheel_current[2] = 0;
     wheel_current[3] = 0;
-    wheel_current[slot_l] = Dji_Torque_To_Current( DJI_MOTOR_WHEEL_LFT, left_torque_nm * (float)machine->dji_sign[DJI_MOTOR_WHEEL_LFT].out);
-    wheel_current[slot_r] = Dji_Torque_To_Current( DJI_MOTOR_WHEEL_RGT, right_torque_nm * (float)machine->dji_sign[DJI_MOTOR_WHEEL_RGT].out);
-    return Dji_Send_Current(Can_Bus_Handle(machine->dji_bus), cfg_l->control_id, wheel_current);
+    wheel_current[slot_l] = Dji_Torque_To_Current( DJI_MOTOR_WHEEL_LFT, left_torque_nm * (float)machine->wheel.dji_sign[DJI_MOTOR_WHEEL_LFT].out);
+    wheel_current[slot_r] = Dji_Torque_To_Current( DJI_MOTOR_WHEEL_RGT, right_torque_nm * (float)machine->wheel.dji_sign[DJI_MOTOR_WHEEL_RGT].out);
+    return Dji_Send_Current(Can_Bus_Handle(machine->wheel.dji_bus), cfg_l->control_id, wheel_current);
 }
 
 /* 全停机 */
@@ -269,7 +262,7 @@ HAL_StatusTypeDef Dji_All_Stop(void)
     wheel_current[1] = 0;
     wheel_current[2] = 0;
     wheel_current[3] = 0;
-    return Dji_Send_Current(Can_Bus_Handle(machine->dji_bus), config->control_id, wheel_current);
+    return Dji_Send_Current(Can_Bus_Handle(machine->wheel.dji_bus), config->control_id, wheel_current);
 }
 
 /* 查在线 */

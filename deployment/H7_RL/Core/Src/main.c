@@ -1,10 +1,8 @@
 /* USER CODE BEGIN Header */
 /*
- * 文件职责：上电初始化与主入口（main.c）。
- * 输入/来源：HAL复位、时钟/外设配置、机器选择。
- * 输出/去向：初始化通信/单调时钟/控制模块，创建RTOS并启动调度。
- * 关键边界：USB DMA存储和MPU适配在用户区；FDCAN附加时序套用目前未调用，实际参数看fdcan.c。
- * 阅读入口：md/file-guide.md；参数当前值以源码为准。
+ * 上电先准备USB专用DMA内存和MPU，再启用缓存、时钟及CubeMX外设。
+ * 用户初始化注册遥控/IMU/电机接收链，随后创建RTOS任务并启动调度。
+ * TIM6回调维护单调时钟并唤醒执行/策略任务；TIM23维护HAL毫秒时钟。
  */
 /**
   ******************************************************************************
@@ -43,10 +41,10 @@
 #include "Attitude_Algorithm.h"
 #include "dji.h"
 #include "mono_ns.h"
+#include "latency_capture.h"
 #include "dm.h"
 #include "robot_control.h"
 #include "machine_config.h"
-#include "jetson_uart.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -79,6 +77,7 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/* GCC启动代码之外的USB专用段：复制Flash初值到RAM并清零BSS；Keil由自身启动流程处理。 */
 static void USB_Dma_Memory_Init(void)
 {
 #if defined(__GNUC__) && !defined(__CC_ARM)
@@ -101,6 +100,7 @@ static void USB_Dma_Memory_Init(void)
 #endif
 }
 
+/* 将0x2404C000起16KB USB DMA区域设为不缓存，避免CPU缓存与DMA访问到不同数据。 */
 static void USB_Dma_MPU_Config(void)
 {
   MPU_Region_InitTypeDef region = {0};
@@ -121,6 +121,7 @@ static void USB_Dma_MPU_Config(void)
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
 }
 
+/* 用当前机器配置覆盖FDCAN数据段时序；这里只改句柄，实际启动/失败恢复由can_bus处理。 */
 static void Machine_Apply_Fdcan_Data_Timing(FDCAN_HandleTypeDef *handle)
 {
   if (handle->Init.DataPrescaler != MACHINE_FDCAN13_DATA_PRESCALER || handle->Init.DataTimeSeg1 != MACHINE_FDCAN13_DATA_SEG1 || handle->Init.DataTimeSeg2 != MACHINE_FDCAN13_DATA_SEG2)
@@ -128,13 +129,11 @@ static void Machine_Apply_Fdcan_Data_Timing(FDCAN_HandleTypeDef *handle)
     handle->Init.DataPrescaler = MACHINE_FDCAN13_DATA_PRESCALER;
     handle->Init.DataTimeSeg1 = MACHINE_FDCAN13_DATA_SEG1;
     handle->Init.DataTimeSeg2 = MACHINE_FDCAN13_DATA_SEG2;
-    if (HAL_FDCAN_Init(handle) != HAL_OK)
-    {
-      Error_Handler();
-    }
+    /* 这里只更新参数，Can_Bus_Init统一初始化并处理失败重试。 */
   }
 }
 
+/* 将机器时序应用于DM所在FDCAN1/3，保持轮电机FDCAN2的现有时序。 */
 static void FDCAN_Config(void)
 {
   Machine_Apply_Fdcan_Data_Timing(&hfdcan1);
@@ -176,7 +175,7 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  Can_Bus_Reset_Hardware(); /* 清除跨固件下载后的FDCAN残留，必须先于三路MX初始化。 */
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -197,28 +196,23 @@ int main(void)
   MX_UART9_Init();
   MX_TIM6_Init();
   MX_UART8_Init();
+  MX_USART10_UART_Init();
   /* USER CODE BEGIN 2 */
-#if MACHINE_VOFA_PORT == 10u
-  MX_USART10_UART_Init(); /* Jetson串口10硬件先就绪，再启动协议RX DMA。 */
-#endif
+  /* 外设句柄已生成：先更新机型时序，再启用各协议的接收缓存/回调。 */
   FDCAN_Config();
-  Jetson_Uart_Init(); /* UART RX DMA; probe only. */
-  Mono_Ns_Init();   /* 单调 ns 时钟 */
-#if MACHINE_VOFA_PORT != 9u && MACHINE_VOFA_PORT != 7u && MACHINE_VOFA_PORT != 8u
+  Mono_Ns_Init();   /* 接收/发布时间使用的上电相对ns计数，与HAL毫秒时钟分开。 */
   DR16_Init();
-#endif /* 仅旧UART7/8/9测试保持遥控暂停；UART10恢复DR16。 */
-#if MACHINE_VOFA_PORT != 7u
   HI229_Init();
-#endif /* UART7由Jetson独占，保留IMU离线保护。 */
   Can_Bus_Init();
   // IMU_Init();       // BMI088 板载IMU (SPI2) —— 暂不使用
   Dji_Init();       // DJI电机 CAN回调注册
   Dm_Init();        // DM电机 CAN回调注册
-  /* 机器: 见 machine_config.h 的 MACHINE_DEFAULT */
+  /* 设置这两路24V控制GPIO为现有初始电平；不以GPIO电平代替电机协议使能状态。 */
   HAL_GPIO_WritePin(GPIOC, POWER_24V_2_Pin|POWER_24V_1_Pin, GPIO_PIN_RESET);
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in cmsis_os2.c) */
+  /* 创建控制信号量、初始化算法状态并创建五个任务，随后启动调度。 */
   MX_FREERTOS_Init();
 
   /* Start scheduler */
@@ -318,9 +312,13 @@ void SystemClock_Config(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
+  /* 基础控制拍：中断只释放节拍，不在中断内运行LQR、推理或电机发送。 */
   if (htim->Instance == TIM6)
   {
-    Mono_Ns_Tick();   /* 周期扩展 */
+    Mono_Ns_Tick();   /* 累计DWT周期，避免32位计数回绕丢失时间。 */
+#if MACHINE_LATENCY_CAPTURE_ENABLE
+    Latency_Tick(0u);
+#endif
     osSemaphoreRelease(ctrl_tick_sem_handle);   /* 按机型配置的 TIM6 周期唤醒输出任务 */
     Policy_Tick_Div();                          /* 分频唤醒策略任务 */
   }

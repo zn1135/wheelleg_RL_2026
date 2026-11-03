@@ -1,0 +1,153 @@
+/*
+ * 根据倒地候选、初始低高度接触确认和AIR结果选择NORMAL/FALLEN/FLIGHT。
+ * 普通运行异常需连续确认；FALLEN由恢复完成事件解除，不能被一拍姿态回正直接清掉。
+ */
+/*
+ * 只做公共低高度候选、原姿态异常观测和NORMAL/FALLEN/FLIGHT选路。
+ * 初始触地优先；FALLEN由原动作报告完成，FLIGHT由原AIR退出判据结束。
+ * 不读取LQR状态、不求解力矩，也不改原fallen_process动作、AIR压缩或物理模型。
+ */
+#include "control_condition.h"
+#include <math.h>
+#include <string.h>
+
+control_condition_param_t control_condition_param = {
+    .body_contact_height = 0.15f,
+    .confirm_time = 0.05f,
+};
+control_condition_t control_condition;
+
+void Control_Condition_Reset(control_condition_t *state)
+{
+    memset(state, 0, sizeof(*state));
+}
+
+/* 更新倒地候选，并分别累计零出力初判时的低高度接触时间与NORMAL运行异常时间。 */
+void Control_Condition_Observe(control_condition_t *state, const imu_state_t *imu,
+                               const leg_state_t *left, const leg_state_t *right,
+                               float height, uint8_t height_valid,
+                               uint8_t zero_effort, uint8_t normal_running)
+{
+    state->hint_available = 0u;
+    state->body_contact_candidate = 0u;
+    state->body_contact_confirmed = 0u;
+    state->prepare_required = 0u;
+    Fallen_Detection_Update(&fallen_detection, imu, left, right);
+    if (!fallen_detection.valid)
+    {
+        state->contact_elapsed = 0.0f;
+        state->trigger_elapsed = 0.0f;
+        return;
+    }
+    state->hint_available = (uint8_t)(zero_effort && height_valid);
+    state->body_contact_candidate = (uint8_t)(state->hint_available && height <= control_condition_param.body_contact_height);
+    state->contact_elapsed = state->body_contact_candidate ? fminf(state->contact_elapsed + MACHINE_LQR_DT, control_condition_param.confirm_time) : 0.0f;
+    state->body_contact_confirmed = (uint8_t)(state->body_contact_candidate && state->contact_elapsed + 1.0e-6f >= control_condition_param.confirm_time);
+
+    state->trigger_elapsed = (normal_running && fallen_detection.abnormal) ? fminf(state->trigger_elapsed + MACHINE_LQR_DT, fallen_detection_param.trigger_time) : 0.0f;
+    state->prepare_required = (uint8_t)(normal_running && fallen_detection.abnormal && state->trigger_elapsed + 1.0e-6f >= fallen_detection_param.trigger_time);
+}
+
+/* 锁存新的公共状态，标记已初判/有效，清normal_ready和异常连续计时。 */
+static void Condition_Enter(control_condition_t *state, control_condition_type_t next)
+{
+    state->condition = next;
+    state->started = 1u;
+    state->valid = 1u;
+    state->normal_ready = 0u;
+    state->trigger_elapsed = 0.0f;
+}
+
+/* 自起完成后按有效且已初始化的AIR结果交接FLIGHT或NORMAL；AIR未知则暂不交接。 */
+void Control_Condition_Recovery_Ready(control_condition_t *state)
+{
+    if (air_param.enabled && (!air_detection.valid || !air_detection.initialized))
+    {
+        state->valid = 0u;
+        return;
+    }
+    Condition_Enter(state, (air_param.enabled && air_detection.flight) ? CONTROL_FLIGHT : CONTROL_NORMAL);
+}
+
+/* 先处理请求/许可和检测有效性，再按FALLEN优先规则选择公共状态。
+ * 已进入FALLEN需recovery_done才尝试交接；FLIGHT保留既有倒置与落地规则。 */
+void Control_Condition_Select(control_condition_t *state, const air_detection_t *air,
+                              uint8_t request, uint8_t drive,
+                              uint8_t recovery_done)
+{
+    if (!request || !drive)
+    {
+        /* 短暂故障撤销本拍许可，保留恢复归属及原失败重试；退出投入才重新初判。 */
+        if (!request)
+        {
+            state->started = 0u;
+        }
+        state->valid = 0u;
+        state->normal_ready = 0u;
+        state->trigger_elapsed = 0.0f;
+        return;
+    }
+    state->valid = 0u;
+    if (!fallen_detection.valid)
+    {
+        state->normal_ready = 0u;
+        return;
+    }
+    if (state->started && state->condition == CONTROL_FALLEN)
+    {
+        if (recovery_done)
+        {
+            Control_Condition_Recovery_Ready(state);
+        }
+        else
+        {
+            state->valid = 1u;
+        }
+        return;
+    }
+    /* FALLEN选路必须先于高度候选等待和AIR有效性/初始化等待。
+     * 保留原各状态触发条件，不把飞行中的普通腿姿偏差当作倒地。 */
+    if ((!state->started && (fallen_detection.inverted || fallen_detection.abnormal || state->body_contact_confirmed)) ||
+        (state->started && state->condition == CONTROL_NORMAL && state->normal_ready && (fallen_detection.inverted || state->prepare_required)) ||
+        (state->started && state->condition == CONTROL_FLIGHT && fallen_detection.upright < 0.0f))
+    {
+        Condition_Enter(state, CONTROL_FALLEN);
+        return;
+    }
+    if (!state->started)
+    {
+        if (!state->hint_available || (state->body_contact_candidate && !state->body_contact_confirmed))
+        {
+            return;
+        }
+    }
+    if (air_param.enabled && (!air->valid || !air->initialized))
+    {
+        state->normal_ready = 0u;
+        return;
+    }
+    if (state->started && state->condition == CONTROL_FLIGHT)
+    {
+        if (!air_param.enabled || !air->flight)
+        {
+            Condition_Enter(state, CONTROL_NORMAL);
+        }
+        else
+        {
+            state->valid = 1u;
+        }
+        return;
+    }
+    if (air_param.enabled && air->flight)
+    {
+        Condition_Enter(state, CONTROL_FLIGHT);
+    }
+    else if (!state->started)
+    {
+        Condition_Enter(state, CONTROL_NORMAL);
+    }
+    else
+    {
+        state->valid = 1u;
+    }
+}

@@ -1,154 +1,872 @@
+## 2026-11-03 删除Jetson独立镜像与探测
+
+按作者要求删除jetson_uart.c/h、main初始化、comm轮询、后台镜像发送、专用宏及Keil源/浏览登记。eIDE扫描drivers目录，无独立Jetson登记。USB完整时序采集和VOFA独立发送保留，UART10的CubeMX外设配置及生成初始化保留；不调整控制参数、反馈快照或物理映射。旧Jetson接口说明归档到sysid-change-map，不再作为当前功能。当前配置（采集关闭）工程外GCC全量编译链接通过，未覆盖IDE构建目录；未烧录验证。
+
+### 已删除的Jetson接口历史说明
+
+## Jetson只读镜像与串口探测（UART10）
+
+2026-10-20按训练仓`26_wheelleg`的`h7-jetson-kinematic-mirror-v1`接口在本地工程实现。与训练仓部署副本的差别：VOFA仍留在UART8发原LQR 48路布局，Jetson镜像改走独立UART10，两者不复用发送函数、缓冲或端口。
+
+2026-11-02按作者要求增加编译开关`MACHINE_JETSON_MIRROR_ENABLE`（`machine_config.h`顶部，与防翻等调试开关同处，当前0）。为0时`jetson_uart.c`把三个入口编成文件内既有空实现：不启动UART10接收DMA、不轮询探测包、不发送镜像；RX/TX静态缓冲、镜像组帧、CRC与探测解析都不参与编译。三个调用点（`main.c`、`task_comm.c`、`background_service.c`）保持原样，行为只看开关。为1时与原实现逐字节一致；改开关需重新编译烧录，VOFA、控制链、许可与物理标定均不受影响。
+
+[Jetson_Mirror_Send](../imcalib/drivers/jetson_uart.c)由`background_task_body`每拍调用，按`HAL_GetTick`经过至少10ms尝试一次，使用静态`Robot_Feedback_Read`快照；DMA忙时跳过，只有提交成功才增加发送序号。帧为48个小端float32加`00 00 80 7F`尾，共196字节；第47槽是前47个float（188字节）的CRC16/CCITT-FALSE数值，参数poly=0x1021、init=0xFFFF、不反射、xorout=0。
+
+| 通道 | 镜像v1定义 |
+| --- | --- |
+| 0～2 | 在线掩码（IMU/DR16/四髋/两轮原0～7位）、状态位（0使能、1跌倒、2左腿有效、3右腿有效、4～7四髋使能、8 LQR投入、9 RL投入）、`ctrl_fault` |
+| 3～5 | 标识7101、版本1、编译机型（0大机／1小机，Jetson首期只接受0） |
+| 6～7 | uint32发送序号的低／高16位；仅DMA提交成功增加，按uint32回绕 |
+| 8～9 | `captured_ns/1000000`的低32位毫秒，拆低／高16位 |
+| 10～13 | 四髋`pos_zero_rad`，左前／左后／右前／右后 |
+| 14～17 | 同顺序`vel_rad_s` |
+| 18～21 | 左右轮`angle_total_rad`两路、`vel_rad_s`两路 |
+| 22～28 | 公共IMU四元数wxyz、角速度xyz |
+| 29 | 数据有效位：0=IMU，1～4=四髋，5～6=两轮；无效来源填0 |
+| 30～31 | IMU／电机的软件发布年龄ms；-1未发布，超过60000饱和 |
+| 32 | 串口探测扩展版本1；旧固件为0 |
+| 33～38 | 最近合法探测序号、主机随机数、合法包数的低／高16位 |
+| 39～46 | 保留为0 |
+| 47 | CRC16/CCITT-FALSE数值 |
+
+下行探测由`comm_task_body`每拍调用`Jetson_Uart_Process`轮询256字节环形RX DMA：只接受`J7P1`＋小端uint32序号＋uint32随机数＋uint16 CRC的14字节包，CRC校验前12字节；噪声和坏CRC逐字节重新找包头，跨环尾与分包保留解析状态。RX只关闭HT半满中断、保留TC完成中断，使HAL接收错误后的异步DMA终止能完成并解锁；`RxState`离开BUSY_RX时由comm重启DMA并清半包，计入`rx_restarts`。
+
+大机`MACHINE_JETSON_PORT=10`：USART10，PE3/TX、PE2/RX，1152000/8N1，RX用DMA1 Stream0环形、TX用DMA2 Stream0 NORMAL，ioc与生成代码都包含该外设；小机为0。`MACHINE_JETSON_MIRROR_ENABLE`为0或端口条件不成立时，两机都走三个空实现入口。镜像只读，不接收动作、不改变RL/LQR许可、模式或物理标定，可与VOFA同时观察。
+
+发布年龄是软件快照时刻减发布时刻，不是传感器采样年龄；序号缺口只表示未观测到已提交帧，不等同CAN丢帧。接线、电平、实际频率、往返耗时与板端时序待台架。
+
+## 2026-11-03 时序采集固定使用USB
+
+按作者要求删除MACHINE_LATENCY_TRANSPORT及UART采集分支；完整事件、输出和START/STOP固定走板载USB CDC，VOFA始终保持原发送。MACHINE_LATENCY_CAPTURE_ENABLE直接定义，保留作者当前值0u，不再用ifndef允许命令行覆盖；需要采集时在machine_config.h改为1u并重新编译烧录。保留采集开关的#if条件编译及头文件保护，0时仍编译移除测点、队列和新增IRQ。下文USB/UART选择及默认1的描述属于历史状态，以本节为准。本次完成源码检查，未重新构建或烧录。
+
 # 工程历史修改记录
 
-## 2026-10-20 · 修复版烧录及DMA错误恢复板测（通过）
+## 2026-11-03 · 用户烧录后USB连通与正常RL实采
 
-- 用户针对“DMA错误恢复修复仍未板测”要求修复。源码沿用已独立复查的修复，仅保留RX TC、关闭HT；本轮没有新增固件功能或改变控制／物理量。用工程外eIDE参数全量重建104个C来源及1个汇编通过，仅既有BMI088 packed告警。
-- 沿用此前用户确认的电机动力断开状态，以200kHz完成写入／校验／复位；HEX SHA256为`2a3d5a3530add09e40dc030f16dfc0bedf6564f9d4ccda97120474ade1c0bf0a`。Jetson常用h7_serial.py已更新，旧版保留为h7_serial.py.before-dma-fix-20261020。证据见`artifacts/uart10-dma-recovery-20261020/flash.json`及`firmware-build.json`。
-- 实际UART10／FUNC_UART先做3秒基线，26发／26回、无超时。随后Jetson TX BREAK请求拉低20ms，连续三轮；每轮后读取H7内存，rx_restarts依次0→1→2→3，UART为BUSY_RX、DMA为BUSY且TC开启。每轮恢复后3秒均为300镜像帧、26发／26回、超时0；三轮共78发／78回，证据见同目录`error-recovery.json`。SWD读取不暂停CPU，测试后调试连接已关闭。
-- 本次确认BREAK诱发的接收错误能恢复，不把三轮恢复外推为任意噪声／溢出或长期稳定性通过；真实遥控、IMU、推理／电机和H7负责人核对仍待确认。未提交／推送。
+- 用户授权检查USB并开始测延迟，识别板载CDC COM69（0483:5740），先3秒run01、30秒run02，再按用户确认RL投入单独采30秒run03。仅写测量START/STOP，未更改遥控/使能/目标/参数或烧录。实际IDE清单已有三个采集源，当前固件身份按用户烧录声明及本机预期manifest，不冒充下载器读回校验。
+- run03正常RL/fault0：1500推理、15000 PD、75000 CAN，136500时序/30000输出；两路原始哈希/结束确认通过，CRC/缺号/新增丢弃0，尾队列/pending0。起始5 PD引用采集前动作，保留无法配对计数。网络均值725.042us，发布到首次PD均值1229.230us，PD间隔最大2017.209us，基础拍最大1388.609us；CAN分ID与同动作端到完成观察配对详见桌面报告。
+- 实采发现h7_latency_capture.py完整性判断访问了汇总中已剔除的records键，修复引用实际last_packet；不改变原始记录。统计分组由逐组全表扫描改为单次分组，run01所有statistics与此前修复版逐项一致，减少离线分析耗时；不改变计时或固件。
+- 数据/统计/极值索引及同动作配对结果保存在Desktop/h7-timing-20261103-68166ff9，measurement-summary.md说明范围。未进行采集关闭板端对照、时基外部校准、电机真实响应或行为验收；本轮不提交/推送、不修改训练延迟。
 
-## 2026-10-20 · 修复串口DMA错误恢复和主机ACK超时（未烧录）
+## 2026-11-03 · 修复eIDE缺少采集源登记
 
-- 用户要求修复独立复查发现的两项问题。`jetson_uart.c`仅禁用RX HT，保留TC，使HAL错误异步终止能恢复DMA READY并解锁，再由comm重启接收；`sim2sim/h7_serial.py`先处理250ms到期，再匹配ACK，迟到回报不再被记成功。
-- 既有正式检查增加DMA ABORT／TC／READY／锁的模拟恢复，以及249／250／300ms回报边界；实际驱动解析、正常／错包／旧固件伪终端及大小机各105来源完整ARM GCC编译链接通过，见`artifacts/uart10-review-fix-20261020/check.json`。DMA测试使用模拟HAL状态机，不是实际HAL中断或板上错误注入。
-- UART10／HI229／DR16分配、协议、控制及物理量不变。本轮未烧录、未部署Jetson脚本或操作硬件；板上仍是此前版本，真实错误恢复、长时稳定性及H7负责人核对待确认；未提交／推送。
+- 作者实际IDE报trace_sample、trace_policy_sequence、Latency_Tick_Read及Latency_Capture_Push未定义。核对当时.eide配置、builder.params及对象清单均缺三个采集源，而Keil已有登记。补回ControlModules虚拟源与物理去重排除，不改生成的builder.params、控制逻辑或测量宏。
+- 之前工程外构建显式带入新源，只证明临时链接通过，没有完成IDE当前配置的真实验收；已向作者说明差别。须在IDE接受配置重载再Rebuild，检查三源/三对象各一次后才能称IDE验收通过。
 
-- 用户随后要求测试：通过Jetson临时副本运行修复后的主机脚本，FUNC_UART／ttyTHS1、1152000／8N1正式十秒收到1000个有效镜像帧，校验拒绝0、93发／93回、超时0，平均往返9.98ms、最大10.13ms。证据见`artifacts/uart10-host-fix-link-20261020/link.json`及`test-context.json`。本次未替换Jetson常用脚本、未烧录或复位H7，沿用此前固件，因此只证明本轮正常双向收发，H7的DMA错误恢复修复仍未板测。
+## 2026-11-03 · 完整测量切回板载USB并提供采集步骤
 
-## 2026-10-20 · UART10配置恢复DR16遥控（已烧录，首次串口双向通过）
+- 用户明确不使用VOFA采集，MACHINE_LATENCY_TRANSPORT由2改1。数据格式、测点、队列、CRC和命令保持；USB CDC承载完整事件，UART8恢复原布局，不改控制参数或波特率。
+- 两机USB候选全量构建通过，Flash613448/613256B、AXIRAM142528B；当前USB发送模块15项实际C边界回归通过。匹配固件位于TEMP构建目录usb-final-m0/m1，大机预期manifest为firmware-machine0-usb-final.json。未烧录、未连接USB或实际采集。
+- file-guide顶部补齐端口识别、唯一新会话目录、录制及双解码命令；区分录制结束和数据完整性，保留失败会话，不声称板端吞吐或控制效果已验证。
 
-- 用户针对“遥控仍暂停”要求恢复。仅解除当前UART10配置的DR16_Init／DR16_Process暂停条件，UART9保持原100000／8E1、PD14/RX、DMA1 Stream4和IDLE接收；DR16离线故障、拨杆许可及最终出力门控保留。Jetson UART10、HI229 UART7、小机及旧端口测试条件不变。
-- 大小机各105来源完整编译／链接、编译后DR16初始化／解析及离线检查调用、UART9接收句柄／DMA／IRQ归属和eIDE完整构建通过，仅既有BMI088 packed告警；Core生成区未改。协议／模型／物理量未变，未重跑相关数值检查。
-- 证据见artifacts/serial-uart10-rc-20261020/；待烧录HEX SHA256为577d184012abcc29022feeb31f57ecd92d1b60b1cb258367018bd1caafb5edab。随后用户明确要求测试UART10并确认本次断电与接线，前两次下载器CMD_INFO初始化失败均未写入；核对无占用后仅重置该PowerDebugger TX的USB连接，以200kHz成功写入／校验／复位。正式UART10／FUNC_UART十秒999有效帧、校验拒绝0，93探测全部回报、超时0，平均往返9.99ms，首次双向通过；证据见同目录flash.json及uart10-func-link.json。真实遥控接收、模式切换、控制行为及H7负责人核对待确认，串口长期稳定性未证明，未提交或推送。
+## 2026-11-03 · 完整测量改走VOFA串口验证
 
-## 2026-10-20 · 撤销UART7／8互换，Jetson改UART10（已编译，未烧录）
+- 用户明确选择完整事件记录走VOFA串口，未选择最新值显示方案。新增MACHINE_LATENCY_TRANSPORT编译选择1 USB/2 UART，默认2；保持完整H7LAT001/H7OUT001、状态确认、采样率、容量与丢失检测。后台仅在串口测量启用时停止原JustFloat发送，旧赋值保持；USB RX测量入口仅USB模式启用，避免两个命令来源。
+- 复用现有MACHINE_VOFA_PORT、RX/TX DMA配置；不改波特率或生成区。后台轮询环形DMA并解析原14B测量命令，TX忙不碰缓冲，Clean缓存后DMA提交，失败不出队。STOP排空和原始流保存保持，录制器增加baud参数和端口/RX接线错误提示。
+- 1152000/8N1有效上限115200B/s，低于预计完整负载，已明确预计溢出、不能宣称无损。软件18项UART边界及实际C流双解码通过，人工溢出76/12均报告失败；大小机UART开/关、大机USB回归构建通过。关闭采集Flash606920/606760B，UART开614504/614312B；不修改控制、自起/AIR、防翻参数或模型。
+- 未烧录/接线/实测串口或控制影响。当前匹配候选和manifest在TEMP构建目录，操作命令/双向PE0/PE1接线见file-guide顶部；本轮不提交/推送。
 
-- 用户要求代码恢复原配置，再将Jetson链路改到UART10。助手按H7端UART10理解，先核对上一互换版源码指纹，再恢复互换前HI229／UART7／UART8路径；当前大机UART7接HI229／921600，UART8无业务收发，Jetson改用H7 USART10（板上UART10），Jetson端仍FUNC_UART。DR16延续暂停及离线保护；小机保持原路径。
-- 在Core用户区增加USART10句柄、硬件初始化、DMA2 Stream0环形RX／Stream1单帧TX和对应DMA／UART中断；main先初始化硬件再启动协议。PE2/RX为AF4、PE3/TX为AF11，按ST DS13313表8分别配置；未占用现有DMA1资源，未改生成区或ioc。后续CubeMX配置USART10须迁移这些用户区定义，避免重复。
-- 正式协议软件检查、大小机各105来源完整编译／链接、编译后UART／HI229／遥控调用路径、DMA2及USART10实际中断向量绑定和eIDE完整构建通过，仅既有BMI088 packed告警。镜像／探测协议、采样与控制频率、模型和物理标定不变。
-- 证据见artifacts/serial-uart10-20261020/。待烧录HEX SHA256为1fba3849f2544a3fc159e22079c04f5ae368c6532e6771dd7a702e82ec135b8d；延续用户先不烧录的选择，本次未写板／移线／硬件测试。实际电气、时序及H7负责人核对待确认；未提交或推送。
+## 2026-11-02 · 完整时序采集第一版软件实现
 
-## 2026-10-20 · UART7／UART8完整互换功能（已编译，未烧录）
+- 作者批准按完整方案实施第一版；先保存实际脏工作区到工程外baseline ZIP/patch，保留作者100项左右原清理/调参差异，不做回退。新测量只读，不改参数、模型、算法/模式保护或原CAN判断和报文字节。
+- 迁入H7LAT001/H7OUT001队列和解码协议，按本地task/control/service结构接入SAMPLE/POLICY/PD/ACTUATION/CAN测点。增加同批接收时间诊断元数据与动作/缓存/分发编号，CAN独立buffer上下文和任务归属，恢复/复位未完成项明确标记。CAN提交判断和HAL返回保持原样，完成通知新增测量负载。
+- 独立latency_usb发送CDC，不复用VOFA UART，不更改Jetson开关；14B CRC命令只START/STOP采集，34B状态确认头尾，停止后排空，不接收机器人控制参数。新增工具仅用于本次用户明确要求的完整采集，不恢复此前已删除的无关Python测试/工具。桌面测试源均在.codex/tmp，固件目录仅放实际采集/解码/身份工具。
+- 工程配置登记三个新增C源，源/头路径按当前目录；eIDE虚拟登记并排除物理重复，外部实际构建包含各一次。IDE界面刷新生成源码清单及Keil实际编译未执行，不将静态登记说成IDE已验收。
+- 大小机开/关四套GCC构建通过，最新大机613448/606920B Flash，小机613256/606760B，采集增加96KB AXIRAM。关闭时11个受影响文件的57个原有函数机器码与保存基线逐字一致；开启采集的物理时序/行为仍待测。SAMPLE起点来自实际快照读取前，PD计时紧贴原求解调用，基础触发观察位于原信号量释放前，额外年龄统计不算入PD求解耗时。
+- 真实队列/USB C宿主15项边界通过；同C生成字节流17B分片经本地轻量双解码器，1024事件/128输出及76/12溢出正确保留失败状态。工具语法和START/STOP CRC跨语言检查通过；未在工程中生成额外测试文件。
+- 未烧录/连接USB/发送测量命令/提交/推送。CAN完成IRQ竞态、USB满负载吞吐、时基与开销、实时截止及实机对照尚未完成；完整测量定义和本机命令见file-guide顶部，不宣称控制效果已在板端验证不变。
 
-- 用户要求两串口互换。大机Jetson通信改到UART7 PE8/TX、PE7/RX、1152000／8N1；HI229改到UART8 PE1/TX、PE0/RX、921600／8N1。UART7继续单帧TX DMA1 Stream1和环形RX Stream2，HI229改用UART8 RX Stream5及对应IDLE中断；不新增DMA通道。
-- HI229驱动按所选通信口绑定接收UART／DMA，main／imu任务恢复HI229初始化与解析，区别于之前仅测试UART7而暂停IMU的配置；UART7 IRQ交HAL、UART8 IRQ交传感器IDLE缓存。补齐UART8 RX DMA公开声明；Core仅修改USER CODE区。DR16延续暂停，离线故障及出力门控保留；小机接收路径不变。
-- 未改HI229协议解析、取轴、符号、标定、控制频率、镜像格式或模型。首次构建发现缺少UART8 RX DMA句柄声明，补齐后现有正式协议检查、大小机各105来源编译／链接、编译后两路UART／DMA／IRQ所有权与HI229启用检查、Core生成区字节比较和eIDE完整构建通过，仅既有BMI088 packed告警。
-- 证据见artifacts/serial-uart7-uart8-swap-20261020/；待烧录HEX SHA256为5eab71270f354c65c2a9c3588bdedfb96563a32b15e003fac4cb8a92afbdc9b1。当前未烧录／硬件联机，HI229实际输入、串口稳定性及H7负责人核对待确认；未提交或推送。
+## 2026-11-02 · 提交前保存防翻及向心补偿当前调参
 
-## 2026-10-20 · 改回UART8供作者复测（已烧录，多轮结果不一致）
+- 作者要求将当前全部更改区归档一次。核对大机budget_fraction已由此前试用0.6继续调整为0.70，turn_comp.gain为0.2（相对HEAD为0.3→0.2），开关1、release_rate=3rad/s²；本次保留现值，不由AI重新调参。Jetson镜像开关0及实现一并纳入。
+- 作者反馈防翻目前尚可、中低腿长几乎不再翻倒；仅记已测场景，不能推广为高腿高速/全扰动验证通过。
+- 本次提交快照按当前配置工程外GCC全量编译链接通过，仅既有BMI088 packed告警；差异空白检查通过。未代烧录，Jetson关闭/开启的板端时序及高腿高速防翻未作为本次验收结论。
 
-- 作者要求H7代码改回UART8，Jetson保留FUNC_UART。大机选8，PE1/TX、PE0/RX、1152000／8N1；复用原UART8 DMA和HAL中断，UART7已有条件分支恢复HI229初始化／解析。遥控按此前要求继续暂停，保留离线保护及电机出力门控；小机接收路径保持。
-- 本轮只改端口选择、对应注释和DR16暂停条件；未清理之前UART7／9条件代码、未改协议、镜像频率、模型或物理标定。大小机各105来源编译／链接、现有协议检查、编译后调用选择、Core生成区字节核对和eIDE完整构建通过，仅既有BMI088 packed告警。
-- 证据见artifacts/serial-uart8-retest-20261020/；待烧录HEX SHA256为ab14d9007c537d2adebfe10b3d3d2346747b9454756e2df1f6c87a26e8719906。用户本次确认电机动力已断开后首次1000kHz烧录在写入期间出现外部复位并失败，Flash完整性一度未知；用户明确要求重新烧录后，200kHz SWD下载同一HEX，写入／校验／复位全部成功。首次故障根因未确定，未改固件或保护位。证据见同目录flash-attempt-1.json和flash.json；用户随后对移线要求回复确认，正式UART8／FUNC_UART十秒复测收到1000帧、校验拒绝0，92探测全部回报、超时0，平均往返9.99ms、最大10.13ms，双向通过；证据见同目录uart8-func-link.json，不据此认定之前下行失败根因。H7负责人及实际时序／行为核对待确认，未提交或推送。
+## 2026-11-02 · Jetson UART10镜像/探测改为编译开关
 
-- 作者随后要求再测一遍：相同UART8固件和FUNC_UART重新开口十秒收到1000有效帧、校验拒绝0，39探测全部超时、回报0；下行未通过。证据见同目录uart8-func-link-2.json。未修改代码、串口配置或重新烧录；与首次通过的差异原因及期间物理接线变化尚未确认。
+- 作者要求把UART10三处入口做成0/1开关，并与其它开关一样放在machine_config。新增`MACHINE_JETSON_MIRROR_ENABLE`（当前0），置于`machine_config.h`顶部；`jetson_uart.c`编译条件由`MACHINE_JETSON_PORT == 10u`改为`MACHINE_JETSON_MIRROR_ENABLE == 1u && MACHINE_JETSON_PORT == 10u`。
+- 为0时`Jetson_Uart_Init/Jetson_Uart_Process/Jetson_Mirror_Send`沿用文件内既有空实现：UART10接收DMA不启动、探测包不轮询、镜像不发送；RX/TX静态缓冲、镜像组帧、CRC与探测解析不参与编译。为1时与原实现一致。三个调用点（`main.c`、`task_comm.c`、`background_service.c`）未改，控制链、许可、VOFA、AIR、自起与物理标定未改。
+- 验证：按`build/CtrBoard-H7_ALL/compile_commands.json`中该源的真实参数用ARM GCC单独编译，开关0与1均退出码0、无告警；0时对象4944 B（仅三个空入口与状态变量，无DMA/镜像缓冲），1时29040 B（含-g调试信息，镜像/CRC/探测实现齐全）；三个调用点文件同样单独编译通过。未完整链接、未烧录、未上机。
 
-- 作者又要求再测一遍，第三次十秒检查仍为1000有效帧、校验拒绝0、39探测全部超时、回报0；与第二次一致，连续两轮下行失败。证据见artifacts/serial-uart8-retest-20261020/uart8-func-link-3.json；本次只复测及记录，未改代码／串口配置或烧录。
+## 2026-11-02 · 开启防翻并试调预算系数0.6
 
-- 作者再次要求测试，第四次十秒收到1000有效帧、校验拒绝0，93探测全部回报、超时0，平均往返10.00ms、最大10.48ms，本轮双向通过。前两次下行失败仍保留，不能由本轮通过认定稳定或确定根因；本次未改配置／代码或烧录。证据见`artifacts/serial-uart8-retest-20261020/uart8-func-link-4.json`。
+- 作者要求开启并设0.6。实际核对工作区大机budget_fraction已为0.5，本次0.5→0.6、宏0→1；预算放宽20%。release_rate=3rad/s²、实际车速依据、高度依据及原LQR/向心补偿/VOFA均保持，小机关闭配置不改。未改物理标定，实机效果待测。
 
-## 2026-10-20 · UART7＋FUNC_UART通信测试（已烧录，双向通过）
+## 2026-11-01 · 防翻仅使用实际车速，取消请求速度预限
 
-- 用户要求H7改串口7、Jetson改回FUNC_UART；获知UART7用于HI229后确认修改。大机选7，PE8/TX、PE7/RX、1152000／8N1，USER CODE区覆盖波特率及TX DMA1 Stream1为NORMAL，RX仍Stream2环形DMA，UART7 IRQ交HAL。
-- 暂停HI229初始化／解析，延续暂停DR16接收，保留IMU／遥控离线故障及电机出力门控；小机USART1通信和HI229／DR16路径保持。未改协议、镜像频率、模型、控制节拍或物理标定；原UART9测试代码仅受编译条件关闭，既有未提交改动保留。
-- 现有正式协议检查、大小机各105来源ARM GCC编译／链接、编译后端口／调用选择检查、Core生成区字节比较及eIDE完整构建通过，仅既有BMI088 packed告警。证据见artifacts/serial-uart7-20261020/，当前说明及部署接口同步。
-- HEX SHA256为2d52aeaf2bd29fb1fbd57e4aca9e0c5bc8d6f0e24f7747a586ac600e59dcda32；用户本次明确确认电机动力断开后，已编程／校验／复位成功。用户确认UART7与FUNC_UART接线完成后，正式十秒收到1000帧、校验拒绝0，92探测全部回报、超时0，平均往返9.98ms；只读镜像确认IMU／DR16离线及对应故障位置位。本次双向通过，真实控制时序／行为及H7负责人核对仍待确认；UART8／9失败根因未确定。只读SWD连接未返回寄存器值，不作为运行寄存器验证依据。未stage／commit／push。
+- 作者批准单变量修正：Motion_Guard_Update的speed_guard由max(|velocity|,|velocity_request|)改为|velocity|，避免实际低速时因速度请求较大提前限转。
+- 预算系数0.375、release_rate=3rad/s²、高度依据、偏航参考合成、原速度请求与减速反馈不变；宏当前0，不自动启用。未调整K/物理标定/AIR/自起及VOFA布局。
+- 验证：修改后实际C的ARM软浮点模拟2500随机状态/1000拍释放检查通过；300组请求速度变化不变性检查通过。对带速度转向测试.csv的新布局1426有效样本按当前K回放，80个样本限幅、实际速度×有效等效参考预算检查通过；包含航向与释放历史，不能与此前76个瞬时转速请求统计直接混为同一指标。采集间断复位，不是闭环动力学仿真。当前宏0的工程外完整GCC构建通过，既有BMI088告警；其余imcalib C/H修改前后指纹一致。未烧录、未验证手感或实际稳定性。
 
-## 2026-10-20 · DBG_UART原始二进制回环确认字节改写（未迁移固件）
+## 2026-11-01 · 持续难转诊断先关闭主动防翻
 
-- 用户要求Jetson切换DBG_UART，并确认断开H7端TX／RX、Jetson侧TX／RX短接。助手临时停止ttyTCU0登录服务，以115200原始模式回环，结束恢复原服务状态；未修改启动配置或H7代码／固件。
-- ASCII／CR／NUL／FF单项通过，LF由0A变成0D 0A，256字节全字节序列返回257字节。当前196字节／100Hz二进制镜像不能直接迁移；编码与降频方案待用户选择。证据在artifacts/serial-20261020/jetson-dbg-binary-loopback.json，file-guide及接口记录同步实测边界；本轮仅诊断与文档，未编译、烧录、提交或推送。
+- 作者反馈低车速/低腿长也持续难转。将MACHINE_MOTION_GUARD_ENABLE从1改0，保留其余配置，先恢复原偏航参考进行单变量对照；不据主观现象盲调预算或放宽门槛。
+- 代码检查显示实际/请求车速均很低且稳定时，允许参考应回到原5rad/s，原地转向航向误差又按原流程锁当前；故现有证据不足以把“全程难转”只归因于过早预限，需关闭烧录后的对照结果或主动布局CSV定位。未声称已复现实机故障。
 
-## 2026-10-20 · Jetson通信测试由UART8切换UART9（已烧录，双向未通过）
+## 2026-11-01 · 修复eIDE防翻源未进入实际链接
 
-- 用户要求改UART9，并确认暂停DR16遥控、只测通信且保留遥控离线保护。大机选择9，PD15/TX、PD14/RX、1152000／8N1；小机选择和DR16链路保留。
-- UART9 USER CODE区覆盖基础串口参数，补TX DMA1 Stream0及IRQ／反初始化，RX沿用Stream4；UART9 IRQ分流到HAL。main／comm跳过大机DR16初始化／接收，不改DR16离线故障、出力保护、模型或物理标定。Core生成区与本轮前字节一致。
-- 正式协议软件检查和大小机各105来源ARM GCC完整编译／链接通过；编译后调用／符号核对大机huart9、DMA0强中断、DR16未启动，小机原路径保留，两机均保留DR16_Online故障检查；仅既有BMI088 packed告警。证据见artifacts/serial-uart9-20261020/。
-- 新Jetson底板FUNC_UART外部回环曾通过，接回H7 UART8仍未获探测回报，未确定恢复原因或转接板RX映射；用户本次确认电机动力已断开并要求烧录后，UART9版已编程／校验／复位成功；只读SWD确认tick及发送序号增加，UART9 DMA和AF11正确，DR16离线故障置位。正式十秒联机收到1000帧、校验拒绝0，下行38包均超时；不同探测长度也无回报，用户已确认黄线接回。双向、控制时序／行为及H7负责人核对待确认；未stage／commit／push。
+- 作者实际IDE链接报Motion_Guard_Update/Reset及motion_guard未定义。检查确认eide.yml只剩物理扫描排除，ControlModules虚拟登记缺失，实际builder.params/compile_commands/objlist亦缺源。此前工程外补齐源清单的通过结果不能替代IDE验收。
+- 补回ControlModules中的imcalib/Algorithm/lqr/motion_guard.c，保留物理路径排除以避免重复；通过IDE“重新加载项目→是”加载配置后执行实际构建，15:48:21构建成功。三份实际生成清单中该源/对象均恰好一次，ELF中Update/Reset及全局状态均有定义。未手工修改生成清单、未改算法、未烧录。
 
-## 2026-10-19 · 网线SSH部署与UART8实测未通
+## 2026-11-01 · 主动防翻本机适配v1与简单调试开关
 
-- 作者自行完成Jetson密钥登录配置后，助手通过现有网线连接登录，确认Ubuntu24.04／L4T R39.2／aarch64，ttyTHS1与ttyTHS2可读写且没有竞争进程；复制h7_serial.py并核对哈希，不改Jetson网络或引脚配置。
-- 正式ttyTHS1十秒探测检查收到0帧；随后两串口各三秒读取均为0原始字节。仅对已知探测固件向ttyTHS1发送一包14字节连通性请求，驱动tx=14／rx=0；H7的合法包、CRC错误与DMA重启计数均为0，不涉及action或电机指令。
-- 用OpenOCD只读内存、无halt／reset／program命令，确认H7的HAL tick与镜像提交序号持续增加，排除固件完全未运行这一情况；不能据此声称板外电气信号或接线正确。当前等待作者核对TX交叉与共地，不盲目改波特率、引脚或重复烧录。
-- 证据在artifacts/serial-20261019/jetson-uart8.json与jetson-uart8-diagnostics.json。固件烧录成功、脚本部署成功、实际串口未通分别记录，H7负责人和真机验收仍待确认；未stage/commit/push。
+- 作者重新批准接入前述偏航参考约束，明确采用MACHINE_MOTION_GUARD_ENABLE 0/1开关；按追加要求删除该宏及ROLL_HEIGHT_OBSERVER_ENABLE的值检查。大机当前宏1，小机策略关闭，改宏需重新编译烧录。
+- motion_guard.c/.h替换旧只读LTR观察器，不读支持力。预算使用最大实测/有效目标腿长与最大实际/请求车速，保护上限及时收紧、3rad/s²放宽，倍率0.375仅试用。LQR当前K就绪后合并角度/转速参考，按共同scale缩放参考，保留实测角速度负反馈、速度请求及yaw_target锁存；当前输出/原向心补偿保持。
+- 只在有效LQR NORMAL许可内推进，退出/候选无效/抑制时复位。MDK与eIDE显式源登记恢复，eIDE仍排除扫描副本。VOFA切新主动防翻48路，旧倒置及估力诊断#if 0保留。详细表与边界见anti-tip-plan当前v1节。
+- 实际C的ARM软浮点指令模拟测试2500随机状态及1000拍释放通过；实际LQR源与受控配置/增益替身接入检查通过；历史留存23027有效样本实际C回放通过。当前大机宏0/1完整GCC构建通过，均Flash610024 B，既有BMI088 packed告警；预处理验证配置0/1及唯一48路赋值。上述均不构成实机、硬浮点节拍或安全上限证明，未烧录。未修改物理标定、AIR、自起及其他工作区既有调参。
 
+## 2026-11-01 · 自起接口与现行说明清理（无控制行为变化）
 
-## 2026-10-19 · 串口探测固件实际烧录
+- 作者仅批准前三项清理，并明确普通SWING不需要目标斜坡。fallen_process.c删除Ready未使用的imu形参与(void)imu，删除Recovery_Ready未使用的st形参，同步两个调用点；未改变函数主体判据或调用次数。fallen_process.c/h将rear_tol统一更名prepare_angle_tol，数值仍0.1rad、类型与结构成员顺序保持，不加宏别名。
+- file-guide将自起/翻身的当前入口、阶段、到位、超时及交接集中为“当前自起与翻身流程”；此前普通路径试用/回退和旧VOFA v3原文移入下方归档。当前倒置上电48路通道表及其他项目说明保持。AGENTS同步普通SWING不增加斜坡的明确边界。历史快照中的旧字段名不追改。
+- 核验：将修改前C源码仅做已授权的字段更名与未用形参/实参删除后，与修改后源码去注释/空白的词元序列一致；138个C/H快照仅fallen_process.c/h变化，其他136个一致。全工程源码无rear_tol或旧签名调用残留，git diff --check通过。只做源码与文档等价核对，本轮未新增行为测试、未编译/链接、未烧录或实机复测，未stage/commit/push。
 
-- 作者明确要求烧录，并确认本次已断开电机动力、保留H7和PowerDebugger RX供电。助手使用shaolu流程，在本机固定builder.params中补入jetson_uart.c，保留其他机型／工具链／输出设置并备份旧参数，然后eIDE全量编译成功。
-- 确认本次HEX包含Jetson_Uart_Init／Process和状态符号后，使用既有USB权限执行OpenOCD；日志完整出现Programming Finished、Verified OK、Resetting Target，退出码0。HEX的SHA256为07f824d06d9c5a4341d1a226f745e5568cf47a7261f3d0117debd3a38b152683，证据在artifacts/serial-20261019/flash.json；未重复烧录、未修改保护位或物理标定。
-- 作者已把UART8与N002 FUNC_UART相连，并用网线连接Jetson。网线邻居可达，但SSH认证未通过；用户名已由作者告知为imca，等待其在自己的终端配置密钥登录。未索取密码、未部署脚本、未称真实串口或机器人控制通过。既有未提交改动保留，未stage/commit/push。
+## 2026-11-01 · 自起总览旧说明归档
 
+以下为本次从file-guide移出的普通自起试用/回退记录及旧VOFA v3原文，作为历史快照保留。当前普通/翻身流程和VOFA只看file-guide顶部现行说明；本处rear_tol为当时名称，现已更名prepare_angle_tol，旧0.4rad分支及已撤销的SWING斜坡不能据此恢复。
 
-## 2026-10-19 · H7与Jetson串口双向探测（通信阶段）
+### 普通趴地自起：前后选路首版（2026-11-01）
 
-- 作者要求先实现串口通信。本轮按通信阶段补齐Jetson发送探测、H7接收校验及镜像回报；不迁移推理或接管电机，既有未提交镜像／快照／文档改动保留。
-- 新增drivers/jetson_uart.c/h，main用户区启动所选UART RX DMA，comm每拍消费环形新字节；14字节J7P1探测包带序号、主机随机数和CRC。后台复用48通道镜像32～38预留槽回报，原字段／帧长／CRC兼容；旧debug_rx预留不动，不新增任务或发送分支。MDK源清单登记新源，eIDE自动发现；固定builder.params须重新生成，不能漏掉新源。
-- 上位机sim2sim/h7_serial.py只依赖pyserial，最多10Hz、一个在途请求，确认随机数／序号并统计探测往返耗时；旧固件只接收，超时／断线返回失败。真实控制协议、动作时效和策略迁移仍未实现。
-- 实际C收包／镜像打包、分包、噪声、坏CRC、DMA跨环尾／异常恢复、uint32回绕，以及模拟串口双向／故意损坏／旧固件检查通过；原只读镜像、运动学和断线检查仍通过。大小机各105来源ARM GCC编译并完整链接通过，仅旧BMI088 packed告警。证据在artifacts/serial-20261019/，模拟往返时间不代表实机延迟。
-- 本机首次检查缺少cc，PATH中的本地ARM编译器缺nano.specs；随后使用既有conda宿主GCC和/usr/bin/arm-none-eabi-gcc验证，不安装依赖、不改工具链配置。未烧录、未复制到Jetson、未连接真实串口，物理映射、实际波特率、时序及H7负责人核对待确认；未stage/commit/push。
+2026-11-01倒置双腿前点对齐：作者确认两腿都到1.45rad后从上方绕回。新增倒置专用recovery_front_angle=1.45rad，普通front_angle=1.75rad保持；阶段10 ALIGN_FRONT追加在枚举尾部，原0～9编号不变。流程7稳定→8原腿长准备→10前点对齐→9同步翻身→新版普通规划。对齐入口沿原Wrap(angle-pitch_world)的0～2pi通道锁定每腿连续前点，用现有angle_rate限速；双腿实际/指令均距连续前点不超过rear_tol且仍满足原预伸腿门槛，连续stable_time后才能开始FLIP。对齐阶段不累计sweep，沿用angle_timeout撤力保护。进入FLIP时双方指令统一从倒置前点开始，再保持原正向连续扫角；原回正/扫角/卡滞保护及回正后的普通规划保持。新增self_right.front_goal[2]保存对齐终点，不与逐拍angle_target混用；PID、物理标定、AIR、普通动作和用户已注释身下入口未改。VOFA赋值保持，通道8可观察7/8/10/9，32/33记录指令；需实测新轨迹效果，软件检查不是碰撞包线或翻正验收。
 
+2026-11-01当前仅保留新版普通路径：作者授权清除旧固定伸腿/统一后摆分支。已删除Extended、Rear_Ready、Rear_Path_Init专用辅助、旧普通目标分支和旧angle_tol=0.4rad成员；普通入口及翻身回正均只调Normal_Plan，Target_Update只分翻身目标与新版普通目标。保留EXTEND/REAR/RETRACT/SWING与Rear_Path_Update连续反馈；伸腿完成仍按双腿本次目标±length_tol、其他到位/稳定/超时保持。关闭自动翻身时仍倒置的IDLE撤力等待，不再回退旧动作。Normal_Target、翻身函数和Compute_Output保持；作者速率、身下注释、AIR与VOFA不改。历史旧路径/0.4rad说明不再代表当前实现。
+
+2026-11-01最新翻身交接：按作者要求，FLIP满足原回正判据及原稳定确认后，直接调用Normal_Plan，以当时双腿姿态/长度进入新版普通前后选路，不再转入旧统一后摆准备链。原recovered标志、PID首拍历史标志、支撑清零及角环恢复设置保留；翻身SETTLE/PRELOAD/FLIP的轨迹/速度/回正判据/保护不改。回正后的普通阶段使用normal_angle_tol=0.2rad及原50ms，随后仍按原接口交LQR；不是翻身完成直接开放正常输出。作者已自行注释身下入口，本轮完整保留该注释及现有速率。下方“翻身回正沿旧链路”说明为此前历史。
+
+2026-11-01最新入口回退：作者要求撤销AI删除身下入口这一轮，准备自行注释。已恢复normal_swing_window参数及Normal_Plan中的身下if/continue分支，当前源码重新保留身下快捷入口；尚未由AI代为注释。作者现有速率调参保留，普通0.2rad/50ms、倒置/AIR和VOFA不改。自行关闭时注释该完整if块即可，不需删除参数成员或初始化。
+
+2026-11-01当前AIR参数试调：作者确认仅将大机air_param.time_off由0.15s改为0.20s，用于观察身下自起进入NORMAL后短暂低支持力是否仍触发FLIGHT。35N支持力门槛、0.16m高度保护、原压缩退出、自起及交接保持；小机参数不改。此项同时将大机首次低支持力初判和运行中离地确认延长50ms，未新增判断或恢复后屏蔽。VOFA仍为下方v3，实际误判改善及真实离地响应待实测。
+
+2026-11-01当前普通到位容差试调：按作者确认，仅normal.planned普通SWING使用normal_angle_tol=0.2rad，原angle_tol=0.4rad保留给倒置回正旧路径；原腿角/指令角两项比较及连续50ms、超时规则保持，不新增姿态/速度条件。身下识别、动作目标、PID、支撑渐入与AIR/NORMAL选路均不改。最新12241行CSV中34.530s先完成并进入NORMAL，34.720s再进入FLIGHT，不是交接选错状态；需用下方v3通道定位后续AIR触发，不能称已解决误离地或pitch。下方此前0.4rad普通到位说明为历史。
+
+2026-11-01最新回退（覆盖此前普通接管门槛试用记录）：8856行CSV确认多次腿角已到位，但新增俯仰/速度/外推条件使普通SWING滞留并超时。按作者确认删除该组条件、normal_ready_pitch/rate参数及normal.ready_block；恢复原腿角和指令角到位连续50ms后交接，不要求恢复控制器先完成LQR机身平衡。身下识别仍为Wrap(几何腿角-pitch_world-leg_trim)，normal_swing_window仍1.0rad。原超时、支撑渐入、目标/PID、倒置及回正、AIR/NORMAL和交接输出保持；本轮不是对整版普通选路的回退。
+
+2026-11-01最新回退（覆盖下段限速说明）：按作者确认，普通SWING恢复上一版直接给站立trim目标及原角环历史处理，撤销实测角起步斜坡和RETRACT→SWING清angle_history_ready；只保留normal_swing_window=1.0rad的身下入口修正。最终angle_tol=0.4rad、前后选路、倒置及回正、AIR/NORMAL/PID/交接保持。尚未增加新的速度完成条件，VOFA布局不变。
+
+2026-11-01根据8681行自起CSV修正普通细节：新增normal_swing_window=1.0rad用于普通入口识别身下可直接收短/摆正，原angle_tol=0.4rad仍仅用于最终到位；二者不再混用。短腿且在窗口内直接SWING，长腿在窗口内先原RETRACT，不绕到前后准备位。仅planned普通SWING将指令从当前实测角按原angle_rate=6.7rad/s推进至trim；planned的RETRACT→SWING清angle_history_ready，由公共原预置函数在首拍重建历史。旧倒置及回正后的目标仍为原逻辑，公共PID参数未改；不直接跳过摆正交LQR。
+
+CSV前侧首轮在5.005s由RETRACT进入SWING，指令直接到0而实际角约2.19rad，速度环出现-54Nm限幅；身下三轮约0.9rad/0.13～0.14m却走6→5→1→2；后侧pitch约0.33～0.37rad峰值可能同时包含收腿与LQR交接动态，不将其一概解释为pitch权重。20.29s处有FAULT_MOTOR、腿解算清零，原保护保持，不当作普通路径到位处理。当前更柔和及pitch改善仍待同样普通自起CSV确认，VOFA48路布局和46路径位保持。
+
+作者要求停止拆分手动采集、直接实现普通自起。fallen_process_param.front_angle=1.75 rad依据本机CSV开头几何角约1.73～1.76 rad、用户确认轮位机身前侧；后侧仍为原rear_angle=-1.42 rad。此为动作目标试用值，不是已验证的全姿态安全包线。普通IDLE建立normal.planned，每腿锁定path：0已在原摆正窗口、1前侧、2后侧；路径选择沿原上绕0～2π表示比较，不走跨机身零位的最短角。只比较当前实测与两个准备位，不修改电机坐标/符号。
+
+两腿均已在准备位直接RETRACT，已收短则SWING；需摆动但腿短时，仅该腿伸至原extend_len，足够长或已在位的腿保持当前长度。阶段6仍表示伸腿准备，阶段5在planned路径中表示前/后准备位对齐，左右独立目标、双腿到位后才推进。之后仍用原收腿零基础Tp、摆正PID及支撑渐入、原LQR交接。没有增加新的前置缩腿包线或在线重新规划。
+
+倒置Reset会清planned；翻身及回正后的原阶段、目标与路径保持，AIR/NORMAL/RL及检测优先级不改。超时仍STOP，经原任务层撤力等待重判和预算。此次改变的是普通目标/动作顺序，尚未实机确认更快、更柔或碰撞可行性，不以编译或手动活动记录代替动作验收。
+
+### 当前VOFA：普通趴地自起路径与AIR采集v3（2026-11-01）
+
+本段为历史自起v3布局，当前有效布局见顶部。防翻观察器接入与旧通道块已撤除，不按模式自动切换帧。相对v2仅22/23由左右连续准备角改为平均支持力/AIR计时，45由恢复补偿限矩改为原始flight；13仍为原始俯仰角速度，46仍仅路径位。
+
+| 通道（0起） | 内容与单位 |
+| --- | --- |
+| 0～2 | 原在线掩码、使能/投入状态位、ctrl_fault |
+| 3～8 | 恢复phase、fault、阶段时间s、稳定时间s、retry、后处理phase |
+| 9～13 | 三态、三态valid、倒置判定、pitch_world rad、原始gyro_rad_s[1]俯仰角速度rad/s |
+| 14～15 | 左右几何腿角rad |
+| 16～17 | Wrap(几何腿角-pitch_world) rad，仅观察量，不定义实物前后 |
+| 18～19 | 左右摆角位置PID保存的measured[NOW] rad |
+| 20～21 | 左右恢复摆角指令rad |
+| 22 | air_detection.mean_force：平均支持力估计N |
+| 23 | air_detection.elapsed：AIR当前状态条件计时s |
+| 24～25 | 左右几何摆角速度rad/s |
+| 26～27 | 左右实际腿长m |
+| 28～29 | 左右恢复最终腿长目标m |
+| 30～31 | 左右恢复Ramp实际给定m |
+| 32～33 | 左右长度PID输出N，未加支撑或补偿 |
+| 34～35 | 左右摆角速度PID输出Nm |
+| 36 | 支撑渐入比例 |
+| 37～40 | 最终四髋请求Nm：左前、左后、右前、右后 |
+| 41～44 | 四髋物理反馈Nm，同上顺序 |
+| 45～47 | AIR原始flight（0/1）、路径状态位、HAL毫秒时间 |
+
+46路径状态位：bit0连续准备角已播种、bit1新普通路径有效；bit2～3左路径、bit4～5右路径（0原位/1前侧/2后侧）。前/前直接收腿为22（2+4+16），前/后为38（2+4+32）；进入准备角对齐播种后加1。已删除bit6～10接管阻断信息，旧门槛试用CSV仍须按当时高位定义解读。37～40仍是最终请求，18～21等历史须结合阶段和46解释。
+
+22为估计值，不能单独证明真实轮端支撑。23在未离地时为低支持力确认计时；已FLIGHT时为原压缩/支撑恢复条件计时，切换会归零；首次低支持力另用initial_unload_elapsed，未放在此路。45是公共AIR观察结果，9才是仲裁后的三态，二者须区分。只录日常普通自起，从投入前覆盖接入NORMAL后至少2s，尤其保留身下起立到FLIGHT或稳定全过程；无需额外手动动作。
+
+phase：0等待、1收腿、2摆正、3完成、4失败、5后摆、6伸腿、7翻身稳定、8翻身预伸腿、9翻身扫腿。fault：0无故障、1输入、2超时、3姿态、4许可、5阶段配置。后处理phase：0运行、1撤力等待、2重判。三态：0 NORMAL、1 FALLEN、2 FLIGHT。
+
+18～19直接读取PID历史，RETRACT暂停摆角PID或退出恢复后可保留旧值；相应PID输出不必等于当前正在施加的力/矩。12为世界pitch，13现为原始gyro_rad_s[1]，更早CSV此路为LQR滤波速度，不能混用；此路只供观察，不保证为pitch_world的导数。16～17沿用现有路径角差定义，先fmod有界化再按±pi端点环绕，避免异常无穷值导致逐圈环绕不退出。角度无效时不据此选路。后台短临界区复制仍不是同一物理采样；最终请求不是电机实际执行结果。读取时结合phase、0～2及valid。
+
+采集顺序：先明确失能，手动在现有可活动范围记录两腿均偏前、均偏后及一前一后，各含短/中/长腿；同步标注实物前后和碰撞/受阻位置，不强推机构。再录原有普通自起，覆盖投入前到接管/撤力后，每个可重复初姿至少3次。新前侧带力矩路径不开放，倒置不作为本次动作试验。视频/实物记录补充真实位移及碰撞，不能用轮速积分替代。
+
+当前按作者最新要求只需录制原有日常普通趴地自起，从投入前到完成或失败退出及NORMAL后续，先观察phase3、fault4、路径46、腿长26～31、摆角18～21、AIR22/23/45和最终矩37～40；不再要求一串失能压腿操作。路径前后依据本机方向确认和代码表示，不用其他项目数值猜测。
+
+## 2026-11-01 · 倒置先对齐1.45rad前点再同步上绕
+
+- 作者确认两腿均到1.45rad后从上方绕回，沿用现有翻身扫角方向。fallen_process_param新增recovery_front_angle=1.45rad，与普通front_angle=1.75rad独立；阶段枚举尾部追加ALIGN_FRONT=10，原0～9编号保持。self_right新增front_goal[2]保存每腿连续前点目标，不增加新任务或公共三态。
+- 流程由SETTLE→PRELOAD→FLIP改为SETTLE→PRELOAD→ALIGN_FRONT→FLIP。PRELOAD保留原长度门槛，进入对齐时复用原Wrap(angle-pitch_world)的0～2pi上绕表示锁定目标；沿原angle_rate推进指令。对齐要求双腿实际和指令均在原rear_tol窗口内、腿长仍满足原预伸门槛，连续原stable_time后才扫腿；不累计sweep，沿原angle_timeout撤力。Recovering显式包括阶段10，避免倒置抢占把对齐反复复位。
+- FLIP入口把两侧指令统一到确认的前点，再按原正向连续扫角，解决从各自初始角开始导致156°差持续保留的问题；位置反馈仍按各自实测播种。原回正、扫角/卡滞保护和回正后新版普通规划不改。Normal_Plan/Target、Compute_Output、普通前点、PID、物理映射、AIR和作者身下注释均不在本轮范围；VOFA源码保持，阶段说明增加10，8通道可观察7→8→10→9，32/33可观察目标同步。
+- 工程外生产函数检查通过：复盘一前一后及反向混合、前点附近和±pi附近初角，连续目标映射回1.45rad，按限速到位并共用FLIP起点；单腿不到位/腿长不足不启动扫角、连续确认被中断清零、对齐超时撤力、阶段10不被误抢占、FLIP扫角只在翻身累计、回正接新版普通及原普通入口隔离。PID/动力学为替身，不能证明实机上绕包线或翻正成功。
+- 大小机GCC各114个C源全量编译链接通过，Flash609616B/605736B，仅原BMI088 packed告警；临时清单仍含前序未接入motion_guard，不代表IDE来源验收。未执行AC5、烧录或实机验收，未stage/commit/push。总览及AGENTS已同步。
+
+## 2026-11-01 · 清除旧固定自起分支
+
+- 作者明确授权清除旧分支。fallen_process.c删除Extended、Rear_Ready、Rear_Path_Init三个旧专用函数、IDLE倒置关闭时的旧固定选段以及Target_Update旧目标生成；后者只分翻身目标与新版普通目标。Ready删除旧伸腿单边到位条件及普通/旧容差选择，伸腿仍在阶段层调用Normal_Length_Ready；EXTEND后统一进入本次所选准备位对齐。fallen_process.h与初始化删除旧angle_tol=0.4rad成员，保留normal_angle_tol=0.2rad。
+- 关闭自动翻身且IDLE仍判倒置时返回STOP，Fallen_Process_Update清候选，不能回退旧动作或强行普通规划。普通入口及翻身回正共用新版规划，EXTEND/REAR/RETRACT/SWING编号和新版连续反馈、PID、补偿、正常翻身及其保护/交接保持。planned保留用于当前VOFA诊断。保留作者身下if注释及工作区速率；作者在本轮并行将extend_len调为0.28m、angle_rate调为4rad/s，未覆盖。
+- 文件内函数数29→26，C源码行数983→868，减少115行；Normal_Plan/Normal_Target、翻身阶段/目标与Compute_Output函数体保持。工程外生产函数夹具覆盖普通补伸/前后对齐/收腿/摆正/50ms及中断重计、翻身回正前后/混合选路、倒置关闭清零候选后等待、重新正立进入新规划、新倒置抢占及扫角保护。首次夹具按旧0.25m写死导致断言失败，改为读取当前生产参数后通过；没有为测试改固件目标或控制。PID/动力学为替身，不代替实机。
+- 大小机GCC各114个C源全量编译链接通过，Flash608940B/605028B，仅原BMI088 packed告警；工程外临时来源仍含前序未接入motion_guard，不代表IDE来源重载验收。全工程源码检索已无三个旧函数及angle_tol成员引用，VOFA/AIR/LQR/最终输出未改。总览和AGENTS同步，未执行AC5、烧录、实机动作验收或Git提交/推送。
+
+## 2026-11-01 · 翻身回正后接入新版普通自起
+
+- 作者要求倒置自救成功后不再经历旧版统一后摆准备，改接当前新版普通自起。fallen_process.c仅将Recovery_Stage的FLIP回正稳定成功分支中的旧EXTEND/REAR/RETRACT/SWING选段替换为Normal_Plan(st, imu, leg)，增加对应静态前置声明；不新增函数或状态。原recovered置位、长度/角环首拍历史标志、支撑清零、角环wrap及长度测量准备保留。
+- 新规划按回正瞬间的双腿状态独立选择前/后位并决定是否补伸/收腿；后续planned普通摆正使用0.2rad及原50ms，再按原接口交LQR。不是翻身完成直接开放NORMAL。SETTLE/PRELOAD/FLIP轨迹、回正判据、扫角/卡滞保护、公共超时重判和最终发送不变；保留作者现有速率及已注释身下入口。fallen_process.h只同步planned与旧容差用途注释，未变更结构布局或参数。
+- 倒置上电VOFA不改；回正后normal.planned变1现在是预期，判断上电误入必须保留7/8/9翻身阶段之前的记录，不能只看回正后的planned。总览与AGENTS同步，旧“回正继续旧链路”记录被本条覆盖。
+- 工程外实际生产阶段/目标函数夹具通过，覆盖回正前49ms仍在FLIP、前/后/混合/未到准备位腿姿接入新规划、普通摆正到DONE、recovered保持、新倒置抢占清planned与扫角上限撤力；PID/动力学为替身，不证明实机翻身效果。大小机GCC各114个C源全量编译链接通过，Flash610160B/606280B，仅原BMI088 packed告警。工程外临时来源含前序未接入motion_guard，不代表IDE来源核验。未执行AC5、烧录或实机验收，未stage/commit/push。
+
+## 2026-11-01 · 按作者要求撤销删除身下入口
+
+- 作者要求撤销上一轮删除，准备自行注释。仅恢复fallen_process.c的normal_swing_window初始化与Normal_Plan身下if/continue分支、fallen_process.h参数成员及原path注释。当前身下快捷入口已恢复，未再代作者关闭。
+- 保留作者现有length_rate=0.7m/s、angle_rate=5.0rad/s等工作区调参，不以旧整文件快照覆盖。普通到位、倒置/AIR、当前VOFA及其他源码保持；总览与AGENTS改为回退后的实际状态。自行禁用位置为Normal_Plan中使用normal_swing_window的整个if块，包括continue；不需删除.h成员或初始化。
+- 大小机GCC全量编译链接通过，Flash610384B/606504B，既有BMI088 packed告警；工程外临时来源仍含未接入的motion_guard，不代表IDE登记验收。未烧录，未stage/commit/push。
+
+## 2026-11-01 · 删除普通自起身下快捷入口
+
+- 作者反馈身下直起不稳定，明确要求取消normal_swing_window，身下腿也正常选前/后起身。fallen_process.c删除参数初始化和Normal_Plan中身下窗口、path=0保持目标及continue分支；fallen_process.h删除参数成员，path注释改为0未规划、1前侧、2后侧。普通规划不再生成path=0，其他前后距离比较、准备位目标和伸腿选择保持。
+- 身下短腿现在会按所选准备位先补伸，再对齐、收腿、摆正；长腿按原规则跳过补伸。已经处于所选前/后准备位时仍允许原收腿/摆正跳段，不强制所有初姿完整执行全部阶段。只取消动作入口的身下快捷路径，不删除公共触地高度判断，不修改普通0.2rad/50ms、PID/速率/支撑、倒置及回正旧路径、AIR200ms、LQR和输出。
+- 当前倒置上电VOFA源码未变，38/39通道仍读path，但当前0仅表示未规划；总览及AGENTS同步。此前身下窗口、path=0保持以及相关测试为历史，不可据此恢复该入口。SWING斜坡及降速建议仍未实施。
+- 工程外实际生产函数夹具检查通过：正/负/零身下短腿、此前补角身下样例、混合腿位均只选1/2并补伸；长腿跳补伸、已在前后准备位跳段、仅需补伸侧更新腿长及倒置进入SETTLE保持。PID/模型为替身，不证明实机效果。138个源C/H快照仅fallen_process.c/h改变，函数体仅Normal_Plan变化，另136个源保持；工程源码已无normal_swing_window或普通path=0赋值。
+- 大小机GCC各114个C源全量编译链接通过，Flash610284B/606404B，仅原BMI088 packed告警；工程外临时来源仍含前序motion_guard，不代表IDE登记验收或主动防翻重新接入。未执行AC5、烧录或新入口实机验收，未stage/commit/push。
+
+## 2026-11-01 · 倒置上电误走普通路径的只读VOFA诊断
+
+- 作者要求优先定位倒置冷启动误入普通准备，授权切VOFA后复现一次。vofa_debug.c仅将原估力分项布局完整包入#if 0，启用固定48路倒置上电诊断；0～2保持，3～19按已说明的三态/有效性、upright/inverted、恢复phase/fault、普通规划、欧拉补角输入、pitch_world、四元数及加速度排列。20～46补齐姿态/腿/力映射有效性、翻身开关、阶段计时、实际/目标腿位、路径、四髋最终请求与AIR结果，47仍HAL毫秒。完整表及复现步骤见file-guide顶部。
+- 只读取已发布共享值，不重新计算姿态/许可，不新增状态、锁存或控制接口；valid=0时的方向残留、planned与DONE残留、异步数据及最终请求含义均在总览注明。无新include，不改.h。普通SWING斜坡、建议降速、混合路径修正、倒置判据与IMU标定均未实施；自起/AIR/LQR/最终输出源码和参数保持。
+- 核验：138个工程自有及生成源C/H快照对比，仅vofa_debug.c变化，其余137个一致；估力旧布局正文逐字保留；按源码#if 0排除后0～47各赋值一次，唯一Vofa_Send保持。大小机GCC各114个C源全量编译链接通过，Flash610384B/606504B，仅原BMI088 packed告警。工程外smart-normal临时清单仍包含前序motion_guard源，不代表当前IDE源清单重载核验或主动防翻重新接入。未执行AC5、烧录或倒置冷启动复现；未stage/commit/push。AGENTS和总览同步当前布局。
+
+## 2026-11-01 · 撤除主动防翻接入，保留独立源码
+
+- 作者明确要求完全去掉防翻相关计算，允许保留文件源码。删除control_compute.c的motion_guard include、Compute_LQR输入组装/Observe及执行入口Reset；删除vofa_debug.c的include和整段旧防翻布局。
+- motion_guard.c/.h原样留存；MDK删除源登记，eIDE无虚拟源登记并增加物理扫描排除，避免保留源码重新进入编译。现有估力分项VOFA、原转弯腿力补偿、AIR/自起/RL及机器参数不改。历史计划不再作为当前已接入事实。
+- 验证：当前工程外GCC全量编译链接通过；临时源清单明确排除motion_guard，新compile_commands和ELF符号表均无该模块。除control_compute.c/vofa_debug.c外imcalib C/H前后指纹一致，保留的motion_guard.c/.h亦未修改；未烧录或板端验证。
+
+## 2026-11-01 · 防翻前置估力分项诊断v1
+
+- 作者确认NORMAL静立无其他部位承重，并明确授权修改VOFA。Vofa_Debug_Send启用估力分项48通道，防翻与自起v3均#if 0保留，0～2及一次48路发送保持。
+- 发布现有air_detection.leg[]的电机反解轴向力/摆矩、弹簧力、自重摆矩、投影压力、腿/轮加速度与滤波前后FN；同时记录估力theta定义、竖直加速度输入、四髋反馈/最终请求、左右force_map、实际height_trim及有效性/限矩状态。
+- 不新增估力结构体字段，不推进观察器，不改AIR公式/门槛、自起、LQR、极性/零点/量程/几何或补偿。通道表与静立三高度步骤见anti-tip-plan.md顶部。异步缓存只在静立统计核对，不把后台同帧当作严格同拍反馈。
+- 软件验证：当前大机工程外GCC全量构建通过，Flash610736 B，仅既有BMI088 packed告警。编译器预处理确认旧两套布局未编译、固定赋值与有界循环完整覆盖0～47且仅发送一次；除vofa_debug.c外108个imcalib C/H文件前后SHA256一致。临时构建清单补入motion_guard用于链接，不替代IDE重载后清单核验。未烧录、未采到分项CSV。
+
+## 2026-11-01 · 恢复防翻VOFA采集
+
+- 作者要求切回防翻采集。Vofa_Debug_Send启用已有防翻48通道块，当前普通自起v3块完整#if 0保留；不按模式选帧。
+- 通道0～2保持原状态；3～47按anti-tip-plan.md防翻表，第7通道applied固定0。观察器、原请求、控制输出、自起、AIR与机器参数均未随此修改。未宣称已采集或防翻已生效。
+- 验证：当前大机GCC工程外全量编译链接通过，Flash610672 B，仅既有BMI088 packed告警；编译器预处理结果确认0～47通道各赋值一次、防翻块启用、自起块未编译。临时builder源清单补入motion_guard供链接验证，不等于IDE重载后清单已核对。未烧录、未采集实机数据。
+
+## 2026-11-01 · 大机离地确认时间试调至200ms
+
+- 作者明确确认后，仅将air_detection.c大机分支的air_param.time_off从0.15s改为0.20s。最新CSV首行错帧剔除后7341行：12.750s普通身下自起已进入NORMAL，12.905s因支持力持续低于35N累满150ms进入FLIGHT，触发时估力约29.1N且正在回升。该记录支持定位低力计时触发，不能单独证明真实卸载或估力误差。
+- 参数同时用于首次低支持力初判与已初始化后的离地确认，二者均延长50ms。35N支持力门槛、高度保护、压缩退出、支持力模型、小机参数、普通/倒置自起、LQR/NORMAL、交接及输出逻辑不改；VOFA沿用v3的22/23/45。未新增判断或恢复后屏蔽。
+- 大小机GCC各114个C源全量编译链接通过，Flash610768B/606888B，仅原BMI088 packed告警。工程外smart-normal临时产物已更新，临时清单仍补齐前序motion_guard，未修改工程登记或原IDE缓存。尚未烧录及验证误触发改善、真实离地延迟；未执行AC5，未stage/commit/push。总览及协作规范同步本次有限参数授权。
+
+## 2026-11-01 · 仅收紧普通摆正角容差并补充AIR观测
+
+- 作者确认只试现有到位参数，不增加控制判据。fallen_process_param_t新增normal_angle_tol，初值0.2rad；Ready沿已有normal.planned选用该容差，倒置回正旧路径仍用angle_tol=0.4rad。只替换原腿角/指令角比较使用的阈值，稳定确认仍50ms；不恢复机身俯仰、速度、外推条件，也不改摆正目标、PID、腿长、支撑渐入及超时。
+- 最新12241行CSV中34.530s普通身下起立完成并进入NORMAL，34.720s才进入FLIGHT；按现有投影公式重算，高度在34.570s跨过0.16m，与原150ms低支持力计时吻合，但没有直接记录支持力，尚不能证明是真实卸载或估计偏低。作者再次强调本例是交接后NORMAL的后续问题，不是交接错选模式；本轮未修改Control_Condition_Recovery_Ready、AIR检测或处理。
+- vofa_debug.c布局v3只将22/23由连续准备角换成air_detection.mean_force（N）/elapsed（s），45由恢复补偿限矩换成air_detection.flight（原始0/1）。9仍为选路三态，13仍原始gyro1，46路径位保持；只读既有状态且仍一次发送。旧v2 CSV不能套用新22/23/45定义。总览与协作规范同步。
+- 工程外既有生产函数夹具通过，覆盖普通±0.2rad边界、任一腿和指令超窗、旧路径±0.4rad边界、原50ms及中断重计、无新增俯仰/速度限制，并保留普通选路与倒置隔离检查。PID/动力学为替身，只证明软件条件。大小机GCC各114个C源全量编译链接通过，Flash610768B/606888B，仅原BMI088 packed告警；临时来源清单仍补齐前序motion_guard，未改工程登记或原IDE缓存。未执行AC5、烧录或实机pitch/AIR验收，未stage/commit/push。
+
+## 2026-11-01 · 撤销普通SWING接管门槛
+
+- 最新起立CSV为8856行/50.235s，三次出现1.5s阶段超时；机身约-0.52rad、腿角约0.03rad且角速度已很小时，接管阻断码仍为18（俯仰及外推窗口）。本记录未出现FLIGHT，退化是FALLEN摆正滞留。恢复控制只跟踪腿长/摆角，不能保证先完成LQR机身平衡；原新增条件不适合作为接管硬门槛。腿长目标与Ramp均已0.15m，不能将实际约0.19m解释为目标斜坡未给到。
+- 作者确认后，fallen_process.c恢复加门槛前的Ready原函数，删除俯仰、机身/腿速度与外推条件；fallen_process.h同步删除normal_ready_pitch/rate和normal.ready_block。原腿角/指令角容差与连续50ms稳定计时、超时撤力规则不改。只回退该组门槛，身下相对角识别Wrap(geometry-pitch_world-trim)及1.0rad窗口保留；倒置/回正、目标/PID/补偿、AIR/NORMAL、LQR交接及输出保持。
+- VOFA46删除高位阻断码，恢复低6位路径定义；13继续记录原始gyro1只供观察，未恢复滤波速度。总览与AGENTS当前规则同步，旧8856行CSV仍按门槛试用版通道解释。
+- 验证：Ready函数体与加门槛前快照一致，本轮仅该函数体变化，Normal_Plan及其他函数体保持；大小机GCC各114个C源全量编译链接通过，Flash610764B/606884B，仅原BMI088 packed告警。产物覆盖工程外smart-normal临时目录，临时来源仍补齐前序motion_guard，不代表原IDE重载清单验收。未执行AC5、烧录或实机响应验收，未stage/commit/push。
+
+## 2026-11-01 · 普通身下识别坐标与摆正完成条件
+
+- 作者批准按最新CSV分析修改。16646行CSV中，身下入口几何角约1.02/1.03rad、pitch_world约0.24rad，原直接比较几何角会错过1.0rad窗口。Normal_Plan改用Wrap(geometry-pitch_world-leg_trim)，窗口不变；只改普通入口识别，不改几何解算与坐标标定。
+- 原SWING只验证双腿及指令进入0.4rad窗口50ms。CSV的后侧62.585s交接时机身pitch约0.367rad、原记录滤波速度2.633rad/s、两腿速度2.462/3.495rad/s；身下25.130s也存在高速通过窗口，不能把腿角到位等同整机稳定。仅normal.planned普通SWING新增normal_ready_pitch=0.30rad、normal_ready_rate=2.0rad/s；使用原LQR姿态取轴及原始gyro1，检查当前姿态/机身和两腿速度，并要求沿原stable_time外推姿态仍在同一窗口。连续满足原50ms才完成，中断清原计时，原1.5s超时及撤力重判保留。阈值为首轮试用，旧CSV的滤波速度不能直接当原始速度重放。
+- fallen_process.h仅增加两个普通参数和一个normal.ready_block诊断成员；fallen_process.c本轮函数体仅Ready与Normal_Plan变化，29个函数数量不变。倒置/回正planned=0走原完成条件；目标、PID、补偿、限幅和原控制交接函数保持。135个其他控制/配置/反馈/网络/任务源头文件与前序快照SHA256一致，保留前序防翻与工程工作区改动。
+- VOFA13由LQR滤波俯仰速度改为接管所用原始gyro_rad_s[1]；46低6位路径保持，bit6～10为普通SWING角/姿态/机身速度/腿速度/趋势阻断。其余通道及唯一发送保持；总览和协作规范同步，未增加AIR门控或屏蔽。
+- 工程外生产函数夹具通过：原身下漏判实例、后侧/身下高速交接阻断、外推内外趋势、速度边界、稳定计时中断重计、planned=0旧路径隔离；PID/力映射/动力学为替身，不代表实机动作。大小机GCC各114个C源全量编译链接通过，Flash分别611188B/607308B，仅原BMI088 packed告警。产物在TEMP/s2rgap-smart-normal-e27b8a98b61b46aba7bc1527eb0d06c4；临时清单仍补齐前序motion_guard漏项，不代表原IDE重载清单验证。本轮未执行AC5、烧录、板端时序或实机pitch/AIR验收，未stage/commit/push。
+
+## 2026-11-01 · 回退普通摆正限速，只保留身下窗口
+
+- 最新12071行CSV来自限速版，作者反馈混合腿位pitch与身下接管后FLIGHT退化；经明确同意，撤销普通SWING实测角播种/目标限速与planned收腿转摆正历史重置，恢复首版的直接trim给定和原历史处理。保留normal_swing_window=1.0rad，最终angle_tol仍0.4rad。
+- 不增加速度门控或固定等待，不修改AIR阈值/压缩退出、倒置及回正、NORMAL/LQR/控制参数或交接。该回退只恢复较好的已试动作基线，不宣称消除身下接管后的FLIGHT；后续完成条件另行设计，不能夹带实施。
+- 生产阶段夹具回归通过，确认身下窗口仍直入SWING/RETRACT、摆正目标恢复直接trim、收腿转摆正保持原历史标志。大小机GCC各114个C源编译链接通过，大机Flash610764B、小机606884B，仅原BMI088告警；临时来源清单补齐前序motion_guard，原工程登记未改。未烧录或实机验收。
+
+## 2026-11-01 · 普通身下直起与摆正目标限速
+
+- 作者反馈后侧pitch变化大、身下仍绕路、前侧摆动猛。CSV8681行/61.095s确认身下约0.9rad、腿长约0.13～0.14m的三轮因旧0.4rad入口窗口走EXTEND/准备摆角/RETRACT/SWING；前侧SWING指令阶跃到0，实际角约2.19rad，角速度PID顶至-54Nm。后侧摆正与交接存在约0.33～0.37rad pitch峰值，不能据此单独认定K或pitch权重错误。
+- normal_swing_window=1.0rad为普通入口独立窗口，原angle_tol=0.4rad最终到位不改。planned普通SWING从首拍实际角按angle_rate限速走trim，planned的RETRACT→SWING清角环历史就绪，利用原公共首拍预置消除暂停后旧历史；不改PID参数/补偿/输出/倒置目标或原交接。
+- 夹具执行生产阶段/目标逻辑，新增正负身下短/长腿入口、转摆正首拍与后续指令每拍<=0.0067rad、历史重置等检查通过，连同前版普通/倒置隔离回归通过；PID、动力学等为替身，不能证明物理pitch冲击已消除。20.29s处电机掉线/FAULT_MOTOR导致输入失败，原保护未绕过。
+- 大小机GCC各114个C源全量编译链接通过，大机Flash610988B、小机607108B，仅原BMI088告警；产物覆盖工程外smart-normal目录中的对应HEX/BIN，未改IDE缓存源清单，仍临时补齐前序motion_guard。VOFA表不变，未烧录或验证实物改善。
+
+## 2026-11-01 · 普通自起前后选路首版
+
+- 作者明确停止一串不可操作的手动测试并要求直接做。CSV9775行/48.925s均phase=0、最终髋请求0；开头前侧由作者确认，相对角约+1.78/+1.75rad、几何角约+1.76/+1.73rad，腿长约0.333/0.336m。增加front_angle=1.75rad，后侧原-1.42不改；此为试用动作值，尚非完整路径/碰撞验证。
+- 普通非倒置IDLE一次锁定每腿前/后/原位路径：沿原上绕0～2π表示比较距离；已在准备位跳过伸腿及绕摆；需摆动的短腿单独给原extend_len，其他腿保持现长；均到位后原收腿、摆正、交接。normal新增planned/path[2]/prepare_angle[2]，不增加任务或全局控制器，不做每拍重规划。
+- 倒置Reset清planned，原翻身及回正不走新规划。Recovery_Stage/Target/Enter、原Ready/Rear_Path_Init、公共Compute_Output/Update、Timeout函数体与本轮前文本一致；135个其他控制/配置/反馈/网络源头文件SHA256一致。公共Stage/Target只对planned普通路径增加分派/长度就绪判断，其余支路保持。
+- VOFA布局v2只将46改为路径位（bit0准备角就绪、bit1新普通路径、bit2～3左路径/bit4～5右路径，0原位/1前/2后），其余布局不变。当前采集以正常普通自起全过程为主，不再要求分散手动压腿。倒置、AIR、NORMAL、RL和最终输出源码未改。
+- 使用工程外Clang夹具执行实际生产阶段/目标入口，覆盖前侧长腿、后侧短腿、原位、左右混合、单腿补伸、双腿到位、目标限速、收腿/摆正/完成、超时、失许可、无效输入、准备轮矩零、倒置抢占及翻身回正旧路径，检查通过。PID/力映射/补偿和腿部动态为替身，仅证明软件状态/目标边界，不证明实体受力或成功率。
+- 大小机GCC各114个C源全量编译链接通过，大机Flash610760B、小机606880B，仅原BMI088 packed告警。临时构建仍补齐前序motion_guard漏项，未修改原IDE来源清单或工程登记；产物在TEMP/s2rgap-smart-normal-e27b8a98b61b46aba7bc1527eb0d06c4。未执行AC5、烧录或实机动作验收，未stage/commit/push。
+
+## 2026-10-31 · 普通趴地自起路径采集v1（只读）
+
+- 作者批准先采集本机前后路径、伸缩需求与混合姿态依据，不开放新动作。仅vofa_debug.c保存原防翻赋值为#if 0，启用固定48路恢复阶段、故障、计时、实际/指令角、PID保存测量、后摆连续目标、腿长/Ramp/PID、支撑、最终/反馈四髋及时间；0～2和唯一Vofa_Send保持。
+- 相对角通道16/17为原路径定义Wrap(virtual_leg_angle-pitch_world)，只读诊断，先fmod有界化再环绕；不识别前后、不选择路径、不改坐标符号。18/19为PID已保存的measured[NOW]，暂停或退出后可残留。
+- fallen_process.c/h、FALLEN/AIR/NORMAL仲裁、倒置及回正、RL、LQR、映射/补偿/限幅和物理标定均冻结；既有防翻观察器、control_compute及工程登记改动保留。通道、单位、采集步骤见file-guide顶部。路径表需后续实物/CSV验证，不宣称本阶段已使自起更快或更柔。
+- 验证：修改前后140个控制/反馈/配置/生成网络及工程登记、防翻计划文件SHA256一致；VOFA0～2保持，3～47各赋值一次，原防翻赋值文本原样保存。大小机ARM GCC均114个C源完整编译链接通过，大机Flash608900 B、小机605020 B，仅原BMI088 packed告警。产物在工程外`C:/Users/ynz/AppData/Local/Temp/s2rgap-normal-rise-diag-4294843adc42433d8e39c1b04d1393e0`。实际IDE builder.params仍未包含前序新增motion_guard.c，本次临时参数补齐该来源核验两机；未修改原构建缓存或工程配置，不宣称完成IDE重载来源验收。未执行AC5、烧录、板端周期或实物路径验收，未stage/commit/push。
+
+## 2026-10-31 · 主动防翻第一阶段参考预算观察
+
+- 作者授权制定计划并开始改进；开发前36个已有文件经明确确认提交为63ae969，未推送。本阶段改动单独保留工作区，未提交。
+- 新增motion_guard.c及inc/motion_guard.h，在Compute_LQR中只读NORMAL状态与原请求；发布实际/请求/交叉v*w、参考高度模型预算及LTR监督。每执行拍清除旧诊断，不修改command、LQR目标、K、轮/腿力矩、AIR/FALLEN及物理标定。
+- 参考来源为HelloWorld RM2026附件13.13节44–45页，附件MD5 91368964ee1331941353a526f35d81a4。原转弯模型高度只作代理，示例策略系数不构成本机可靠上限；LTR估力无效时跳过收紧，单轮卸载仍可观察。
+- VOFA切为固定48路防翻观察，旧停车布局#if 0保存；新表及阶段计划见anti-tip-plan.md。第7通道applied固定0，不能称主动防翻已生效。
+- eIDE虚拟源登记+排除扫描副本，MDK登记新源。工程外临时builder参数基于当前配置源清单补入新模块，GCC全量编译链接通过，Flash608868 B，生成HEX/BIN；仅既有BMI088 packed告警。此验证不是IDE重载后源清单验证，用户重新加载eIDE工程后仍需确认builder.params/compile_commands/objlist包含motion_guard各一次；未执行AC5构建、烧录或实机验收。
+
+## 2026-10-30 · 回退control_condition高度参数
+
+- 按作者要求，仅将control_condition_param.body_contact_height从0.16m恢复0.15m；confirm_time仍为0.05s。AIR参数与优先级逻辑未随此项回退。
+
+## 2026-10-30 · 独立观测与FALLEN/AIR/NORMAL仲裁
+
+- 作者最终确定FALLEN > AIR > NORMAL。删除按状态暂停并清空AIR的Air_Allowed及inhibit/rearm状态；公共FALLEN观测与AIR每拍独立运行。进入FALLEN不清AIR，恢复完成不强制NORMAL，按有效AIR结果交接，未知则等待零输出。原FALLEN动作锁存与FLIGHT真正倒置抢占、NORMAL原持续异常触发及原AIR压缩落地保持。
+- 大小机force_off与force_on统一35N，触地body_contact_height从0.15改0.16m。原支持力公式、确认时长、AIR内部低高度保护、PID/轨迹/发送未改。恰等35N仍遵循原严格大小比较，未引入迟滞死区。
+
+## 2026-10-30 · 修复AIR初判挡住FALLEN的选路错误
+
+- 起立CSV确认投入时高度约0.156 m、支持力约30.2 N、force_off/on为30/35 N，AIR不完成初始化。旧Control_Condition_Select先等待AIR，再判断首次异常、NORMAL恢复及FLIGHT倒置，导致明确倒地无法进入恢复，违反作者已定FALLEN优先级。
+- 将原首次倒地/倒置/异常/触地确认、NORMAL原恢复条件和FLIGHT真正倒置判断统一提前至高度候选与AIR等待之前；已运行FALLEN仍锁存至恢复完成。未扩大FLIGHT的普通异常抢占范围，未改变NORMAL持续确认和normal_ready约束。
+- control_detection每拍仍观察一次，但FALLEN观测移动到AIR更新之前。保留支持力算法/门槛/计时、AIR压缩落地、恢复动作、最终输出和硬许可。VOFA入口诊断保持供台架复测。
+- 大机eIDE全量113个C源编译链接通过，Flash607568 B，既有machine_config missing-braces和BMI088 packed告警保留；分支差异检查通过。未烧录、未做板端恢复验收，不以编译代替实机确认。
+
+## 2026-10-30 · 自起入口未启动诊断
+
+- 起立CSV中phase/计时/输出均为0、三态valid为0，尚未进入动作。按作者要求替换VOFA19～40为策略/许可、姿态/高度有效性、触地候选计时、AIR初判及实时阈值，保留阶段、目标、最终输出和毫秒时间；只读，不修改动作或判据。
+
+## 2026-10-30 · 自起卡住VOFA诊断与采集约定
+
+- 作者明确默认无法使用Watch，仅使用VOFA/CSV，已写入AGENTS与授权记忆更新说明。
+- vofa_debug.c启用自起阶段、故障、阶段/稳定计时、重试、后处理、双腿实际/目标/斜坡、伸收腿参数、后摆连续角/目标、实际角度容差、PID及最终四髋输出，0～2和固定48路发送保持。原布局注释保存；未改恢复动作、超时或PID。
+
+## 2026-10-30 · 保存作者LQR与自起调参
+
+- 按作者确认的第二次提交范围保存现有调参：大机腿长Kp1900→2800、自起伸收腿共用容差0.01→0.02m；十状态大机LQR更换为20261030-0110生成表，脚本/两份表/报告Q/R一致；四状态roll权重10→12并同步roll_height_model。均为作者既有改动，本次仅分组提交，不重新调参。
+- 自起收腿完成门槛因此为retract_len+length_tol=0.17m，伸腿完成门槛也随同一容差变化。两份大机十状态表内容哈希一致，四状态源码头与脚本Q一致；此前工作区大小机构建已通过，未重跑MATLAB或进行本次实机验收。
+
+## 2026-10-30 · 机械腿长范围改为宏定义
+
+- 作者要求leg_len_min/max像RL范围一样使用宏。machine_config.h集中定义大小机各自MIN/MAX，machine_config.c两机配置表分别引用；两表同时编译，因此不使用随编译机型改变的同名宏污染另一机型表。大机0.13/0.34、小机0.13/0.23保持，不修改任何控制公式或限幅行为。
+- 验证：大小机工程外增量编译及完整链接通过，源码差异检查通过；仅参数表示方式变化，未烧录。
+
+## 2026-10-30 · 公共拨轮与LQR腿长/RL机高分层限幅
+
+- 作者明确要求公共拨轮用LQR下限/RL上限，进入不同算法分别裁剪。rc_command.c将公共上限固定MACHINE_RL_HEIGHT_CMD_MAX，不再按模式选择；下限保持机械/K表交集。lqr_balance.c显式包含math_utils.h，在投入锁存和目标更新两处按原机械/K表交集裁剪，不回写公共命令。RL继续仅在观测入口使用独立0.27～0.47机高范围。
+- 未修改默认值、积分速度、机械参数、自起/PD/保护或模式选择。公共字段名保留，仅明确算法消费时的不同含义。
+- 验证：实际Rc_Command_Update、LQR_Enable_Latch及LQR_Target_Update函数提取后宿主64项检查通过，覆盖两种模式/8个上下边界输入、公共命令不被算法回写；配置/遥控/增益描述为替身，fmaxf使用有限值兼容实现。大小机工程外增量编译及完整链接通过；未烧录或测试真实拨轮响应。
+
+## 2026-10-30 · 作者指定RL高度命令上限0.47m
+
+- 作者指出机高/腿长范围不同，明确要求将输入上限放到0.47。machine_config.h增加唯一RL高度命令上下限0.27/0.47；rl_observation按新上限裁剪；rc_command将原拨轮累加/限幅移动到模式解码后，RL使用0.47上限，其他模式保留原机械/K表范围。没有修改机械限位、零点、极性、PD或LQR表。
+- 当前沿用leg_length_target字段在RL传高度命令，不新增目标几何换算；0.34～0.47为超训练包线试验。VOFA I6上限由原公共限幅下约1.55扩到2.35。
+- 验证：大小机工程外增量编译及完整链接通过；未烧录或验证实际可达高度。再次读取1999冻结环境确认训练height_range仅[0.27,0.34]，0.47并未训练。
+
+## 2026-10-30 · 作者指定RL低高度保护改为0.13m
+
+- 接地rl测试CSV四次投入均进入FAILED，公共倒地/ctrl_fault均为0，定位为原0.20m代理机高门槛。作者明确要求改为0.13m，并说明前导轮可能同时接地。
+- 仅rl_observation.c的RL_RECOVERY_HEIGHT从0.20f改0.13f，初始趴地识别和连续低高度失败共用该值；高度定义仍为公共髋轮投影+0.03648m。保持200ms零力矩启动、400ms连续失败、姿态保护、PD/标定/LQR与VOFA布局，未将前导轮视为已确认根因。
+- 验证：大小机工程外增量编译及完整链接通过，源码/文档差异检查通过；未烧录，门槛和前导轮影响待后续接地实测。
+
+## 2026-10-30 · CubeMX重生成1999核对与RL录制布局
+
+- 作者已重新生成网络并要求检查。来源宏model_1999_opset13、35输入/6单输出正确，25379个64位权重字与本轮已验证的ST CLI生成1999逐项一致；IOC已改为桌面1999来源。本轮保留作者fallen_process及LQR/MATLAB改动，不覆盖。
+- VOFA已经启用完整obs35与action6，不再改写数据路径；补齐通道注释及“后台非严格推理配对”边界。0～2状态、3～37观测、38～43动作、44阶段、45观测有效、46推理耗时、47毫秒时间。
+- 验证：大小机111个C源/1启动汇编工程外完整构建链接通过，Flash606340/602620 B；仅保留原小机零初始化括号及BMI088 packed告警。本轮源码/文档差异检查通过，未烧录或进行板端数值/物理测试。
+
+## 2026-10-30 · 指定旧高度门控1999导出并本地配套适配
+
+- 作者确认唯一旧model1999并要求输入等同步。先备份当前5999工作区（含作者改动）到.codex/tmp/rl5999-before1999-20261030，再读取检查点实际env/actor与备份分支旧源码；不以编号或基类默认值推测接口。训练仓新增哈希固定导出入口、模型包和交付记录，本地替换成套7个生成C/H及报告，不切分支/提交/推送。
+- obs35、50Hz策略、6单输出；action/反馈四腿两轮恒等顺序，缩放前裁剪恢复0.5/0.1，轮速目标上限150→100rad/s，腿PD60/2与轮P0.1保留。固定普通模式，无5999历史/估速/承重解锁；删除独立RL估力，仅保留原LQR检测。实机连续角、初始参考分支、机械标定与LQR代码保持。模式/接触终止采用旧400ms时间及现有高度代理，无法等价训练传感器；说明见总览。
+- VOFA恢复完整obs35（3～37）和action6（38～43），44阶段、45观测有效、46网络us、47时间。旧诊断保留注释。IOC历史来源未自动伪造修改，下次CubeMX须改选1999。
+- 验证：ONNX 64组最大差3.09944e-6；ST生成C 64组最大差3.81470e-6。实际观测/PD源码64帧1363项宿主检查通过，配置/硬件用替身，覆盖缩放前边界、恒等动作及限幅、200ms保持和400ms失败。大小机工程外111个C/1启动汇编完整链接通过，Flash606340/602620 B；未烧录、未进行真实SDK/频率或物理行为验收。
+
+## 2026-10-30 · VOFA切回RL与核对1999模型来源
+
+- 作者要求恢复RL观测并导出1999测试。vofa_debug.c注释保存LQR自起诊断，重新启用原model5999固定32维观测/估速/恢复布局，不新增模式选帧。
+- 当前训练仓仅发现旧20261012高度门控model_1999.pt，与现行5999历史160接口不同；目标模型来源待作者明确，不据编号替换网络。训练仓及网络当前未修改。
+
+## 2026-10-29 · VOFA记录LQR收腿后摆正失败
+
+- 作者报告左中右中有收腿动作但摆不到平衡位，要求添加观测录CSV。仅vofa_debug.c增加fallen_process头并将原5999赋值注释保存，启用固定48路自起阶段/失败码/目标实际/串级PID/最终及反馈力矩/限幅与发送结果；不改变控制、自起参数或门控，不新增采样模块。具体通道见file-guide顶部。
+- 验证：大小机工程外增量编译及完整链接通过，Flash分别766404/762748 B；本轮源码/文档差异检查通过。未烧录；真实失败原因待作者CSV，不根据现象直接调增益或超时。
+
+## 2026-10-29 · 本地结构接入model5999稳站v2
+
+- 作者批准使用连续角并适配新版RL，网络由作者生成。以训练仓5183608的H7_RL_ros为参考，迁入当前Algorithm/rl及task/control结构；不复制USB、时延采样或旧集中控制文件。保留本轮开始前作者重新设为40度的fallen_detection改动与CubeMX生成文件，不恢复为快照提交的55度。
+- DM恢复整数圈/连续角，快照与RL输入改连续角；原单圈几何供LQR不变。RL首次以现有position_limit_center为参考锁存整数圈偏移，映射后的q供观测和PD；退出投入重选。Jetson10～13槽同步连续角，UART及协议尺寸保持。
+- 新增32维五帧历史160输入和6动作/3估速输出，推理与历史100Hz，PD500Hz；缩放后裁剪，速度±0.5及1m/s²，yaw0、高度0.22。删除失效的旧速度预裁剪配置。task_policy完整发布历史并保留reset_count在途保护，控制段切换清历史种子、模式切换保留。
+- control_strategy先模型准备后独立RL估力，1kHz推进AIR但不消费LQR flight；100Hz推进5999恢复，参考质量/高度偏移仅为代理，不修改物理标定或公共高度。首次站起前不以旧2秒失败，站起后的承重/倒置/倒地失败按参考固件。LQR/AIR算法和RL力矩公式未改。
+- VOFA旧LQR布局注释保存，固定obs32＋估速/阶段/机高/估力/计时布局；不选帧。文件总览顶部新增当前权威说明，下方旧RL39内容为历史背景。
+- 验证：生成权重39909个64位字与参考一致；观测/映射/恢复实现除本地字段/既有无configured成员外与参考一致。实际C宿主80帧657项通过，覆盖历史、速度重排、缩放后边界、限速、恢复立即零速、初始角分支、首次起立/解锁、失支撑失败/退出复位。宿主使用简化配置/遥控结构及有限值fmaxf兼容函数；未执行SDK数值回放或物理仿真。测试文件仅在TEMP。
+- 大小机工程外完整构建通过，大机Flash 766116 B/AXIRAM 49184 B，小机Flash 762460 B/AXIRAM 47904 B；原小机`.rl={0}`初始化括号及BMI088 packed告警保留。生成网络报告自身行尾空格保留，其余本轮源码差异检查通过。未烧录、未推送/提交；台架角度、100Hz最坏耗时、承重代理和真机恢复尚未验证。
+
+## 2026-10-27 · 补充长腿力矩反解观测
+
+- 作者要求加入反解来源诊断。仅vofa_debug.c替换10～11为左右force_valid、20～23为四髋反馈Nm、26～27为左右force_map行列式、32～35为最终四髋请求Nm；顺序为左前/左后/右前/右后。保留支持力、弹簧、几何、AIR、轮矩和阈值；不新增控制状态或推进算法。
+- 用户当前air_detection.c门槛改动保留。后台只读原反馈与发布诊断，时间来源异步，不能将请求当实测或将同帧当同拍采样；通道表同步file-guide。
+- 大机eIDE全量113个C源编译链接通过，Flash 610532 B；既有machine_config missing-braces和BMI088 packed告警保留，未烧录。
+
+## 2026-10-27 · 长腿无法进入FLIGHT的只读VOFA诊断
+
+- 作者报告长腿状态下不能正确进入FLIGHT。当前入口要求均值支持力严格低于force_off连续time_off；另有恢复后的AIR屏蔽、新初判与后处理等待，可独立阻止选路。尚无本轮CSV，不能认定具体根因。
+- 只修改task/service/vofa_debug.c的固定48路布局，保留0～2，替换3～47为AIR有效性、屏蔽/重判、支持力完整分量、实测腿长/几何角、IMU竖直加速度、AIR控制标志与最终轮矩。旧yaw/四态布局注释保留；通道表同步file-guide。
+- 未修改估力、阈值、三态、控制处理、物理标定、调度或输出；后台只读快照，软件构建与实际CSV结论分别记录。
+- 当前大机eIDE全量113个C源编译/链接通过，Flash 610468 B；存在machine_config既有missing-braces及BMI088 packed告警，VOFA无新增编译诊断。尚未烧录或获得本轮CSV。
 
 本文件只保存历史变更、依据、验证与删除前的文档副本。当前规则看AGENTS.md，当前代码结构看file-guide.md；历史内容不能作为现行参数、已验证状态或可直接执行的操作步骤。阅读时按日期、模块或关键词检索，不必整份加载。
 
-## 2026-10-19 · 烧录技能仅限当次明确同意并确认电机断电（仅文档与个人技能）
+## 2026-10-27 · VOFA加入十态yaw实际与目标
 
-- 作者要求不得私自使用烧录技能，必须经过其同意，并在烧录前通知断开电机动力。个人shaolu设置allow_implicit_invocation=false；直接调用可作为本次同意使用，但不能作为电机已断电的确认。讨论或修改技能不触发操作，历史授权不能作为新的任务授权。
-- 每次新的烧录任务，先提醒断开电机动力、保留H7/RX供电并告知会复位，收到本次断电确认才连接或写板；不沿用同一会话里上一次的断电确认。本次请求已确认断电时提醒后继续，不要求同一任务重复确认。等待时可按本次授权准备/编译，不运行连接、暂停、复位目标的命令。file-guide同步现行约束；此前默认流程说明作为历史保留。
-- 本轮仅修改个人技能配置及项目说明，核验技能结构、YAML显式触发设置、命令语法及新增差异；未编译、未连接下载器或烧录，未改固件/系统权限，未stage/commit/push。
+- 按作者调试yaw要求，vofa_debug.c复用40～43通道，依次发送yaw实际角度、目标角度、实际角速度、目标角速度，单位rad/rad/s。反馈直接读取十态x；目标读取target并计入与实际反馈公式一致的x_eq，实际角速度为LQR滤后值。
+- 原40～43四态诊断赋值保留为源码注释，固定48通道及单次发送保持；只读打包，不调整yaw控制、增益、滤波或力矩输出。同步总览通道表，移除旧43平衡力含义及依赖它的解读公式，并按现有源码说明14为四态roll角。
+- 验证为通道赋值、控制器反馈/目标来源及差异检查；未进行编译、烧录或上机验证。已有十态增益表及MATLAB报告改动保留。
 
-## 2026-10-19 · 烧录技能默认执行编译＋烧录
+## 2026-10-26 · 补充编译产物与个人界面忽略规则
 
-- 作者明确要求“这个要编译＋烧录”。个人shaolu技能改为无额外限定调用时默认完整执行编译、固件确认、烧录校验及复位；用户明确只编译或只要命令时保留其范围。file-guide增加&&串联合并命令，编译失败不执行烧录。
-- 本轮核对当前eIDE源文件清单、宏、包含目录、链接脚本及编译选项与本机构建参数一致，重新全量编译103个C、1个汇编、2个库成功，HEX本次生成；仍仅既有BMI088 packed告警。USB节点普通用户不可写，非交互sudo提示需要密码，因此本次烧录未执行，交付用户终端中的合并命令，不把编译完成说成写板成功。
-- 验证限于本轮固件构建、技能结构与文档命令语法；未修改固件或系统权限，未新增测试工具，未stage/commit/push，未验证板端运行/控制效果。
+- 作者要求将已核对的四类文件加入.gitignore：Keil输出目录、个人uvguix布局、JLinkLog.txt，以及MATLAB各级目录的asv备份；保留原四态候选输出目录的忽略规则，更新现有总览。
+- 仅调整忽略规则和维护说明，不删除本地文件、不取消已有Git跟踪、不暂存或提交。工程登记、下载配置、链接脚本、依赖、正式增益/模型/网络C/H及控制参数保持原状。
+- 验证仅检查忽略规则匹配、必要构建文件未被忽略及本轮差异；未重新编译、克隆或烧录。
 
-## 2026-10-19 · 固化Linux终端编译与PowerDebugger烧录流程（仅文档与个人技能）
+## 2026-10-26 · 取消PD选择开关与configured，保留rc_enable
 
-- 作者要求把本会话的终端编译/烧录步骤写入项目，并创建名为“烧录”的技能。file-guide新增terminal-flash段，COMMANDS增加入口；记录构建参数准备与失效条件、完整命令、USB权限、TX/RX连接、成功判据和失败阶段。不改固件源码、工程配置、网络权重、标定或控制参数。
-- 本机外部固定目录为$HOME/.local/share/h7-rl-build，builder.params及对象/HEX/BIN不纳入Git；参数保留当前工程源文件列表及编译选项。新增/删除源文件、切换机型/编译配置、移动工程或升级eIDE目录后必须更新，不把本地参数当作自动读取eide.yml的构建入口。
-- 本会话前序实际使用eIDE unify_builder 3.11.1、ARM GCC 13.2.1全量编译103个C、1个汇编并链接2个库通过，当前默认大机；固定目录输出Flash602200B，仅既有BMI088 packed告警。另据用户回传的OpenOCD 0.12.0日志，先前临时目录HEX：CMSIS-DAPv2识别TX/RX、STM32H72x/73x和1MB单Bank Flash，Programming Finished、Verified OK、Resetting Target齐全。烧录由用户在自己的终端执行；后来固定目录编译生成的固件未重新烧录，程序运行、真实时序及控制行为仍未验证。
-- 个人技能安装在用户skills目录，内部标识shaolu，界面名称“烧录”；读取本项目现行规范和file-guide，不复制固件或本机构建缓存。技能创建不授权自动写板或Git操作，用户仅索要命令/编译时不烧录，实际写入前核对本次构建和供电状态。
-- 本轮核验：技能结构/YAML校验、文档与技能内Bash命令语法、项目入口链接及新增差异；未再次编译或烧录，未新增测试工具，未stage/commit/push。
+- 作者进一步明确：NORMAL固定四态，非NORMAL固定原PD，不需要len_pid_enable。删除机器配置/运行配置字段、大小机初始化、LQR_Init拷贝及非NORMAL固定支撑替代分支；AIR轴向释放优先F=0，自起/倒置自救独立PID和参数未改。
+- 逐项审计configured：lqr_configured在两机恒为1，仅送遥控解码，删除声明/赋值并默认LQR模式允许。rl.configured原来有大机1/小机0的真实启用作用，已告知后作者明确仍要求删除；按要求删除配置字段、两机赋值、机器人状态初始化/网络初始化/策略任务/电机许可/观测映射内的相关条件，小机.rl保持零参数，不编造网络/物理映射。
+- 网络统一在ctrl_task_init初始化；未选RL不推理。SDK初始化/接口/结果检查、policy.ready、动作新鲜度、反馈有效、最终出力许可均保留。ready不代表训练网络机型匹配，删除后小机误选RL不再由configured拦截，适用性按作者要求由操作方负责。未改网络生成文件/权重。
+- 作者在审计中明确提出先解释、不要直接删rc_enable；该字段和所有现有消费者保留。RL解码将它固定为1，关闭档/离线/缺少补偿模型时仍0。online只表示遥控在线，rc_enable仍承担模式许可；若未来移除它必须以DISABLE策略等方式承接原停档语义。本轮未删字段、未改控制选路/检测/恢复中对rc_enable的使用。
+- 其余enable检查：wheel_enable/hip_enable实际屏蔽通道；AIR各开关改变检测/落地/释放接入；恢复enabled/recovery_enabled选择动作；motor_enabled为电机状态，torque_output_enabled为最终总门。它们不当作未用字段批量删除，尤其不扩大恢复/AIR修改范围。USB的USBD_STATE_CONFIGURED是真实协议枚举状态，不删。
+- 12个相关C源×大小机共24项ARM GCC语法检查通过；源引用检查确认自有C/H已无configured/lqr_configured/len_pid_enable，rc_enable仍存在。现有RL_Policy、最终输出层、DM驱动和ground_recovery相对HEAD无改动。只做源码清理核对，未重跑整套桌面行为/完整链接或上机；未暂存/提交。
 
-## 2026-10-18 · 按批准方案实施H7→Jetson只读镜像
+## 2026-10-26 · 删除NORMAL的腿长/roll PD后备
 
-- 作者明确要求实施与Claude讨论后的方案，并选择镜像期间暂替换LQR详细布局。仅修改vofa_debug.c/h、Vofa_send.h说明和反馈元数据注释：静态公共快照、实际经过时间约100Hz尝试、固定48路JustFloat、序号／快照时间拆16位、CRC16和逐来源有效位；Vofa_Send实现、驱动／标定／控制／生成网络不改，旧LQR/RL函数逐行注释保留。
-- 训练仓新增轻量只读接收与闭链显示入口、依赖及正式检查脚本；Jetson不回发命令、不调用物理步进，使用现有RL模型映射一次，单部位失效保留旧值并标记，200ms断流标STALE。当前不是obs39／action复算或电脑接管协议。
-- 大小机各104来源ARM GCC完整编译与链接通过，仅既有BMI088 packed告警；按实际存在来源构建，15条过时虚拟引用单列，不修改工程文件。工程外Jetson宿主编译实际vofa_debug.c的C检查覆盖节流、DMA忙、uint32边界、无效源；接收器覆盖坏帧／伪尾／断线；96个模型腿姿态的闭链重构通过。替身、模型验证与真实板端结果分开记录。
-- 产物和运行说明见训练仓部署接口及artifacts/real2sim-20261018。未烧录H7，未接通真实H7数据，实际轴向／零点／姿态／装配分支与H7负责人核对仍待确认；未经实测不得改物理参数。
+- 作者先要求清理旧独立PD，随后明确范围为仅NORMAL，不改其他路径/恢复。仅在leg_balance.c收敛NORMAL出力路径：固定四态LQR，删除NORMAL对len_pid_enable的依赖、模型不匹配时回退PD及关闭开关后只给支撑的行为。模型不匹配/四态失败返回无效候选，沿用最终零输出保护。
+- 原PD计算/实例仍保留给非NORMAL（AIR预接触等）使用，旧len_pid_enable仅影响非NORMAL。Ground_Recovery_Init仍读取同一机器表长度参数，动作PID及配置不删除、不移动；恢复源与头文件相对HEAD无改动。不新增AIR处理或参数，不改K、Q/R、滤波、观测器、轨迹、Tp/轮矩、物理标定及最终映射/限矩。
+- 当前只有大机匹配四态生成表；删去NORMAL后备后，小机NORMAL会拒绝该大机模型，不再执行原小机PD。不生成未经标定的小机四态数据。
+- 同步leg_balance.h、lqr_balance.h和machine_config.h的用途注释；类型、成员和函数接口保持，新增的lqr_balance.h改动仅一行开关注释，后续Git分批清单应包含它。
+- 检查生产Leg_PD_Update及Leg_Balance_Output相对本轮前内容一致，正常四态核心无公式变化；4个相关C源×大小机共8项ARM GCC语法检查通过。按本轮清理范围不重跑全套桌面控制行为或完整构建，也未做上机验证。无暂存/提交。
 
-## 2026-10-18 · 快进新版H7后同步说明（仅文档）
+## 2026-10-26 · 19:04日志：减轻roll速度滤波滞后
 
-- 作者告知H7代码已更新。本地维护分支从7768a46快进至已合并的ca6cdab，包含69f1add的部署同步；保留并恢复本地未提交文档、CPU回放及检查脚本，备份保存在本机系统临时目录与autostash中，未另行提交或推送。
-- 以新版源码保留model5849、公共遥控与NORMAL／RECOVER、配对映射及LQR调试布局。总览列明当前48路实际启用LQR，RL obs39／恢复布局仅为注释参考；旧43路覆盖问题仅保留在下面的同步前记录，不再称为当前缺陷。
-- 训练仓README、接口约定和AI事实入口同步模型／功能范围；上位机规划仍标为尚未实现，补充原始action／四元数／时间／推理配对仍未上传的边界。保留远端全部历史记录和此前本地说明，修复合并冲突，不改新固件、网络、控制参数或物理标定。
-- 本轮验证限于文档链接／锚点、差异与源码字段核对、原有改动保留检查；未重跑远端记录中的编译、网络数值、串口、板端或真机验收。H7负责人及另一方复查状态仍按部署同步记录标为待确认。
+- 本次CSV（19:04:34）22,881完整行，NORMAL有效15,869行，分4段投入（69.845s/20.285s/0.17s/9.215s）；反算K匹配Qroll20后的312.738/29.975，H仍1110.019/147.204，滤波0.02/0.15。公共fallen标志有15个过渡样本；35个限矩样本集中在仅0.17s、初始约-37度的重投入段，不将该段当普通转向对照。
+- 排除各段开始1s/公共fallen/无效FN后，roll绝对值中位约0.317度、95分位2.951度，仍有第1段-20.53度和第2段+26.01度的大角度失稳。按相近向心估计量及较低Hdot分组，常规转向较前份波动减小，但两份操作/目标高度/输入强度不同，非严格A/B，不能仅用全程极值评价增益。新向心估计峰值约23.5N，旧份约9N，也不能直接当真实横向加速度比较。
+- 第1段69.705s/CSV12153行，原roll角速度约-0.0139rad/s，滤后仍-1.2637rad/s，D分项约+37.88N；第2段结束同样存在明显滤后残留。用时间戳和原速度离线回放现有0.02滤波，与记录相关性0.99999、残差标准差约0.00103rad/s。这里只确认信号滤波滞后，不把回放当新闭环实测，也不把大角度欧拉变化率与单轴陀螺严格等同。
+- 单变量将machine.lqr.lpf_alpha[2]从0.02→0.05，1ms时间常数约49.5→19.5ms，减轻速度反馈延迟；这是更轻/更快滤波，不是增强平滑。pitch/yaw0.6、Hdot0.15、Q/R、K、观测时间常数和边界、向心0.1及控制逻辑均不改。大角度存在单侧FN估计低/负值，不能声称单一滤波改动已解决接触/模型可行性问题。
+- 已运行正常M入口，保留全部稳定性保护；含观测/滤波/0～10ms假设延迟、偏置/噪声/冻结等验证通过。大小机GCC增量编译链接通过；重新生成28个M参考快照并执行实际C闭环/门控/退出核对。C生成表数值不变，滤波仍取机器配置。未上机、未新增仓库测试源或提交Git，源CSV只读。
 
-## 2026-10-18 · 同步前文档核对（43路旧版，已被后续源码取代）
+## 2026-10-26 · 18:45日志后增强转向roll回正
 
-- 作者要求先修复本仓代码的Markdown与说明文档。本次按同步前7768a46工作区的实际源码修正当时入口，保留历史交付和验证证据，不修改代码、配置、网络权重或物理参数。
-- file-guide列明实际43通道：3～34为obs[0..31]、35～38被四个连续电机角覆盖、39～41为obs[36..38]。补充UART／JustFloat、USB与接收预留、异步数据和未配对推理的范围；将大机正常RL下发间隔的过时5ms描述改为代码设定2ms，明确未实测。
-- 训练仓README改为mjlab主线入口，部署接口按当前RL39源码说明；修正失效的部署总览／规则路径。旧S2R1／HPI1与2026-10-15外部对接说明标明历史版本；当前CPU multimode入口的默认角与轮增益修正不再描述为仍有差异。
-- 串口采集、镜像、同输入复算与后续电脑接管仅整理为“尚未实现”的规划，唯一正文在训练仓docs/deployment-contract.md，不增加H7独立计划文件，不把讨论当成实施或物理标定。
-- 验证仅限Markdown差异、本地链接／锚点及上述源码定义的对应检查；没有重新编译、运行策略、连接串口、烧录或实机测试。板端数值、时序、物理映射和H7负责人的核对状态仍为待确认。
+- 作者反馈行进转向时roll软。只读冻结本次CSV（18:45:21，22,498,765字节），50,000完整有限行，NORMAL有效28,452行，计数折算158.135s；Q/K反算匹配接手时[5,0.01,250,0.01]及roll156.844/21.802。在线255、故障/求解结果/最终电机限矩均0，无FALLEN/FLIGHT；不能据此把所有动态差异归作通信故障。
+- 高度共模偏置中位约40.0N/腿，全程H绝对误差中位1.247mm（动态95分位24.887mm），26～38s定高片段绝对误差中位0.092mm、95分位0.681mm。仅说明该定义下的H偏置补偿效果，不是两条实体腿各自都达到此误差，也不代表全部工况精度通过。
+- roll最大约+15.54/-14.60度；|roll|>3度的样本中偏置修正约79.6%与P回正同向，20.4%反向，未据此认定偏置是软的主要原因。1,646个样本出现偏置边界标志、左右差偏置约±10N（全差20N），但本轮不扩大边界。大角度时有单腿FN估计低于20N，观测暂停符合设计；FN不是接触传感器。
+- 单变量修改run_roll_height4.m：Qroll角度5→20，其余Q/R/观测时间常数/滤波/高度/向心增益/偏置边界保持。新roll角度/速度K约312.738/29.975，原156.844/21.802；高度仍1110.019/147.204，观察L不变。5度时单腿角度修正约13.7→27.3N，增加早期回正刚度；速度增益由DARE联动增加，不单独修改速度Q。
+- 已完整运行生成入口并覆盖C；含滤波/观测/0～10ms假设延迟、偏置/噪声/冻结/代表性模型偏差检查通过。大小机GCC增量编译链接通过；重新生成28个M参考快照并核对实际C闭环/停学/坏数据/门控。未改C控制逻辑、物理量或添加限幅。
+- 未上机确认新增益的转向刚度和是否重新出现高频抖动。现有向心系数仍0.1，不能从本日志相关性直接认定其准确；本轮保留它，避免同时改变两条作用通路。原CSV未改、无仓库测试文件、未提交Git。
 
-## 2026-10-18 · 按作者明确要求通过功能分支提交PR
+## 2026-10-26 · 四态LQR接入1kHz慢变力偏置观测
 
-- 作者在已展示49个文件范围、中文提交标题/正文、功能分支及推送目标后明确要求“按照他的提交规则，提交pr”。本次以codex/h7-model5849-sync提交本部署快照及两份训练侧接口文档，推送至zn1135/wheelleg_RL_2026并向26_wheelleg发起PR；不直接推送维护分支、不自动合并、不代发消息。最终提交SHA和PR地址由Git/GitHub记录提供，避免文档内自引用SHA；独立复查与实机验收仍待确认。
+- 作者明确要求按前文方案实施：保留四态LQR，核对输入/输出口径与反馈带宽，移植慢变偏置观测。未恢复MPC、力箱/力变化率、实验mode、额外姿态低通或新的C模块；未改质量、极性、零点、轴向、刻度、几何及CAN/RL/恢复动作。
+- M端run新增observer_tau=[0.02,0.5]s（状态估计/慢偏置），Q=[5,0.01,250,0.01]、R保持接手时工作区。build按1ms A/B在共/差模3态坐标设计先预测再校正的L，再组装6×4矩阵；export生成K/A/B/f/L，接口4→5。新增observe_roll_height4.m为M参考实现。生成前后检查入口/机器配置文本，变动则不覆盖，正常入口仍只打印生成成功/已覆盖。
+- C端roll_height_balance.c/.h增加四个物理状态估计和左右偏置；用上一拍F请求预测，当前原roll速度与原几何Hdot校正，控制速度低通仍独立。F=原支撑+显式向心-bhat-K误差，bhat不重复抵消已知补偿。原F/Tp映射→弹簧/腿重力→电机限矩链不变。
+- 新增两个machine.lqr边界：共模平均偏置100N/腿、左右偏置差20N，约束估计而非F输出。作者工作期间把速度低通调为0.005/0.15，联合10ms假设延迟极点1.00007182未通过；比较后仅将roll低通0.005→0.02，高度0.15保留。Q/R及物理量未变，roll/Hdot时间常数约49.5/6.15ms。
+- control_compute新增上一拍输入确认：候选/四态有效、DM与DJI提交成功、未限矩、最终输出镜像与候选髋矩相同，且当前AIR估计有效/初始化/非flight、双腿FN>现有force_on。无需改最终输出层。HAL_OK仅表示提交；不是硬件力已实现。FN不作为模型F输入。限矩/提交失败/最终撤力/支撑不足时冻结偏置重对齐状态，恢复首拍播种；退出NORMAL/投入/策略、无效计算仍完整Reset并清偏置。
+- VOFA保持48路：24/25改左右偏置；43改扣偏置后的平衡力；8新增bit4播种、bit5本拍学习、bit6本拍估计触界（原低四位不变）。28/30仍为纯四态反馈均值/半差，不把偏置混入；11/12仍FN，26/27仍总F。常见正常学习ch8=51，43与44/45组合可核对总共同F。
+- M生成验证：原/单精度、含滤波/观测的0/1/3/5/10ms延迟联合极点均通过（联合最大约0.998002）；全腿长给定变化、共模44.3N/腿+左右6N偏置、代表性M/I/阻尼偏差、高频测量噪声、冻结/恢复、偏置边界通过。理想偏置工况最终高度/roll收敛，不能视作实机证明；真实电机/接触/延迟仍未辨识。
+- 工程外实际C运行8s闭环，对照M的28个快照，最大力差约7.3e-5N、偏置差约0.00161N、观测状态差约1.45e-5；检查重复调用、原始速度/滤后速度分离、冻结/首拍恢复、边界、坏数据清理、退出投入。另从生产控制文件提取新增输入确认片段编译执行，覆盖发送失败、最终改零、限矩与单侧低支撑；不是整个任务/硬件运行证明。VOFA只读/位域/偏置等60项检查通过。
+- 工程登记仍为既有2个四态C源，按已安装eIDE收录逻辑确认总131源无缺失/重复；大小机GCC完整编译链接通过（原BMI088 packed警告保留），AC5六相关源×两机共12个对象编译通过；7个M文件checkcode无问题。测试/脚本仅在工程外，未新增仓库测试源或新Markdown。
+- 尚未烧录、未测板端耗时/栈余量、未验证观测估计准确性、控制效果或物理稳定；不将数学/宿主检查标作可上场。未提交Git，保留全部原WIP。
 
-- 本轮仅把先前同步记录中的待提交/直推方案更新为作者选择的PR方式，未改模型/控制/参数/链接脚本。此前目标目录大小机完整GCC构建结果仍适用；提交前再次核对范围、来源文件、链接脚本、生成模型及凭据模式，不重复不必要的编译或宣称新实机验证。既有暂存49个文件全部属于已展示范围，不混入训练算法、模型交付包或编译产物。
+## 2026-10-26 · 高度速度滤波过重触发生成稳定性保护
 
-## 2026-10-18 · 训练仓部署副本补齐链接脚本并准备同步说明
+- 作者报告verify_roll_height4在含滤波/延迟闭环assert失败。复现时工作区Q=[0.1,0.01,1750,0.01]、R=[1e-4,1e-4]、lpf_alpha={0.6,0.6,0.5,0.01}。实际解析为roll0.5/Hdot0.01，数组合并未读错位置。
+- 工程外执行生产验证中的增广矩阵计算：名义/单精度极点模0.99613385，含滤波0ms为0.99773186、5ms为0.99903112、10ms为1.00029524；失败来自10ms假设输入延迟下的高度通道，不是实际测得10ms硬件延迟。Hdot alpha0.01对应约99.5ms低通时间常数，不能认为越平滑越稳定。
+- 仅将大机lpf_alpha第4项0.01→0.05（Hdot时间常数约19.5ms），其余滤波不变；不移除/放宽稳定性assert，不改物理量。原失败Q下完整verify通过，含0～10ms假设延迟最大极点模约0.99610334。
+- 工作期间作者继续手调参数。在一次生成时M入口为Q=[10,0.01,750,0.01]、Hdot0.05，运行正常入口完整设计/验证/生成并覆盖C模型，C头注释与该次Q一致；大小机GCC增量编译链接通过。随后工作区Hdot又改为0.5、Q数次变化，本轮保留作者改动，不回写旧Q/滤波。最终只读执行实际解析和完整verify，核验到Q=[0.1,0.01,1750,0.01]、roll/Hdot0.5/0.5，最大延迟极点模0.99610334，通过且该次检查期间输入文件未变。正常生成入口输出仍为生成成功/已覆盖文件。
+- 本次修复证明给定模型/假设延迟下通过数值检查，不证明实机稳定或原高度静差消失。历史参数记录保留，当前值以C机器配置、M入口和生成C为准。
 
-- 作者要求补齐缺失链接脚本，并拟定提交标题及给训练侧的展示。本条仅追加于训练仓deployment/H7_RL副本；独立H7来源main/e2a3339519add73805df531e6247233a9540fbf0保持干净。40个目标中缺失的.sct从源工程原样复制：39个CMSIS模板及MDK-ARM/CtrBoard-H7_ALL.sct，逐文件SHA256一致，没有调标定、算法或工程链接布局。恢复后目标无误删链接脚本；不复制319个Keil编译产物或.git。
+## 2026-10-26 · 合并低通数组并核对角度输入
 
-- 追加本条之前，1607个应同步文件均与独立源工程逐字节一致；其后部署副本仅本历史说明有预期额外文字。新增训练侧[同步记录](../../../docs/interfaces/20261018-h7-model5849-deployment-sync.md)，更新训练仓部署契约的旧模型描述。说明包含5849/遥控/恢复、同期LQR及自起整定、当前VOFA分项布局、机身高度替代定义及待独立核对状态，不代发给训练同学。
+- 作者明确要求将roll_height_lpf_alpha合并到lpf_alpha，并在注释明确顺序。machine_lqr_cfg_t改为单一float lpf_alpha[4]：[0]pitch角速度、[1]yaw角速度、[2]roll角速度、[3]高度变化速度；移除分立成员。
+- 保留本轮开始时作者工作区数值：大机{0.6,0.6,0.5,0.01}（高度滤波已由作者改为0.01），小机{0.3,0.3,0,0}（原未初始化的四态项本就为0）。不改Q、K、控制公式、滤波推进周期/次数、遥控速率或物理量。
+- Roll_Height_Reset改读数组2/3；原pitch/yaw仍0/1；VOFA19读3、46读2。MATLAB build正则读取四项，四态仍取第3/4项，不重算或覆盖K。配置与头文件均注明顺序及alpha越小越平滑/延迟越大的关系。
+- 对照CKP的Driver/imu.c、Estimator/body.c与Task/leglen_task.c：roll角和H不另做控制入口低通，roll角速度alpha0.05、Hdot alpha0.8，10ms周期；当前本项目1ms，不可直接比较系数。两套接收链均使用惯导提供欧拉角；本项目Attitude_Update不在MCU重新融合姿态。未新增角度低通。惯导内部算法/滤波设置不能从接收代码确认。CKP H仅有腿长/roll投影，本项目还包含腿摆角投影，不能称高度输入公式完全相同。
+- 按本轮纯配置整理范围仅做引用/差异检查：主动C/H/M已无旧字段引用；4个相关源×2机型，共8项ARM GCC语法检查通过；MATLAB执行实际解析段，确认读到roll0.5、Hdot0.01。不做完整链接、桌面控制行为测试或上机验证，不将命名整理称为控制效果改善。
 
-- 实际eIDE在训练仓部署目录分别定义MACHINE_DEFAULT=0/1，全量编译103个C及1个汇编、链接通过，仅既有BMI088 packed告警；Flash598840B、DTCM8704B、AXI46272B、USB7456B。临时参数初次写入反斜杠绝对GCC脚本路径时链接失败，改为目标工程相对路径后两机通过；仅修改系统临时构建参数，未修改工程配置或源目录。日志/HEX/BIN在系统临时h7-trainrepo-sync-build-7f10adce89d8447282c2ffff0515e929，不污染原增量缓存。未执行Keil/烧录/实机/模型数值测试，未重跑旧111项软件检查，不将既有调参结论当作本轮验证。
+## 2026-10-26 · 16:22支持力日志分析与拨轮腿长速率减半
 
-- 拟提交标题“同步H7部署工程：更新5849模型、遥控恢复与LQR整定”；目标为训练仓26_wheelleg。当前只准备文件和展示，未暂存、commit、push、建分支或PR；实际Git操作仍按用户逐次确认执行。
+- 原CSV 22,070,407字节，共50,000有限且48列完整行；NORMAL投入5,831行、更新计数折算34.18s。ch8有效位为1的支持力样本5,647行，其余184行未用于支持力解释。反算K与作者当前Q=[20,0.01,1750,0.01]一致；滤波仍[0.5,0.1]，控制故障/结果/最终限矩标志均0，无FLIGHT/FALLEN。
+- 18～29.8s较平稳片段，roll均值0.1125度、标准差0.0235度；高度误差均值16.342mm、标准差0.085mm。左右请求F均值52.322/53.562N，FN估计58.607/59.822N；单腿差约6.3N与估计器轮重项6.38N量级相符，不能据此认定指令完全没有执行，也不能将FN当力传感器或据此改质量。
+- 该片段共同请求约52.942N/腿，而支撑前馈100.719N/腿，位置反馈长期抵消约47.8N/腿；静差与支撑基准/模型净偏置需要独立核对。禁止从本日志直接改M、极性、刻度、零点或几何。
+- 动态片段差动请求与FN半差的对齐相关性约0.945，最优时间平移约31ms；其中包含FN估计器10ms低通及轮重/加速度项，不能认定为电机或CAN的31ms纯延迟。末段32～34.18s，roll速度反馈标准差约51.7N、差动请求53.8N；估计单侧FN曾低于5N，不等于已由接触传感器确认离地。18～29.8s静稳数据不代表动态工况全部通过。
+- 目标升降两次150→310→150mm，实际变化速度最高约0.3002m/s（Rc_Command_Update已有固定0.3系数）；在升降之后出现大幅速度反馈和共同腿力。作为单变量减振验证，只将大机machine.rc.len_rate从1.0改0.5；拨轮最大变化由约0.30→0.15m/s，满行程160mm由约0.53→1.07s。Q、K、滤波、出力限制及物理标定均不改，小机仍0.3。
+- 公共RC.len同时供LQR/RL，二者拨轮高度响应都会减慢；LQR内部既有给定斜坡也读取该值。未新增参数、限幅、模式、轨迹或观测器。本轮改变不消除约16mm静差，也未证明升降速度是振荡唯一原因。
+- 工程外编译执行生产rc_command.c/machine_config.c，11项检查覆盖最大变化速度、上下界、速度/转向原值、LQR/RL模式和离线复位；DR16死区及K表域用窄替身，不是遥控硬件验证。大小机GCC增量编译链接通过；未新增仓库测试文件。减速后的动态效果待上机，原CSV只读未改。
+
+## 2026-10-26 · 14:02日志与支持力观测补齐
+
+- 新CSV（修改14:02:13）4,122行，NORMAL有效投入2,933行，更新计数折算16.695s。反算增益约312.738/29.975/2923.299/241.159，匹配作者当前Q=[20,0.01,1750,0.01]；roll/Hdot滤波0.5/0.1生效。当前Q与上份不同，不能把表现变化单独归于滤波。
+- 投入段在线255、故障0、四态结果0、最终电机限矩0，未切入FLIGHT/FALLEN。短腿目标150mm后段高度误差中位约16.2mm、两腿均值误差约16.4mm，较上份24～26mm减少；roll仍约-0.58度静差。
+- 长腿目标276.389mm片段仍明显失稳。第13.045s/CSV2714行，roll+11.301度，左腿228.996mm、右腿342.275mm，左右请求F约41.861/167.425N；请求力不等于实际地面支持力，未据此断言正反馈或物理标定错误。
+- 作者本轮观测确认：左侧高/右侧低时ch13为正；实物左腿伸缩对应ch20。两项与当前模型约定/代码命名一致，不能据日志腿长关系直接推断roll角度或左右输入应取反。未改符号/轴向/几何/标定；当前仍需用实际反馈受力区分接触/执行问题和模型失配。
+- 仅改vofa_debug.c的3路：ch8从模型ID换air_detection状态位（valid1/initialized2/fault4/flight8），ch11/12从计算耗时/模型周期换左右FN估计。直接只读已有air_detection.leg[].force，不增加估计推进或控制缓存；原26/27请求F、34/35 Tp及其他通道保持。valid=0时旧估计值不能当有效接地力；FN是反馈反解+模型估计，不是力传感器，且与补偿前F坐标不同。
+- 本轮不改Q、滤波、K或控制逻辑。工程外VOFA生产源码只读测试61项断言覆盖48路、估计状态、有效/失效及不修改检测历史；大小机GCC增量编译链接通过。尚未取得新FN日志，不能宣称roll问题已解决。原CSV与M/C参数未改。
+
+## 2026-10-26 · 13:37日志分析与高度速度滤波调整
+
+- 作者上传桌面roll腿长测试.csv（修改时间13:37:41，5,742,481字节）。工程外只读冻结分析，共12,540有效行，NORMAL投入10,705行，更新计数折算约67.89s。作者确认包含调腿长、转向行走，无手推/扶车；当前48路未记录摇杆原始输入，不能把所有摆动归作自发振荡。
+- 从32/13、33/15、44/10、45/18反算增益约221.506/25.512/1918.135/194.644，与当前作者工作区Q=[10,0.01,750,0.01]匹配；46记录roll低通0.5、19记录Hdot低通0.3，不能沿用前轮Qroll0.1/滤波0.005解释。保留作者当前Q和roll滤波。
+- 投入段在线掩码255、故障0、四态结果0、最终电机限矩标志0，未进入FLIGHT/FALLEN。短腿固定目标150mm、25.7～40.4s片段高度误差中位约24.7mm；roll均值约-0.62度、标准差约0.23度，存在静态偏差。
+- 第7～8s固定目标约242.6mm，平均轴向请求标准差约100N，而roll反馈半差约4.2N；高度速度项有约41Hz强分量。50～58s又有约44Hz高度速度/共同腿力分量。只说明高频伸缩进入速度反馈后产生大幅请求，未证明噪声/结构共振/接触变化的唯一因果。
+- 另记待核对片段：第42s目标两腿235.929mm，实测左314.330/right196.792mm，roll约-0.832度，H255.324mm（CSV7194行）。在双轮平地接触且现有几何投影含义成立时，117.5mm腿长差与该roll不相符。只标记模型接触/反馈条件需核对，不据此更改物理符号、轴向、几何或标定。
+- 按前文参数调整授权，本轮仅将machine_config.c的Hdot低通0.3→0.1（roll仍0.5），并纠正旧滤波时间常数注释。1kHz下Hdot滤波约9.5ms，41.25Hz幅值增益由0.811→0.378（约原46.6%），用于降低该频段速度反馈请求；更强滤波也增加相位滞后，不能宣称实机振荡已解决。未新增限幅/开关，未改K或控制逻辑。
+- M按当前Q/新滤波只生成候选并做单双精度/滤波/0～10ms输入延迟及代表性模型检查，固件K不重复覆盖；大小机GCC增量编译链接通过。修改后VOFA19应为0.1、46仍为0.5。原CSV未改；分析和图仅在工程外临时目录。新滤波效果、接触状态与精度仍待实测。
+
+## 2026-10-26 · 无抖动基线上增强roll回正
+
+- 作者反馈上一组Q=[0.01,0.01,750,0.01]已不抖，但roll控制效果差。保留该组M入口/C模型/C机器配置于工程外临时目录，未做Git操作。
+- 本轮只把roll角度Q从0.01提高到0.1，其余Q、R和滤波保持：Q=[0.1,0.01,750,0.01]，R=[1e-4,1e-4]，速度低通[0.005,0.3]。不新增限幅、开关、观测器或物理量改动。
+- 生成roll角度增益7.04945→22.27423（约3.16倍）、速度增益8.29736→10.49416（由LQR设计联动改变，速度Q未改）；高度仍1918.13535/194.64389。目标是逐步增加回正力，避免直接恢复曾失败的高roll增益。
+- M入口已生成并覆盖C模型；名义单双精度/滤波/0～10ms输入延迟/几何/偏置与代表性模型偏差数值检查及大小机GCC增量编译链接通过。作者确认无抖动仅适用于上一组基线；新参数的roll回正及是否重新振荡仍待上机。高度23.1mm偏置性能未因此改变，未宣称精度达标。
+
+## 2026-10-26 · 降低高度通道增益的减振试验
+
+- 作者反馈roll增益/滤波调整后幅度减小但仍抖，并授权参数问题直接调整后汇报。本轮只改run_roll_height4.m的高度Q：5000/1→750/0.01；roll Q仍0.01/0.01，R仍1e-4/1e-4，C滤波仍0.005/0.3。未新增控制开关、降额或限幅，未改控制执行逻辑/物理标定。
+- 新生成K的单腿高度位置/速度增益约1918.14N/m、194.64Ns/m，原约4921.69、321.49；roll仍7.04945、8.29736。与原PD在近直立双腿同向等量伸缩时的1900/150比较，减小共同高度通道的激振，不能据此认定剩余roll振荡已经解决。
+- MATLAB保留原10mm偏置性能判定为bias_within_10mm报告项；低增益下每腿44.3N偏置预测23.095mm，实际仿真与预测一致，该指标为false。稳定性/几何/有限值/反馈方向/名义回稳检查继续执行，不以数值检查通过宣称精度达标；不再为让偏置性能过关而迫使提高K。
+- 已运行生成入口覆盖roll_height_model.c；单双精度、速度滤波和0～10ms输入延迟数值检查、名义/偏置/代表性模型偏差检查通过。大小机GCC增量编译链接通过。本轮未烧录、未上机；高度静差可能增大，先验证振荡幅度。
+
+## 2026-10-26 · 仅调参缓解roll高频振荡
+
+- 作者明确拒绝额外限幅/降额，已撤销临时roll增益系数、单腿±5N限制及M端对应逻辑；不保留新增结构成员或旁路。
+- 仅调整原有参数：machine_config.c的roll速度低通先0.05→0.01，复核时工作区进一步调为0.005（保留现值，1ms时间常数约199.5ms），Hdot仍0.3；run_roll_height4中Q=[1,1,5000,1]→[0.01,0.01,5000,1]（保留复核时入口现值），R保持[1e-4,1e-4]。降低roll增益与增强平滑同时进行，避免只增加滤波延迟。高度、原支撑/向心、补偿及最终电机限矩保持。
+- 已运行M入口覆盖C数据，roll角度/速度增益约7.05/8.30；名义单双精度/滤波及0～10ms输入延迟检查通过，大小机GCC完整编译链接通过。弱反馈4s数值响应未达到原误差标准，观察延长为8s后通过，未放宽误差门槛。该组用于降低激振的测试，扶正较弱，不能宣称已解决实机振荡。未烧录。
+
+## 2026-10-26 四态LQR简化与roll振荡排查（实机未通过）
+
+- 按作者要求去掉实验mode，正常大机直接完整四态；删除独立roll_height_param.h、roll_height_lqr.c/.h、观测器/偏置配置、五次参考、F上下限/变化率与反解历史。C只在原machine_config.lqr保留两个速度低通，模型只留机型/Ts/K；小机与非NORMAL仍原PD。
+- leg_balance复用原腿长斜坡，原支撑前馈及显式向心项加到四态反馈；保留原F/Tp映射、弹簧/重力和最终电机限矩。新增模块初始化速度滤波；同拍重复调用不推进历史，退出/无效清理。未改物理极性、零点、IMU轴向或几何。
+- roll低通由工作区0.004改0.05，Hdot保留0.3；1kHz对应约19.5ms/2.8ms时间常数。候选Q=[72,0,5000,1]、R=[1e-4,1e-4]，roll增益约591.149/40.075；高度保留作者当时最新权重5000。作者随后继续调参，以当前入口和生成文件为准。
+- 该候选单双精度、滤波及0/1/3/5/10ms输入延迟模型检查通过；44.3N等效单腿静偏置预测约9mm高度误差，仅数学预测。工程外生产C运行检查正常/非NORMAL/释放/重复调用/几何/坏数据、映射补偿和最终限矩；48通道只读发送检查通过。大小机GCC完整编译链接与AC5相关对象编译通过，不是上机效果证明。
+- **作者上机反馈Qroll=[72,0]仍严重高频抖动，候选不通过。** 延迟模型未覆盖实际腿弹性、执行器/反馈动态和接触，不能以名义极点稳定宣称已解决。未继续盲调或启用扰动观测器。
+- CKP实际leglen_tinympc.c每拍更新LESO，偏置进入下一拍动力学仿射项；其M脚本S.USE_DOBS=false仅控制仿真，不能推断C关闭。该观测器估计慢变的左右恒力偏置，可改善静差，是否对本机稳定性必要尚无实测对照。另查明新四态替换移除了原左右单腿PD的差模刚度/速度阻尼，不能只比较独立roll增益判定控制等价；物理因果需新日志验证。
+
+## 2026-10-26 · 四状态LQR同步1kHz并集中C运行调参
+
+- 作者要求四态与平衡同为1kHz、C调参集中，并另上传100Hz基准CSV。删除ROLL_HEIGHT_CTRL_DIV/ticks分频与保持分支，四态每个有效1ms拍直接计算，sampled防止同拍重复更新；M端Ts=0.001重新生成A/B/K和观测器L，不复用旧100Hz数据。
+- 接手确认作者已将Q高度改305，保留q=[22 10 305 6]、M=20.534、I_roll=0.578等现值。新K的roll/roll速约305.260/207.812、高度/高度速约1221.076/229.293；不将升频或数值验证称为高度偏差已解决。
+- 新增config/roll_height_param.h作为四态C运行调参唯一来源：模式、观测器开关、力箱、N/s力变化率、参考时长/速率、两处滤波与偏置限制；machine_config只引用宏，生成model不再存运行值。M四态build解析同一头文件，读入后设计/验证，原十态生成不依赖此解析；数值项使用直接数字常量。数据接口号升为3，原模型数据需重新生成。
+- 滤波保持时间尺度：旧10ms alpha=0.04/0.8换算为1ms的0.0040738786/0.1486600775；force_rate=3000N/s，单拍上限由30N/10ms换成3N/1ms；参考0.5s不变。观测器极点按10ms设计极点的Ts/0.01次方换算，默认仍关闭。原状态判断、补偿和物理标定未改。
+- VOFA仍48路，12由最大耗时改为控制周期ms（应为1）；最大耗时保留Watch字段。用户100Hz基准已在工程外复制留存，按旧10ms和旧12通道解析；21811帧中17408帧有效，LQR结果均正常、单次6~12us，无最终电机限矩，静态筛选高度误差中位约40.3mm。该数据不按1ms解释，也不能说明1kHz已修复静态工作点偏差。
+- 工程外8110条生产C断言通过，包含1000拍1000次更新、同拍不重复、10个1ms滤波步与旧10ms响应一致、3N命令速率、2000拍可选观测器有界收敛、C/M力差最大约3.81e-5N、原PD影子/隔离/非NORMAL输出保持及降力回归。上下文224B、只读模型284B。VOFA108条打包断言通过，12在未投入时也显示模型周期1ms。
+- 大小机GCC完整编译链接通过，Flash/AXIRAM分别613508/47744B和609788/46496B，仅原BMI088 packed告警；8个相关源在两机配置下共16个AC5对象编译通过。M端6个函数checkcode无提示；公共machine_table保留原有一处MSNU（旧AGROW抑制注释）提示，未为消除提示改无关代码。未做完整AC5链接、烧录、提交或推送；1kHz实机效果需新日志。
+
+## 2026-10-26 · 四状态M/C全部改为直接LQR并重整生成流程
+
+- 作者要求移除迭代控制、M/C均直接四状态LQR，继续以VOFA排查高度；同时要求M端结构参照已有十状态，并且正常只提示生成成功/已覆盖文件。删除旧roll_height_mpc.c/h，新增roll_height_lqr.c/h，机器枚举改LQR系列，移除预算字段；Keil登记同步新源，eIDE继续Algorithm目录扫描。
+- C端直接计算平衡前馈、四个-K误差项和合计原始力，再作力箱/命令速率限制；没有迭代、超时、回退、热启动、预测窗和QP缓存。运行上下文保留观测/参考/100Hz调度及反解反馈诊断，非NORMAL与十状态平衡输出、最终映射补偿保持。滤波值0.04/0.8保留，统一从M端生成数据读取。
+- 接手时发现M端已被作者改为M=20.534、q=[22 10 5500 6]，而C数据仍是M=25.544/q高度55。保留当前M端数值，机器参数迁到现有machine_table的roll_height字段、Q/R迁到独立run_roll_height4入口；设计/验证/导出/覆盖由build_roll_height4负责，model只建动力学。候选/报告写忽略的独立output目录，检查通过才覆盖固件，失败不覆盖；正常stdout仅两行。生成检查不等于上机稳定性。
+- 实际MATLAB执行生成并覆盖成功；新K高度/高度速度约4386.834/329.542，roll增益约155.425/106.783；名义/单精度闭环与包含速度滤波的增广模型检查通过，滤波模型最大极点模约0.989205。名义/扰动/偏差与能力不足检查、几何17点和数值力分解通过并写报告，压力失败指标保留。负R失败设计未改变固件文件，6个M函数checkcode无提示。
+- VOFA仍48路，新增直接LQR原始平均力、H-Href、原始几何Hdot、平衡前馈/高度位置/高度速度反馈及力限制标志；旧迭代/超时/回退通道含义退役，现行表同步。用户随后只要求生成提示简洁，保留完整验证并把细节写报告，不打印过程。
+- 实际生产C工程外核验6109条断言通过，24组C/M数值对照最大力差约1.14e-4N，120拍原PD影子逐字节等价、完整/隔离/非NORMAL选路、1000拍100次更新、滤波及高反解反馈降力回归保留。新上下文224B、只读模型308B。新VOFA布局108条打包断言通过，确认只读、48路/一次发送及通道分解。
+- 大小机GCC完整编译链接通过，Flash/AXIRAM分别613428/47744B和609740/46496B，仅原BMI088 packed告警；8个相关C源在两机下共16个AC5对象编译通过，未做完整AC5链接。安装版eIDE源选择与编译/链接清单中三源各一次，旧求解器无链接项。生成候选与固件文件逐字节一致；未烧录、提交或推送，实际抖动/高度仍需新版实机日志验证。
+
+## 2026-10-25 · 为完整四状态日志恢复高度出力并增加PD平均力参考
+
+- 作者明确要求完整四态恢复出力并录制新VOFA日志。将大机从ROLL_ONLY切回MACHINE_LEG_MPC，保持当前模型、Q/R、roll滤波0.04、高度速度滤波0.8、观测器关闭及100us预算不变；小机仍PD，隔离选项保留。
+- 既有48通道保持，唯42由参考段时长改为原PD算法平均力参考：0.5*(左右长度PD输出+左右原支撑前馈)，roll/向心的反对称项在均值中抵消，不参与实际控制。完整模式下28/29应一致，42用作未选用的PD对照；现行通道表同步，明确旧roll腿长测试.csv的42仍应按旧的秒单位解析。
+- 已分析的前次隔离日志显示2754次求解均回退、单轮222~279us超100us预算；本次未一并改预算，完整出力仍可能全由四状态LQR回退提供，需结合9通道判读。静态片段高度参考213.10mm、观测233.73mm，候选均值115.22N/腿而选用PD均值61.06N/腿；此数据说明直接接入平均力会明显加力，但不能据旧隔离日志认定完整模式顶腿的全部过程。
+- 工程外6408条控制断言及108条VOFA打包断言通过，覆盖完整四状态实际选择及新的42通道、非投入时PD参考语义。未修改极性、补偿、CAN或其他工作区改动，未烧录、提交或推送。
+- 大小机GCC增量编译及完整链接通过，vofa_debug/machine_config在两机配置下共4个AC5对象编译通过，未执行完整AC5链接。
+
+## 2026-10-25 · VOFA切换四状态MPC隔离诊断布局
+
+- 作者明确要求将对应观测量放到VOFA，并反馈关闭MPC高度输出后不再持续顶腿。该结果支持继续检查MPC平均力通道，不直接认定模型参数、符号或算法已定位。保留当前ROLL_ONLY模式与全部控制参数；读取时发现roll速度滤波已手调0.04，未改动该数值。
+- vofa_debug.c注释保留旧AIR交接赋值，启用固定48路MPC布局，0~2保持公共状态；新增状态/模式/valid、求解次数与回退/时间、roll原始/滤后速度、H/Hdot与参考、左右腿长目标、候选与选用F、平均/差动力、命令历史/反解反馈、饱和/AIR及参考轨迹/残差/腿角。只读已有状态，同一短临界区复制后一次发送，未新增传输机制、页面或控制采样。
+- Vofa_send.h仅同步48通道注释，数量/协议/UART未改；完整通道表同步file-guide。明确24/25和28为MPC候选，26/27和29为当前实际选用请求，均不是直接实测支持力。当前ROLL_ONLY下高度MPC候选仍计算但不直接用于平均支撑，无需切回全MPC即可采集其偏差。
+- 工程外编译实际vofa_debug.c与机器配置，HAL/RTOS及发送为替身；108条断言覆盖两帧48通道位置/单位原值、均值/差值、NORMAL与退出后清零、一次发送在临界区外及控制对象逐字节未被修改。仅证明打包软件契约，不代表UART上位机已接收。未烧录、提交或推送。
+- 大小机GCC增量编译及完整链接通过；vofa_debug.c在两种机器配置下AC5对象编译通过，未做完整AC5链接。无控制算法修改，未重跑整套物理控制替身测试。
+
+## 2026-10-25 · 增加MPC平均力/差动力隔离诊断
+
+- 作者要求先关闭roll或高度中的一项排查。新增MACHINE_LEG_MPC_ROLL_ONLY/HEIGHT_ONLY，保留既有枚举值；当前大机选择ROLL_ONLY，小机仍PD，Q/R、模型、滤波、预算和标定不变。
+- leg_balance中令common=(Fl+Fr)/2、diff=(Fl-Fr)/2；ROLL_ONLY使用原PD common与MPC diff，HEIGHT_ONLY使用MPC common与原PD diff，再重构左右F。当前相当于暂不让MPC决定平均支撑，保留旧PD平均腿长支撑，并观察MPC差动roll效果。不是将支撑清零，也没有直接删状态或将Q改零。
+- 属于输出隔离，内部仍求解四状态，候选力约束仍耦合；不能称完全解耦模型。候选20~150N/30N限制不直接约束混合F，但原映射、补偿和最终电机限矩保持。混合模式request_previous记录MPC候选而非混合后实际F，previous保留反解反馈供诊断/观测；控制器实际出力许可及非NORMAL清理沿用原逻辑。
+- 工程外实际生产C检查6408条断言通过，新增12个不对称状态/两种最终限矩幅值组合，逐项核对ROLL_ONLY的PD均值/MPC差值、HEIGHT_ONLY的MPC均值/PD差值，并确认轮矩、Tp、非NORMAL输出与原路径一致。此前数值、滤波、降力回归仍通过。未烧录、提交或推送，实机隔离结果待作者复测。
+- 大小机GCC增量编译及完整链接通过，Flash分别622444/618756B；相关4个C源在两机配置下共8个AC5对象编译通过，未做完整AC5链接。
+
+## 2026-10-25 · 修复限矩反解反馈可能锁住MPC降力请求
+
+- 作者反馈滤波后roll抖动减小，但仍缓慢升至最大腿长、拨轮不能下降；可控制行走且暂时无法使用VOFA。未把实机现象直接定为FLIGHT或质量错误，继续检查C/MATLAB命令历史差异。
+- 找到可复现的软件边界：C端Roll_Height_Commit每1ms用最终限矩反解力重写previous，而求解器用它作为30N速率约束起点。若反解持续超箱并被钳为150N，即使H=0.34m且目标0.15m，下一拍请求仍被限制不低于120N；反复反馈又重置到150N，无法继续降力。MATLAB用的是上一份已发布合计力命令，不含这个额外闭环。
+- 工程外实际生产C先复现失败：持续高反解反馈下，1000拍后请求仍为约120N/腿。随后仅修改roll_height_balance.c/h：新增request_previous保存有效候选经输出映射后的控制命令，速率约束读取该历史；原previous及applied_sum继续保存反解反馈作诊断/可选观测，不改变补偿、模型、滤波、Q/R、力箱和周期。复位仍统一清理全部历史。
+- 同一回归修复后请求可降至约34.97N/腿，且连续请求变化不超过30N；此前数值/选路/滤波等检查保留，共6260条断言通过。上下文由960B增至968B。测试施加了构造的高反解反馈，证明该软件锁死路径已解除，不证明实机一定存在该饱和条件或振荡已全部解决；仍需有保护复测。
+- 核验过程中发现当前工作区roll速度滤波已手调为0.01，保留该数值，递推检查读取当前宏而非继续写死0.05；不将该工作区调参归为本次降力修复。现行说明同步0.01与CKP参考0.05的区别。
+- 当前大小机GCC增量编译及完整链接通过，Flash分别622188/618500B；相关4个C源在两机配置下共8个AC5对象编译通过，未做完整AC5链接。未烧录、提交或推送。
+
+## 2026-10-25 · 四状态反馈滤波参数对齐CKP
+
+- 作者报告MPC刚投入就roll持续摆动且高度升高，随后明确要求先将滤波参数按CKP对齐。本轮仅修改roll_height_balance.c/h及现有文档，不改质量/惯量、Q/R、力箱、参考轨迹、MPC模式、物理标定和其他控制路径。
+- 核对CKP leglen_task.c：roll角速度0.05、Hdot 0.8两处一阶低通，每10ms更新；roll角、腿长和H没有该层低通。新增两个私有滤波状态及对应.h宏，复位清零；几何Hdot仍先用原始roll角速度计算，再滤波。保持现有H/Hdot一致的几何公式，不复制CKP的H未含腿摆角而Hdot含摆角差异，不新增不存在的腿长低通。
+- 工程外生产C检查4259条断言通过，覆盖两处首拍/第二拍递推、9个保持拍与单拍重复调用不推进、退出/重进清零、17组非零姿态几何与滤后速度，并保留前述PD影子等价/实际MPC选路/数值与回退检查。运行上下文由952B增至960B；模型数据和纯求解器未变。额外离散名义模型检查四状态LQR含两处滤波的闭环最大极点模约0.988576，仅证明该简化无饱和模型，不代表实机稳定或已修复振荡。
+- MATLAB默认仿真尚未加入这两处测量低通，未据此重调Q/R。滤波对齐会引入相应延迟，当前摆动根因及上机效果仍待验证；未烧录、提交或推送。
+- 大小机GCC增量编译及完整链接通过，Flash/AXIRAM分别622156/48480B和618436/47232B；4个受影响C源在两机配置下共8个AC5对象编译通过，未执行完整AC5链接。
+
+## 2026-10-25 · 按作者要求切换大机NORMAL为MPC实际出力
+
+- 作者明确要求“改成直接使用mpc”，将大机roll_height.mode从MPC_SHADOW改为MPC，生成模型actuation_ready从0改为1。该标记只表示允许选择出力，不称本机参数已辨识/实机验证通过；模型浮点系数逐项核对未变，小机仍为PD，观测器仍关、求解预算仍100us。
+- MATLAB导出函数增加enable_actuation第三参数，默认true匹配当前模式，仍默认写临时候选目录，不自动覆盖固件。模型头注释和file-guide同步实际语义。NORMAL已有选择分支直接采用MPC合计力，不重复叠加PD/支撑前馈/向心力；轮矩及摆矩仍由十状态LQR计算。MPC不收敛/超时仍按原设计用四状态LQR回退。
+- 工程外原生检查更新为当前MPC模式，共4200条断言通过：确认NORMAL的F逐项等于MPC合计力、区别于原PD且没有额外叠加，轮矩/Tp保持；非NORMAL与轴向释放继续和原PD输出逐字节一致。保留先前24组MATLAB数值对照、17组几何及生命周期/预算等检查，最大力差7.63e-5N。未改工作区原有background_service.c及向心gain=0.1改动。板端最坏耗时、频繁回退情况、参数及实际动作仍待上机验证；未烧录或提交。
+- 当前工作区大小机GCC增量编译及完整链接通过；此次改动的machine_config/model在大小机下共4个AC5对象编译通过，MATLAB导出函数checkcode无提示。未执行完整AC5链接或上机试验。
+
+## 2026-10-25 · 四状态MPC C端接入与默认影子验证
+
+- 作者要求制定方案并执行C端修改，按此前说明以默认影子运行作为本轮交付。新增roll_height_model/mpc/balance三对.c/.h、MATLAB export_roll_height4；修改leg_balance.c/h、control_compute.c、machine_config.c/h、Keil源登记。eIDE当前Algorithm目录扫描已在实际sourceList/compile_commands/链接清单收录三源各一次，无需另建任务或输出通道。
+- 大机SHADOW、观测器关闭、100us求解预算；小机PD。正式MPC模式保留，但生成数据actuation_ready=0，不能直接使用未确认的CKP惯性参数和近直立力接口出力。保持十状态轮/摆矩、FALLEN、自救、AIR、公共检测及最终输出。现有工作区向心gain=0.1是作者先前修改，未改回HEAD的0.2；该行原注释仍是旧0.2，不作为当前数值依据。
+- 状态取同拍roll/角速、腿长/伸缩速度及已有世界腿角/摆速，解析Hdot与H一致；参考从实测高度初始化，目标保持遥控腿长语义，五次轨迹支持中途更新连续。100Hz候选由1kHz执行入口单次计数调度，离开NORMAL/撤力/无效输出立即清历史。ADMM失败/预算超限给四状态LQR回退候选，非有限结果失败；实际力口仍统一映射、补偿和限矩。
+- 最终限矩相对raw_dm的差反解为补偿前等效轴向请求，避免把限幅前规划当实际施力；记录饱和及种子钳位，可选观测在下一窗口以请求均值校正上一拍预测，默认关闭。所有时间/反馈均为既有接口，未增加真实电机反馈传感器或声称精确支持力。
+- 工程外Clang原生检查实际生产源码（时钟替身、CMSIS sin/cos用标准数学函数桥接）：4185条断言通过。24组C/MATLAB最大力差7.63e-5N；17组非零姿态几何一致；120拍覆盖释放/使能开关/补偿/饱和/非NORMAL时，影子与修改前PD的最终力矩、F/Tp及补偿逐字节一致；1000拍恰好100次求解，覆盖单拍重复调用、退出/重进、冷启动、预算/迭代/非有限回退、参数未就绪阻断、可选观测和限矩种子。sizeof运行上下文952B，含688B求解工作区；只读模型5452B，不代表最终Flash增量。
+- 大小机GCC完整编译链接通过（114C+1ASM），仅原BMI088 packed告警；新源各在编译/链接清单一次。6个相关C源在大小机下共12个AC5对象编译通过；未做完整AC5链接。参数导出在本机MATLAB R2024b执行。验证与构建位于系统临时h7-roll-height-c-*目录，不新增仓库测试源文件。尚未烧录/测板端最坏耗时及栈余量，也未确认本机M/I_roll和轴向/竖直力转换，未提交或推送。
+
+## 2026-10-25 · 独立复现roll/高度四状态MATLAB模型
+
+- 按作者授权在tools/matlab/roll_height4新增model/run/solve/verify四个m函数，单独存放建模、离线求解和仿真。保留现有十状态入口、固件、实体标定和限幅，不导出C表、不提交或推送。结果默认写系统临时目录，使用方法同步file-guide。
+- CKP基准来源s03_leglen_tinympc.m，SHA256为ADD53DC991B391D87BCA8C8D6F759DCA4997062DA9853241EEE3EE24E53A29E3；复制其局部ADMM供复现对照。仅在工程外临时副本关闭D.WRITE后运行原脚本，未运行其部署写入；新基准400拍最大状态差4.44e-16、力差1.14e-13N，迭代次数完全一致。
+- 优化版明确标准跟踪QP代价，Q/R与数值罚参数分离；同时约束整条力序列/差分而非原逐节点截断；使用因果五次平滑高度及速度参考。高度/速度几何函数来自同一公式，修正参考实现中H不含摆角而Hdot含摆角的接口不一致，尚未改实机观测链。扰动观测以同拍创新预测，已知力与偏置分别入模，发布总力沿用统一力箱和速率。
+- MATLAB R2024b、Control/Optimization工具箱运行验证：平衡、可控性、连续积分与ZOH、观测器极点、17个几何点、6组标准QP整序列对照和显式轨迹代价通过。几何速度误差最大3.46e-11，严格容差下ADMM与quadprog力序列最大差9.75e-6N、目标差3.55e-14；四个m文件checkcode零提示。
+- 六类闭环场景及观测器/热冷启动、上限/不可行回退检查通过发布力边界。正常阶跃场景，原版/优化版最大步变23.8689/4.1477N，末态高度误差约0.169/0.0166mm。匹配模型联合扰动中，优化版关闭/开启观测器末态高度误差约31.1/0.2mm。该比较同时包含参考/代价改变，不称单纯求解器改进。
+- 压力结果明确保留失败：质量+5%、惯量-20%、阻尼+50%并叠加持续扰动/延迟时，4s内恢复存在明显高度误差，开启观测器仍不能保证恢复；标准quadprog对照也显示接近力上限时恢复缓慢。能力不足场景可出现负高度（模型已超物理适用域）。验证通过只代表数值契约/诊断，不代表所有场景稳定、参数辨识完成、H723实时性或上机效果。
+
+## 2026-10-24 · CAN启动复位与全总线失联后的硬件恢复
+
+- 实机反馈补充：作者在原来会离线的相同跨固件测试条件下复测，报告未再出现离线；此结果确认该已测场景改善，不扩展为全部硬件/启动故障均已覆盖。提交前核对当前工作区向心gain为0.2，保留现值并同步注释/现行说明；原0.5记录保留为调参历史。
+- 提交前按当前gain=0.2重跑生产源码检查：大小机各83组腿控和各45条恢复屏蔽断言通过，合计1164/1913条；CAN替身检查362条通过。当前完整工作区的大小机GCC增量编译链接和差异检查通过，新增行凭据特征扫描未命中。
+- 作者反馈别人的固件切回本固件后四髋/双轮全离线，重复烧录无效，部分故障同时无VOFA，并明确要求优先修改CAN恢复。现有软件流程只做Stop/Init/Start，缺少共享外设硬件复位；DEAD期间发送层仍可能接受高优先级任务写队列。本次仅修改can_bus.c/h和main.c的USER CODE业务区，保留其他已在工作区的向心/恢复屏蔽改动，不改电机协议、控制算法、物理参数或串口配置。
+- 启动在SystemClock_Config之后、任意MX_FDCANx_Init之前清CAN IRQ挂起并RCC复位共享FDCAN硬件；机器附加时序只更新Init，由Can_Bus_Init统一HAL初始化/滤波/启动。该统一初始化失败留DEAD供通信任务重试，启动成功先RECOVERING等新反馈；不再在附加时序函数内失败即Error_Handler。CubeMX首次外设初始化Error_Handler和更早的电源/时钟卡住仍保留，不将它们宣称为已经修复的现场根因。
+- 运行单路保留100 ms软重试，先屏蔽本路外设中断，DEAD期间发送返回HAL_BUSY，防止消息RAM/寄存器重建期间被执行任务再次写入；RECOVERING仍允许发送。软重试不刷新最后正常RX时间，防止不断重试掩盖长期无反馈。
+- 所有已登记总线均离线、没有新RX且各自至少1 s无正常反馈，才升级共享硬件复位；有任一已登记总线正常时不动共享复位。先三路DEAD，再逐路HAL_DeInit以配对MSP时钟/引脚/中断引用，随后共享RCC复位并逐路Init/Start，软件路由和设备上下文保留；共享复位间隔至少1 s。新增hardware_resets计运行期共享复位次数。所有HAL超时等待在临界区外，复位后仍需新RX确认在线，不绕过原FAULT_CAN或使能许可。
+- 桌面替身测试直接编译生产can_bus源码：修改前93条检查确认注入的硬件卡住不能由重复软重试清除、DEAD仍接受TX；修改后362条断言通过。覆盖启动硬件复位/IRQ清理、初始HAL失败返回、各恢复阶段失败、初始化时并发发送被拒绝、999/1000 ms升级、从最后正常RX计时、任一健康总线或临界前新帧取消升级、路由/当前Init保留、旧计数不提前判在线、共享MSP引用配对、复位后失败再试、连续复位限频及tick回绕。寄存器/HAL行为为替身模型，不等同于复现或解决了真实板端故障；无新增仓库测试源文件。
+- 大小机GCC全量编译链接及最终增量链接通过，Flash分别607452/603724 B，AXIRAM分别47520/46272 B，仅原BMI088 packed告警；can_bus.c/main.c分别在大小机配置下通过Keil AC5对象编译。核对main.c所有非USER CODE内容与修改前一致。产物位于系统临时h7-can-hardware-recovery-eed74d3d3f4a40b5844fe1c33a929173目录；未烧录、提交或推送。
+
+## 2026-10-24 · 向心系数降为0.5，FALLEN恢复后延迟重开离地检测
+
+- 作者实机反馈向心系数1效果不如之前，明确要求降到0.5；machine_turn_comp_cfg_t增加gain字段，大机设0.5，小机设0，原质量/轮距/质心高度和左减右加方向保持。leg_balance按gain缩放计算，不新增补偿限幅或滤波。作者指定的新系数效果待上机，不调整已有电机极性、零点、IMU轴定义或最终力矩限幅。
+- 根因：恢复动作期间AIR持续估力和累积flight；原Control_Condition_Recovery_Ready会按旧AIR标志选择FLIGHT，暂停观察后又可能因initialized为0而一直无法交接。现改为FALLEN期间清AIR历史并暂停观察，恢复完成统一先交接NORMAL；检测层及计算层两个恢复入口均更新，不再要求恢复阶段产生AIR初始化。
+- control_condition.c/h新增air_inhibit、air_normal_ticks及air_rearm_time=1.0 s；仅在投入、drive、有效NORMAL和上拍NORMAL候选有效时累计，按MACHINE_LQR_DT换算连续时长。满1 s后才重新采样，初判尚未完成期间保持NORMAL输出，初判有效后才恢复AIR选路。再次倒地、反馈/投入中断清连续计时；首次投入从未经历FALLEN的原AIR初判不增加延迟。
+- control_detection保留FALLEN类超时重判的air_inhibit；进入FALLEN当拍清flight/峰值并取消落地事件，避免复位制造假落地沿。计算层BALANCE后若候选失败回FALLEN，也重新置屏蔽和清计时。未调整原支持力、压缩、姿态、高度判据或自起/翻身动作公式。
+- 桌面生产源码检查：大小机各83组腿控对照通过，验证0.5补偿、原最终限幅和小机/非NORMAL输出不变；另各45条恢复屏蔽断言通过，直接运行实际AIR/姿态/三态、检测调度、地面恢复、LQR/腿控及控制计算源码。覆盖两处恢复交接、999/1000拍边界、满时后新低力确认、高低支持力中间区间保持正常出力、再倒地/反馈中断重计时、超时重判屏蔽保留、模式退出、首次空中/接地投入。合计大机1164/小机1913条断言，时钟/反馈由桌面构造，不代表真实机器人或传感器验证；源码经stdin编译，无新增仓库测试文件。
+- 大小机GCC全量编译链接通过，仅原BMI088 packed告警；Flash分别606828/603140 B，AXIRAM分别47520/46272 B。五个本次修改C源在大小机配置下均通过Keil AC5对象编译。产物位于工程外系统临时h7-recovery-air-guard-444fc8832fcc4f1abe6867fb404645d2目录；未烧录、提交或推送。
+
+## 2026-10-24 · NORMAL左右腿力合成接入向心补偿
+
+- 作者明确确认向心补偿系数1、方向+1，随后要求简化为“现有正常判断成立就计算并加入”，并授权开始修改。`leg_balance.c/h`在原左右F合成式直接左减右加`turn_ff`；计算采用实际融合速度ds_kf、现有滤波偏航角速度及平均实测腿长。`control_compute.c`仅传入现有有效NORMAL许可，不新增AIR/释放等重复状态判据；原控制分支和开关保持。
+- 参数/方向单独记录：AI按当前模型表提取并向作者展示大机机身质量20.534 kg、全轮距0.42551 m、高度偏置0.07113 m（轮半径0.0525+质心相对髋轴0.01863）；作者在上述方案基础上指定系数1、左右方向+1并授权实施。新增machine.lqr.turn_comp保存质量/轮距/高度偏置，系数和方向直接体现于公式与左减右加。小机质量设0保持原行为，轮距0.6918 m/高度偏置0.0901 m取原小机模型。未修改已有电机极性、零点、IMU轴映射、轮力矩限幅或机械配置；该补偿的实机方向和效果待台架，不将模型值当作新称重结果。
+- 不新增补偿限幅、滤波、任务、源文件或状态开关。原PD、向心与支撑先合成F，再与Tp经雅可比、弹簧/自重补偿和原电机限幅输出；没有在已限幅力矩之后追加。`leg_balance.turn_ff`每拍及复位清零供Watch使用，原VOFA布局不变。最终电机限幅不等于轮地接触约束。
+- 验证：大小机各83组桌面生产腿控源码对照，大机1119/小机1868条断言通过；包含3种腿长、正/零/反车速与转速组合、左右不等长、非NORMAL与释放状态、原腿长/摆矩/轮矩开关、补偿复位和非有限请求拒绝。对照HEAD旧腿控，确认非NORMAL与小机输出一致、总F请求在限矩前不变、向心经实际雅可比和公共补偿叠加后仍受最终电机限幅。初用旧MinGW路径失败，后使用本机MATLAB所带Clang/LLD与Windows CRT接口运行，源码经stdin编译，不新增仓库测试源文件；构造反馈与时钟无关的腿控测试不代表实际接触力或整机模式实测。
+- 大小机GCC全量编译链接均通过，Flash分别606400/602712 B，AXIRAM分别47488/46240 B，仅原BMI088 packed告警。三个修改C源在大小机配置下通过Keil AC5对象编译。产物位于工程外系统临时h7-turn-comp-96fc93b624f940e8bd7a643d2f3a72d1目录；未烧录、提交或推送。
+
+## 2026-10-22 · 后处理超时统一撤力等待与重新初判
+
+- 作者批准FLIGHT、自起、自救超时统一撤力等待后重判，不强制进入FALLEN或直接接续某个动作。`control_detection.c/h`新增任务层`control_postprocess`及请求撤力、AIR连续处理期限和输出禁止接口；实际有效AIR控制候选连续满5000 ms触发撤力，等待共用工作区原有`ground_recovery_param.retry_wait=0.3f`，以HAL毫秒差计时并处理计数回绕。
+- `ground_recovery.c/h`取消EXTEND超时转REAR及翻身失败直接重做PRELOAD；普通动作超时、预压超时、翻身卡滞/扫角耗尽均报告TIMEOUT并返回STOP，算法内部不再自动重试TIMEOUT。其他故障保持原处理。
+- `control_compute.c`收到超时当拍清候选与补偿，等待/重判期间禁止LQR、自起、自救出力并清理LQR运行历史；最终输出口沿用DM/DJI零力矩，不主动失能。等待到期复位AIR、三态初判及地面恢复动作历史，本拍仍为零，下一拍重新确认；不生成假落地沿或写回落地腿长。反馈无效或初判未完成继续零输出，不强制猜测接地状态。
+- 地面超时消耗原重试预算，预算跨动作复位与FALLEN重新进入保留；5次重试后再次失败锁定零输出，退出LQR投入/切换策略才清除。AIR超时不增加地面重试次数，重判为AIR重新计5 s。未调整检测阈值、正常完成转段、控制公式、物理标定、RL或CAN。
+- 软件验证：工程外stdin编译并运行实际检测、恢复、AIR响应、LQR/腿控和控制计算源码，大小机各1607条断言通过（包含逐拍零输出检查，不是1607个独立场景）；覆盖4999/5000 ms、299/300 ms边界，计时回绕、重复请求、三态重判与自起/自救选路、反馈失效、模式退出、重试预算和上限、各普通动作超时、预压/卡滞/扫角退出及正常伸腿完成。HAL时钟及执行拍输入由桌面构造，不代表实体动作或CAN发送验证；无新增仓库测试源文件。
+- 工程外GCC大小机全量编译链接通过（各111个C源、1个启动汇编、2个库），仅原BMI088 packed告警；Flash分别606184/602496 B，AXIRAM分别47488/46240 B。三个修改C源在大小机配置下均通过Keil AC5对象编译。产物在系统临时`h7-postprocess-1811fc989b94438688735c33514300c7`目录；未覆盖工作区构建产物，未烧录、提交或推送，上机动作效果待验证。
+
+## 2026-10-22 · RL统一使用DM单圈零点角
+
+- 作者明确要求删除DM连续角相关实现。`dm.c/h`删除整数圈状态、跨圈更新和`pos_continuous_rad`；`pos_zero_rad = pos_rad + dm_zero`保留，原始协议反向解码仍使用`DM_ANGLE_CPR`常量。DJI轮子的`angle_total_rad`不变。
+- `feedback_snapshot`、`task_comm`和`task_actuation`删除连续角快照链；RL的`control_frame.motor_pos`改为同一份`pos_zero_rad`。Jetson镜像四髋10～13槽也改为`pos_zero_rad`，因此其含义与RL输入一致。
+- 未修改`dm_zero`、dm/dji极性、MIT量程或任何控制增益。DM单圈角跨协议角界时会出现约一圈跳变，RL位置PD不会自动作最短角差处理；该工作范围和台架影响待实测。
+- 验证：工程外GCC全量编译链接通过，大小机各111个C源、1个启动汇编和2个库；大机Flash 605608 B、AXIRAM 47456 B，小机Flash 601888 B、AXIRAM 46208 B，仅保留原BMI088 packed告警。未烧录、未进行跨角界实机测试。
+
+## 2026-10-22 · 倒地检测复用公共角度环绕
+
+- 按作者要求，`fallen_detection.c`删除局部`Fallen_Wrap`，显式引入`math_utils.h`，左右腿角误差和pitch误差三处统一调用`Angle_Wrap_180`；检测阈值、输入来源和异常判断表达式不变。
+- 环绕改用公共逐圈加减实现，范围仍为[-π,π]；不将它与原fmodf实现宣称为所有浮点输入逐位等价。本轮仅修改对应源码及本记录，未运行测试或构建。
+
+## 2026-10-21 · 正常腿长与roll直接替换为显式PD
+
+- 作者明确要求只替换显式PD，力分配与轨迹优化留待后续。`leg_balance.c/h`将正常左右长度环改为`Kp*(斜坡给定-实测长度)-Kd*d_virtual_leg_length`，roll改为`-Kp*roll-Kd*roll_rate`；复用原pid_t字段保存P/D/总输出与给定，不运行积分或误差差分。新增私有Leg_PD_Update，删除已经无作用的正常首拍历史预置及len_prime_enable/len_history_ready；恢复控制自身的同名历史状态不变。
+- `lqr_balance.c/h`增加roll_rate，读取现有映射后的IMU机体X轴gyro_rad_s[0]，保留原roll角来源。未改IMU配置、极性、零点或任一物理标定；同轴、方向与真实阻尼仍待台架验证。没有新滤波、MPC、力分配、轨迹优化或目标速度前馈。
+- 机器表参数值不变。正常初始化将原差分Kd乘MACHINE_LQR_DT后作为实际速度增益；本轮大机初始化对应腿长150 N·s/m、roll 0.1 N·s/rad，小机为10和0.05。地面恢复继续使用原机器表差分PID，通用pid.c不变。machine_config.h标注两种消费者的单位口径，VOFA仅更新注释，原分项字段和48路映射不变。
+- 保留现有目标斜坡、支撑前馈、左右正负叠加、LQR输出/Tp符号、雅可比、弹簧/重力补偿、最终限幅与开关语义；AIR释放暂停PD/斜坡并清输出，恢复从实测重播给定，实际速度D在恢复首拍即生效。目标变化不再进入D，跟随和落地效果未实测。
+- 构建：按当前compile_commands的111个C源和1个启动汇编，两机分别工程外重编/链接通过，仅原BMI088 packed告警。旧lnp遗漏当前已列入compile_commands及builder sourceList的jetson_uart对象，工程外链接按当前编译对象补齐；未改持久工程配置或覆盖工作区构建产物。Flash大机605928 B、小机602208 B。产物位于系统临时explicit-pd-c0600f1dbf5d45f8ad79898f0e6bb1bc目录。
+- 桌面行为测试尝试未完成：本机LCC不支持工程所用C99指定初始化，Clang可编译探针，但配套LCC运行库/链接器不兼容；不称行为用例通过。没有在工程内新增测试文件；未烧录、提交或推送。
+
+## 2026-10-20 · 收敛修复CAN故障后的重启处理
+
+- 作者要求撤销上一轮扩展方案后，批准只修改`can_bus.c/h`并测试。bus-off回调现在核对真实`PSR.BO`，只记录DEAD及确认基准/时间；退出通知不再Stop，HAL恢复只由原通信任务执行。
+- 新增私有`Can_Bus_Recover`：保留软件路由，取消挂起发送，按HAL状态Stop，再使用当前句柄原Init恢复对应控制器、滤波器、启动与原通知。Stop失败可继续尝试Init；任一步最终失败保持DEAD，每100ms再试。启动成功进入RECOVERING，硬件正常且本轮新接收计数变化才回ACTIVE。
+- 仅新增RECOVERING枚举和recover_attempts、last_error、failed_step三项诊断。last_error保留最近HAL失败，failed_step=0表示启动步骤通过。沿用原FAULT_CAN与使能/零输出；未改DM、最终输出、物理量、自起、离地、控制周期或任务。C/H净增加67行，当前总览同步说明。
+- 验证：修改前工程外生产源码复现7项检查中3项失败（退出通知误Stop、HAL ERROR未重新初始化/启动）；修改后140项通过，覆盖进出bus-off、HAL Init/Filter/Start/通知失败再试、Stop失败后Init恢复、新帧确认、旧计数不放行、静默及未使用总线、单路恢复、持续重试和32位时钟回绕。HAL/时钟/收帧用替身，不证明真实CAN行为。未在工程内增加测试文件。
+- 构建：eIDE实际unify_builder在工程外按大小机各111个C源及1个启动汇编全量编译链接通过，仅原BMI088 packed告警；Flash分别605928/602208 B。can_bus.c另经Keil AC5两机对象编译通过。未烧录，跨固件烧录后的全电机离线现象及真实带电恢复效果仍待台架验收，不宣称已确认现场根因。
+
+## 2026-10-20 · 接入Jetson UART10只读镜像与双向探测
+
+- 训练仓`26_wheelleg`已合并PR#3（`codex/h7-uart10-probe`，`8329052`）。作者要求把该接口落到本地工程：新增`imcalib/drivers/jetson_uart.c/h`、`machine_config.h`的`MACHINE_JETSON_PORT`、`feedback_snapshot`的`imu_meta/motor_meta/captured_ns`；main初始化UART10，commTask每拍轮询探测，backgroundTask发送镜像。
+- 与训练仓权威实现`Vofa_Debug_Send`的差异（作者本地适配）：镜像不再占用VOFA端口，改由UART10独立发送，VOFA保留UART8原LQR 48路布局；DMA由训练仓的DMA2 Stream0/1（USER CODE手写、ioc不含USART10）改为CubeMX生成的DMA1 Stream0收、DMA2 Stream0发，ioc已含USART10。帧格式、槽位、CRC参数和14字节探测包解析逐字段一致。
+- 验证：按eIDE `compile_commands.json`的111个C源加启动汇编，在工程外用同一套GCC参数全量编译并链接通过，FLASH 605416 B（57.74%）、DTCMRAM 8680 B、AXIRAM 48224 B、USBRAM 6720 B；`jetson_uart.c`另用Keil AC5 `--c99`单文件编译通过。未在工作区跑eIDE增量构建。
+- 未验证：未烧录、未接线；实际波特率与电平、镜像频率、探测往返耗时、板端时序和长时间稳定性均待台架。物理量未改动。
+- 文档：file-guide新增Jetson节；训练仓`deployment/H7_RL`部署副本同步本工程。
+
+## 2026-10-20 · 完整迁移地面恢复动作与子结构分组
+
+- 删除 `standup.c/h`，将原普通起立、倒置翻身、阶段机、目标、PID、映射、补偿、超时和重试逐语句迁入 `ground_recovery.c/h`。旧薄包装变为唯一动作实现；全局状态、参数、枚举和公开接口统一为 `ground_recovery_*` / `GROUND_RECOVERY_*`，不保留旧符号、宏别名或兼容包装。
+- `ground_recovery_ctx_t` 显式分为 `lifecycle`（许可/阶段/重试/计时）、`normal`（后摆连续路径）、`self_right`（翻身扫描/卡滞）和 `actuator`（目标、PID、Ramp、补偿诊断）。访问全部使用真实嵌套成员；动作公式、阶段顺序和跨拍状态的存储位置语义保持。
+- 审查腿长相关复用：恢复仍直接读取机器的腿长PID、物理限位、电机限幅、支撑力和trim；`ground_recovery_param.length_rate`、阶段长度目标和两腿`length_cmd/ramp`保持独立，不能替换为`rc_command.len`或`machine->rc.len_rate`，否则会改变恢复的固定轨迹及机型恢复速率。
+- `control_compute/control_strategy/control_detection/task_actuation/robot_control/control_condition/fallen_detection`、Keil源登记和现行文档同步改名。eIDE实际全量110个C源编译链接通过，Flash 600800 B、AXIRAM 45760 B，仅原BMI088 packed告警；未烧录。
+
+## 2026-10-20 · 触发判据从恢复参数拆入倒地检测
+
+- 将`trigger_angle`、`trigger_pitch`、`trigger_time`和`pitch_max`从`ground_recovery_param_t`移动到`fallen_detection_param_t`，初值保持50°、50°、0.2 s和1.0 rad。`fallen_detection`与`control_condition`不再包含或读取`ground_recovery.h`，检测→选路方向不再依赖动作参数。
+- `pitch_max`和`trigger_time`此前还分别参与恢复姿态保护与DONE后的重新恢复确认；两处现读取同一个`fallen_detection_param`字段，比较、计时、阶段和输出顺序不变。恢复轨迹、腿长速率、目标、PID、限幅、超时和重试参数仍留在`ground_recovery_param`。eIDE实际全量110个C源编译链接通过，Flash 600800 B、AXIRAM 45760 B，仅原BMI088 packed告警；未烧录。
+
+## 2026-10-20 · 收敛普通恢复超时、腿长容差和翻身力限幅
+
+- 删除`extend_timeout`、`rear_timeout`和`timeout[2]`，替换为`length_timeout`与`angle_timeout`；EXTEND/RETRACT共用前者，REAR/SWING共用后者。当前源码的四个旧值为1.0、1.0、1.5、1.5 s，收敛后两项都取1.5 s，避免任何阶段整理后更早超时。
+- 删除`retract_ready_len`，将`extend_tol`改名为`length_tol`；伸腿到位仍为`extend_len - length_tol`，收腿切入摆正改为`retract_len + length_tol`。当前收腿门槛由0.19 m收紧为0.16 m，属于作者指定的行为调整。
+- 删除翻身轴向力预映射限幅`recovery_force_max`及其F裁剪，四髋继续由原`machine->dm_trq_clamp`在公共映射/补偿后最终限幅。虚拟摆矩`tp_max`仍保留，因其不是轴向力限幅。eIDE实际全量110个C源编译链接通过，Flash 600720 B、DTCMRAM 8696 B、AXIRAM 45760 B，仅原BMI088 packed告警；未烧录。
+
+## 2026-10-20 · 删除恢复专用Tp预映射限幅
+
+- 作者明确要求恢复摆矩也只走最终四髋限幅。删除`tp_max`字段、初始化值、摆角速度PID的`min(tp_max, machine->dm_trq_clamp)`输出上限及PID结果的Tp裁剪；该PID现在直接以`machine->dm_trq_clamp`为输出上限，随后仍经过原腿端映射、补偿和最终四髋限幅。
+- 这会允许映射前虚拟腿Tp超过旧40 N·m；最终四髋保护保持，实际动作效果需台架确认。eIDE实际全量110个C源编译链接通过，Flash 600620 B、DTCMRAM 8696 B、AXIRAM 45760 B，仅原BMI088 packed告警；未烧录。
+
+## 2026-10-20 · 翻身PRELOAD建立力臂后再扫腿
+
+- `rear_rate`与`recovery_angle_rate`合并为`angle_rate=6.7 rad/s`，后摆与FLIP扫腿共用同一目标推进速率；`TUCK`更名为`PRELOAD`，因为该阶段实际是给翻身腿长目标建立力臂。
+- 删除固定`recovery_preload_time`。新增私有`Ground_Recovery_Preloaded`，将`recovery_len`按机器腿长范围夹取后，要求两腿实际长度均不小于`recovery_len - length_tol`才转FLIP；PRELOAD仍受原`recovery_timeout`保护。原实现只等待50 ms，可能在目标腿长尚未到位时就开始扫腿。
+- `recovery_ready_pitch`更名为`recovery_pitch_tol`，当前数值0.6 rad不变；仍需正立并连续稳定才结束翻身。eIDE实际全量110个C源编译链接通过，Flash 600740 B、DTCMRAM 8688 B、AXIRAM 45760 B，仅原BMI088 packed告警；未烧录，动作效果待台架确认。
+
+## 2026-10-20 · 删除无效的通用翻身超时
+
+- 参考Leg3自救阶段机后复核：当前`angle_rate=6.7 rad/s`时FLIP扫满`2π`约0.94 s，早于旧`recovery_timeout=1.5 s`；SETTLE固定0.05 s；PRELOAD此前也恰好使用1.5 s。删除`recovery_timeout`，不再让一项通用超时覆盖三个语义不同的阶段。
+- PRELOAD改用已有`length_timeout`重试；FLIP继续使用扫满一圈或卡滞`recovery_stall_time`重试；SETTLE按`recovery_settle_time`转段。三条保护路径均保留。eIDE实际全量110个C源编译链接通过，Flash 600736 B、DTCMRAM 8680 B、AXIRAM 45760 B，仅原BMI088 packed告警；未烧录。
+
+## 2026-10-20 · FALLEN检测与恢复动作分层
+
+- 作者要求按AIR检测/后处理的方式拆分倒地链。新增Algorithm/fallen_detection.c/h，逐字保留control_condition原有的四元数重力朝向、倒置、普通腿角/俯仰异常及输入有效性计算；control_condition删除重复upright/pose_valid/inverted/abnormal字段，直接消费fallen_detection，触地高度、三态时序和FLIGHT倒置抢占保持。
+- 新增Algorithm/ground_recovery.c/h作为FALLEN后处理动作入口，接收显式IMU、双腿、补偿、许可和dt，原样委托Standup_Update；control_compute不再直接调用Standup_Update。standup仍保留动作阶段、PID、轨迹、超时和重试，以及运行中姿态复核保护，不把安全复核误当成外层倒地检测。
+- 未改standup参数和阶段公式；现有length_rate值保持。eIDE实际全量111个C源编译链接通过，fallen_detection/ground_recovery在sourceList和compile_commands各一次，只有原BMI088 packed告警。结构体进一步拆分待动作逐拍台架回归后再做。
+
+## 2026-10-20 · 自起状态第一轮去冗余
+
+- 作者授权简化自起结构与函数但不改控制逻辑。standup_ctx删除仅写不读的need、仅内部瞬时使用的pose/upright/ready_block；ready_block改为Standup_Ready局部变量。删除无引用STANDUP_OK、无生产路径的STANDUP_POSE枚举和始终被忽略的allow_restart参数。
+- Standup_Need和Standup_Pose_Update的原腿角/俯仰/四元数计算改为读取同拍fallen_detection；ground_recovery是在control_condition更新检测之后调用，因而不增加检测拍延迟。翻身卡滞仍保存stall_upright，动作阶段、PID、目标、F/Tp、补偿、限幅、超时和重试均未改。
+- eIDE实际全量111个C源编译链接通过，Flash 601472 B，仅原BMI088 packed告警。未烧录；结构体子分组和普通/翻身动作函数移动待台架逐拍回归后再做。
+
+## 2026-10-20 · 自起状态第二轮临时缓存删除
+
+- 作者要求继续简化且不增加结构复杂度。standup_ctx删除只在同一PID计算循环内使用的angle_speed_cmd、仅作函数内临时力矩容器的prepare、以及只写无消费者的raw_dm。Standup_Torque_Output改为局部prepared候选，补偿映射完整成功后才写入调用方torque，失败仍不发布部分输出。
+- force/tp保留，因为恢复力限幅和映射跨函数共享；compensation保留，因为control_compute发布恢复诊断；length_cmd/angle_cmd和各PID/斜坡保留，因为它们是跨拍轨迹历史。未把状态强行嵌套成更多子结构，避免增加访问层级。
+- eIDE实际全量111个C源编译链接通过，Flash 601376 B、DTCMRAM减少32 B，仅原BMI088 packed告警。未烧录，普通起立/翻身动作待台架确认。
+
+## 2026-10-20 · 自起单拍输出计算合并
+
+- `standup_ctx_t` 删除 `force[2]` 与 `tp[2]`：两者仅在一次 `Standup_Update` 内由PID写入、翻身力限幅读取、映射读取，未跨拍消费。`Standup_PID_Calculate` 与 `Standup_Torque_Output` 合并为私有 `Standup_Compute_Output`，以函数局部 `force/tp/base/prepared` 完成原计算和候选发布。
+- 计算顺序保持：目标更新 → Ramp/PID/支撑前馈 → PID历史置就绪 → 翻身期F限幅 → 腿端映射 → 弹簧与重力补偿/电机限幅 → 完整候选写回。阶段、轨迹、PID、支撑公式、补偿、超时、重试和最终输出接口均未改。
+- 本条只删除同拍临时缓存与一个内部转交边界。eIDE实际全量111个C源编译链接通过，Flash 601280 B，仅原BMI088 packed告警；未烧录，台架仍需分别确认普通起立与倒置翻身动作。
+
+## 2026-10-20 · 全项目第一批无消费者结构体成员删除
+
+- 删除 `lqr_state_t.u_col/u_hip_col`：全工程检索确认它们只在 `LQR_Control_Update` 中清零和写入，未被VOFA、Watch发布、输出或控制读取；LQR矩阵逐项求和和最终 `u[]` 计算未改。该项同时去掉每拍四次10元素清零与两路20次赋值。
+- 删除 `robot_state_t.rc_enable` 及 `Robot_Feedback_Publish_Rc` 的镜像赋值：策略准备、检测和最终许可全部读取 `rc_command.mode.rc_enable`，没有任何消费者读取该镜像。遥控模式解释、互锁、输出和反馈临界区范围不变。
+- 本批不删除驱动原始反馈、跨任务快照、AIR遥测或补偿诊断；这些仍有消费者或待台架诊断用途。eIDE实际全量111个C源编译链接通过，Flash 601152 B、AXIRAM显示45 KB，仅原BMI088 packed告警；未烧录。
+
+## 2026-10-20 · 删除无消费者的反馈元数据链
+
+- 后续全项目结构审查授权覆盖2026-10-11“暂留”决定后，删除 `feedback_metadata_t`、`feedback_meta_t`、`feedback_sample_t`、私有 `metadata`、`Feedback_Published`，以及 `robot_feedback_t` 中全程无人读取的发布/采样时间字段。`Robot_Feedback_Publish_Imu/Rc` 同步收窄为只接收真实状态，`task_imu.c/task_comm.c` 删除仅为该链构造的局部接收时间。
+- `Robot_Feedback_Read` 仍在同一临界区复制IMU、电机、双腿、遥控和公共高度；`motor_state.dm.parsed_rx_ns`、驱动的CAN接收时间、离地检测输入、控制周期和许可逻辑均未改。删除的是没有任何控制、策略、VOFA或Watch消费者的镜像元数据，非电机原始反馈。
+- 本项完成后全工程无 `feedback_metadata_t`、`feedback_meta_t`、`feedback_sample_t`、`metadata`、`Feedback_Published` 或旧快照时间字段引用。eIDE实际全量111个C源编译链接通过，Flash 600736 B、AXIRAM 45856 B，仅原BMI088 packed告警；未烧录。
+
+## 2026-10-20 · 收紧AIR调试镜像
+
+- `air_detection_t` 仍完整保存检测器运行所需的两腿估计、峰值、压缩和状态；`air_debug`从其同型整份副本改为 `air_debug_t`，仅含VOFA实际读取的均值支持力、两个压缩量、两个压缩计时、两类初判计时及flight/initialized/valid/fault。
+- `Control_Output_Publish_Air_Debug` 在原临界区逐字段发布该快照；VOFA 3～11和45同步读取新扁平字段，数值定义、发布时机、控制状态机和AIR处理均未改。需要查看未镜像的中间估计时直接Watch `air_detection`。
+- 此项删除的是调试镜像的冗余复制，不删除检测历史或改变VOFA通道。eIDE实际全量111个C源编译链接通过，Flash 600800 B、AXIRAM 45760 B，仅原BMI088 packed告警；未烧录。
+
+## 2026-10-19 · 临时切换VOFA为AIR落地交接诊断
+
+- 作者报告长腿长离地检测和离地后落地 pitch 翻滚，要求将根因数据放入VOFA后录制CSV。vofa_debug.c的3～47由常规LQR观察布局替换为支持力估计、flight/valid/initialized/计时、双腿压缩与力分量、三态/AIR release、pitch/速度/位置积分、四路LQR请求及腿长PID交接量；0～2公共状态不变。
+- 所有通道仅读取已有air_debug、control_condition、lqr_state和leg_balance状态；未增加检测、控制、输出、任务、缓存或发送逻辑。当前布局是定位用临时观测，不能将后台VOFA时间视为同拍物理采样或控制结果；采集结论后再单独决定修复和恢复布局。
+
+## 2026-10-19 · 倒置从FLIGHT抢占进入FALLEN
+
+- CSV最后一次显示AIR支持力已恢复约55 N，但两腿相对压缩仅约3～5 mm，未达到既有20 mm/100 ms压缩落地条件，因此flight、condition=FLIGHT、air_control和air_release一直保持到结束；作者确认实体已倒置。原三态规则在FLIGHT内只等AIR退出，倒置也不会进入原翻身自救。
+- control_condition.c仅在已处于FLIGHT且四元数重力朝向确认`upright < 0`时直接进入FALLEN，调用原自起/翻身处理。普通FLIGHT、相对压缩落地、支持力阈值、低高度规则和仅前倾但未倒置的情况不变；不以pitch Q代替此保护，因为AIR控制本身屏蔽LQR的pitch反馈列。
+- VOFA 45～47改为inverted/upright/public fallen，用于台架确认抢占的实际触发。GCC全量109个C源编译链接通过，仅保留原BMI088 packed告警；未烧录，本改动对落地翻滚的实机效果待新CSV确认。
+
+## 2026-10-19 · AIR落地支撑前馈150 ms渐进恢复
+
+- 作者依据CSV确认落地瞬间AIR释放结束后，现有腿长PID虽从实测长度播种，但每腿约100 N的support_force立即恢复，导致腿长反弹、再次离地并放大pitch；要求先只验证支撑前馈渐进恢复。control_air_response新增私有落地比例：有效落地沿置0，之后按MACHINE_LQR_DT在线性150 ms内升至1；LQR退出清回1，普通地面投入保持原支撑力。
+- leg_balance的唯一调用新增support_scale参数，仅将support_force乘该比例；腿长PID、斜坡、roll、弹簧补偿、AIR相对压缩落地、轮组、限幅及其他路径不改。策略准备每拍一次更新比例，避免standup内两次AIR响应重复推进。VOFA 45改为该比例，46/47保留upright/fallen。
+- eIDE实际unify_builder全量编译109个C源并链接成功，Flash 602116 B，仅原BMI088 packed告警。未烧录或实机确认；下一次CSV需确认45从0连续升至1，以及腿长/轴向力和pitch是否仍出现反弹。
+
+## 2026-10-19 · AIR落地LQR pitch列150 ms渐进恢复
+
+- 作者基于新CSV确认支撑前馈渐进恢复已明显抑制反弹，但要求继续降低落地瞬间pitch列冲击。lqr_balance的LQR_Control_Update新增pitch_scale参数，仅对`LQR_X_THB`和`LQR_X_DTHB`两列贡献相乘；AIR内这两列原本已屏蔽，普通地面调用比例为1，AIR有效落地后复用既有150 ms比例。
+- 未修改K表、Q/R、AIR中四列保留规则、轮组零力矩、其它八个LQR状态列、限幅、PID或检测。u_col/u_hip_col记录缩放后的实际分项，供后续区分比例恢复和饱和。eIDE全量109个C源编译链接通过，Flash 602180 B，仅原BMI088 packed告警；台架需确认落地时45比例、31～34请求及27～28 pitch响应。
+
+## 2026-10-19 · 落地恢复比例简化并改为300 ms
+
+- 作者要求简化落地比例更新并将0→1时间由150 ms改为300 ms。control_air_response删除额外active状态：有效落地沿直接置零，其他执行拍以`clampf(scale + dt / 0.30, 0, 1)`恢复；LQR退出仍清回1。支撑前馈和pitch两列继续共用该比例，其他处理不变。
+
+## 2026-10-19 · 撤销落地渐进，观测腿长PID阻尼
+
+- 作者要求撤销支撑前馈和pitch列渐进恢复，改为先确认现有腿长PID D项能否承担冲击缓冲。撤销control_air_response落地比例、control_strategy调用、leg_balance支撑比例参数和lqr_balance pitch比例参数，恢复原处理与接口。
+- VOFA 45/46改为左右腿长PID的dout，47保留fallen；只增加观察，不修改Kp/Kd、腿长PID、支撑前馈、AIR判据或输出。eIDE全量109个C源编译链接成功，Flash恢复601792 B，仅原BMI088 packed告警。
+
+## 2026-10-20 · VOFA改为腿长闭环落地诊断
+
+- 作者反馈腿会压到底再弹起，要求确认目标斜坡、P/D与实际髋命令哪一环不足。保留AIR状态、压缩、三态、pitch、腿长、斜坡、轴向力、Tp和最终目标；12～21替换为左右腿长速度、P/D、PID总输出及roll项，31～34替换为最终门控后的四髋力矩，45/46为腿长历史预置/AIR释放。
+- 该布局只读已有控制状态，不修改腿长目标、len_rate、PID、补偿或AIR处理；用于区分“斜坡尚未追上”“PID已顶力”“最终髋力矩受限”“AIR交接反复复位”。
+
+## 2026-10-20 · 压缩候选期间提前接入腿长环
+
+- 作者确认当前AIR需保持压缩持续时间才允许完整LQR投入，但要求检测到压缩后立即打开腿长环，避免腿先压到底。control_air_response在任一腿现有压缩判据已开始累计时保持`air_control=1`、轮组零及AIR pitch掩码，同时清`air_release`以接入原腿长P+D、支撑前馈和补偿；压缩计时满足原条件后仍由air_detection退出FLIGHT，再恢复完整LQR。
+- 为保证预接触已先清air_release时仍可写回落地腿长目标，落地沿不再依赖was_release，只继续受AIR处理开关和有效判断保护。未改变compression_on、compression_time、flight状态机、轮组或LQR列掩码。VOFA 45为压缩候选，46为AIR释放，验证时45=1/46=0应先于flight清零。
+
+## 2026-10-19 · 执行拍按策略准备、控制运算和最终输出横向拆分
+
+- 作者确认离地/触地检测完成后，要求整体控制结构按横向三层整理，并锁定“不改算法控制代码、控制方式、控制周期或控制效果；先验证结构迁移，再另行优化结构体”。新增task/control_strategy.c/h、control_compute.c/h、control_output.c/h：前者按原序推进RL恢复、模型准备和公共检测；中者按原策略运行LQR、自起、AIR、RL或补偿并产生候选；后者保留唯一最终门控、诊断和DM/DJI发送。
+- task_actuation.c只保留反馈快照与三段同步调用。原顺序保持为反馈快照→RL恢复→模型准备→AIR/触地/三态检测→进入FALLEN清原动作→LQR状态/速度融合→策略唯一求解→AIR诊断发布→最终输出；LQR与RL不在同拍共同求解，RL网络任务和50Hz/500Hz节拍不变。Algorithm目录、检测处理、参数、结构体、物理标定和驱动未改。
+- Keil与eIDE分别登记三个新增源；eIDE仍采用ControlModules虚拟源登记并排除物理扫描副本，防止漏编或重复链接。结构体删改未在本条实施，待逐拍对照、完整链接和台架确认后另行评审。
+
+## 2026-10-19 · 修复eIDE未收录两个新增执行源导致的链接失败
+
+- 作者两次报告Control_Air_Response_Update和Control_Detection_Update未定义。实际builder.params、compile_commands及objlist均缺两个新C，日志新增C编译数为0；首次仅建议刷新未解决。本次只修工程接入，不改判断或处理源码。以用户当次真实lnp和既有对象在临时目录重现同样3个未定义引用，未以数学/AI库或控制算法问题解释。
+- .eide/eide.yml新增ControlModules虚拟组，显式登记task/control_detection.c与task/control_air_response.c；target.excludeList排除这两个物理扫描路径，虚拟路径仍启用。直接运行已安装eIDE的getAllSources/isExcluded规则，验证目录树漏项与完整扫描两种情况下各收录一次，避免重复链接；未改编译/链接参数、库、头文件路径、工具链或生成缓存作为持久修复。
+- 按当前工程配置导出来源清单，使用eIDE实际unify_builder 3.11.1在工程外全量编译106个C源并链接，生成ELF/HEX/BIN；仅原BMI088 packed告警。两个函数在ELF中均为已定义T符号，实际IDE的三份生成清单随后也各包含两个文件一次。另执行同参数增量构建成功。产物、原始失败、源选择校验及最新K表稳定指纹在C:/Users/ynz/AppData/Local/Temp/s2rgap-eide-registration-3tqp3cyg/；没有写入项目对象缓存或烧录设备。
+- 本轮未修改任何C/H；核验期间检测到lqr_gain_big.c的外部更新，保留未覆盖，最终构建期间其指纹稳定；其余92个固件文件与本轮开始快照一致。file-guide及AGENTS补充实际IDE清单核验要求，纠正只依赖目录扫描的假设。未stage/commit/push，构建通过不表示实机接触/恢复或物理参数已验证。
+
+## 2026-10-19 · 检测调度与AIR后处理分文件，保持当前行为
+
+- 作者确认三态已接入后要求检测与后处理分层，逐项展示文件/接口并再次获准后实施。新增task/control_detection.c及task/inc/control_detection.h：合并原执行层两段检测调度，仍依次推进AIR观测和触地/三态判断，返回进入FALLEN事件；原Standup_Reset由task_actuation在相同位置消费事件，不进入检测文件。Algorithm/control_condition.c/h、触地参数和三态规则未改。
+- 新增task/control_air_response.c及配套头：原Control_Air_Update的目标回置临界区、基准复位、AIR选择、释放/限幅和applied赋值迁入Control_Air_Response_Update，两个原调用位置保留。Air_Detection_Active的原布尔表达式内联至响应，删除检测C/H中的旧定义/声明；检测算法其余文本保持。task_actuation删除三段私有实现，只保留调度、状态进入动作、处理求解和唯一输出；Keil登记两个新源，eIDE沿用原目录扫描。
+- 以本次迁移前的当前工作区为基线，大小机真实C执行夹具分别84/83项通过；每个检查点记录状态、计时、目标、控制量和最终发送候选，迁移前后十六进制浮点记录逐字节一致。固件/工具快照中仅原task_actuation.c及air_detection.c/h三个已有文件改变，其余99个文件（含作者当前K表和MATLAB改动）逐字节保持。执行层和响应体变换另作文本核对，无新增判断、配置副本或控制处理。
+- 大小机GCC分别106个C源完整编译链接通过，相关AC5共12对象通过；GCC只有原BMI088 packed告警。产物在工程外C:/Users/ynz/AppData/Local/Temp/s2rgap-detection-response-split-56utithd/，未生成工程测试目录或改写eIDE构建缓存。未烧录、未stage/commit/push；对照基于反馈/IO替身，不作为实机耗时下降或真实接触辨识已通过的证明。
+
+## 2026-10-19 · 接入触地判断、三态与实际选路，冻结原处理内部
+
+- 作者纠正“只拆调用无法验证判断”，明确批准接入公共高度触地及NORMAL/FALLEN/FLIGHT实际切换，再考虑后处理修改。新增control_condition.c/h，使用已锁定的公共height≤0.15 m连续50 ms；候选等待优先，原standup_param门槛与异常持续时间作为正常运行重新恢复依据。公共IMU fallen、height生产及RL恢复语义不变；robot_state.h仅同步height消费注释，字段和布局保持。
+- air_detection.c/h仅改变反馈入口、首次高/低力初判和失效重新确认：移除控制permit，armed改名initialized，初次低力独立计时。原Air_Estimate、air_param初值、初判之后整段AIR/压缩/支持力运行分支与快照文本一致；不将压缩落地改为支持力联合条件。失败清连续计时及initialized、保留已有flight和峰值；重新确认不绕过已有AIR的压缩退出。
+- task_actuation.c主拍独立推进一次公共检测与三态。检测模型一次准备，不依赖LQR运行或自起完成；lqr_idle和LQR私有故障不再清公共观察器。FALLEN只在进入时初始化原动作，恢复运行和失败重试不被其他判断重启；原动作到位后按检测交接NORMAL/FLIGHT，未知则保持DONE等待。FLIGHT不能直接转FALLEN，原落地后先生成有效NORMAL候选再允许后续倒地。关闭对应处理不隐式改选NORMAL。原AIR目标回置、基准复位、掩码、释放、补偿、限幅、控制公式和最终出口保留，仅接入状态/许可条件。
+- 初始化增加Control_Condition_Reset，Keil注册新源，eIDE原目录扫描保留；未迁移或新增后处理文件。standup.c/h、lqr_balance.c/h、leg_balance.c/h及相关动作/控制参数、补偿模型、K表、RL和驱动未改。实际source对照证明原估力与运行落地分支保持，原solve_lqr、RL分支及最终输出等任务函数保持。新增观察器会增加未投入/RL期间的模型准备，实机峰值耗时待测。
+- 软件验证：实际C执行函数＋反馈/IO替身大机84、小机83项通过，覆盖高度等值/中断、49/50 ms、触地优先、无支撑上电、独立高低初判、原压缩任一腿退出/非压缩/关闭落地、失效保留峰值、FLIGHT归属、先NORMAL后FALLEN、READY＋AIR、未知READY等待、处理关闭、模式退出、故障撤力/原重试、RL 200基础拍100次下发；正常/自起消费的模型值与旧准备函数在代表姿态逐字节一致。初次检查暴露短故障丢失FALLEN归属，已修正为只在退出投入后重新初判。默认大小机GCC完整编译/链接各104个C源，相关AC5各5对象通过，仅GCC原BMI088 packed告警；产物见工程外C:/Users/ynz/AppData/Local/Temp/s2rgap-three-condition-dz2c12yb/。未烧录、未stage/commit/push，软件结果不代替真实接触辨识、恢复动作或1 kHz时序验收。
+
+## 2026-10-19 · 仅提取离地检测输入组装与调用
+
+- 作者已用Git撤销此前重构，随后明确只做检测调用，不改自起、倒置自救、离地处理或相对压缩规则；经逐项展示并获准执行后，固件仅修改task_actuation.c：新增私有Control_Air_Detection_Update，将原输入组装和Air_Detection_Update调用原样搬入，返回原input.permit；原Control_Air_Update通过返回值permit继续判断落地。
+- 原检测调用位置及次数、许可表达式、落地目标回置、位置/偏航复位、AIR选择、轴向释放及限幅赋值保持；solve_lqr_standup原本就存在，本次未新增或修改。air_detection.c/h、standup.c/h、LQR/腿力控、参数、补偿、RL、VOFA、驱动、工程清单和最终输出函数均未改。未接入新三态或触地高度判断。
+- 验证：相同输入组装文本与原响应逐项比对通过，其余任务函数保持；另外86个固件C/H与修改前快照逐字节一致。task_actuation.c分别通过大小机ARM GCC与Keil AC5编译，共4个对象，无告警；git差异另作检查。工程外证据位于C:/Users/ynz/AppData/Local/Temp/s2rgap-air-call-split-9aa0gqb4/。未做完整链接、烧录或实机时序测量，未stage/commit/push；此次拆分不作为检测效果改善的实测证明。
+
+## 2026-10-19 · 修改任务与实施计划须展示文件和拟改代码（仅文档）
+
+- 作者明确要求将“写对应任务时，展示需要修改的代码，并指出修改文件”记入记忆和AGENTS。AGENTS的“用户背景与解释”新增要求：按文件/函数/结构体列出拟新增、删除或替换的关键代码，使用片段或diff说明原因与影响，区分拟修改和已实施；不增加新的执行确认关卡。
+- 记忆更新写入Codex指定的ad_hoc备注目录，不直接修改汇总记忆。当前离地/自起/NORMAL-FALLEN-FLIGHT方案仍处于讨论阶段，本次未修改控制实现或参数，未将方案标为已实施。
+- 验证范围为文档差异、格式及记忆备注写入；不涉及固件构建、烧录、Git提交或推送。
 
 ## 2026-10-18 · 按作者要求撤销后两轮观测并汇总整定证据
 
@@ -9886,3 +10604,246 @@ MATLAB 桌面：`cd tools/matlab`，敲 `run_all`。命令行（不开桌面；�
 - 接入清理：只保留单模型，删除无人调用的旧模型切换/索引及无人消费的input_command镜像；CubeAI显式绑定35/6维独立I/O缓冲，支持导出时I/O放在activation或外部缓存两种配置。
 - 验证：ARM GCC大机完整104项编译及链接、AC5十一相关消费者×两机共22次对象编译通过。原BMI088 packed警告保留；当前旧生成尺寸使AC5在旧模型拒绝后报不可达警告，非运行错误。工程外宿主运行生产观测/映射/PD，覆盖35维下标/缩放/裁剪、名义姿态、重力投影、原始action历史、阻尼、目标/独立力矩限幅、配对符号/零偏、延迟及坏输入；真实DM解析覆盖双极性多圈正反跨界且原标定角保持。非RL机器配置词元相对本轮前备份一致。
 - 验证边界：真实rl_policy使用SDK元数据/后端替身，验证35/6接收、旧25/125创建前拒绝、尺寸/格式/batch/数量不匹配、独立I/O绑定和运行失败/NaN清动作；任务联调用确定性action替身，不能证明实际新权重推理、硬件调度频率、CAN延迟、物理标定或站立效果。没有在工程内新增测试/工具文件；未改生成网络/权重，未烧录。
+
+## 2026-10-27 统一一阶低通命名
+
+按作者要求将lowpass1d_t重命名为lpf_t，Lowpass_*统一为LPF_*；同步公共声明/实现和十态/四态调用。四态velocity_filter数组改为具名lpf_omg_roll、lpf_height_rate；保留Reset接口。仅命名整理，不改滤波公式、参数或执行时序。完成源码引用及差异检查，本轮未重新编译或上机测试。
+
+## 2026-10-27 四态执行函数结构整理
+
+按作者授权，在roll_height_balance.c提取静态State_Update及Force_Update，合并三处失败处理为Fail；Observe和外部C/H接口保持。保持原几何/参考/低通、观测预测校正、力累加顺序及异常复位行为，不增删判断、不调参。源码差异及引用检查通过，未执行完整编译或实机验证。
+
+## 2026-10-27 全项目控制命名统一
+
+- 作者明确授权按命名审查清单修改；基于当前工作区进行，不回滚已有增益表、VOFA或结构整理。
+- 四态reference改target，height_goal改height_target，斜坡参数改length_ramp_target；十态leg_len_tgt/yaw_tgt/vel_tgt改leg_length_target/yaw_target/velocity_target。恢复rear_goal/length_cmd/angle_cmd改rear_angle_target/length_target/angle_target；局部goal统一target，稳定计时改stable_elapsed。
+- 遥控vel/yaw/len改velocity_target/yaw_rate_target/leg_length_target；PID set/get改target/measured，pos_out/last_pos_out明确为position_mode_output/last_position_mode_output。只写速度镜像保留，不在命名清理中删除状态。
+- 四态equilibrium改base_force；RL reference_pos改position_limit_center，重力reference缓存参数改cached_result。只改字段名，不改变原生参考角、极性、零点、物理值或训练接口。
+- frame.drive/normal/recovery改drive_permit/nonfallen_drive_permit/recovery_permit；公共最终力矩镜像移除rl前缀，hip_enable改leg_swing_enable，raw_dm改unclamped_dm，Angle_Wrap_180改Angle_Wrap_Pi。rc_enable及所有许可逻辑保留。
+- 同步声明、实现、全部调用及注释中的调试引用；四态MATLAB控制和验证脚本同步target/base_force命名。历史记录中的旧符号表示当时版本，不全局改写历史。
+- 验证：35个C/H和2个MATLAB文件与修改前快照的非命名代码结构一致；大小机各54个工程自有C源文件完成GCC语法检查，共108项通过；旧标识符引用及git diff --check通过。未执行完整链接、MATLAB数值重生成或实机测试，本轮未提交。
+
+## 2026-10-27 四态结果统一为valid
+
+按作者对结果同义状态的纠正，删除roll_height_result_t、反馈结构result成员及成功/失败赋值。控制仍使用原有roll_height.valid，复位清0、完整计算成功置1，不改变控制许可。MATLAB删除重复info.result。VOFA6保持valid，9保留0，不新增第二份valid或移动其他通道；历史CSV的9仍按旧版本解释。
+
+## 2026-10-27 职责目录整理及process命名
+
+按作者最终确认只移动、改名、同步引用；54C/53H原始工作区基线保存在工程外。Algorithm分六组，task分入口/control/service，头文件统一inc，config例外。AIR整体迁入process/air_process，ground_recovery改fallen_process并同步模块前缀；不抽离AIR内部依赖，不合并pitch_world。pitch_world独立迁入estimation，control_detection保留任务层公共调度与撤力重判。MATLAB分lqr10/lqr4，共享机器表不复制。Keil、eIDE登记/包含目录及M生成路径同步，未自动提交或烧录。验证结果见后续条目。
+
+验证结果：107个C/H与迁移前工作区逐一对照，除预定模块标识符和include位置外保持；54个C均在eIDE实际生成的sourceList/compile_commands各出现一次，并完成大小机GCC完整编译链接。Keil实际工程完整编译链接为0错误、2原有警告（rc_command中的浮点提升、background_service末尾换行），未借此改动源码。Keil构建改写的原先干净的已跟踪产物已恢复，外部验证日志保留。
+
+MATLAB前后十态生成、模型核对和四态生成均通过；四态13组模型/增益矩阵逐项完全一致，最大差为0，十态两机三组非对称腿长A/B共6组一致。全部验证deploy=false，三个固件生成数据源字节与原工作区一致；十态验证报告按新路径更新，候选C恢复为原固件一致内容。原四态目录被MATLAB当前目录占用时采用逐文件迁移，随后将MATLAB当前目录切到lqr4；旧空目录归档到工程外临时备份。未清理用户baseline，未关闭或保存旧编辑器页签，需从新路径打开继续编辑。
+
+没有提交、推送、下载、烧录或实机测试。目录移动不证明控制效果改善。
+
+## 2026-10-28 调整速度融合平滑程度
+
+按作者询问速度来源及更平滑的要求，核对电机轮速→腿摆/伸缩补偿→两状态速度/加速度融合→十态反馈链。仅将slip_param.q_velocity从0.007降为0.002（每1ms），r_velocity=0.01及其余参数、接触门控和异常轮速降权保持；未增加低通。参数为大小机公共。当前参数稳态协方差数值计算中，轮速对速度的修正增益约0.557→0.358；这不是板端日志。slip.c的ARM GCC语法检查与差异检查通过，未完整编译/烧录/实机验证，未提交。作者其余工作区修改保持。
+
+## 2026-10-28 VOFA替换为执行侧振荡观测
+
+按作者“你替换”授权，仅修改Vofa_Debug_Send及现有通道文档：保留48路，27～46由十态反馈贡献替换为轮速/轮电流、四髋反馈力矩/角速度/最终力矩请求、左右轴向力请求和四态滤波前后高度速度。23～24改为最终门控轮矩请求，22增加bit7四态valid；0～21及25～26保持。未改控制、滤波、Q/R、增益表、检测或物理标定。请求镜像不代表电机实际执行，反馈力矩为电机上报估计值；异步来源不据单纯相位差推断执行延迟。vofa_debug.c大小机ARM GCC对象编译无诊断，具名文件差异检查通过；产物在工程外临时目录，未完整链接、烧录或实机验证。
+
+## 2026-10-28 VOFA静止抖动状态贡献观测
+
+按作者要求将需要观测的状态贡献放入VOFA，仅替换Vofa_Debug_Send的27～46：四个输出各五路，依次为速度、左腿角速度、右腿角速度、pitch角速度、其余六态合计与u_eq；单位全部为Nm。读取当前实际K，沿用控制函数AIR掩码、pos/yaw开关及角度环绕，未投入或状态/增益无效时清零。保留0～26、47、48路协议及既有C/H接口，不改控制、滤波、Q/R或物理标定。分项是后台重建的限幅前请求，不是严格控制拍快照或电机实际力矩；大贡献不独立证明振荡根源。现行通道表与解释同步于file-guide.md。大小机vofa_debug.c的ARM GCC语法检查无诊断，具名差异检查通过；本轮C/H摘要对比仅该VOFA源改变，未完整构建、烧录或实机验证。
+
+## 2026-10-29 输入增量LQR第一版开始实施
+
+作者授权开始修改：大机停车pos_target由0.1改为0，与锁点时积分清零的基准一致；小机保持。新增design_incremental.m离线设计内核，包含当前输入R项对应的交叉项N，支持相对腿角代价，S=0检查退化为同Q/R普通LQR。在0.15/0.20/0.31m、两种角度代价与五档S共30种名义设计中通过；尚未接入生成表和固件输入历史，未部署增量控制器，不代表实机性能验证。
+
+## 2026-10-29 撤回输入增量LQR候选
+
+作者实机反馈效果变差且更易摔倒；记录中反向行进时出现较大俯仰和轮矩饱和，软件名义模型检查未能预测这项退化。撤回增量设计、表接口/正常增益、输入历史及确认回写、VOFA历史贡献、混合角代价和本轮停车目标调整，恢复修改前普通十态源与对应表；删除未接入基线的增量设计辅助文件，保留候选及CSV于工程外备份。不改作者新增fallen_detection改动、四态、原Q/R或暂存内容。此回退不代表原静止振荡已解决，不将摔后离地/离线当作本次失稳起因。
+
+## 2026-10-30 十态与四态LQR联合观测
+
+按作者要求仅替换VOFA为最终/斜坡/实际高度、roll及原始/滤后速度、腿长目标/斜坡/实际、十态关键状态、轴向力共差模反馈贡献、偏置及向心项、虚拟Tp与最终电机请求。状态位包含四态有效/学习许可/触限/发送状态，固定48路，旧RL布局注释保留。不改控制、Q/R、滤波或物理标定。
+
+## 2026-10-30 NORMAL高度位置/速度参考一致性与roll阻尼滤波
+
+作者批准后，大机roll角速度低通第三项0.01→0.05；新增length_ref_accel_max=1.0m/s²，仅NORMAL长度参考使用，速度上限复用rc.len_rate。leg_balance.c/h生成并保存左右参考位置/速度，首次从实测与零速度播种，复位/退出NORMAL清速度；起立/翻身公共Ramp与非NORMAL PD/轨迹不改。目标中途反向先减速，离散制动距离及末端小步对齐保证有界参考。roll_height_balance.c/h接入参考速度投影，target[3]由恒0变为Hdot_ref，状态/模型/K与支撑及偏置计算保持；新目标计算检查有限值。VOFA10改Hdot_ref，其余通道保持。四态MATLAB入口参数读取/验证参考轨迹同步，未调用部署或覆盖K。单精度参考上升/下降/反向/移动目标数值检查及大小机相关对象编译通过（machine_config既有.rl={0}括号警告保留）；模型名义/偏置/参数偏差/噪声/门控及0～10ms假设延迟检查通过，非实机稳定性保证。未完整链接、烧录或提交。
+
+## 2026-10-30 腿长参考响应速度调整
+
+作者接受当前稳态长度误差后，要求优先优化速度、十态另行处理，本轮按腿长升降响应实施：只将大机length_ref_accel_max从1.0改为2.0m/s²，小机、速度上限、roll低通0.05及当前四态Q=[20 0.01 400 0.01]/R与十态参数均保留。0.16m静止到静止参考的单精度数值用时约0.802→0.567s、峰值速度约0.400→0.565m/s；这是参考生成器结果，不是实机到位时间。大小机machine_config对象编译通过，保留既有.rl={0}括号警告；只读四态模型验证通过，不运行部署、不覆盖K。未烧录或提交。
+
+## 2026-10-30 放开现有机械范围内的LQR腿长给定
+
+作者要求允许0.13～0.34m并指出采样未能收到0.13m目标，确认原因是软件目标被表下限裁到0.15m。本轮仅将Rc_Command_Update公共下限改用machine->leg_len_min，LQR_Enable_Latch与LQR_Target_Update两处目标裁剪改用既有机械上下限；未修改机械配置/标定、Q/R或K表。公共最大命令仍保留RL机高范围，RL观测自有限幅保持；大机LQR目标上下限现为0.13/0.34m。K求值继续夹在当前0.15～0.31m表域，因此两端使用边界增益，不能据此宣称覆盖全域的模型验证或实机稳定性。
+
+## 2026-10-30 roll角速度低通回到0.01（CSV显示11.66Hz自激）
+
+作者只要求先改滤波、不改限幅。核对`roll腿长测试.csv`（67.8s、200Hz，固件为Q=[20 0.1 400 0.01]、K_roll=311.97、K_rate=36.53、K_H=1402.8）后确认roll在11.66Hz自激：roll幅值1.9～2.9°、峰峰8.2°、原始角速度±2.96rad/s，包络可从0在0.75s内长到0.0325rad又在0.25s内消失。差动力75N中角速度项63.4N（=36.53×|x1|1.736）、角度项14.1N（=311.97×0.045），与该频率上回路几乎全靠角速度通道一致；该通道经α=0.05只通过0.572、滞后53°，同相阻尼只剩12.6N/(rad/s)。本轮仅将大机`lpf_alpha[2]`0.05→0.01：11.66Hz通过率0.0985、同相阻尼0.50N/(rad/s)，1Hz仍为0.848/−32°，真实roll回正保留；Q/R、K表、roll_height_model、机械与电气标定、偏置上下限均未改。
+
+参考仓CKP`Matlab/TinyMpc_Leg_Len/s03_leglen_tinympc.m`核对结果：其I_ROLL同为0.578，但注释写明是按M·R_TRK²·η估算的初值、需靠侧向冲激实验拟合，本仓直接沿用了该初值；其P.M=25.544（整机含两轮，站立负载口径）而本仓roll_height_model用20.534（十态sjtu5机体质量，不含腿和轮），支撑前馈因此偏低约20%；其单腿力箱F_MIN=20/F_MAX=150N，本仓无下限，故CSV中F可到−70N。CKP同现象文档记录的振荡为50Hz、由10ms求解周期锁频，与本机1kHz下11.66Hz不同，其α̇压到0.05（通过率0.026）依赖"有用0.5～1.5Hz、有害50Hz"的30倍时间尺度分离，本机振荡与有用频段只差约8倍，不能照搬。另按本机数据核算：2.58°@11.66Hz需140N·m而差动力矩仅32N·m，差4.4倍，与CKP"陀螺读到的是局部结构振动而非刚体roll"的结论一致，故滤波只能压幅值。
+
+仅machine_config.c单文件对象编译通过（既有`.rl={0}`缺括号警告保留，输出重定向到工程外临时目录），未链接、未烧录、未提交；实机效果待验证。
+
+## 2026-10-30 四态支撑口径改整机质量、偏置差模放宽与单腿力下限
+
+作者批准三条修改。①支撑口径：按参考仓CKP`TinyMpc_Leg_Len/s03_leglen_tinympc.m`的`P.M=25.544`（整机含两轮，站立负载口径）替换原20.534（十态sjtu5机体质量，不含腿和轮）；`machine_table.m`的`roll_height.M`同步为25.544，`machine_config.c`的`support_force`改为`25.544*9.81*0.5=125.29N/腿`，并用`run_roll_height4`重出`roll_height_model.c`：M=25.544、Q/R保持作者的[20 0.1 400 0.01]/[1e-4 1e-4]、K_H 1402.79→1403.94、K_Hdot 165.93→185.56、B[4] 4.869e-5→3.914e-5、f[3]同步，L按新Ad/Bd重算。②`roll_height_bias_diff_max`20→40N：上一份CSV显示偏置半差有20.0%时间钉在+10.0，且Fc>130N时触限占97.6%，长腿段右腿持续偏短7~11mm，先解除该限再判模型。③新增`machine_lqr_cfg_t.leg_force_min`（大机20N、小机0即不限），`Roll_Height_Force_Update`对左右F取`fmaxf`下限；上一份CSV中F最低到+0.4N、全程无反号，此下限当前为兜底，参考CKP力箱F_MIN同值。
+
+生成闸门记录：`verify_roll_height4`的观测器+滤波+延迟联合极点要求roll角速度低通α≥0.02，α=0.01时为1.000072（超界7e-5）、α=0.005为1.001043，故本次临时以α=0.02过闸出表后再改回0.01；K/A/B/f/L与α无关（α只进验证矩阵），但该边际须记为已知裕度。α=0.01是本轮滤波验证值：新CSV的I11→I12传递函数在10Hz实测|H|=0.152、相位-83°，与α=0.01理论值0.158/-79°一致，α=0.05理论为0.632。
+
+另需注意：`support_force`同时被`fallen_process`的支撑前馈读取，本次由100.72调到125.29N后起立/翻身支撑力等比增加约24%，起立行为未做台架验证。侧向冲激辨识I_ROLL/阻尼仍未做，`turn_comp.mass`保持20.534未动（向心补偿是另一含义）。
+
+验证：按`compile_commands.json`全参数把113个C源对象编译到工程外临时目录，0失败、3个既有`.rl={0}`括号警告；四态模型生成与`verify_roll_height4`全部检查通过（含名义/偏置/模型偏差/噪声/门控仿真及0~10ms延迟）。未链接、未烧录、未提交，实机效果待验证。
+
+## 2026-10-30 变腿加速度与四态偏置共模上限
+
+作者批准两条行为调整。①大机`length_ref_accel_max`2.0→1.0m/s²：上一份CSV显示变腿速度快时（参考速度最高0.33m/s）roll峰峰达0.154rad，roll偏移与参考速度相关系数0.52~0.55，先降一半激励再判断。②大机`roll_height_bias_common_max`100→150N：0.13~0.15m静立时偏置已用到82.5N/100N（占83%），再压就会削顶并让高度环失去慢修能力。未改Q/R、K表、roll_height_model、α、滤波、机械/电气标定。仅machine_config.c单文件对象编译通过（既有`.rl={0}`警告）。
+
+另记录本轮两份CSV的只读分析结论：变腿时左右腿长度差最大到130mm而四态差动力只有±18N、四髋力矩仅2.4~6.4Nm（sat=0），同时由腿长反算的roll为±0.30rad（17°）而IMU的roll只有±0.03rad；直线/静止段两者相关+0.83，|yaw|>3rad/s时降到−0.27。即快速偏航时roll通道两个来源不自洽，四态roll环只消费IMU那一路，故对“一腿抬高”不出手。谁错待“卡住机身只打转向”的判别实验，本轮未改任何符号/映射。
+
+## 2026-10-30 离地判据增加机身贴地高度屏蔽
+
+作者批准按0.145m公共高度屏蔽离地判定。`air_param_t`新增`air_min_height`（大机0.145m、小机0保持原行为），`Air_Detection_Update`用既有`Leg_Height_Estimate`求公共髋轮投影高度，传给`Air_State_Update`新增的`height_block`：初判low-force分支在贴地时不清flight、把`initial_unload_elapsed`清零后重新累计；常规分支在`!flight && height_block`时把`elapsed`清零并return，不再翻成离地。只屏蔽“进入离地”，不影响离地→接地的退出路径，也不改`force_on/force_off/time_on/time_off`等落地门槛。air_detection.c/control_condition.c/control_detection.c/machine_config.c/roll_height_balance.c编译通过（既有`.rl={0}`警告）。
+
+只读分析同时确认：`turn_ff`与`2.973*ds*dphi`相关0.996，公式无误；大腿长差出现时（|dphi|≈4.6~4.9rad/s）turn_ff只有−5.6~+5.0N，`corr(|dL|,|turn_ff|)`为负，故向心补偿不是两腿不等长的原因。另更正：此前把离散位掩码做线性插值统计`lqr_valid`/`flight`等比例有误，改用最近邻取原始样本后，本份记录的`flight`为15.2%、`air_release`7.6%、`lqr_valid`恒1.0。
+
+## 2026-10-30 彻底删除四态单腿轴向力下限
+
+作者要求彻底去掉下限、让F可取负值。删除`machine_lqr_cfg_t.leg_force_min`（头文件字段、大机配置项、`Roll_Height_Force_Update`里的`fmaxf`），恢复`state->force[i] = value;`即原“允许负F主动压缩”的行为，全工程已无该标识引用。删前两版对照：下限20N时roll峰峰0.719rad(41°)、F最大521N、出现FALLEN 1.39s；下限0N（代码仍clamp在0）时roll峰峰0.367rad(21°)、F最大143N、全程NORMAL。本次连clamp一起去掉，可负值后的实测数据待下一轮录制。仅控制代码与配置改动，未动Q/R、K表、模型、滤波与机械/电气标定；113个C源对象编译到工程外临时目录0失败。
+
+同轮只读核对向心补偿在本轮CSV中的作用：`turn_ff`范围−30.9~+21.2N、rms 4.65N，与`2.973*ds*dphi`相符（插值后中位比值3.21）；硬转向段(|dphi|≥3)`turn_ff` rms 12.15N、其产生的差动力p95 47.1N，占实际差动力p95(83.3N)的约45%；t=28.0那次异常里`turn_ff`=−26.2N、对应差动−52.4N，实际`F_L−F_R`=+135.2N，即向心补偿贡献约39%的差动，且方向把右腿压到了下限0。故向心补偿确实在起作用，不是可以忽略的小量。
+
+## 2026-10-30 VOFA切为腿长差排查布局作者要求把排查两腿长度差所需数据放进观测。仅改`service/vofa_debug.c`固定赋值，上一版十态/四态联合表用`#if 0`保留（不按模式选帧）。新增四髋反馈关节角`leg_l/r.input.hip_f/hip_b`、AIR每腿支持力`air_detection.leg[i].force`与反解电机轴向力`motor_force`、左腿`leg_jac[0][0..1]`与`force_det`、左右轮反馈电流`motor_state.dji.current_raw`、腿长差/均值；相应去掉原4～5高度目标、6～7高度速度、10高度速度参考、13腿长目标副本、21俯仰角速度、24～25腿摆角速度、32～35四态力分项、36～37偏置差模、39～40虚拟摆矩。固定48路，腿长m/角rad/速度rad/s/力N/矩Nm。仅vofa_debug.c对象编译通过，未烧录、未提交；通道表见file-guide顶部。
+
+## 2026-10-30 仅减轻大机roll角速度低通滞后
+
+作者明确先改滤波，本轮只将machine_config.c大机lpf_alpha第三项0.01改0.05；pitch/yaw/Hdot及小机低通、Q/R、参考加速度和力下限/分配逻辑保持。未实施共模/差模协调限幅。两机machine_config语法检查通过，既有.rl={0}括号警告保留；未板测、烧录或提交。
+
+## 2026-10-30 撤回本轮roll低通0.05试验
+
+作者反馈新CSV中roll更严重，数据在36～39s出现约11Hz大幅滚转。恢复大机lpf_alpha第三项0.05→0.01，保留当前Q/R、长度参考、逐腿F下限及其他配置。此前只按低频相位提出减轻滤波并不充分：该改变同时增加11Hz速度反馈通过量约4倍。未叠加共差模限幅或其他控制更改；源码撤回不代表板端已恢复。
+
+
+## 2026-10-30 四态下限协调与模型一致性检查
+
+作者批准实施并继续排查。Roll_Height_Force_Update先算原左右力，仅有原请求低于−10N时抬升共模，使两腿均满足原下限并保持力差；未触限直接保留原值。代价是触限时高度收缩力不再完全满足，最终电机限矩仍优先。头文件追加原始半差difference_request、共模抬升common_shift，只作观测；VOFA40/41替换为两者，42行列式保留，3新增bit16。
+
+原MATLAB求解未包含C的力下限，现solve/build/verify同步协调分配并读取C下限；未重新生成或覆盖K表。20,000组float32边界验证力差最大误差9.54e−7N、未触限值逐位保持；MATLAB原有闭环/偏置/失配/噪声/门控检查与新增边界断言通过。两机下5个相关C文件对象编译通过；未全量链接、烧录或板测。
+
+仅分析：四态模型固定I_roll=0.578估算初值、G_roll=0，轴向力近直立等效竖直力；高度几何投影已考虑腿角，但动力学不包含腿长相关惯量、执行器力响应及机构柔性。含滤波和观测器的假设10ms延迟局部检查最大极点约0.9997，说明参数组合对执行动态敏感，不证明实机延迟10ms，也不能仅据此认定模型错误。先前高腿日志双腿同时落在−10N会损失差模，是明确的软件非线性问题；修正后剩余振荡才适合评估Q/R和模型。保留作者当前alpha=0.01、Q/R、参考加速度、偏置边界、生成表及机械电气标定。
+
+2026-10-30 作者授权关闭四态LESO对照：ROLL_HEIGHT_OBSERVER_ENABLE=0，观测函数清空偏置并跳过学习，保留纯LQR及原Q/R、滤波、力下限分配。未板测，不能断言LESO是全部振荡根因。
+
+
+2026-10-30 关闭LESO后低目标0.14m、实际约0.19m，偏置与下限协调均0，未限矩。作者要求修正，保持纯LQR，仅四态q(3)400→800并生成部署K：高度增益1403.94→1982.68N/m，高度速度185.56→221.21N/(m/s)，roll增益不变。原MATLAB检查通过但包含观测器附加检查，不等于纯LQR实机验证。仅能减小稳态误差，若等效恒偏差不变预计50→35mm，不能宣称可到0.14m；未烧录。
+
+
+2026-10-30 作者批准撤回高度加权：四态q(3)800恢复400并重生成更新固件K。原因是CSV高度/共模力约37.5Hz震荡，LESO偏置为0；保留LESO关闭及其他参数。MATLAB生成检查通过，未烧录实测。
+
+
+2026-10-30 作者授权按PD/四态差异做最小修改：PD初始化腿长D=150000*0.001=150N/(m/s)，四态KdH=185.56但额外高度速度LPF alpha0.15，在37.5Hz同相反馈约70，alpha0.30约138。仅大机lpf_alpha[3]0.15→0.30，Q/R、K、roll滤波及LESO关闭不变。不保证实机消振，放宽滤波增加高频通过量。低腿静差未解决。
+
+
+2026-10-30 当前VOFA补偿对照布局：32～35改为实际叠加的弹簧补偿力矩，36～39改为重力补偿力矩，均Nm且按左前/左后/右前/右后；替换原轮矩轮速/AIR力，仅VOFA赋值变更。14/15仍为补偿前轴向力N，43～46最终髋力矩Nm，40/41差模及协调抬升保留。控制参数/物理模型不变，未板测。
+
+
+2026-10-30 NORMAL控制选择统一在machine_config.h：MACHINE_NORMAL_LEG_CONTROL选择MACHINE_NORMAL_LEG_LQR4（默认）或MACHINE_NORMAL_LEG_PD；MACHINE_ROLL_HEIGHT_OBSERVER_ENABLE=0关闭四态LESO，替代原局部宏。PD使用原Leg_PD_Update，NORMAL参考斜坡、转向前馈、十态平衡与公共补偿路径保持；非NORMAL逻辑不变。PD路径四态状态复位，因此VOFA四态高度/参考与分项通道不再有效，比较应使用4/5实际腿长和19/20参考、14/15轴向力、24roll。修改宏需重新编译烧录。
+
+2026-10-30 作者要求直接切换试验：MACHINE_NORMAL_LEG_CONTROL设为MACHINE_NORMAL_LEG_PD，LESO仍关闭，其余参数未变；待作者编译烧录对照。
+
+
+2026-10-30 按作者要求简化控制宏：删除PD/LQR4两个命名常量，MACHINE_NORMAL_LEG_CONTROL=0u，注释说明0原PD、1四态LQR；使用处比较1u。最新PD CSV目标0.14m，停稳实际左右约0.16697/0.16739m，说明PD同样有约27mm静差，较四态约52mm小；不能再表述PD无静差。PD下四态状态清零，通道24/27为0不代表roll/高度为0，不能用于评估。未改控制参数。
+
+
+2026-10-30 作者要求四态无积分/LESO尽量压静差至10mm以内。切NORMAL为1，新增大机静态共模前馈试调，machine_config.h HEIGHT_TRIM开关及低/高端-70/-8N每腿，按本拍高度参考0.14～0.33插值，范围外端点保持；不修改物理模型/弹簧/重力标定，Q/R和滤波不变。初值仅由现有目标0.14/0.33记录的稳态-K误差推算，不能证明迁移到新实际姿态后仍匹配，未保证10mm。VOFA40改为实际修正N/腿，41仍下限协调量。原MATLAB理想物理模型不包含这项实机残差，生成验证不代表此试调已验证；后续重生成K须重新评估修正值。仅源码检查，未编译烧录。
+
+2026-10-30 高腿左右差排查：仅VOFA29改roll角度反馈力半差、30角速度反馈力半差、31基础前馈力半差，单位N；16转向项、14/15轴向力、40静态修正、41协调抬升保持。24改直接取lqr_state.roll，兼容PD实际roll观测。未改控制/机械标定。
+
+2026-10-30 作者批准静态前馈由两点插值改限域三次拟合：z=clamp((H_ref-0.235)/0.095,-1,1)，F=((21.719z+13.958)z+8.638)z-59.591 N/腿，系数统一machine_config.h。仅大机四态生效，按斜坡高度参考，无积分/LESO；范围外保持端点-75.990/-15.276N。VOFA40仍本拍修正量，其他控制/物理参数不变。1001个高度点有限值及端点限域数值检查通过；未编译烧录，拟合精度不等于实机误差，MATLAB理想模型未覆盖实机残差。
+
+2026-10-30 作者反馈三次前馈中高腿震颤严重，本轮撤回三次系数及计算，恢复两点-70/-8N按0.14~0.33m斜坡参考插值，其余控制保持。旧闭环稳态误差推算的补偿点未构成独立静态系统辨识；拟合误差小不保证改变平衡姿态后的动态稳定性。停止继续提高曲线阶数或加大补偿。源码撤回不代表板端已恢复，未编译烧录。
+
+2026-10-30 作者授权改四节点三段连续前馈：H0/H1/H2/H3=0.14/0.18/0.26/0.33m，F0/F1/F2/F3=-70/-56.947368/-30.842105/-8N每腿，全部machine_config.h维护。初值与恢复版两点直线等价，区间外端点保持；单节点改变影响相邻两段，并非完全隔离区间。10001个高度点数值对照误差小于1e-5N；未编译板测。VOFA40仍实际前馈、41下限协调；其他控制参数不变。
+
+2026-10-30 作者明确要求恢复多项式之前版本：HEIGHT_TRIM_ENABLE重新设1，删除三段节点与分支，恢复原公式fraction=clamp((targetH-0.14)/(0.33-0.14),0,1)，trim=-70+fraction*(-8+70) N/腿。四态、LESO关闭、Q/R与滤波不变，VOFA40保持修正量。此次是恢复原计算实现及重新启用，不宣称三段等价实现本身已证明导致振荡；效果待作者重编译烧录。
+
+2026-10-30 作者批准四节点三段前馈小步校准：H=0.14/0.245/0.318/0.33m，F=-70/-38.736842/-11.915789/-8N每腿，machine_config.h统一。仅0.245节点较原直线减少3N；中低区间平滑影响，0.318~0.33原直线不变。保持四态、LESO关闭、Q/R与滤波；VOFA40实际修正。10001点有限值/端点/差量检查通过，未编译烧录，实际误差及震颤待验证。
+
+2026-10-30 作者要求执行物理补偿一致性核查：停用经验HEIGHT_TRIM_ENABLE=0，保留四态及原物理补偿，未改标定。核查Spring_Prepare按实际腿长算实体力并经同一雅可比映射负弹簧力；公共Apply只加一次。Gravity_Comp_Prepare仅映射自重摆矩，未发现重复添加同一轴向重力项。四态Bc输入按竖直力，实际Forward输入轴向力，存在近直立近似，但不能未经完整广义力推导就乘除cos。质量口径待实测核实：现有m_b+2m_l+2m_w=24.650kg，与四态M=25.544kg差0.894kg（4.385N/腿），不自行更改任何质量。核查未得到足以直接修正物理参数的证据，停止拟合补偿表；停用经验项会恢复此前静差，未编译板测。
+
+2026-10-30 实际执行力矩对照：VOFA29/30/31/42依次四髋反馈力矩Nm（左前/左后/右前/右后），对应43/44/45/46最终请求力矩。替换roll分项/左det，保留32~35弹簧、36~39重力补偿力矩、4/5腿长、10~13关节角、14/15轴向力、40经验修正、41触限。反馈为电机协议估算而非独立测力传感器，异步采样不能逐帧证明力矩误差。四态、LESO关闭、经验前馈关闭保持。下一录制只需0.14/0.24/0.33各停稳约5s，用于请求-执行-补偿一致性分析，不再扫描调参。
+
+2026-10-30 作者暂停腿长补偿排查，要求恢复最基础线性补偿：ENABLE=1，0.14m/-70N至0.33m/-8N每腿，按斜坡高度参考限域线性插值，删除三段节点与分支。四态、LESO关闭、其余参数及当前VOFA不变。未编译烧录。
+
+2026-10-30 腿长诊断恢复48路：4/5左右长度，8/9伸缩速度，14/15本拍轴向请求，18最终目标，19/20斜坡目标，24roll，27/28高度实际/参考；29/30/31原始/滤后/参考高度速度m/s；32/33上一拍轴向请求快照N（含静态修正与下限分配，不含电机侧弹簧/重力），34本拍观测预测实际启用0/1；35基础力均值，36高度位置反馈均值，37高度速度反馈均值，38/39支撑前馈，40静态修正，41下限共模抬升，42静态补偿开关，43~46最终髋请求，47ms。32/33只表示候选输入，34=0时不参与观测。新增只读快照，不改变控制公式。当前静态补偿0、LESO0。未编译烧录。
+
+2026-10-30 VOFA切十态位移/速度耦合布局，仅观测：0~2原状态；3有效/增益/AIR/释放/DM限矩位；4位移实际5目标6误差(target+eq-x)，7速度目标8实际9误差，10pos_armed11pos_hold，12/13相对机体腿角14/15世界腿角16/17含eq目标，18pitch19pitch速度，20~23位移列贡献24~27速度列贡献28~31LQR限幅后输出（均左轮右轮左腿右腿），32/33最终轮矩34/35实际使用虚拟摆矩Tp（与LQR腿输出符号关系见leg_balance），36/37实测腿长38目标39roll，40~43位移列K，44/45左右腿速度列K，46十态输出到限位图（NORMAL下有效，AIR髋上限不同需排除），47ms。贡献按pos_hold及AIR门控，异步快照不保证恰好同一求解拍；不修改控制。对照仅改十态位移Q，须保存各自K生成文件。未编译烧录。
+
+2026-10-31 位移权重专项VOFA：保留原十态4~31、36~47布局，5改包含x_eq的有效位置目标；32/33改左右世界腿角相对锁定姿态的环绕偏差rad，34实际首次锁定速度门槛m/s，35遥控velocity_target（7仍LQR目标）。3位图新增bit5零速指令、6已锁定、7位置列启用、8满足首次速度门槛、9/10DM/DJI发送成功。0~4位保持有效/增益/AIR/释放/DM限矩。40~43位移列K及44/45腿速度K保留，46十态限幅位图仅NORMAL按限幅解释。当前源码腿角门槛0.3rad、速度门槛0.3m/s（作者参数），只观测不改。核查legs_ready仍会冻结已锁定位置累计，3.5m阈值仍重定基，均需用数据判断影响，不改控制。未编译烧录。
+
+2026-10-31 作者要求停车腿角门槛迁入机型配置：删除LQR_POS_LEG_TOL局部宏，新增machine_lqr配置与lqr_runtime的pos_leg_tol，初始化复制并在LQR_Velocity_Apply使用；大小机均0.3rad保持原值。大机pos_arm_vel保留作者0.15m/s。未改变积分冻结/解锁逻辑。零散调参审计另有LQR_POS_RESET_DIST、K_RECALC_THRESH、ROLL_HEIGHT_FORCE_MIN、自起支撑角范围及RL恢复时间/高度常量；暂只列清单，不迁移物理轴向/数值容差/协议常量。源码检查，未编译板测。
+
+2026-10-31 参数归组迁移，原数值不变：lqr.pos_reset_dist=3.5m、leg_force_min=-10N；rc.deadband_vel/yaw/len=10/20/20；rl.recovery_height=.13m、hold/stable/timeout=200/500/400ms；公共起立fallen_support_angle_range=.6rad。起立无现有机型子配置，仅增加明确命名字段不搭空框架。两机显式赋原值；MATLAB build同步读取leg_force_min。K重算缓存阈值和SLIP噪声基准周期保留算法模块。未重新生成K、未改标定和控制公式，未编译板测。
+
+2026-10-31 机型配置功能嵌套整理：rc.deadband（原始死区）、rc.motion（速度/偏航上限）、rc.length（腿长初值/变化速度）；lqr.position集中停车位置目标、重定基、首次速度/腿角门槛及位置列开关；lqr.pd集中左右leg_len与roll，PID改具名kp/ki/kd/max_output/integral_limit。同步全部C引用，lqr_debug运行字段保持原接口。仅迁移不改值：当前大机pos_arm_vel=.15m/s、pos_leg_tol=.15rad均按作者工作区保留。四态/十态K及物理标定未改，MATLAB读取具名len_rate等仍兼容。大小机编译语法检查结果见本轮报告；未烧录。
+
+2026-10-31 作者明确撤销上一轮局部嵌套：RC恢复平铺字段、LQR恢复原position/PD字段入口，撤回对应类型和引用。保留更早批准的pos_leg_tol及集中参数迁移，所有当前调参/标定值保持。整表功能重组尚未实施，需以完整模块结构处理，不以局部示例为范围。
+
+2026-10-31 整表功能分组：根rc/wheel/hip/leg/imu/compensation/lqr/recovery/rl；LQR分reference/position_hold/filter/roll_height/pd/turn_comp/output；RL分recovery/timing并保留observation/torque。RC模块内保持平铺。全部C引用同步，初始化叶表达式对照备份一致（包括物理标定），PID改具名字段，补齐模块单位/顺序说明。108项两机型C语法检查通过；未全量链接、未烧录、未改K及权重。MATLAB仍按原叶字段名读取配置。
+
+2026-11-01 行进转向摆动VOFA：0~2原状态，3有效/增益/AIR/释放；4遥控速度5LQR速度目标6实际速度；7遥控yaw率8缩放后有效yaw率目标9实际yaw率10航向误差11防翻reference_scale；12/13相对腿角14/15世界腿角16/17世界腿角速度18pitch19pitch速20roll21roll速；22/23腿长24目标25转向轴向前馈N26/27轴向请求N；28~31LQR轮左/右/腿左/右输出Nm；32/33yaw角+角速度对左右腿输出贡献34/35速度贡献36/37pitch两项贡献38/39双腿角及角速度四项贡献（均LQR坐标，实际Tp在leg_balance取负）；40pos_armed41位置误差42NORMAL输出触限位图43防翻原因44释放45接地状态46DM限矩47ms。贡献只在地面有效，含reference_scale，不改控制。后台重算快照非严格同拍；旧布局#令0保留。
+
+2026-11-01 小幅低频往返分项：原行进转向布局38/39改为两腿角度列对左右腿输出贡献，40/41改为两腿角速度列贡献（均保留交叉K）；43/44改为位置项+u_eq，替换原pos_armed/poserr及防翻原因/释放。32/33yaw、34/35速度、36/37pitch保留；未触限时每侧32+34+36+38+40+43应等于30，右侧相应奇数通道等于31。各贡献同为LQR输出符号Nm，实际Tp在leg_balance另取负，勿混用。AIR/无效不算分项，异步快照不能要求逐行严格闭合；连续偏差需排查。仅VOFA改动，Q/R和滤波不动。
+
+2026-11-01 转弯低频速度来源VOFA：4~9保持速度/yaw指令及实际，10运动学ds_raw11IMU前向加速度；12~19保持相对/世界腿角、世界角速、pitch及pitch速；20/21轮轴反馈rad/s22/23腿长24腿摆轮速补偿符号25pitch轮速补偿符号；26/27修正后轮心线速28/29腿摆水平速度项30/31伸缩水平速度项32/33各侧组合速度，单位m/s；34/35速度反馈腿摆矩36/37最终LQR腿摆矩38/39腿角贡献40/41腿角速度贡献，Nm；42输出限幅43运动学减融合速度44转向轴向补偿N45接地状态46DM限矩47ms。重构校验(32+33)/2约等于10，6是LQR使用的融合速度；异步快照有误差，不视为独立地速真值。不改控制或融合，不修改物理符号。
+
+2026-11-01 十态分项诊断VOFA（当前）：0～2保持；3 LQR位图（valid/gain/AIR/释放）；4～35为四路输出（左轮、右轮、左腿、右腿）各8个状态列的贡献Nm，每组顺序ds、dphi、thL、dthL、thR、dthR、pitch、dpitch；36/37遥控速度目标与融合速度，38/39 yaw目标与实际yaw角速度，40/41世界腿角，42 pitch，43 roll，44左腿长，45左腿最终虚拟摆矩，46左轮最终矩，47 ms。贡献按控制器同式含x_eq与dphi的reference_scale，省略行进时恒零的s、phi两列；未投入或AIR时4～35为0；20～27之和约等于45，用于查漏项。仅VOFA改动，未改Q/R、K、滤波或物理量；两机型语法检查通过，未完整链接、未烧录。作者要求借此定位转弯腿摆角抖动来自输入还是某一状态列。
+
+2026-11-01 VOFA扩100路，同帧完整诊断：0~2在线/状态/故障，3有效/增益/AIR/释放/DM限矩/pos_hold/pos_armed位；4~13十态实际，14~23目标含x_eq；状态顺序s,ds,yaw,yaw速,左腿角/速,右腿角/速,pitch/速；24~33左轮十项贡献34~43右轮44~53左腿虚拟摆矩54~63右腿，按当前AIR/yaw/pos门控及reference_scale重算；64~67LQR限幅后输出68~71u_eq（AIR0）；72/73轴向力N74转向轴向补偿75静态修正76下限抬升77/78观测偏置；79~82弹簧电机补偿83~86重力电机补偿87~90最终髋请求91~94协议反馈Nm，均左前/左后/右前/右后；95ms96reference_scale97运动学速度98/99腿长。14~23为缩放前目标，yaw按96应用；贡献重构用各10项加68~71，触限后不保证等于64~67。轴向补偿和电机补偿不同坐标，不能直接相加。DMA缓冲随VOFA_MAX_CH扩大，发送周期未变，忙丢帧不阻塞，以时间戳核实实际采样。后台快照不是严格控制同拍；不改控制。
+
+2026-11-01 VOFA扩112路，0~99不变，追加100pos_trace位图（1零速指令/2腿姿态合格/4首次速度合格/8已锁定/16本拍累计/32首次锁定事件/64越距离重定基/128AIR冻结/256已锁定但腿角冻结）；101pos_armed102累计位置m103有效位置目标104位置误差m105锁定速度门槛m/s106腿角门槛rad107/108腿角偏差rad109重定基m110pos_hold111本拍速度。Velocity_Apply仅新增诊断写入，不改变原门控和输出；短事件后台可能漏采，持续状态与积分走势交叉判断。位移状态对四输出贡献原24/34/44/54，时间仍95。未烧录。
+
+2026-11-01 作者明确VOFA最多48且尽量少，不再扩容；恢复VOFA_MAX_CH=48。当前停车积分专项0~2状态3有效/AIR位，4pos5有效目标6位置误差7速度目标8实际9有效yaw目标10实际11pos_trace12armed13pos_hold14腿角门槛15速度门槛16/17姿态偏差18/19相对腿角20/21世界腿角速22pitch23pitch速24/25腿长26转向F27静态修正28~31位置列对四输出贡献32/33速度对腿贡献34/35腿角贡献36/37腿角速贡献38/39pitch贡献40~43LQR输出44触限45DM限矩46接地状态47ms。原100/112布局不再有效。只读pos_trace保留，控制公式不变。
+
+
+### 2026-11-02 RL与公共倒地判据分离
+- 删除通信任务 Robot_Fallen_Update；RL恢复改为同拍IMU欧拉角独立判断，machine.rl.recovery.fallen_angle_deg两机均为40deg，取轴、低高度及恢复计时不变。
+- robot_state.fallen改为公共CONTROL_FALLEN选路归属，不再表示40deg倾角。公共选路仍由fallen_detection提供姿态候选：普通运行异常55deg连续0.1s、倒置立即响应；初始及FLIGHT沿用原条件。恢复完成重新选路解除。
+- LQR硬件使能入口不再受旧公共fallen标志阻断，同拍nonfallen_drive_permit在检测选路后刷新；最终输出许可仍保留。未增加RL到LQR自动切换。
+- 验证：按现有compile_commands对7个相关C源执行ARM GCC语法检查，全部通过；未链接、烧录或台架验证。
+
+
+### 2026-11-02 输出重力补偿按路径互斥选择
+
+- 按作者要求，正常LQR/FLIGHT输出请求LEG_COMP_GRAVITY，自起FALLEN及补偿测试请求LEG_COMP_GRAVITY_WORLD。不再用自起功能enabled表示正在自起；两种重力标志不同时请求。
+- Leg_Compensation_Prepare分支只填同一angle数组，末尾一处Gravity_Comp_Prepare调用，结果统一存gravity；删除输出结构的gravity_world成员并同步自起/测试消费者。双重标志请求不生成有效重力结果。
+- 为避免上一拍状态影响输入选择，公共检测在输出补偿准备前执行；同拍自起交接到平衡时再按新状态准备普通模型，因此一次准备只调用一次，交接拍可重新准备。
+- AIR仍每拍独立估力，直接用Gas_Spring_Force和Gravity_Comp_Compute求原欧拉俯仰对应的实体力/自重摆矩，不再依赖输出缓存；原支持力投影、差分/滤波、连续计时和状态机不改。未修改物理映射、阈值或控制增益。
+- 验证：8个相关源ARM GCC语法检查通过；静态对照确认AIR状态/计时函数以及估力的投影/滤波代码保持。未完整链接、烧录或台架验证。
+
+
+### 2026-11-02 删除无消费者的AIR诊断镜像
+
+- 删除Control_Output_Publish_Air_Debug调用、实现/声明，以及air_debug对象、air_debug_t类型。检测和控制继续使用air_detection，未改其算法和判据。
+- 当前VOFA布局不变；保留的旧离地诊断布局已改为在原临界区直接读取air_detection。compression[i]对应landing[i].compression，landing_elapsed[i]对应landing[i].elapsed；其余字段同名。重新启用旧布局仍可观测，无需恢复镜像。
+- 源码检索无旧标识残留，核对AIR检测源仅删除镜像全局定义、执行入口仅删除发布调用及对应注释，最终输出函数保持；差异检查通过，未构建/烧录。
+
+### 2026-11-03 自动磕台阶独立接入，首批观察交付
+
+- 按作者确认的计划新增stair_detection.c/.h、stair_process.c/.h。检测只发布候选和重新武装，动作独立持有连续角/腿长轨迹、显式速度阻尼PD、阶段/总期限、各腿卡滞窗口、WAIT/RECHECK和退出原因，不包含或调用Fallen_Process，不复用自起PID、目标或重试预算。
+- 任务层先原三态选路，再从有效NORMAL普通平衡触发。台阶接管期间暂停AIR/FALLEN检测及原状态/速度融合/高度观察器计算，保留基础故障和唯一Control_Output_Apply。触发后摇杆回中不取消，退出LQR投入或故障作废旧动作；完成重判、失败独立等待后重判，不强制NORMAL/FALLEN。
+- machine.stair集中配置，大机OBSERVE、小机OFF。检测和动作confirmed均0，记录原始特征但不武装；本机角度/加速度门槛、路径、支撑、轨迹速率和控制增益留待CSV/台架确认，没有填入LHX或自起数值。门槛确认后先在OBSERVE验证误触，路径/控制参数确认后才能AUTO。现有物理标定、AIR、自起、防翻公式及参数未改。
+- VOFA固定48路切为台阶v1，旧停车积分布局#if 0保留，不新增自动选帧。逐通道单位、状态位和采集/开放步骤见stair-control.md。Keil显式新增两源；eIDE沿现有Algorithm物理目录扫描各纳入一次，无需额外虚拟条目。
+- 软件验证：大小机GCC完整编译/链接通过；8个新增/改动源分别通过大小机AC5对象编译。实际新增模块及任务路由C宿主验证1131断言通过（核心962、路由169；传感器/旧控制器/硬件驱动边界使用替身，不是机械模型验证）；OBSERVE与改前100拍公共选路/控制调用/候选输出轨迹逐项一致。源清单核对新增源均编译一次，只有原BMI088 packed告警。
+- 临时验证脚本、日志、源码测试及大小机产物在C:/Users/ynz/.codex/tmp/stair-20261103。未烧录，未完成本机阈值/路径标定和真实越阶试验，不宣称可通过指定高度台阶。用户已有Jetson删除等未提交改动保持，不提交/推送。
+
+### 2026-11-03 台阶观察判据v2：冲击窗口及独立入口范围
+
+- 作者要求结合stair测试.csv并参考LHX修改。核对LHX为双腿角>0.15、指定腿长档、任一侧角加速度正向阈值150同拍触发；本机未照搬其角度/符号/阈值，摆腿与收腿处理不动。
+- Stair_Detection_Update改为冲击上升沿开350ms窗口，再对双腿角偏差连续20ms确认，后续尖峰不续期；失去NORMAL许可、松杆、后退或转向请求超范围清窗口。轮速/实测偏航只限开窗，不让碰撞后突变抹掉已开的窗口。
+- 观察试用值angle_min=0.10rad、acceleration_min=80rad/s²；轮速开窗上限0.6→1.5m/s，转向请求0.3rad/s保持，实测偏航开窗独立为1.2rad/s；检测腿长范围0.14～0.33→0.135～0.345m，仅改变识别容差，没有改机械工作区或动作目标。
+- OBSERVE现在可计算并记录试用候选；检测confirmed=0仍禁止AUTO消费事件，动作confirmed=0仍禁止开始动作。大机OBSERVE、小机OFF保持。VOFA编号不变，8号bit4为冲击窗口，9号为后验姿态连续确认。
+- 验证：实际C确认函数消费CSV已记录特征，对>10ms导出空档丢弃窗口，29107行产生124.955s单次观察事件，0～110s对照段无事件；不是1kHz固件逐拍复现，不代表检出全部真实碰撞。C宿主核心970、路由169断言通过，原100拍OBSERVE控制轨迹一致；大小机GCC完整链接及8个相关源的大小机AC5编译通过。未烧录、未实测新版识别效果，AUTO保持关闭。
+
+### 2026-11-03 台阶观察v3：长度只限开窗、锁存结束原因
+
+- 作者确认按前述三项修正：Stair_Detection_Confirm将长度范围移到eligible，不再参与已开窗口hold；保持前进/转向请求、实时许可及原350ms期限。没有扩大任何配置上限，没有增加无限卡阶保持或自动重试。
+- stair_detection.c/.h新增Stair_Detection_Clear及独立STAIR_CLEAR原因，真实候选结束时锁存，空闲拍不覆盖；任务暂停保留编码。VOFA原ch8的bit13～15发送最近原因，0无/1请求/2转向/3许可/4超时/5确认成功/6取消武装/7新计算无效；48通道及其余位保持。
+- 实际IDE builder.params检查两台阶源各一次，大机按该原始清单完整Rebuild通过；小机GCC和相关源大小机AC5通过。核心970、路由169、新增保持/原因43项C断言通过；100拍OBSERVE输出轨迹与改前一致。
+- 两份CSV记录特征回放前后计数均为1/2，不能据此宣称漏检改善或证明原退出原因；导出空档保守清窗，缺失的1kHz中间样本不补造。临时用例及日志仍在.codex/tmp/stair-20261103；本次只修改检测保持和诊断，AUTO/confirmed仍关闭，未烧录和实机验证。
