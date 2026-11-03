@@ -1,0 +1,256 @@
+/*
+ * 由四髋反馈反解腿力，加入实体弹簧、扣除自重摆矩并计入轮组惯性，估算支持力N。
+ * 支持力连续条件判离地，压缩/支持力判落地；valid与flight独立，无效观测不等于落地。
+ */
+
+#include "air_detection.h"
+#include "machine_config.h"
+#include <math.h>
+#include <string.h>
+
+air_param_t air_param = {
+    .enabled = 1u, .control_enabled = 1u,
+    .landing_enabled = 1u, .compression_enabled = 1u,
+#if MACHINE_DEFAULT == MACHINE_ID_BIG_WHEELLEG
+    .wheel_mass = 0.65f, .force_off = 35.0f, .force_on = 35.0f,
+    .hip_max = 10.0f,
+    .time_off = 0.20f, .time_on = 0.05f,
+    .compression_on = 0.03f, .compression_time = 0.1f,
+    .air_min_height = 0.16f, /* 机身贴地区间，公共高度不高于此值不判离地 */
+#else
+    .wheel_mass = 0.13463f, .force_off = 35.0f, .force_on = 35.0f,
+    .hip_max = 8.0f,
+    .time_off = 0.01f, .time_on = 0.02f,
+    .compression_on = 0.01f, .compression_time = 0.05f,
+    .air_min_height = 0.0f, /* 小机未接NORMAL四态，保持原行为不屏蔽 */
+#endif
+    .derivative_tau = 0.01f, .force_tau = 0.01f,
+};
+air_detection_t air_detection;
+
+/*
+ * 清空本次检测所有历史，包括initialized、flight和悬空峰值。
+ * 初始化/关闭检测调用；LQR退出不清公共观测，清零不能当作真实落地事件。
+ */
+void Air_Detection_Reset(air_detection_t *state)
+{
+    memset(state, 0, sizeof(*state));
+}
+
+/* 清条件计时 */
+static void Air_Timer_Reset(air_detection_t *state)
+{
+    state->elapsed = 0.0f;
+    state->initial_unload_elapsed = 0.0f;
+    state->landing[0].elapsed = 0.0f;
+    state->landing[1].elapsed = 0.0f;
+}
+
+/*
+ * 观测失效时清连续条件计时并保留flight和悬空峰值。
+ * fault记录本拍失败；恢复时重新播种差分，失败拍不累计连续条件时间。
+ */
+static void Air_Invalid(air_detection_t *state)
+{
+    state->valid = 0u;
+    state->initialized = 0u;
+    Air_Timer_Reset(state);
+    state->fault = 1u;
+}
+
+/*
+ * 由同侧前后髋反馈反解电机轴向力/摆矩，按原欧拉俯仰计算估力所需的实体弹簧力和自重摆矩。
+ * 将力投影到世界竖直方向，再用机体/腿投影加速度估计轮重动态项；滤波得到本腿FN。
+ * 首帧没有可靠差分，必须先播种；这里计算的是支持力估计，不是长度PID给定或发送力矩。
+ */
+static uint8_t Air_Estimate(air_leg_t *next, const air_leg_t *previous,const air_input_t *input, uint8_t side, uint8_t seeded, float az)
+{
+    const leg_state_t *leg;
+    float theta;
+    float omega;
+    float length;
+    const float dt = MACHINE_LQR_DT;
+    float alpha;
+    float force;
+    float torque;
+    gravity_leg_result_t gravity; /* AIR固定使用欧拉俯仰，不随输出补偿路径改变。 */
+
+    leg = input->leg[side];
+    if (!Leg_Force_Map_Inverse(leg, input->torque[side], &next->motor_force, &next->motor_torque))
+    {
+        return 0u;
+    }
+    length = leg->output.virtual_leg_length;
+    theta = remainderf(leg->output.virtual_leg_angle - leg->config.offset_phi0 - input->imu->euler_rad[ATTITUDE_ROLL], LEG_2PI);
+    omega = leg->output.d_virtual_leg_angle - input->imu->gyro_rad_s[1];
+    if (length <= 1.0e-3f || !isfinite(theta) || !isfinite(omega))
+    {
+        return 0u;
+    }
+    /* 实体弹簧和自重始终存在；只求估力所需标量，不请求输出抵消力矩。 */
+    next->spring_force = Gas_Spring_Force(length);
+    next->gravity_torque = 0.0f;
+    if (machine->compensation.gravity != NULL)
+    {
+        if (!Gravity_Comp_Compute(machine->compensation.gravity, length,
+                                  leg->output.virtual_leg_angle - input->imu->euler_rad[ATTITUDE_ROLL],
+                                  &gravity))
+        {
+            return 0u;
+        }
+        next->gravity_torque = gravity.torque;
+    }
+    force = next->motor_force + next->spring_force;
+    torque = next->motor_torque - next->gravity_torque;
+    next->pressure = force * cosf(theta) - torque * sinf(theta) / length;
+    next->height_velocity = leg->output.d_virtual_leg_length * cosf(theta) - length * omega * sinf(theta);
+    next->height_acceleration = 0.0f;
+    if (seeded)
+    {
+        alpha = dt / (air_param.derivative_tau + dt);
+        next->height_acceleration = previous->height_acceleration + alpha * ((next->height_velocity - previous->height_velocity) / dt - previous->height_acceleration);
+    }
+    next->wheel_acceleration = az - next->height_acceleration;
+    next->force_raw = next->pressure + air_param.wheel_mass * (9.81f + next->wheel_acceleration);
+    alpha = seeded ? dt / (air_param.force_tau + dt) : 1.0f;
+    next->force = previous->force + alpha * (next->force_raw - previous->force);
+    return (uint8_t)(isfinite(next->spring_force) && isfinite(next->pressure) && isfinite(next->height_velocity) && isfinite(next->height_acceleration) && isfinite(next->force_raw) && isfinite(next->force));
+}
+
+/*
+ * 首次高/低支持力分别连续确认，空中上电不要求已有支撑历史。
+ * AIR每拍更新各腿峰值；压缩模式使用每腿独立计时，任一腿达时即可恢复整机接地。
+ * landing_enabled关闭时只观察峰值/压缩，不退出AIR；非压缩模式才使用高支持力落地。
+ */
+static void Air_State_Update(air_detection_t *state, const air_input_t *input, uint8_t height_block)
+{
+    const float dt = MACHINE_LQR_DT;
+    float duration;
+    float length;
+    uint8_t condition;
+
+    if (!state->initialized)
+    {
+        state->elapsed = state->mean_force > air_param.force_on ? state->elapsed + dt : 0.0f;
+        state->initial_unload_elapsed = state->mean_force < air_param.force_off ? state->initial_unload_elapsed + dt : 0.0f;
+        if (state->elapsed + 1.0e-6f >= air_param.time_on)
+        {
+            state->initialized = 1u;
+            state->elapsed = 0.0f;
+            state->initial_unload_elapsed = 0.0f;
+        }
+        else if (state->initial_unload_elapsed + 1.0e-6f >= air_param.time_off)
+        {
+            state->initialized = 1u;
+            state->elapsed = 0.0f;
+            state->initial_unload_elapsed = 0.0f;
+            /* 已知AIR的失效重确认保留原峰值；只为新AIR播种。贴地时不计入离地，计时清零后重新累计。 */
+            if (height_block)
+            {
+                state->initial_unload_elapsed = 0.0f;
+            }
+            else if (!state->flight)
+            {
+                state->flight = 1u;
+                memset(state->landing, 0, sizeof(state->landing));
+                for (uint8_t side = 0u; side < 2u; side++)
+                {
+                    state->landing[side].peak_length = input->leg[side]->output.virtual_leg_length;
+                }
+            }
+        }
+        return;
+    }
+    if (state->flight)
+    {
+        for (uint8_t side = 0u; side < 2u; side++)
+        {
+            length = input->leg[side]->output.virtual_leg_length;
+            state->landing[side].peak_length = fmaxf(state->landing[side].peak_length, length);
+            state->landing[side].compression = state->landing[side].peak_length - length;
+        }
+        if (!air_param.landing_enabled)
+        {
+            Air_Timer_Reset(state);
+            return;
+        }
+        if (air_param.compression_enabled)
+        {
+            for (uint8_t side = 0u; side < 2u; side++)
+            {
+                state->landing[side].elapsed = state->landing[side].compression >= air_param.compression_on ? state->landing[side].elapsed + dt : 0.0f;
+            }
+            state->elapsed = fmaxf(state->landing[0].elapsed, state->landing[1].elapsed);
+            if (state->elapsed + 1.0e-6f >= air_param.compression_time)
+            {
+                state->flight = 0u;
+                state->elapsed = 0.0f;
+            }
+            return;
+        }
+        state->landing[0].elapsed = 0.0f;
+        state->landing[1].elapsed = 0.0f;
+    }
+    condition = state->flight ? (uint8_t)(state->mean_force > air_param.force_on) : (uint8_t)(state->mean_force < air_param.force_off);
+    duration = state->flight ? air_param.time_on : air_param.time_off;
+    state->elapsed = condition ? state->elapsed + dt : 0.0f;
+    if (!state->flight && height_block)
+    {
+        /* 公共高度已到机身贴地区间：物理上不可能离地，清零计时避免高度一升高就立即跳进离地。 */
+        state->elapsed = 0.0f;
+        return;
+    }
+    if (state->elapsed + 1.0e-6f >= duration)
+    {
+        state->flight = (uint8_t)!state->flight;
+        state->elapsed = 0.0f;
+        if (state->flight)
+        {
+            memset(state->landing, 0, sizeof(state->landing));
+            for (uint8_t side = 0u; side < 2u; side++)
+            {
+                state->landing[side].peak_length = input->leg[side]->output.virtual_leg_length;
+            }
+        }
+    }
+}
+
+/*
+ * 公共反馈/四髋可用 → 双腿估力 → 状态机；缓存未更新也按MACHINE_LQR_DT处理。
+ * 首次或失败恢复先播种差分，连续条件计时每个有效执行拍推进。
+ * 算法只更新state，执行层负责真实控制切换。
+ */
+void Air_Detection_Update(air_detection_t *state, const air_input_t *input)
+{
+    air_leg_t air_leg_temp[2];
+    float height;
+    uint8_t height_block;
+
+    if (!air_param.enabled)
+    {
+        Air_Detection_Reset(state);
+        return;
+    }
+    if (!input->imu->online || !input->imu->pitch_world_valid || !input->leg[0]->output.valid || !input->leg[1]->output.valid || !input->joint_ready)
+    {
+        Air_Invalid(state);
+        return;
+    }
+    memset(air_leg_temp, 0, sizeof(air_leg_temp));
+    for (uint8_t side = 0u; side < 2u; side++)
+    {
+        if (!Air_Estimate(&air_leg_temp[side], &state->leg[side], input, side, state->valid, input->imu->accel_vertical))
+        {
+            Air_Invalid(state);
+            return;
+        }
+    }
+    memcpy(state->leg, air_leg_temp, sizeof(air_leg_temp));
+    state->mean_force = air_leg_temp[0].force * 0.5f + air_leg_temp[1].force * 0.5f;
+    state->valid = 1u;
+    state->fault = 0u;
+    /* 公共髋轮投影高度不高于门槛即视为机身贴地，不判离地；短腿站立时支持力本身就在门槛附近。 */
+    height = 0.0f;
+    height_block = (uint8_t)(air_param.air_min_height > 0.0f && Leg_Height_Estimate(input->leg[0], input->leg[1], &height) && height <= air_param.air_min_height);
+    Air_State_Update(state, input, height_block);
+}

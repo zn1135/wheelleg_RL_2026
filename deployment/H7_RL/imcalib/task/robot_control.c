@@ -1,16 +1,20 @@
 /*
- * 文件职责：共享控制状态定义与全机控制初始化（robot_control.c）。
- * 输入/来源：机器表、各算法初始化接口、TIM6分频节拍。
- * 输出/去向：初始化几何/LQR/RL/自起/离地与信号量，提供动作清零。
- * 关键边界：共享变量在这里定义；策略仲裁和发送在task_actuation；不在初始化中重标定物理量。
- * 阅读入口：md/file-guide.md；参数当前值以源码为准。
+ * 定义跨任务共享对象；上电创建执行/推理信号量，装入腿几何并清控制器历史。
+ * TIM6经Policy_Tick_Div唤醒策略任务；Action_State_Clear使旧动作及在途推理失效。
  */
 
 #include "robot_control.h"
 #include "robot_state.h"
+#include "latency_state.h"
+#include "output_capture.h"
+#include "mono_ns.h"
 #include "machine_config.h"
-#include "standup.h"
+#include "fallen_process.h"
 #include "air_detection.h"
+#include "control_condition.h"
+#include "fallen_detection.h"
+#include "stair_detection.h"
+#include "stair_process.h"
 
 #include <string.h>
 
@@ -39,7 +43,7 @@ osSemaphoreId ctrl_tick_sem_handle = NULL;
 osSemaphoreDef(policy_tick_sem);
 osSemaphoreId policy_tick_sem_handle = NULL;
 
-/* TIM6 节拍分频: 每 MACHINE_POLICY_DIV 拍释放策略节拍 (ISR 调用) */
+/* TIM6中断每累计MACHINE_POLICY_DIV个基础拍释放一次策略信号量，随后计数归零。 */
 void Policy_Tick_Div(void)
 {
     static uint8_t div_cnt;   /* 分频计数 */
@@ -47,11 +51,15 @@ void Policy_Tick_Div(void)
     if (++div_cnt >= MACHINE_POLICY_DIV)
     {
         div_cnt = 0u;
+#if MACHINE_LATENCY_CAPTURE_ENABLE
+        Latency_Tick(1u);
+#endif
         osSemaphoreRelease(policy_tick_sem_handle);
     }
 }
 
-/* 清空动作 */
+/* 清原始action和就绪/时间标志，并增加reset_count让清零前启动的推理失效。
+ * 保存/恢复原中断屏蔽状态，使策略和执行任务看不到半清零动作。 */
 void Action_State_Clear(void)
 {
     uint32_t primask = __get_PRIMASK();
@@ -64,7 +72,8 @@ void Action_State_Clear(void)
     __set_PRIMASK(primask);
 }
 
-/* 控制初始化 */
+/* 创建节拍信号量，按机器表初始化双腿几何/索引，清检测、台阶、自起及LQR/RL历史。
+ * 这里只准备运行状态，CubeAI网络初始化由策略任务ctrl_task_init执行。 */
 void Robot_Control_Init(void)
 {
     ctrl_tick_sem_handle = osSemaphoreCreate(osSemaphore(ctrl_tick_sem), 1);
@@ -78,33 +87,34 @@ void Robot_Control_Init(void)
         Error_Handler();
     }
     torque_output_enabled = 1u;
-    rc_command.len = machine->rc.len_init;
+    rc_command.leg_length_target = machine->rc.len_init;
     rc_command.mode.strategy = CTRL_STRATEGY_DISABLE;
-    Standup_Init(&standup_control);
+    Fallen_Process_Init(&fallen_process_control);
+    Stair_Detection_Reset(&stair_detection);
+    Stair_Process_Init(&stair_process);
     Air_Detection_Reset(&air_detection); /* 参数直接使用固定配置，初始化只清检测历史。 */
+    Fallen_Detection_Reset(&fallen_detection);
+    Control_Condition_Reset(&control_condition);
 
     Leg_Init(&leg_l);
     Leg_Init(&leg_r);
-    leg_l.config.lu = machine->leg_lu;
-    leg_l.config.lg = machine->leg_lg;
-    leg_l.config.offset_phi0 = machine->leg_off_phi0[0];
-    leg_r.config.lu = machine->leg_lu;
-    leg_r.config.lg = machine->leg_lg;
-    leg_r.config.offset_phi0 = machine->leg_off_phi0[1];
+    leg_l.config.lu = machine->leg.leg_lu;
+    leg_l.config.lg = machine->leg.leg_lg;
+    leg_l.config.offset_phi0 = machine->leg.leg_off_phi0[0];
+    leg_r.config.lu = machine->leg.leg_lu;
+    leg_r.config.lg = machine->leg.leg_lg;
+    leg_r.config.offset_phi0 = machine->leg.leg_off_phi0[1];
 
     leg_map_l.dm_front = DM_MOTOR_LEG_F_LFT;
     leg_map_l.dm_rear = DM_MOTOR_LEG_B_LFT;
     leg_map_r.dm_front = DM_MOTOR_LEG_F_RGT;
     leg_map_r.dm_rear = DM_MOTOR_LEG_B_RGT;
 
-    if (machine->rl.configured)
-    {
-        /* 单模型RL39直接读取机器配置；初始化只清观测、推理计数及PD诊断。 */
-        RL_Observation_Reset(&rl_control.observation);
-        RL_Policy_Reset(&rl_control.policy);
-        RL_Torque_Reset(&rl_control.torque_state);
-        RL_Recovery_Reset(&rl_control.recovery);
-    }
+    /* 清当前RL观测、网络运行标志、力矩目标和启动/失败计时；网络实例稍后由策略任务创建。 */
+    RL_Observation_Reset(&rl_control.observation);
+    RL_Policy_Reset(&rl_control.policy);
+    RL_Torque_Reset(&rl_control.torque_state);
+    RL_Recovery_Reset(&rl_control.recovery);
     Action_State_Clear();
 
     LQR_Init(&lqr_state);
