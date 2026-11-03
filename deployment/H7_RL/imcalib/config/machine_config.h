@@ -33,7 +33,8 @@
 #define MACHINE_RL_CTRL_DIV       2u      /* RL实体PD/反馈采样/正常下发：500Hz */
 #define MACHINE_POLICY_DIV        20u     /* actor推理50Hz；一个action保持10个2ms控制子步 */
 #define MACHINE_DM_OFFLINE_MS     50u
-#define MACHINE_VOFA_PORT         10u     /* UART10接Jetson，UART7接HI229；DR16恢复，离线保护保留 */
+#define MACHINE_VOFA_PORT         8u      /* UART8 */
+#define MACHINE_JETSON_PORT       10u     /* UART10：Jetson只读镜像/探测，独立于VOFA。 */
 #define MACHINE_FDCAN13_DATA_PRESCALER  1u
 #define MACHINE_FDCAN13_DATA_SEG1       4u
 #define MACHINE_FDCAN13_DATA_SEG2       1u
@@ -44,6 +45,7 @@
 #define MACHINE_DM_OFFLINE_MS     10u
 #define MACHINE_POLICY_DIV        10u     /* 策略节拍 1000/10 = 100 Hz */
 #define MACHINE_VOFA_PORT         1u      /* UART1 */
+#define MACHINE_JETSON_PORT       0u      /* 小机未接Jetson。 */
 #define MACHINE_FDCAN13_DATA_PRESCALER  3u
 #define MACHINE_FDCAN13_DATA_SEG1       5u
 #define MACHINE_FDCAN13_DATA_SEG2       2u
