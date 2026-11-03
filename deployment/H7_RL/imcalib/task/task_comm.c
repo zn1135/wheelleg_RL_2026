@@ -1,9 +1,6 @@
 /*
- * 文件职责：通信刷新、腿解算、故障/跌倒/使能管理（task_comm.c）。
- * 输入/来源：DR16/DM/DJI接收数据、设备在线状态及已有IMU。
- * 输出/去向：更新物理电机量、解算双腿、发布遥控/电机反馈并维护许可。
- * 关键边界：协议解析在驱动，运动学在leg_solver；本任务管理许可，不承担策略力矩求解。
- * 阅读入口：md/file-guide.md；参数当前值以源码为准。
+ * 每轮解析DM/DJI缓存、换算电机物理反馈并解算双腿，成批发布反馈。
+ * 随后更新遥控、故障位和电机使能/失能；力矩计算由执行任务完成。
  */
 
 #include "robot_control.h"
@@ -13,13 +10,11 @@
 #include "dji.h"
 #include "can_bus.h"
 #include "machine_config.h"
-#include "mono_ns.h"
-#include "jetson_uart.h"
 
 #include <math.h>
 #include <string.h>
 
-/* 更新电机状态 */
+/* 将DM/DJI驱动反馈复制为统一电机状态，汇总在线/故障并记录本次整理时刻ms。 */
 static void Motor_State_Update(motor_state_t *next)
 {
     next->valid = 1u;
@@ -29,7 +24,7 @@ static void Motor_State_Update(motor_state_t *next)
 
         next->dm.pos_rad[i] = feedback->pos_rad;
         next->dm.pos_zero_rad[i] = feedback->pos_zero_rad;
-        next->dm.pos_continuous_rad[i] = feedback->pos_continuous_rad; /* RL连续角随同一电机快照发布。 */
+        next->dm.pos_continuous_rad[i] = feedback->pos_continuous_rad;
         next->dm.vel_rad_s[i] = feedback->vel_rad_s;
         next->dm.trq_nm[i] = feedback->trq_nm;
         next->dm.last_rx_tick[i] = feedback->last_rx_tick;
@@ -41,6 +36,9 @@ static void Motor_State_Update(motor_state_t *next)
     {
         const dji_motor_feedback_t *feedback = &dji_motor_feedback[i];
 
+#if MACHINE_LATENCY_CAPTURE_ENABLE
+        next->dji.parsed_rx_ns[i] = feedback->parsed_rx_ns;
+#endif
         next->dji.angle_rad[i] = feedback->angle_rad;
         next->dji.angle_total_rad[i] = feedback->angle_total_rad;
         next->dji.vel_rad_s[i] = feedback->vel_rad_s;
@@ -53,7 +51,7 @@ static void Motor_State_Update(motor_state_t *next)
     next->updated = 1u;
 }
 
-/* 更新单腿 */
+/* 把绑定的前后髋反馈角rad和速度rad/s送入五连杆求解；任一离线则清输出有效性。 */
 static void Leg_Side_Update(const motor_state_t *motor, const leg_map_t *map, leg_state_t *leg)
 {
     /* 前后电机下标由初始化固定绑定，这里只判断两路反馈是否在线。 */
@@ -72,45 +70,31 @@ static void Leg_Side_Update(const motor_state_t *motor, const leg_map_t *map, le
     }
 }
 
-/* 更新腿部状态 */
-/*
- * 按电机物理反馈更新双腿输入，再调用leg_solver得到几何、速度和力映射有效性。
- * 腿几何用于LQR/离地估计；RL直接使用实体电机反馈，不在此调整极性、零点或设目标。
- */
+/* 用同一批电机状态分别解算左右腿，写入待发布的双腿几何和映射结果。 */
 static void Leg_State_Update(const motor_state_t *motor, leg_state_t *left, leg_state_t *right)
 {
     Leg_Side_Update(motor, &leg_map_l, left);
     Leg_Side_Update(motor, &leg_map_r, right);
 }
 
-/* 更新遥控: 指令解算 + 使能 */
+/* 处理DR16接收并转换为统一遥控指令，再通过快照接口发布。 */
 static void Remote_Control_Update(void)
 {
     dr16_t remote;
     rc_command_t rc_command_temp;
-    feedback_sample_t received;
-
-#if MACHINE_VOFA_PORT != 9u && MACHINE_VOFA_PORT != 7u && MACHINE_VOFA_PORT != 8u
     DR16_Process();
-#endif /* UART10恢复DR16解析；离线故障与出力门控不变。 */
     remote = DR16_Snapshot();
-    received.received_ns = remote.received_ns;
-    received.seen = remote.online;
     rc_command_temp = rc_command;
     Rc_Command_Update(&rc_command_temp, &remote, MACHINE_TICK_DT);
     if (!(output_task_lqr_engaged() || output_task_rl_engaged()))
     {
-        rc_command_temp.len = machine->rc.len_init;
+        rc_command_temp.leg_length_target = machine->rc.len_init;
     }
-    Robot_Feedback_Publish_Rc(&rc_command_temp, received);
+    Robot_Feedback_Publish_Rc(&rc_command_temp);
 }
 
 
-/* 更新故障状态 */
-/*
- * 汇总传感器/遥控/DM/CAN已有故障与在线判据。
- * ctrl_fault是整机许可依据，和离地观察器自身valid/fault不是同一标志。
- */
+/* 每轮重算IMU/遥控/电机/CAN故障位，并分别检查RL动作停更和投入后持续无动作超时。 */
 static void Robot_Fault_Update(void)
 {
     static uint32_t rl_ready_lost_tick;
@@ -134,7 +118,7 @@ static void Robot_Fault_Update(void)
         fault |= FAULT_MOTOR;
     }
     /* 模型就绪且已有动作后才判停更；等待首帧由下面的持续不可用保护处理。 */
-    if (ctrl_strategy == CTRL_STRATEGY_RL && rl_control.policy.ready && action_state.updated && HAL_GetTick() - action_state.last_ok_tick >= machine->rl.action_timeout_ms)
+    if (ctrl_strategy == CTRL_STRATEGY_RL && rl_control.policy.ready && action_state.updated && HAL_GetTick() - action_state.last_ok_tick >= machine->rl.timing.action_timeout_ms)
     {
         fault |= FAULT_ACTION;
     }
@@ -145,7 +129,7 @@ static void Robot_Fault_Update(void)
         {
             rl_ready_lost_tick = HAL_GetTick();
         }
-        else if (HAL_GetTick() - rl_ready_lost_tick >= machine->rl.ready_timeout_ms)
+        else if (HAL_GetTick() - rl_ready_lost_tick >= machine->rl.timing.ready_timeout_ms)
         {
             fault |= FAULT_ACTION;
         }
@@ -157,28 +141,8 @@ static void Robot_Fault_Update(void)
     ctrl_fault = fault;
 }
 
-/* 更新翻倒状态 */
-/*
- * 直接读取IMU回传的俯仰/横滚角，任一绝对值超过40度写公共fallen。
- * 不包含高度条件；恢复出力许可及完成保持由执行层另行选择。
- */
-static void Robot_Fallen_Update(void)
-{
-    float pitch_deg;
-    float roll_deg;
-
-    if (ctrl_fault & FAULT_IMU)
-    {
-        return;
-    }
-    taskENTER_CRITICAL();
-    pitch_deg = imu_state.euler_deg[ATTITUDE_ROLL]; /* 沿用LQR实际俯仰取轴。 */
-    roll_deg = imu_state.euler_deg[ATTITUDE_PITCH];
-    taskEXIT_CRITICAL();
-    robot_state.fallen = (uint8_t)(fabsf(pitch_deg) > 40.0f || fabsf(roll_deg) > 40.0f);
-}
-
 /* 更新使能状态: 使能沿发使能, 失能沿发失能; 两个方向都有看门狗兜底 */
+/* 根据使能请求的上升/下降沿发送DM使能/失能及DJI零电流；每轮看门狗补发未完成命令。 */
 static void Robot_Enable_Update(void)
 {
     uint8_t enable_request;
@@ -206,17 +170,12 @@ static void Robot_Enable_Update(void)
     }
 }
 
-/* 通信单周期 */
-/*
- * 每拍推进通信缓存解析、物理反馈、遥控、腿解算、故障和电机使能管理。
- * 准备好的电机/腿/遥控结果通过快照发布，控制任务读取；不在通信循环内求LQR或RL力矩。
- */
+/* 解析驱动缓存→整理电机反馈→解算双腿并发布→更新遥控和故障→管理硬件使能。 */
 void comm_task_body(void)
 {
     motor_state_t motor_state_temp;
     leg_state_t leg_l_temp,leg_r_temp;
 
-    Jetson_Uart_Process(); /* 仅解析串口连通性探测，不发布控制动作。 */
     motor_state_temp = motor_state;
     leg_l_temp = leg_l;
     leg_r_temp = leg_r;
@@ -228,7 +187,6 @@ void comm_task_body(void)
 
     Remote_Control_Update();
     Robot_Fault_Update();
-    Robot_Fallen_Update();
     Robot_Enable_Update();
     
     

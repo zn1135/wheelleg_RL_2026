@@ -1,9 +1,6 @@
 /*
- * 文件职责：位置式/增量式PID、误差历史与前馈（pid.c）。
- * 输入/来源：实测值、给定值、dt、增益/限幅/死区和角度环绕配置。
- * 输出/去向：更新P/I/D、误差历史和输出，提供首拍历史预置。
- * 关键边界：位置式D沿用误差逐拍差分，未除dt；改给定会影响D，首拍预置只消除初始化突变。
- * 阅读入口：md/file-guide.md；参数当前值以源码为准。
+ * 通用PID、前馈和历史预置工具；pid_calc的D项使用误差差分，调用方决定系数和dt。
+ * 显式物理速度阻尼由各控制模块自行计算，不应直接把两种Kd按相同单位解释。
  */
 
 #include "pid.h"
@@ -17,17 +14,13 @@ static float ABS(float num)
     return (num < 0.0f) ? -num : num;
 }
 
-/* 预置历史 */
-/*
- * 将测量/给定/误差三拍历史同步预置，避免投入或模式切换的首拍D突变。
- * 只改历史，不改变增益、积分或输出限幅；运行中不能每拍预置，否则会消除真实阻尼。
- */
+/* 将本拍测量/目标/误差写入PID历史，供新控制段避免误差差分突变。 */
 void PID_History_Set(pid_t *pid, float measured, float target, float error)
 {
     for (uint8_t i = 0u; i < 3u; i++)
     {
-        pid->get[i] = measured;
-        pid->set[i] = target;
+        pid->measured[i] = measured;
+        pid->target[i] = target;
         pid->err[i] = error;
     }
 }
@@ -53,18 +46,13 @@ float Deadband_Soften(float err, float deadband)
     return 0.0f;
 }
 
-/* 计算PID */
-/*
- * 位置式误差=set-get；P响应当前误差，I按dt积分，D沿用误差的逐拍差分。
- * D没有除dt，其增益对应现有离散节拍；给定突变和实测突变都能进入D。
- * 计算后移位get/set/err历史，并分别限积分和总输出；角度环绕/死区按pid配置选择。
- */
-float pid_calc(pid_t *pid, float get, float set, float delta_time)
+/* 按mode计算位置式/增量式PID，保存误差历史；D项取离散误差差，不是直接测量速度阻尼。 */
+float pid_calc(pid_t *pid, float measured, float target, float delta_time)
 {
-    pid->get[NOW] = get;
-    pid->set[NOW] = set;
-    pid->err[NOW] = set - get;
-    if (pid->angle_wrap) pid->err[NOW] = Angle_Wrap_180(pid->err[NOW]);
+    pid->measured[NOW] = measured;
+    pid->target[NOW] = target;
+    pid->err[NOW] = target - measured;
+    if (pid->angle_wrap) pid->err[NOW] = Angle_Wrap_Pi(pid->err[NOW]);
     if (pid->max_err != 0.0f && ABS(pid->err[NOW]) > pid->max_err)
         return 0.0f;
 
@@ -85,9 +73,9 @@ float pid_calc(pid_t *pid, float get, float set, float delta_time)
         }
 
         abs_limit(&pid->iout, pid->IntegralLimit);
-        pid->pos_out = pid->pout + pid->iout + pid->dout;
-        abs_limit(&pid->pos_out, pid->MaxOutput);
-        pid->last_pos_out = pid->pos_out;
+        pid->position_mode_output = pid->pout + pid->iout + pid->dout;
+        abs_limit(&pid->position_mode_output, pid->MaxOutput);
+        pid->last_position_mode_output = pid->position_mode_output;
     }
     else if (pid->pid_mode == DELTA_PID)
     {
@@ -104,11 +92,11 @@ float pid_calc(pid_t *pid, float get, float set, float delta_time)
 
     pid->err[LLAST] = pid->err[LAST];
     pid->err[LAST] = pid->err[NOW];
-    pid->get[LLAST] = pid->get[LAST];
-    pid->get[LAST] = pid->get[NOW];
-    pid->set[LLAST] = pid->set[LAST];
-    pid->set[LAST] = pid->set[NOW];
-    return (pid->pid_mode == POSITION_PID) ? pid->pos_out : pid->delta_out;
+    pid->measured[LLAST] = pid->measured[LAST];
+    pid->measured[LAST] = pid->measured[NOW];
+    pid->target[LLAST] = pid->target[LAST];
+    pid->target[LAST] = pid->target[NOW];
+    return (pid->pid_mode == POSITION_PID) ? pid->position_mode_output : pid->delta_out;
 }
 
 /* 计算前馈 */
