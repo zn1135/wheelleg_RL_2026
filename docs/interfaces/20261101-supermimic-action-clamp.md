@@ -1,8 +1,8 @@
 # SuperMimic 原始动作统一限幅
 
-**后续决定（2026-11-01）**：用户要求先按V13动作分布与失败时序选范围，不能照搬参考数字。因此以下±3实现仅为实验候选，不是已验证、已采纳的训练范围；代码当前仍是该候选值，本轮不修改成另一个未经验证的数字，也不启动训练。新增10模型/固定seed43各96例的只读统计见[动作与失败时序报告](../../artifacts/supermimic-v13-action-failure-timing-20261101-r1/README.md)。
+**后续决定（2026-11-01）**：用户要求先按V13动作分布与失败时序选范围，不能照搬参考数字。因此以下±3实现仅为实验候选，不是已验证、已采纳的训练范围；代码当前仍是该候选值，本轮不修改成另一个未经验证的数字，也不启动训练。新增10模型/固定seed43各96例的只读统计见[动作与失败时序报告](../../artifacts/supermimic/supermimic-v13-action-failure-timing-20261101-r1/README.md)。
 
-**随后授权的300次试训已完成**：SM615完整actor/估速器继承，世界/价值/四优化器冷启，世界4000次预热后策略300次，总W5200。初始96例存活/平衡均96，最终存活96、平衡0；方向/停车退化，±3仍未验证为合格训练范围。此结论不能单独归因于限幅，因为结构/坐标/初始化等适配同时存在。[试训结果与正常速度视频](../../artifacts/supermimic-v13-v5-sm615-a300-20261101-r1/README.md)。
+**随后授权的300次试训已完成**：SM615完整actor/估速器继承，世界/价值/四优化器冷启，世界4000次预热后策略300次，总W5200。初始96例存活/平衡均96，最终存活96、平衡0；方向/停车退化，±3仍未验证为合格训练范围。此结论不能单独归因于限幅，因为结构/坐标/初始化等适配同时存在。[试训结果与正常速度视频](../../artifacts/supermimic/supermimic-v13-v5-sm615-a300-20261101-r1/README.md)。
 
 2026-11-01，按用户要求，把新 SuperMimic 配方的六维原始动作统一限制到 `[-3,3]`。未启动训练。当前算法合同为 `chuanliantui-supermimic-control-endpoint-state-action-clamp-bptt-v13-v5`。
 
@@ -25,8 +25,8 @@ NaN/Inf不被转换成有限动作，采集在送入仿真前停止。有限输�
 
 ## 检查记录
 
-- [保存恢复检查](../../artifacts/supermimic-v13-action-clamp-restore-20261101-r2/report.json)：旧完整合同拒绝、错形状拒绝、新完整包往返、旧actor继承/推理权重保持；优化器0。
-- [动作路径与ONNX检查](../../artifacts/supermimic-v13-action-clamp-check-20261101-r1/report.json)：强制饱和输出、范围内/外梯度、非有限保留、想象动作及观测一致；新ONNX动作最大误差0，估速最大误差4.77e-7，旧ONNX动作最大误差2.75e-6以内。
+- [保存恢复检查](../../artifacts/supermimic/supermimic-v13-action-clamp-restore-20261101-r2/report.json)：旧完整合同拒绝、错形状拒绝、新完整包往返、旧actor继承/推理权重保持；优化器0。
+- [动作路径与ONNX检查](../../artifacts/supermimic/supermimic-v13-action-clamp-check-20261101-r1/report.json)：强制饱和输出、范围内/外梯度、非有限保留、想象动作及观测一致；新ONNX动作最大误差0，估速最大误差4.77e-7，旧ONNX动作最大误差2.75e-6以内。
 - 同一检查的GPU集成：12环境各1个控制步，12条真实转移、60个物理子步。用固定正负噪声区分“先限幅再加噪声”和正确顺序；执行/回放/奖励记录/下一拍观测一致。Inf输出在仿真调用前拒绝；四优化器均0次更新。
 - 初次恢复检查r1误选了与当前同形状的v4包，导致“伪装新合同后必须因形状不同被拒绝”的检查假设不成立；记录保留。r2使用原A5200异形状包后通过，未因此放松生产校验。
 
@@ -34,7 +34,7 @@ NaN/Inf不被转换成有限动作，采集在送入仿真前停止。有限输�
 
 ```bash
 PYTHONPATH=mjlab_training/src:. mjlab_training/.venv/bin/python -m scripts.agent.supermimic.check_supermimic_no_history --output artifacts/supermimic-action-restore-NEW
-PYTHONPATH=mjlab_training/src:. mjlab_training/.venv/bin/python -m scripts.agent.supermimic.check_supermimic_action_clamp --checkpoint artifacts/supermimic-action-restore-NEW/zero-update-roundtrip.pt --legacy artifacts/supermimic-v13-imagination-clamp-integration-20261101-r1/zero-update-roundtrip.pt --output artifacts/supermimic-action-check-NEW --integration
+PYTHONPATH=mjlab_training/src:. mjlab_training/.venv/bin/python -m scripts.agent.supermimic.check_supermimic_action_clamp --checkpoint artifacts/supermimic-action-restore-NEW/zero-update-roundtrip.pt --legacy artifacts/supermimic/supermimic-v13-imagination-clamp-integration-20261101-r1/zero-update-roundtrip.pt --output artifacts/supermimic-action-check-NEW --integration
 ```
 
 检查生成的饱和权重和ONNX仅为测试夹具，不能部署。未交付训练模型；真实96例行为、多种子及真机未验证。H7负责人核对：待确认，固件未修改。

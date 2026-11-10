@@ -36,6 +36,6 @@ PYTHONPATH=mjlab_training/src CUDA_VISIBLE_DEVICES='' mjlab_training/.venv/bin/p
 PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.supermimic.check_supermimic_no_history --integration --output artifacts/<新的集成检查目录>
 ```
 
-[CPU检查](../../artifacts/supermimic-v13-imagination-clamp-check-20261101-r1/report.json)：范围内逐字节不变；高度/速度/有限关节限位；未知限位保留；范围内梯度恒等、越界梯度零；非有限不隐藏；平面变换一致；默认预测不夹紧；拟合/归一化不调用sanitize；回放张量不变；每个想象步启用；夹紧后观测/奖励/存活同源。
+[CPU检查](../../artifacts/supermimic/supermimic-v13-imagination-clamp-check-20261101-r1/report.json)：范围内逐字节不变；高度/速度/有限关节限位；未知限位保留；范围内梯度恒等、越界梯度零；非有限不隐藏；平面变换一致；默认预测不夹紧；拟合/归一化不调用sanitize；回放张量不变；每个想象步启用；夹紧后观测/奖励/存活同源。
 
-[集成与保存恢复检查](../../artifacts/supermimic-v13-imagination-clamp-integration-20261101-r1/report.json)另列。全部优化器更新0；尚未验证预测误差、真实平衡/运动、跨种子或真机效果。
+[集成与保存恢复检查](../../artifacts/supermimic/supermimic-v13-imagination-clamp-integration-20261101-r1/report.json)另列。全部优化器更新0；尚未验证预测误差、真实平衡/运动、跨种子或真机效果。

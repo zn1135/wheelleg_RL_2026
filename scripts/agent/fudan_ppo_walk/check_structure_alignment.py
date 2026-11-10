@@ -24,7 +24,7 @@ from ct_mjlab.envs import task_registry
 from .reset_v2_fixture import fixture
 
 ROOT=Path(__file__).resolve().parents[3]
-ARTIFACT=ROOT/'artifacts/fudan-structure-alignment-20261103'
+ARTIFACT=ROOT/'artifacts/fudan_ppo_walk/fudan-structure-alignment-20261103'
 CHECKPOINT=ROOT/'logs/mjlab/fudan_ppo_walk/20261102_parking_resume7000_to8000/model_final.pt'
 
 

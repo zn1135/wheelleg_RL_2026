@@ -17,7 +17,7 @@ with ExitStack() as guards:
 
 def main():
     p=argparse.ArgumentParser(__doc__);p.add_argument('--output',type=Path,required=True);a=p.parse_args();a.output.mkdir(parents=True,exist_ok=False)
-    source='artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk'
+    source='artifacts/fudan_ppo_walk/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk'
     parent='logs/mjlab/fudan_ppo_walk/20261102_resume6000_to7000/model_final.pt'
     cases=[('structure','check_structure_alignment',[]),('algorithm','check_algorithm_alignment',[]),('tools','check_structure_tools',[]),
         ('history-v3','check_history_v3',[]),('reset-v2','check_reset_v2',[]),('parking','check_parking_commands',[]),
@@ -25,8 +25,8 @@ def main():
         ('preserve-v2','check_preserve_v2',['--checkpoint',parent]),
         ('migration-v2-v3','check_history_migration',['--checkpoint',parent,'--baseline-source',source]),
         ('resume','check_resume',['--checkpoint','logs/mjlab/fudan_ppo_walk/20261102_reset_v2_iter3000/model_final.pt']),
-        ('budget','check_iteration_budget',[]),('logging','check_reward_logging',['--baseline','artifacts/fudan-reward-logging-20261102/before-runner.py']),
-        ('gpu-entry','check_gpu_validation',['--migration','artifacts/fudan-gpu-only-validation-20261102']),
+        ('budget','check_iteration_budget',[]),('logging','check_reward_logging',['--baseline','artifacts/fudan_ppo_walk/fudan-reward-logging-20261102/before-runner.py']),
+        ('gpu-entry','check_gpu_validation',['--migration','artifacts/fudan_ppo_walk/fudan-gpu-only-validation-20261102']),
         ('scoring','check_scoring_v2',[]),('reference','check',[])]
     def run(case):
         name,module,extra=case;directory=a.output/name;directory.mkdir();result=directory/'result.json'

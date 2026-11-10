@@ -16,7 +16,7 @@
       ],
       "sha256": "9e4e4bdd2d964af5d7fecb83173995c12135e0edc6adc0fcb42ec1acff884c16",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/analyze_chuanliantui_vofa_sysid.py",
@@ -104,7 +104,7 @@
       ],
       "sha256": "5863b4622c189fea877bee58837928dd4f384c7e98caba80aca8adcb78b859ce",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/analyze_walk_velocity_compensation.py",
@@ -120,7 +120,7 @@
       ],
       "sha256": "e05d31e2502c44d7782ccf54bd49038a9817b44acfd14d713f2e2b8714745be1",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_aligned_bc_braking.py",
@@ -217,7 +217,7 @@
       "dependencies": [],
       "sha256": "76dc0e7d40bf20af834f3c7dfd0fb4bdde627ab7e1e44af6a4a4f529f595ee13",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_chuanliantui_stand_v2.py",
@@ -233,7 +233,7 @@
       ],
       "sha256": "c115c9479ba3cb8a1c6030caf81f1b3b36fb8d2721d9f84be0b9968e4af72485",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_chuanliantui_supermimic.py",
@@ -266,7 +266,7 @@
       ],
       "sha256": "ae93e261364e9ab819dba6345764bc776f4a3f10da3bb3a1dbf68ccbe5c3dcf7",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_fast_bc_screen.py",
@@ -308,7 +308,7 @@
       "dependencies": [],
       "sha256": "dee870143527babaa6a39c0bd5387eb42ef9efd6584cbfc57b4f0d8d96edb1e5",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_ground_chuanliantui_stand.py",
@@ -324,7 +324,7 @@
       ],
       "sha256": "52d1f20f219f8b52e2428fadaa73bbc5abadefa0f78a4619ced854ecc4500b80",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_lqr_delay_compensation.py",
@@ -389,7 +389,7 @@
       ],
       "sha256": "3a9f665cafadd3053149461b7e8ba39760bee77e5adc3b666816ee4d3b976d47",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_multimode_cpu_zero_hold.py",
@@ -403,7 +403,7 @@
       "dependencies": [],
       "sha256": "b1bd94ace36047216b979b3e13b3eee3f40bb87c6cf062df5ec1c1591c4ee919",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_multimode_envelope_friction.py",
@@ -420,7 +420,7 @@
       ],
       "sha256": "5a73dad045b03d7b792d53c1c5263ba4fc99d45022523069b7867311887cb0e3",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_multimode_knockdown_recovery.py",
@@ -434,7 +434,7 @@
       "dependencies": [],
       "sha256": "44c494fb776592de5b6877d96e781f56edb3d6b919908449f85275d125abebff",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_multimode_recovery_height.py",
@@ -448,7 +448,7 @@
       "dependencies": [],
       "sha256": "e16bc43ef10491217c60e88f6df2015b46625f483d43a430324dc387e9945ee8",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_multimode_tracking.py",
@@ -465,7 +465,7 @@
       ],
       "sha256": "1c269b3b7c3f96289b888e3c02be0558fd0b081c501175371c7638ca15d33391",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_multimode_zero_hold.py",
@@ -479,7 +479,7 @@
       "dependencies": [],
       "sha256": "fe99cb6559d09802f8af628a0fb5a78665a5445ec63391b17ed8ae8a011d16f8",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_ppo400_import.py",
@@ -585,7 +585,7 @@
       ],
       "sha256": "1460ed5e1225320f9415b2c60431fcfddd11948a1a479a910b3fc011f3f94d9b",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_stand_v2_tracking.py",
@@ -601,7 +601,7 @@
       ],
       "sha256": "ffa8d6ba60778d64b5c9234c8446a251eda49907e0d2f37d78ce971f70c5dd1e",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/assess_stand_v2_yaw_control.py",
@@ -618,7 +618,7 @@
       ],
       "sha256": "1c8601740370ddae95e1bcd9aa0f84f4e5d63e6255de728867d4eaea55c5fcbf",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/audit_walk_compensation_startup.py",
@@ -634,7 +634,7 @@
       ],
       "sha256": "152b3438e7183cd7427c559339a7a89d5836bb94cd285d2d219b2149b5dabfd2",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/audit_walk_estimator_closedloop.py",
@@ -648,7 +648,7 @@
       "dependencies": [],
       "sha256": "a6b4c2fce61e28ac63fb146e5ea81cdc86955f57d9ce3628045e20f51b14688f",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/audit_walk_estimator_final_result.py",
@@ -692,7 +692,7 @@
       "dependencies": [],
       "sha256": "3b64f96ccdbe53d1370dc81c6e96028fcd3711cb54f527a5c380b51cdcdcf905",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/audit_walk_estimator_training_data.py",
@@ -708,7 +708,7 @@
       ],
       "sha256": "56a54d4cd3ed984b98766dfd570e79ec4698036fb57c532ba38eb65b014cf134",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/audit_walk_goal_feedback.py",
@@ -722,7 +722,7 @@
       "dependencies": [],
       "sha256": "7666e02b84cd842450d2c4c59837b218cfbee6372100f3fd059c3305e869c4d3",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/audit_walk_shadow_method.py",
@@ -738,7 +738,7 @@
       ],
       "sha256": "a9c218ec695d3441bcc76f0ac57e0bc987ed240944dddff1ec509f2af18a4753",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/audit_walk_shadow_result.py",
@@ -1024,7 +1024,7 @@
       ],
       "sha256": "c9bfeee77d7f725275575d368c6a1e9e35a18628fdb7f82fa752d49cdb77f6c2",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_chuanliantui_stand_regressions.py",
@@ -1040,7 +1040,7 @@
       ],
       "sha256": "4fe3e36fe050111bc44bc1a2cb181f38f0f833a26fbcbbdbbb1002ed41a825fe",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_chuanliantui_stand_reset_migration.py",
@@ -1056,7 +1056,7 @@
       ],
       "sha256": "622764ac813ef68cbff1856d66995093cee39f79948c175b5edfa107fb9c2f23",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_chuanliantui_stand_v2.py",
@@ -1073,7 +1073,7 @@
       ],
       "sha256": "b02a7bd479f45659a496bf4d83c5d4e72323542ab5fb680116e4394131597e83",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_chuanliantui_stand_velocity.py",
@@ -1089,7 +1089,7 @@
       ],
       "sha256": "061c97c88f1fafb665364000453bd07131d6c0c8a3f3355ba54922a31e14c255",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_chuanliantui_supermimic.py",
@@ -1131,7 +1131,7 @@
       ],
       "sha256": "0da453cc2f89748d52267e3c246b07a1372106c920757aced3d998e339a9006b",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_chuanliantui_two_policy_sim2sim.py",
@@ -1147,7 +1147,7 @@
       ],
       "sha256": "fbbc0c7cffacd8ac8f9b80beac3be9d35be4f3330c5eb2b17de0f5ee11f4e157",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_convex_velocity_rewards.py",
@@ -1228,7 +1228,7 @@
       ],
       "sha256": "daded50aff508b737d8f6b4bb7f3f35c6769a535c5c7b76809187239bab60917",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_getup_height_curriculum.py",
@@ -1244,7 +1244,7 @@
       ],
       "sha256": "236d5170270067070e6162ed9d754eaae97e3b814b218c3d0b533e46b9eb3d08",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_getup_height_training.py",
@@ -1272,7 +1272,7 @@
       ],
       "sha256": "2b9b9246b067ba73334a27bdd648e6d3c2a9b0b2811df014f136cc65902baee8",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_getup_nominal_state.py",
@@ -1288,7 +1288,7 @@
       ],
       "sha256": "2b6853188d922419cc663672a70348410f851e4e303348ec189499b080b11001",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_getup_target_slew.py",
@@ -1304,7 +1304,7 @@
       ],
       "sha256": "58f37542dd275f80d108e0ce891709c25430519862b8e669771315b4f3f1a2d7",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_getup_target_slew_state.py",
@@ -1320,7 +1320,7 @@
       ],
       "sha256": "34c4a6afee0bd1d5ea882ad32ef79e0c115b6257c1d84ea339b536b240cda940",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_getup_torques.py",
@@ -1337,7 +1337,7 @@
       ],
       "sha256": "f4e9e5e70179fb2a13316b1a410d3c6d92762a3305a9feec75d5e0dd5d653b1a",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_h7_b_zero_bilateral.py",
@@ -1530,7 +1530,7 @@
       ],
       "sha256": "dd725d28ee994ffa3d2c3573e01568cf64ecbcbb889d2b7596fd050f9a662ced",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_h7_zero_board.py",
@@ -1607,7 +1607,7 @@
       "dependencies": [],
       "sha256": "6eba58a3a9e491a39e80a3b016eb604030a16d348278824c52e5f4284c3cf03d",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_motor_response.py",
@@ -1635,7 +1635,7 @@
       ],
       "sha256": "e0e41520e8a54f6d22e6f322e290a00450019a77791e04458d9b12e2c848d716",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_multimode_final_balance.py",
@@ -1652,7 +1652,7 @@
       ],
       "sha256": "4513b0a2752461049e094da457e45ca55a3301ad63760b083afcd771006d3cd9",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_multimode_ground_ratio.py",
@@ -1666,7 +1666,7 @@
       "dependencies": [],
       "sha256": "2f3082b8291ea144a43b2b2a47fee89f8ab40e8db5aefab53c32fd62aeb142b3",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_multimode_recovery.py",
@@ -1680,7 +1680,7 @@
       "dependencies": [],
       "sha256": "5765945cbac92adb523b82b72c6d563111ee51c580e669c2fe87bc4fc33d8730",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_multimode_tracking.py",
@@ -1980,7 +1980,7 @@
       ],
       "sha256": "d898569bada67b6d6b2ffb0089ec7f20b40e19cd49b9bf6eac20a2a76edc7e78",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_cpu_launch_stability.py",
@@ -1994,7 +1994,7 @@
       "dependencies": [],
       "sha256": "6db0bc94471ab0b23ca2399a10be0d3780dce9a1545c8699ff7ce28059ad81bb",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_cpu_sim2sim.py",
@@ -2008,7 +2008,7 @@
       "dependencies": [],
       "sha256": "b95ce8d81196d4322348550398152566c3c44cb1ffb356e8992cd909e986c50b",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_exploration_resume.py",
@@ -2024,7 +2024,7 @@
       ],
       "sha256": "5bb7bfe062690b0ace32132ff243c5935625d6bc3fe92a31b26c4f7e9543cbab",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_late_balance.py",
@@ -2040,7 +2040,7 @@
       ],
       "sha256": "3ee81e34ed3919786e6337b8d18369558921e190f527c63712875036805babde",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_nominal_training.py",
@@ -2070,7 +2070,7 @@
       ],
       "sha256": "961361dcc5f73393e4b18a3d14e296528cd9b10b36e84213e7ec105ad70dc60e",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_post_stand_tracking.py",
@@ -2086,7 +2086,7 @@
       ],
       "sha256": "5dfec9b4b8b3a166ed7ef89740187459bc72b9aa9158b3b522a532001be2f743",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_post_stand_training.py",
@@ -2116,7 +2116,7 @@
       ],
       "sha256": "78697378d1e2ccba1d74c3407036e64b2ec53f42b608716a59dc5104f86e82cf",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_speed_commands.py",
@@ -2132,7 +2132,7 @@
       ],
       "sha256": "e280f7565ae60031c1e4ce210e21241497da7c7e8a5f4e9f5b47495e8d07a256",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_speed_training.py",
@@ -2163,7 +2163,7 @@
       ],
       "sha256": "fb443657459609fbb8ad8bdcca4a83200c885f02972400823e4287522c7824c3",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_tight_training.py",
@@ -2194,7 +2194,7 @@
       "sha256": "acf951787ce1ce335636455e4bd5d3f2ba3152ea722f4e9b728585476492e4fe",
       "merged_snapshot": "scripts/archive/20261101-motion-normalization",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_stand_v2_yaw_control.py",
@@ -2211,7 +2211,7 @@
       ],
       "sha256": "91433b0197b0e743a533fb2d25ba0f9974e18342391b24d118dbf4fc6f71a2a5",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_standing_push_schedule.py",
@@ -2402,7 +2402,7 @@
       "sha256": "e2bccb70ab264b124b1d91596b8507cf5d67dd3c3aa4b3b97f2a1ef1201841ec",
       "runtime_protected": false,
       "retained_original": true,
-      "live_sha256": "e2bccb70ab264b124b1d91596b8507cf5d67dd3c3aa4b3b97f2a1ef1201841ec"
+      "live_sha256": "b6a45126f56837ad721ecc1c46312aedead6eb606088078966ee5d95ca779c20"
     },
     {
       "old_path": "scripts/agent/check_supermimic_world_only.py",
@@ -2482,7 +2482,7 @@
       ],
       "sha256": "0ea58bb3794e317d4932b4c9a95d27bdafd23a457c9387dd0c7b8274e039b5da",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_walk_direction_curriculum.py",
@@ -2499,7 +2499,7 @@
       ],
       "sha256": "9636a5649e88e17d45ee9daec09969d0617886ed7805606ffabf4a9d4ee4a33e",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_walk_leg_symmetry.py",
@@ -2517,7 +2517,7 @@
       ],
       "sha256": "dfd57f0b01a07c69e5136d11a98a6e1f63dbba6336aeec75d8774920c7fed9db",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_walk_resume.py",
@@ -2534,7 +2534,7 @@
       ],
       "sha256": "71d1f6ffcda4a25024756869863575b81e2f7380cbb72b000719dcbbe511b16a",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_walk_tracking_economy.py",
@@ -2551,7 +2551,7 @@
       ],
       "sha256": "5e4fc005f2a31152de805d27dcce4efb0162efb50ce383124871e00dadfdb2f3",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_walk_training.py",
@@ -2579,7 +2579,7 @@
       ],
       "sha256": "4763da14f58d9759e4fc990fc36d3e9623ca550c1832cb0e91e5541fe0b982c1",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/check_wheel39_ppo.py",
@@ -2718,7 +2718,7 @@
       ],
       "sha256": "d59869f585564f3fbc412eff984db5b8e0dfdce906299dca6cbda56dc551e8c8",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/collect_bc_braking.py",
@@ -2780,7 +2780,7 @@
       "dependencies": [],
       "sha256": "cca5bcebf503fe0807428a648b4c9021d3712e32e86658803b099b3aa52ef454",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_h7_measured_start.py",
@@ -2818,7 +2818,7 @@
       "dependencies": [],
       "sha256": "f0cb5b46db56d68ed375ecb203d3d5146136ac562cc8b9bbb9c0cf885e3264d6",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_multimode_knockdown.py",
@@ -2832,7 +2832,7 @@
       "dependencies": [],
       "sha256": "5aa9e9961dddaac72f9562f79f2c170c57e067477a1053b927a629e25703a256",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_smp_motion_scores.py",
@@ -2862,7 +2862,7 @@
       ],
       "sha256": "08ef6b0fa81093154167332f9f2c74e9f28364568454dc435dff8c196a3ef47b",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_stand_v2_active_weight.py",
@@ -2880,7 +2880,7 @@
       ],
       "sha256": "64cf53acc002bd66863206a1022c9b58995bd908de39c74962a0eb1bb5e36a08",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_stand_v2_nominal_inversion.py",
@@ -2896,7 +2896,7 @@
       ],
       "sha256": "438e1c44674be920059822042d30075f80ca21471b2cf8f1a8bc08d128f89ed7",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_stand_v2_phase_mix.py",
@@ -2912,7 +2912,7 @@
       ],
       "sha256": "60197c6219b4ecdcb10083e029069502903e37838ba8456fff17d75abd737314",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_stand_v2_wheel_normal.py",
@@ -2926,7 +2926,7 @@
       "dependencies": [],
       "sha256": "cb1f6b8f13aaea34b2100572f81fd7655f2b6e839cc34980b9edbe8641b31dff",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_supermimic_behavior.py",
@@ -2957,7 +2957,7 @@
       "dependencies": [],
       "sha256": "350adc07235afd3c6d455dac220f0423491d5933af348a49da124319a562b3cc",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_walk_estimator_trial.py",
@@ -2974,7 +2974,7 @@
       ],
       "sha256": "89fe74747496847e5b6d64a38d050566873a5742bfe5875046887b53c010fd71",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_walk_feedback.py",
@@ -2988,7 +2988,7 @@
       "dependencies": [],
       "sha256": "bbf43764bd4b9f321e2030837af448dac9bb2b67d0016eae5ccac5c931267994",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compare_walk_height_response.py",
@@ -3002,7 +3002,7 @@
       "dependencies": [],
       "sha256": "342f86a8ebb820637564b500fc2e3a413c435246e4cf1f5099d3659fc1892f75",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/compose_chuanliantui_factor_videos.py",
@@ -3059,7 +3059,7 @@
       "dependencies": [],
       "sha256": "c99943e0434de6c16d440280db9078253f36a81e83c446dcb707cd761c412889",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_getup_release.py",
@@ -3073,7 +3073,7 @@
       "dependencies": [],
       "sha256": "0064ff42ede77444acadf5beb96c2b77a9fa83878b2ba5fedc0785c8507e72e2",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_getup_start.py",
@@ -3087,7 +3087,7 @@
       "dependencies": [],
       "sha256": "1ad70ca638f46bc14f1d9c6f97be5a018d2f53b39737c243afc67d39a035ef6e",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_isaac_ppo_rewards.py",
@@ -3151,7 +3151,7 @@
       "dependencies": [],
       "sha256": "336044a2dcd5e8b4b94f78608be77013290258a14d5df29393aa4278db8f6cf8",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_stand_v2_inversion.py",
@@ -3167,7 +3167,7 @@
       ],
       "sha256": "0dfe37270d2f85800074f4a40b9589b64c9dcd3f68162d15361d01ad388e7200",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_stand_v2_late_balance.py",
@@ -3184,7 +3184,7 @@
       ],
       "sha256": "51f8766911b8dd8be786042537045e3c3a0df6a633e1d95d8358869d04ba7259",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_stand_v2_launch_reference.py",
@@ -3198,7 +3198,7 @@
       "dependencies": [],
       "sha256": "4ebb3b71ca3bdfb8f8d54910a5f4398ac24ae264fa4717ab9f8228c8be03120e",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_stand_v2_mode_input.py",
@@ -3214,7 +3214,7 @@
       ],
       "sha256": "f5bb55436f82f75e94c8e53189167cb25540493758ee7151bd8f21b1b4899fff",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_stand_v2_pitch_progression.py",
@@ -3230,7 +3230,7 @@
       ],
       "sha256": "bee31da7e25836ee5f71a9d8120252fb36d8aa2df68b9b7fe4a72a1794798d8d",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_stand_v2_rewards_velocity.py",
@@ -3244,7 +3244,7 @@
       "dependencies": [],
       "sha256": "04f51567e153b6489ce1d0d0266a1c99089ba952c8d3e415b46d63219d54272e",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_supermimic_rollout_drift.py",
@@ -3276,7 +3276,7 @@
       ],
       "sha256": "2fdf6b7b3bdf763ba64fd83616137556e963b91b597206b133848651dbf285de",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_walk_forward_failure.py",
@@ -3290,7 +3290,7 @@
       "dependencies": [],
       "sha256": "690c196534233bdd1cc3d1e2f442a34c735c2afb4b569d99a0239df87317e4c6",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_walk_goal_feedback.py",
@@ -3306,7 +3306,7 @@
       ],
       "sha256": "0187f3323795f155163c7f49c0885c9098a649e438cfc54bff35c35dfbf31887",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_walk_height.py",
@@ -3322,7 +3322,7 @@
       ],
       "sha256": "81be2ada185b44e27e2b4378cab8d3a283813707d3c4917e2adf8098668dd0f8",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_walk_v8_regression.py",
@@ -3336,7 +3336,7 @@
       "dependencies": [],
       "sha256": "2e914f1d04aee46c1d9e5013a5ebd1bae7a4664001ba2c29722b9e39d8dc768a",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_walk_velocity_compensation.py",
@@ -3354,7 +3354,7 @@
       ],
       "sha256": "67bc4058334e146ca06897b97cca6a30a5f60b1135781336bd1101eaf1c2a2a3",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/diagnose_wheel_angle_bc.py",
@@ -3395,7 +3395,7 @@
       "dependencies": [],
       "sha256": "d2404b0d0b06af59f60ce54ec87ba030a88158e214da4d967775675577084068",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/eval_bc.py",
@@ -3468,7 +3468,7 @@
       ],
       "sha256": "f8b728ad8ec3693359e0414c8341916629b6670d95ffcc9bd5d70dfde0029e6d",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/evaluate_walk_estimator_final.py",
@@ -3485,7 +3485,7 @@
       ],
       "sha256": "a5c4c6aa5d6a38e0a16740e508af4356ee2434fd4eda397ef0591989452e27b1",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/experiment_stand_v2_phase_mix.py",
@@ -3499,7 +3499,7 @@
       "dependencies": [],
       "sha256": "053d21316fad7a6f7a260ac1e4c882d5d4ae8a55d0d10b56d68f18707a6b6d1d",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/export_bc_braking_takeover.py",
@@ -3599,7 +3599,7 @@
       "dependencies": [],
       "sha256": "28e4ab61855fa2becebe66fa0ba13bef8906f3883211145c5db328d8f0d3eccf",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/inspect_supermimic_motion_milestone.py",
@@ -3641,7 +3641,7 @@
       ],
       "sha256": "54aa3c700d5111bd798b5576abd6d058bc59775dcae3b0e20a7feb1f523d157c",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/migrate_chuanliantui_stand_velocity.py",
@@ -3655,7 +3655,7 @@
       "dependencies": [],
       "sha256": "0333455fe2a2e316834e4927187b9739a601d81a6bc648d5a464f690d9f0802b",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/plot_chuanliantui_ablation_evaluation.py",
@@ -3757,7 +3757,7 @@
       ],
       "sha256": "863c120cf74eff58d19ea28de335af61df1a9d7f2c25607b070cb2e32ea8cb85",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/probe_getup_torque_rewards.py",
@@ -3774,7 +3774,7 @@
       ],
       "sha256": "b9ad02484cf41cb36241c979ebe0c8e501ab9e613cc2502477f046228e68963c",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/probe_supermimic_action_gradient.py",
@@ -3816,7 +3816,7 @@
       ],
       "sha256": "56d012a5c7e1dc8a5aaa284b16ff64fb71458b650dbe422e240e0487cac437e0",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/record_multimode_knockdown_failures.py",
@@ -3832,7 +3832,7 @@
       ],
       "sha256": "ecee4166a917af97c02401981a3b0608fbd18f598b670daf9b2cae519f3df8fe",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/record_stand_v2_sample.py",
@@ -3848,7 +3848,7 @@
       ],
       "sha256": "86343b80a612a6b8e23f63d0507fca397f5d87e57c6c5f1bfa4d025bb40888a9",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/record_supermimic_physical_prediction.py",
@@ -3879,7 +3879,7 @@
       ],
       "sha256": "658d95573beebcb9060c77f52dbdef0ab45976b5499162315112010d7971417a",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/record_walk_shadow_sensors.py",
@@ -3897,7 +3897,7 @@
       ],
       "sha256": "3c18a30e0274b1c856830093c91e8a270c44146721e5e87a72d4b58aab34e4e0",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_aligned_bc_braking.py",
@@ -3996,7 +3996,7 @@
       ],
       "sha256": "e10422ef5b5c3f764c65e99590695fecbb342f0be2a52a57928afa052b6bfb89",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_chuanliantui_supermimic.py",
@@ -4054,7 +4054,7 @@
       ],
       "sha256": "7bf3d429a81dcb3995d0633db5457eebf59c66921b7b7cf082bd55e97ce1f46f",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_h7_zero_command.py",
@@ -4128,7 +4128,7 @@
       "dependencies": [],
       "sha256": "0c291b6b4a8b6ceb4a55247a5b3d177074275beca7137296f725303cfe4abec0",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_multimode_minimum_leg.py",
@@ -4144,7 +4144,7 @@
       ],
       "sha256": "ad8042e214b0392e1280cfe8e8d3c96336960b73843c7ec39d5f5473717aa1db",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_ppo_smp_comparison.py",
@@ -4189,7 +4189,7 @@
       ],
       "sha256": "7d214b318e2851f60ce240e10344991557bce44ef41fe6f9f50ef6a6fe7944fc",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_stand_v2_late_balance.py",
@@ -4206,7 +4206,7 @@
       ],
       "sha256": "a1a23a1c880ef500947b9bebd733dd69d9d4035886cedd0eda48f2b085108f8e",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_stand_v2_sample.py",
@@ -4222,7 +4222,7 @@
       ],
       "sha256": "04c7d554a9cb5bed62fe8a38ead8120e669dc7df466a3f9e760790575c88f73f",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_stand_v2_speed_comparison.py",
@@ -4239,7 +4239,7 @@
       ],
       "sha256": "3616c0b82c28e88c628344a0bac68210f0e28c9216d949edbd9c15743c1be548",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/render_stand_v2_tracking.py",
@@ -4255,7 +4255,7 @@
       ],
       "sha256": "389a21048b27923e68b5bef1de5239fc4a8d2d1aae00d56f63b040ead6052a2d",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/replay_teacher_pd.py",
@@ -4299,7 +4299,7 @@
       "sha256": "b166f3c841dd09ff8b223d66c9de8cfc923c242de2f7fc0c45f97a53acc8f863",
       "runtime_protected": false,
       "retained_original": true,
-      "live_sha256": "b166f3c841dd09ff8b223d66c9de8cfc923c242de2f7fc0c45f97a53acc8f863"
+      "live_sha256": "b46fa983f95f738a73ecc31f4d10e24c9843ffedd1a842883023ba4d6ac7d9e1"
     },
     {
       "old_path": "scripts/agent/report_supermimic_v13_count_budget.py",
@@ -4316,7 +4316,7 @@
       "sha256": "cb81c42b99faeaf65b2151cb9d35794c747cfdeb46265ebd834cad645757289a",
       "runtime_protected": false,
       "retained_original": true,
-      "live_sha256": "cb81c42b99faeaf65b2151cb9d35794c747cfdeb46265ebd834cad645757289a"
+      "live_sha256": "7a114d73ae20dc4a360d1b15d6d3d4b752c14bc8a634d2eeff7114cfcd63dbd7"
     },
     {
       "old_path": "scripts/agent/report_walk_estimator_closedloop.py",
@@ -4542,7 +4542,7 @@
       "dependencies": [],
       "sha256": "43350dc7e5a7a7eb42725a9748bc5607e5bbf76c9f1d652752477efd0aa794b4",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/summarize_stand_v2_tight_effect.py",
@@ -4568,7 +4568,7 @@
       "dependencies": [],
       "sha256": "81fd28ace4f312c3b5c6dd2d48b823319c514c2622c9955e787ebbd758e04da9",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/summarize_walk_leg_swing.py",
@@ -4619,7 +4619,7 @@
       "sha256": "d4011fb3a0d4d615bc73405e158042b4f9a2437fd347364211ffefa67d94f580",
       "runtime_protected": false,
       "retained_original": true,
-      "live_sha256": "bfab070c77dba41a6cbc92076ea607ed8c557ba5960b261f20f10ecb79e06a16"
+      "live_sha256": "5b9d8d8ab9d0a1941b279955376113bd276d113c069d4e667e1c7248343bf3c2"
     },
     {
       "old_path": "scripts/agent/train_walk_estimator_only.py",
@@ -4636,7 +4636,7 @@
       ],
       "sha256": "9301fd2aed6727a4f8697679842790d558a0c044effa69f046abe338ff831eec",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/validate_stand_v2_handover.py",
@@ -4652,7 +4652,7 @@
       ],
       "sha256": "690122468bad602be0a4a84faf3a156ae2ba253eb4065010cbab067af6ed4ffd",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/wait_training_completion.py",
@@ -4680,7 +4680,7 @@
       ],
       "sha256": "73e362a49a1029c9bb3ed64e2c41082d8ec3685585a060b29bd599fd44aa74c6",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/walk_sensor_velocity.py",
@@ -4694,7 +4694,7 @@
       "dependencies": [],
       "sha256": "522be70ee5e35960441d241d9bf69643464609eeff281a166a106493324bdb19",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/lqr_vmc_reference.c",
@@ -4720,7 +4720,7 @@
       "dependencies": [],
       "sha256": "533293bda55a7f540d31841f13e544b67e8a82a9355deff9be67fa77e4946222",
       "runtime_protected": false,
-      "retirement_record": "artifacts/retain-678-cleanup-20261101/deletion-plan.json"
+      "retirement_record": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json"
     },
     {
       "old_path": "scripts/agent/reproduce_fixed_h7_calibration.sh",

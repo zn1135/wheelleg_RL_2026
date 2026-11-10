@@ -16,9 +16,9 @@ A/B是单输入差异诊断，B不是实际趴地启动；C自然进入NORMAL后
 
 此前口头提及的“30秒净位移2.1cm”对应A的首末采样点，B同口径为47.8cm。C起立初期先后退，因此首末净距离为15.2cm，而起立后的第2～30秒向前移动约38.7cm；不能混用起点或把往返路程当成单向漂移。
 
-![相同窗口的CPU前向位移](../../artifacts/model6848-startup-review-20261022-122136/zero-command-frozen-v2/cpu-displacement.png)
+![相同窗口的CPU前向位移](../../artifacts/real2sim/model6848-startup-review-20261022-122136/zero-command-frozen-v2/cpu-displacement.png)
 
-作者要求查看C组回放后，新增[30秒原速仿真视频](../../artifacts/model6848-startup-review-20261022-122136/video-seed42/model6848-ground-seed42-30s.mp4)。使用同一冻结模型和seed42，重放逐步轨迹及网络输入最大差均0；固定相机，地面刻度10cm，红线标记第2秒机身位置，画面显示相对此位置的前向位移。750帧、25fps、960×640，已检查首尾解码与预览；视频不是实机录像。来源、SHA256与验证见`video-seed42/render-report.json`，完整qpos/qvel保存在同目录NPZ，生成入口为`scripts/agent/render_h7_zero_command.py`。
+作者要求查看C组回放后，新增[30秒原速仿真视频](../../artifacts/real2sim/model6848-startup-review-20261022-122136/video-seed42/model6848-ground-seed42-30s.mp4)。使用同一冻结模型和seed42，重放逐步轨迹及网络输入最大差均0；固定相机，地面刻度10cm，红线标记第2秒机身位置，画面显示相对此位置的前向位移。750帧、25fps、960×640，已检查首尾解码与预览；视频不是实机录像。来源、SHA256与验证见`video-seed42/render-report.json`，完整qpos/qvel保存在同目录NPZ，生成入口为`scripts/agent/render_h7_zero_command.py`。
 
 ## 实机同初姿核对的边界
 
@@ -26,7 +26,7 @@ seed42只是固定随机初态，C组从仿真姿态库取样，并未匹配本�
 
 随后取实录19.654316009秒、首个非零输出之前的一帧，将策略观测的四腿相对角加回板端默认角，得到模型角`[0.404947319,1.977319720,-0.434381523,-1.994384769] rad`，并使用该帧IMU四元数重构冻结XML中的闭链。左右闭链残差约`2.80e-13/1.75e-12 m`，但被动关节`lf1/rf1`分别超出模型限位约`4.927°/4.311°`。这是该次初姿与模型限位不一致，不能据此判定实体限位或标定哪一方有误。
 
-此前这一步只做静态可行性检查，尚未从该实测初姿运行动力学，没有放宽限位或夹断角度；直接从越限状态步进会引入限位纠正力，不能当成正常无扰动的同初姿对照。机身绝对高度、线速度及地面支撑亦未由这份记录完整测得。详细输入、模型哈希与重构qpos见`artifacts/model6848-startup-review-20261022-122136/same-start-pose/feasibility.json`和同目录`kinematic-reconstruction.npz`。
+此前这一步只做静态可行性检查，尚未从该实测初姿运行动力学，没有放宽限位或夹断角度；直接从越限状态步进会引入限位纠正力，不能当成正常无扰动的同初姿对照。机身绝对高度、线速度及地面支撑亦未由这份记录完整测得。详细输入、模型哈希与重构qpos见`artifacts/real2sim/model6848-startup-review-20261022-122136/same-start-pose/feasibility.json`和同目录`kinematic-reconstruction.npz`。
 
 ## 按实录初姿运行的动力学对照（后续获授权执行）
 
@@ -43,15 +43,15 @@ seed42只是固定随机初态，C组从仿真姿态库取样，并未匹配本�
 
 **结果：从实录已测姿态启动，零速前移也会出现；该现象不依赖随机seed42，也不依赖初始两膝越限。**但最初起立响应尚未对上：左后驱动角lf00从约1.98rad降到1.0rad以下，仿真约80ms，实录首次采样约114ms；首1秒四腿角RMSE约0.211/0.226/0.241/0.239rad。统一前向的轮速峰值约50.07rad/s，对应实录51.31rad/s，但时间过程不同。实录没有独立机身位置/速度，绳索受力起点未知，不能计算真机位移误差，也不能据此认定具体的零点、力矩、惯量或接触参数错误。
 
-最终产物在`artifacts/model6848-startup-review-20261022-122136/measured-start-dynamics-final/`，含`report.json`、两组NPZ/JSON轨迹、`startup-comparison.png`及[30秒并排回放](../../artifacts/model6848-startup-review-20261022-122136/measured-start-dynamics-final/measured-start-pose-30s.mp4)。视频750帧/25fps/1280×608，首尾解码通过、已检查预览。`v1/v2`为整理时保留的中间结果，其中额外的请求力矩开环回放受对齐方式影响很大，未作为本文的已验证对比或参数判断依据。
+最终产物在`artifacts/real2sim/model6848-startup-review-20261022-122136/measured-start-dynamics-final/`，含`report.json`、两组NPZ/JSON轨迹、`startup-comparison.png`及[30秒并排回放](../../artifacts/real2sim/model6848-startup-review-20261022-122136/measured-start-dynamics-final/measured-start-pose-30s.mp4)。视频750帧/25fps/1280×608，首尾解码通过、已检查预览。`v1/v2`为整理时保留的中间结果，其中额外的请求力矩开环回放受对齐方式影响很大，未作为本文的已验证对比或参数判断依据。
 
 复现命令（新输出目录，mjlab环境；不连接实机、不训练）：
 
 ```bash
 MUJOCO_GL=egl OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
   mjlab_training/.venv/bin/python scripts/agent/compare_h7_measured_start.py \
-  --capture-root artifacts/model6848-startup-review-20261022-122136 \
-  --out artifacts/model6848-startup-review-20261022-122136/measured-start-recheck
+  --capture-root artifacts/real2sim/model6848-startup-review-20261022-122136 \
+  --out artifacts/real2sim/model6848-startup-review-20261022-122136/measured-start-recheck
 ```
 
 该正式入口退出0；活动工作区仍有其他任务修改，所用旧版本完整清单在冻结manifest中，运行源码副本在最终产物目录。只新增离线对照入口和本分析记录，没有改共享物理资产、H7或模型权重，没有训练、烧录或控制硬件。模型采纳状态与部署负责人待确认状态不变。
@@ -87,7 +87,7 @@ MUJOCO_GL=egl OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
 分析期间活动XML、姿态库与相关代码发生其他修改，新增复测被模型哈希检查拒绝。随后从Git `de9841cd8e9a3e4e2ca339669af9e5de80c138be`冻结原CPU源码、XML、原姿态库和15个引用mesh，保留活动工作区不动：
 
 - checkpoint为交付6848（SHA256 `4a96a4c2…`）；冻结XML `cac8061d…`，为原joint_sharp版本；CPU源码 `3c1418a0…`。
-- 完整来源清单在`artifacts/model6848-startup-review-20261022-122136/frozen-baseline/manifest.json`。冻结后整段重复原30秒基线，逐步时间/位置/速度/高度最大差0。
+- 完整来源清单在`artifacts/real2sim/model6848-startup-review-20261022-122136/frozen-baseline/manifest.json`。冻结后整段重复原30秒基线，逐步时间/位置/速度/高度最大差0。
 - PATH无主机C编译器，复用与冻结C源码哈希及MuJoCo 3.11.0对应的既有原生轮回调缓存；来源/库哈希在`frozen-baseline/native-cache.json`，未安装依赖。
 - 正式结果为`zero-command-frozen-v2/report.json`：保存替换输入、冻结迭代、完整CPU轨迹、seed42初始qpos/qvel、实际输入和来源哈希。这些结果不代表活动工作区后来修改的新XML已验证。
 
@@ -96,10 +96,10 @@ MUJOCO_GL=egl OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
 ```bash
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 mjlab_training/.venv/bin/python \
   scripts/agent/analyze_h7_zero_command.py \
-  --capture-root artifacts/model6848-startup-review-20261022-122136 \
-  --cpu-report artifacts/model6848-startup-review-20261022-122136/cpu-zero-30s.json \
-  --cpu-snapshot artifacts/model6848-startup-review-20261022-122136/frozen-baseline \
-  --out artifacts/model6848-startup-review-20261022-122136/recheck-zero-command
+  --capture-root artifacts/real2sim/model6848-startup-review-20261022-122136 \
+  --cpu-report artifacts/real2sim/model6848-startup-review-20261022-122136/cpu-zero-30s.json \
+  --cpu-snapshot artifacts/real2sim/model6848-startup-review-20261022-122136/frozen-baseline \
+  --out artifacts/real2sim/model6848-startup-review-20261022-122136/recheck-zero-command
 ```
 
 新增入口只做离线诊断。正式冻结运行退出0，检查覆盖策略配对一致、冻结传感器不被迭代改写、非有限数值拒绝与基线重复差0；不是单位测试或整机行为验收。`zero-command-final/`的模型变化拒绝及`zero-command-frozen/`的缺编译器失败保留，不算成功结果。本轮没有改H7、标定、XML、姿态库或训练配置，没有启动/追加训练、烧录或发电机指令。

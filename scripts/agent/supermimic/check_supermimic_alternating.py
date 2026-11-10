@@ -16,7 +16,7 @@ from ct_mjlab.supermimic.state import StateAdapter, SENSORS, NOISE, MEMORY, PARA
 from ct_mjlab.supermimic.buffer import ReplayBuffer
 
 ROOT = Path(__file__).resolve().parents[3]
-ART = ROOT/'artifacts/supermimic-v13-alternating-20261031-r1'
+ART = ROOT/'artifacts/supermimic/supermimic-v13-alternating-20261031-r1'
 PARENT = ROOT/'logs/mjlab/chuanliantui_supermimic_walk/20261031_v7_worldfit4_actortransfer3600/checkpoint_000615.pt'
 WORLD = ROOT/'logs/mjlab/chuanliantui_supermimic_walk/20261031_v12_motiononly_retrain_r1/final.pt'
 

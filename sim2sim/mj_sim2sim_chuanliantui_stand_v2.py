@@ -59,12 +59,12 @@ class OnnxPolicy:
 
 
 class StandV2Playback(Playback):
-    def __init__(self, initial_states, sample=0, integration_substeps=4):
+    def __init__(self, initial_states, sample=0, integration_substeps=4, *, fitted_leg_load=True):
         with np.load(initial_states) as saved:
             self.initial_qpos = saved["qpos"].copy()
             self.initial_qvel = saved["qvel"].copy()
         self.sample = sample
-        super().__init__("ground", (0., 0., .22), motor_response_time_constant_s=0.)
+        super().__init__("ground", (0., 0., .22), motor_response_time_constant_s=0.,fitted_leg_load=fitted_leg_load)
         # 原生CPU在部分落地姿态下2ms积分会异常注能；保持PD 2ms，用四个0.5ms子步积分。
         self.integration_substeps = integration_substeps
         self.model.opt.timestep = DT/integration_substeps
@@ -159,6 +159,8 @@ class StandV2Playback(Playback):
             self.data.ctrl[self.motor_ids] = torque
             self.data.ctrl[self.spring_ids] = spring
             for _ in range(self.integration_substeps):
+                if self.leg_load is not None:
+                    self.leg_load.apply()
                 mujoco.mj_step(self.model, self.data)
             forces = self.contact_forces()
         self.base_force = float(np.linalg.norm(forces[0]))

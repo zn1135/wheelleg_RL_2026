@@ -268,6 +268,8 @@ def train(args):
             shutil.copy2(path,destination)
             hashes[str(relative)] = hashlib.sha256(path.read_bytes()).hexdigest()
         (args.log_dir/'source_sha256.json').write_text(json.dumps(hashes,indent=2)+'\n')
+        from ct_mjlab.envs.chuanliantui.fitted_leg_load import PARAMETERS
+        shutil.copy2(PARAMETERS,args.log_dir/'snapshot'/'fitted_leg_load.json')
         config = {k:str(v) if isinstance(v,Path) else v for k,v in vars(args).items()}
         config['initialization'] = initialization
         config['world_steps_per_update'] = WORLD_STEPS_PER_UPDATE

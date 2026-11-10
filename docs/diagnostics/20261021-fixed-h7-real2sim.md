@@ -6,8 +6,8 @@
 
 - 工作目录：`/home/zn/.codex/worktrees/fixed-h7-real2sim/Wheel-Legged-Gym`，独立托管 worktree、detached HEAD。
 - 起点：原工作区 `26_wheelleg`，HEAD `d7c857f10c24751f8bb2e525438bf10bad499312`。原暂存区为空；保留原工作区，不提交、不推送。
-- **不是只取HEAD**：复制启动时所有35个未提交/新增文件，另复制15个会话的 `meta.json/stream.jsonl`、固定ONNX及历史复现实验、固件来源证据，共110项。逐文件来源和源/目标SHA256见 [迁移清单](../../artifacts/fixed-h7-calibration-20261021/migration-manifest.json)。未提交补丁、暂存补丁和原状态分别保存在同目录的 `source-tracked.diff`、`source-index.diff`、`source-status.z`。
-- 实验期间原工作区另有修改，包括部分H7试验补偿文件被删除；本任务没有回写或覆盖，继续用启动时快照。逐文件前后哈希见 [保留核对](../../artifacts/fixed-h7-calibration-20261021/source-preservation-audit.json)。因此不能把“本任务没有改原目录”写成“原目录所有文件始终不变”。
+- **不是只取HEAD**：复制启动时所有35个未提交/新增文件，另复制15个会话的 `meta.json/stream.jsonl`、固定ONNX及历史复现实验、固件来源证据，共110项。逐文件来源和源/目标SHA256见 [迁移清单](../../artifacts/real2sim/fixed-h7-calibration-20261021/migration-manifest.json)。未提交补丁、暂存补丁和原状态分别保存在同目录的 `source-tracked.diff`、`source-index.diff`、`source-status.z`。
+- 实验期间原工作区另有修改，包括部分H7试验补偿文件被删除；本任务没有回写或覆盖，继续用启动时快照。逐文件前后哈希见 [保留核对](../../artifacts/real2sim/fixed-h7-calibration-20261021/source-preservation-audit.json)。因此不能把“本任务没有改原目录”写成“原目录所有文件始终不变”。
 - 运行库：原 mjlab 虚拟环境中的 Python 3.12.3、MuJoCo 3.11.0、NumPy 2.5.3；不安装依赖、不使用系统Python。工作目录和代码/模型/输出全部在本worktree；仅共用已有解释器/依赖。
 - 正式XML SHA256：`1ea213314d8fd686841678d28246fbb588d53a5586e08c22ea977e95c0cb4ec5`。
 - 机器配置 SHA256：`017665bc3ebcfdd20d846e2d781b6109c2e425ccdd9f1b4779124e2221ef5416`，大机M3508+C620，轮总减速比15.3333333，附加RL坐标映射 `[1,1,-1,-1,1,-1]`。这里只读取原值。
@@ -16,7 +16,7 @@
 
 ## 数据盘点与划分
 
-完整盘点见 [15会话清单](../../artifacts/fixed-h7-calibration-20261021/inventory-audit.json)，本次冻结划分见 [split.json](../../artifacts/fixed-h7-calibration-20261021/study/split.json)。会话文件时间为UTC，以下名称沿用原归档名。
+完整盘点见 [15会话清单](../../artifacts/real2sim/fixed-h7-calibration-20261021/inventory-audit.json)，本次冻结划分见 [split.json](../../artifacts/real2sim/fixed-h7-calibration-20261021/study/split.json)。会话文件时间为UTC，以下名称沿用原归档名。
 
 | 用途 | 完整采集会话 | 有效数据/输入 | 固件历史证据 |
 |---|---|---|---|
@@ -81,11 +81,11 @@
 
 自由组加速/减速段RMSE依次为L+ 3.362/12.902、L− 4.150/12.690、R+ 9.277/7.319、R− 9.072/8.222 rad/s。左轮候选滑行停止明显过早；右轮峰值过高且方向残差不同。原模型0损耗会持续维持过高轮速，故“相对原模型改善很多”不等于“复现实机”。
 
-0～3、3～10、10～20、20～40、≥40rad/s分别按**实测速度**分箱，再区分左右/正反/加速/减速/边沿；所有组别的样本数、MAE、RMSE、偏置、P95见 [分箱表](../../artifacts/fixed-h7-calibration-20261021/study/bench-phase-speed-metrics.csv)。≥40无台架覆盖，空格不是零误差；少量加速样本不构成稳定统计。
+0～3、3～10、10～20、20～40、≥40rad/s分别按**实测速度**分箱，再区分左右/正反/加速/减速/边沿；所有组别的样本数、MAE、RMSE、偏置、P95见 [分箱表](../../artifacts/real2sim/fixed-h7-calibration-20261021/study/bench-phase-speed-metrics.csv)。≥40无台架覆盖，空格不是零误差；少量加速样本不构成稳定统计。
 
 固定参数下把验证脉冲的开/关沿分别移到记录约束区间四个角点：自由组L+/L− RMSE范围12.27～12.95/12.06～12.84，R+/R−约2.14～15.94/2.93～16.98rad/s。右轮对输入边沿高度敏感；未通过边沿扰动稳健性验证。这不是从USB间隔拟合出一个“实际延迟”。
 
-[完整对照曲线](../../artifacts/fixed-h7-calibration-20261021/study/bench-validation.png)、[候选及实测放大图](../../artifacts/fixed-h7-calibration-20261021/study/bench-validation-zoom.png)、[方向/速度/阶段图](../../artifacts/fixed-h7-calibration-20261021/study/phase-speed-validation.png)。
+[完整对照曲线](../../artifacts/real2sim/fixed-h7-calibration-20261021/study/bench-validation.png)、[候选及实测放大图](../../artifacts/real2sim/fixed-h7-calibration-20261021/study/bench-validation-zoom.png)、[方向/速度/阶段图](../../artifacts/real2sim/fixed-h7-calibration-20261021/study/phase-speed-validation.png)。
 
 ## 整机10/50/100ms预测
 
@@ -111,9 +111,9 @@
 
 自由组轮速明显改善，但10/50ms俯仰分别恶化约13.8%/8.8%；100ms俯仰改善约13.8%，仍达5.45°平均误差。固定组10ms俯仰也略恶化，50/100ms有所改善；两组均不能据此判整体通过。本报告用轮速改善且俯仰不恶化作为诊断门槛，不把它冒充作者确认的实机验收阈值；扶持外力和输入波形缺失本身也阻止整机校准验收。
 
-8种边界/输入假设下自由组左右轮MAE范围：10ms 0.863～0.971/1.489～1.557，50ms 1.759～1.905/2.475～2.743，100ms 3.055～3.301/4.792～5.045rad/s；轮速相对改善保持。俯仰范围分别0.194～0.322、1.689～1.771、5.444～5.529°，短时俯仰改善没有稳健证据。原模型同假设范围和逐点误差同时保存在 [结论/敏感性表](../../artifacts/fixed-h7-calibration-20261021/study/conclusion.json)，不挑最有利的边界。
+8种边界/输入假设下自由组左右轮MAE范围：10ms 0.863～0.971/1.489～1.557，50ms 1.759～1.905/2.475～2.743，100ms 3.055～3.301/4.792～5.045rad/s；轮速相对改善保持。俯仰范围分别0.194～0.322、1.689～1.771、5.444～5.529°，短时俯仰改善没有稳健证据。原模型同假设范围和逐点误差同时保存在 [结论/敏感性表](../../artifacts/real2sim/fixed-h7-calibration-20261021/study/conclusion.json)，不挑最有利的边界。
 
-[整机误差曲线](../../artifacts/fixed-h7-calibration-20261021/study/rl-errors.png)；全部9792个终点、状态和初始化分别保存在 `rl-predictions.csv`、`rl-states.npz`、`rl.json`。
+[整机误差曲线](../../artifacts/real2sim/fixed-h7-calibration-20261021/study/rl-errors.png)；全部9792个终点、状态和初始化分别保存在 `rl-predictions.csv`、`rl-states.npz`、`rl.json`。
 
 ## 舍入异常复核
 
@@ -137,13 +137,13 @@
 
 舍入组约0.48s开始出现超过1e-3量级的指标差异。将积分细化同时保持500Hz力矩更新、50Hz策略时，完整/取整组的好坏关系翻转；这是数值离散与接触/闭环响应敏感的证据，**不是已证明数值收敛**，也不能把差异全归因于float精度或认定保留小数可修复。当前行为本身不稳健；尚未定位到唯一的接触切换或求解器内部根因。
 
-早期诊断还暴露一个实验混杂：`mj_setConst`会改变当前数据位置，调整armature后必须还原初态。最终版本已还原并核对哈希；早期 `rounding/` 中该单项不作为证据。另外 `rounding-verified/` 的1ms试跑同时改变PD更新率，不作为纯数值对照。最终仅采用 [rounding-final-isolated/report.json](../../artifacts/fixed-h7-calibration-20261021/rounding-final-isolated/report.json)，图为同目录 `rounding-sensitivity.png`。最终运行还将历史XML的绝对mesh目录在内存中重定向到本worktree，并核对编译后的物理字段一致，避免依赖原工作区资产。中断的 `rounding-final/` 和早期诊断保留原状。
+早期诊断还暴露一个实验混杂：`mj_setConst`会改变当前数据位置，调整armature后必须还原初态。最终版本已还原并核对哈希；早期 `rounding/` 中该单项不作为证据。另外 `rounding-verified/` 的1ms试跑同时改变PD更新率，不作为纯数值对照。最终仅采用 [rounding-final-isolated/report.json](../../artifacts/real2sim/fixed-h7-calibration-20261021/rounding-final-isolated/report.json)，图为同目录 `rounding-sensitivity.png`。最终运行还将历史XML的绝对mesh目录在内存中重定向到本worktree，并核对编译后的物理字段一致，避免依赖原工作区资产。中断的 `rounding-final/` 和早期诊断保留原状。
 
 ## 验证范围与下一项最小采集
 
-- [原有有限动力学检查](../../artifacts/fixed-h7-calibration-20261021/check-existing-dynamics.json)通过：CRC、回绕、缺口、重启、过期、截断拒绝；夹具不移动，候选允许字段限制。
-- [本次核验](../../artifacts/fixed-h7-calibration-20261021/study/verification.json)通过：实际预算/会话哈希/划分、质量质心惯量等保护字段、固定组armature=0；验证脉冲重新积分差0；9792终点重算差0；1条整机轨迹重新积分差0；篡改未来实测状态不影响预测。
-- 这些是离线软件/数据核对，不是单元测试、实机力矩标定或行为验收。候选独立XML、源码版本/哈希见 [结果清单](../../artifacts/fixed-h7-calibration-20261021/study/result-manifest.json)。正式XML、机器配置、物理映射和生成策略未改；H7负责人核对仍待确认。
+- [原有有限动力学检查](../../artifacts/real2sim/fixed-h7-calibration-20261021/check-existing-dynamics.json)通过：CRC、回绕、缺口、重启、过期、截断拒绝；夹具不移动，候选允许字段限制。
+- [本次核验](../../artifacts/real2sim/fixed-h7-calibration-20261021/study/verification.json)通过：实际预算/会话哈希/划分、质量质心惯量等保护字段、固定组armature=0；验证脉冲重新积分差0；9792终点重算差0；1条整机轨迹重新积分差0；篡改未来实测状态不影响预测。
+- 这些是离线软件/数据核对，不是单元测试、实机力矩标定或行为验收。候选独立XML、源码版本/哈希见 [结果清单](../../artifacts/real2sim/fixed-h7-calibration-20261021/study/result-manifest.json)。正式XML、机器配置、物理映射和生成策略未改；H7负责人核对仍待确认。
 
 最小补充为两类独立采集：
 
@@ -158,7 +158,7 @@
 
 ```bash
 bash scripts/agent/reproduce_fixed_h7_calibration.sh \
-  artifacts/fixed-h7-calibration-20261021/replicate-01
+  artifacts/real2sim/fixed-h7-calibration-20261021/replicate-01
 ```
 
 脚本依次执行小样本检查、40次预算小拟合和2起点RL试跑、240次等预算完整拟合、每200ms起点的整机预测、独立核验、历史舍入诊断和汇总；不接触串口、训练或TensorBoard。数据固定为 `split.json` 对应会话，输出全部保存在所给目录及其 `-small/-rounding` 同级目录。可用 `TASK_PYTHON` 指定已有mjlab虚拟环境解释器；不使用系统Python。
@@ -168,5 +168,5 @@ bash scripts/agent/reproduce_fixed_h7_calibration.sh \
 ```bash
 OPENBLAS_NUM_THREADS=1 /home/zn/文档/Wheel-Legged-Gym/mjlab_training/.venv/bin/python \
   scripts/agent/check_fixed_h7_calibration.py \
-  --out artifacts/fixed-h7-calibration-20261021/study
+  --out artifacts/real2sim/fixed-h7-calibration-20261021/study
 ```

@@ -105,7 +105,7 @@ def verify_contact(base, folder_name='contact-real2sim'):
         assert digest(folder / name) == sha
     for info in report['models'].values():
         assert digest(Path(info['path'])) == info['sha256']
-    prior = read(ROOT / 'artifacts/real2sim-dynamics-20261021/verified-run/report.json')
+    prior = read(ROOT / 'artifacts/real2sim/real2sim-dynamics-20261021/verified-run/report.json')
     arguments = prior['command_arguments']
     session = dyn.Session(ROOT / arguments['rl_session'], config=ROOT / arguments['machine_config'])
     assert session.summary == report['rl_session'] and session.wheel_response_mode == 0
@@ -146,7 +146,7 @@ def verify_contact(base, folder_name='contact-real2sim'):
                 subset = [r for r in rows if (r['case'], r['model'], int(r['horizon_ms'])) == (case, name, h)]
                 for key in fields:
                     assert dyn.stats([float(r[key]) for r in subset]) == report['summaries'][f'{case}/{name}/{h}'][key]
-    with np.load(ROOT / 'artifacts/real2sim-coupling-20261021/fixed-initials/states.npz') as archive:
+    with np.load(ROOT / 'artifacts/real2sim/real2sim-coupling-20261021/fixed-initials/states.npz') as archive:
         old = {key: archive[key] for key in archive.files}
     old_keys = {(int(r), str(c), str(m)): k for k, (r, c, m) in enumerate(zip(old['row'], old['case'], old['model']))}
     matched = 0
@@ -182,7 +182,7 @@ def verify_torque_scale(base):
     assert bench.summary == report['bench_session']
     pulses, rejected, _ = dyn.pulses_from_session(bench)
     assert len(pulses) == 8 and not rejected
-    extra = np.array(read(ROOT / 'artifacts/real2sim-dynamics-20261021/verified-run/candidate-parameters.json')['additional_parameters'])
+    extra = np.array(read(ROOT / 'artifacts/real2sim/real2sim-dynamics-20261021/verified-run/candidate-parameters.json')['additional_parameters'])
     fixture = dyn.Fixture(bench.model_path, pulses[0].full_qpos)
     matrix = np.empty((2, 2)); mujoco.mj_fullM(fixture.m, fixture.d, matrix)
     inertia = np.diag(matrix)
@@ -390,7 +390,7 @@ def verify_sine(folder):
     session = dyn.Session(folder / 'wheel-sine-live-20261021')
     exit_session = dyn.Session(folder / 'wheel-sine-exit-20261021')
     assert session.meta['complete'] and exit_session.meta['complete']
-    flash = read(ROOT / 'artifacts/wheel-bench-sine-1p70-5hz-flash-20261021/flash.json')
+    flash = read(ROOT / 'artifacts/real2sim/wheel-bench-sine-1p70-5hz-flash-20261021/flash.json')
     assert flash['status'] == 'flashed_verified_reset'
     wave = flash['waveform']
     a = session.f
@@ -490,7 +490,7 @@ def verify_sine(folder):
             'session': session.summary, 'exit_session': exit_session.summary, 'runs': runs,
             'faults_zero': True, 'leg_requests_zero': True, 'one_wheel_at_a_time': True,
             'exit_disabled_zero_requests': True, 'waveform': wave,
-            'flash_record_sha256': digest(ROOT / 'artifacts/wheel-bench-sine-1p70-5hz-flash-20261021/flash.json'),
+            'flash_record_sha256': digest(ROOT / 'artifacts/real2sim/wheel-bench-sine-1p70-5hz-flash-20261021/flash.json'),
             'limitations': ['100Hz samples are not the entire 1kHz CAN request history',
                             'one frequency does not independently identify torque gain, inertia and losses',
                             'velocity phase lag is the entire mechanical response, not control latency'],
@@ -508,7 +508,7 @@ def verify_sine_models(folder, session):
     for name, sha in report['source_sha256'].items():
         assert digest(base / 'source' / name) == sha
     assert digest(session.model_path) == report['model']['sha256']
-    prior = ROOT / 'artifacts/real2sim-dynamics-20261021/verified-run'
+    prior = ROOT / 'artifacts/real2sim/real2sim-dynamics-20261021/verified-run'
     assert digest(prior / 'candidate.xml') == report['prior_candidate']['sha256']
     np.testing.assert_array_equal(report['parameters']['prior_candidate'], read(prior / 'candidate-parameters.json')['additional_parameters'])
     np.testing.assert_array_equal(report['parameters']['original'], np.zeros((2, 3)))
@@ -705,7 +705,7 @@ def main():
         args.out.write_text(json.dumps(result, indent=2) + '\n')
         print(json.dumps(result), flush=True)
         return
-    fit = ROOT / 'artifacts/real2sim-dynamics-20261021/verified-run'
+    fit = ROOT / 'artifacts/real2sim/real2sim-dynamics-20261021/verified-run'
     cases = ('original', 'candidate_no_compensation', 'candidate_full_precision', 'candidate_approved_h7')
     fit_coeff = np.array(read(fit / 'candidate-parameters.json')['additional_parameters'])[:, 2]
     h7_coeff = np.array(read(base / 'parameters.json')['additional_parameters'])[:, 2]

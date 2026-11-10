@@ -7,12 +7,14 @@ from pathlib import Path
 import numpy as np
 
 ROOT=Path(__file__).resolve().parents[3]
-SOURCES=[('SM615','supermimic-v13-baseline615-current13-seed43-20261031'),
-    ('A170','supermimic-v13-midpoint-seed43-20261031'),
-    ('A368','supermimic-v13-final-seed43-20261031'),
-    ('A700','supermimic-v13-continuation-a700-seed43-20261101-r1'),
-    *[(f'A{n}',f'supermimic-v13-r2-a{n}-seed43-20261101') for n in (1200,1700,2200)],
-    *[(f'A{n}',f'supermimic-v13-r3-a{n}-seed43-20261101') for n in (3200,4200,5200)]]
+SOURCES=[('SM615','supermimic/supermimic-v13-baseline615-current13-seed43-20261031'),
+    ('A170','supermimic/supermimic-v13-midpoint-seed43-20261031'),
+    ('A368','supermimic/supermimic-v13-final-seed43-20261031'),
+    ('A700','supermimic/supermimic-v13-continuation-a700-seed43-20261101-r1'),
+    *[(f'A{n}',f'supermimic/supermimic-v13-r2-a{n}-seed43-20261101') for n in (1200,1700)],
+    ('A2200','supermimic/supermimic-v13-r2-a2200-seed43-20261101'),
+    *[(f'A{n}',f'supermimic/supermimic-v13-r3-a{n}-seed43-20261101') for n in (3200,4200)],
+    ('A5200','supermimic/supermimic-v13-r3-a5200-seed43-20261101')]
 GROUPS={'legs':[0,1,3,4],'wheels':[2,5],'left_wheel':[2],'right_wheel':[5]}
 
 

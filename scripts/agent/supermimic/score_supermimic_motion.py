@@ -21,12 +21,12 @@ from ct_mjlab.supermimic.learner import ALGORITHM_CONTRACT, WORLD_LOSS_RECIPE
 from ct_mjlab.supermimic.state import NOISE, rotation_vector, unit_quat
 
 ROOT=Path(__file__).resolve().parents[3]
-ART=ROOT/'artifacts/supermimic-v12-motion-only-20261031-r2'
+ART=ROOT/'artifacts/supermimic/supermimic-v12-motion-only-20261031-r2'
 V12='chuanliantui-supermimic-motion-only-pd-reward-soft-termination-v12'
-OLD=ROOT/'artifacts/supermimic-v10-world-only-20261031-r1'
+OLD=ROOT/'artifacts/supermimic/supermimic-v10-world-only-20261031-r1'
 OLD_RUN=ROOT/'logs/mjlab/chuanliantui_supermimic_walk/20261031_v10_contact_worldonly_r1'
-V10_PT=ROOT/'artifacts/supermimic-v10-one-step-vs-rollout-20261031-r3/result/predictions.pt'
-V11_PT=ROOT/'artifacts/supermimic-v11-world-only-20261031-r1/score/predictions.pt'
+V10_PT=ROOT/'artifacts/supermimic/supermimic-v10-one-step-vs-rollout-20261031-r3/result/predictions.pt'
+V11_PT=ROOT/'artifacts/supermimic/supermimic-v11-world-only-20261031-r1/score/predictions.pt'
 LOCKED_NEW={
     'supermimic/__main__.py':'bea771fd2e0686b53a196c78f5d488df95471ae1878a56b6f6d01502ddcb809c',
     'supermimic/learner.py':'fb27172a723ddf20c7e9f0a40993b10c97c38e1b9771e0b101708e7fb006b330',

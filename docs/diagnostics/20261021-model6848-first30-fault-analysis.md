@@ -4,7 +4,7 @@
 
 ## 本次数据与范围
 
-最新会话为Jetson `artifacts/model6848-real-rl-20261021-203758`，20:37:59开始、120.039秒、267438条原始事件，meta完整且流哈希验证通过。原样复制到本独立worktree `artifacts/model6848-real-rl-203758-review/model6848-real-rl-20261021-203758`，原始流SHA256 `8700f8efb39912ba1a8a6029f83e7038f3d7341835020fdd1c2a1a8d587fcca3`。行为分析仅使用记录接收时间0～30秒；全文件仅额外做完整性/哈希检查。未接硬件控制、复位、烧录、训练或修改标定/XML/控制参数。
+最新会话为Jetson `artifacts/model6848-real-rl-20261021-203758`，20:37:59开始、120.039秒、267438条原始事件，meta完整且流哈希验证通过。原样复制到本独立worktree `artifacts/real2sim/model6848-real-rl-203758-review/model6848-real-rl-20261021-203758`，原始流SHA256 `8700f8efb39912ba1a8a6029f83e7038f3d7341835020fdd1c2a1a8d587fcca3`。行为分析仅使用记录接收时间0～30秒；全文件仅额外做完整性/哈希检查。未接硬件控制、复位、烧录、训练或修改标定/XML/控制参数。
 
 前30秒2993帧合法v2镜像，已提交帧序号缺口0、重启0，帧尾扫描拒绝候选7个（不是认定7个损坏镜像帧）。有398组当前板端时间范围内、RL档成功推理配对，退出RL后重复的历史配对不当新推理。28帧有效且允许驱动的RL PD样本只占约0.28秒，不能把10.61秒RL档时间当作有效运动时间。
 
@@ -56,6 +56,6 @@ Jetson录制没有firmware-manifest；其XML哈希仍是旧显示模型 `1ea2133
 
 优先修正并验证角度表示/启动分支的一致性，再决定是否需要模型训练或执行器参数调整。本轮只完成分析，不改零点/极性/力矩换算、不直接将角度取模、不放宽故障门控、不继续动力试验。
 
-可复现命令、输入/来源哈希、逐帧CSV、原始帧NPZ、数值核对NPZ和曲线在 `artifacts/model6848-real-rl-203758-review/`；以 `first30-final/report.json` 为最终自动分析。新增离线入口 `scripts/agent/analyze_h7_rl_capture.py` 仅解析和复算已录数据，未运行单位测试或硬件控制验收。
+可复现命令、输入/来源哈希、逐帧CSV、原始帧NPZ、数值核对NPZ和曲线在 `artifacts/real2sim/model6848-real-rl-203758-review/`；以 `first30-final/report.json` 为最终自动分析。新增离线入口 `scripts/agent/analyze_h7_rl_capture.py` 仅解析和复算已录数据，未运行单位测试或硬件控制验收。
 
 修复阶段更正：XML前驱动关节为约参考角±100rad、后驱动关节不限位，先前“有限行程关节”的说法不准确。目标限幅并非机械限位，故候选采用首次锁存整圈偏移、运行中保持连续；见[修复与验证](../interfaces/20261021-h7-rl-angle-branch-fix.md)。未上板验证。

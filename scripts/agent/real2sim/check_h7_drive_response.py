@@ -25,7 +25,7 @@ def main():
     native = out/'check-native';native.mkdir(exist_ok=True)
     library = probe.install_gain(native)
     try:
-        firmware = json.loads((ROOT/'artifacts/h7-bench-fixed300-20261021/firmware-machine-0.json').read_text())
+        firmware = json.loads((ROOT/'artifacts/real2sim/h7-bench-fixed300-20261021/firmware-machine-0.json').read_text())
         for name,digest in {**firmware['source_sha256'],**firmware['protected_sha256']}.items():
             path = ROOT/name
             if name.endswith('multimode_model3023/chuanliantui.xml') and hashlib.sha256(path.read_bytes()).hexdigest()!=digest:

@@ -4,7 +4,7 @@
 
 唯一可编辑源为[共享XML](../../resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml)。改动双轮armature、damping、frictionloss和执行器G/V/p；零件质量、重心、刚体惯量、几何、非轮关节及电机极性/零点/电流换算保持。参数仍只称指令到响应的等效参数，不宣称真实轴端惯量或摩擦。
 
-用户后续明确选用统一2ms：当前训练配置`huananhu_env_cfg.py`和CPU sim2sim的`DT`原本均为0.002s，保持现值；每10个物理步更新策略，即20ms（50Hz）。后续以2ms悬空轮速RMSE **2.880550rad/s**作为该运行步长的参考，1ms结果仅保留历史对照，不重拟合参数、不启动训练。复核命令：`mjlab_training/.venv/bin/python scripts/agent/check_multimode_cpu_sim2sim.py --out artifacts/h7-wheel-response-integration-20261021/timestep-2ms-cpu-check.json`；检查只覆盖有限接口/数值一致性，不代表整机行为验收。
+用户后续明确选用统一2ms：当前训练配置`huananhu_env_cfg.py`和CPU sim2sim的`DT`原本均为0.002s，保持现值；每10个物理步更新策略，即20ms（50Hz）。后续以2ms悬空轮速RMSE **2.880550rad/s**作为该运行步长的参考，1ms结果仅保留历史对照，不重拟合参数、不启动训练。复核命令：`mjlab_training/.venv/bin/python scripts/agent/check_multimode_cpu_sim2sim.py --out artifacts/real2sim/h7-wheel-response-integration-20261021/timestep-2ms-cpu-check.json`；检查只覆盖有限接口/数值一致性，不代表整机行为验收。
 
 | 轮 | armature kg·m² | damping Nm·s/rad | frictionloss名义Nm | G | V rad/s | p |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -36,13 +36,13 @@ model.load_model/load_view_model属于训练侧初始化/姿态辅助，使用�
 - mjlab实际GPU 2环境×16步有限检查通过，actor/critic为[2,39]/[2,82]、动作6维，无非有限值。此检查创建策略做有限推理，没有调用学习、没有训练日志目录，不是站立/行走/恢复行为验收。
 - H7来源、机器标定和网络权重哈希保持；部件质量/惯量/重心/几何/接触、非轮自由度/执行器未变，wheel字段精确等于选定候选。旧冻结候选也在新加载链下复算通过。
 
-证据为[接入检查](../../artifacts/h7-wheel-response-integration-20261021/check/report.json)、[CPU检查](../../artifacts/h7-wheel-response-integration-20261021/cpu-contract-native.json)、[GPU有限检查](../../artifacts/h7-wheel-response-integration-20261021/mjlab-check-summary.json)、[历史候选检查](../../artifacts/h7-wheel-response-integration-20261021/frozen-candidate-check/verification.json)。未对照旧RL俯仰，未启动训练、TensorBoard或硬件。
+证据为[接入检查](../../artifacts/real2sim/h7-wheel-response-integration-20261021/check/report.json)、[CPU检查](../../artifacts/real2sim/h7-wheel-response-integration-20261021/cpu-contract-native.json)、[GPU有限检查](../../artifacts/real2sim/h7-wheel-response-integration-20261021/mjlab-check-summary.json)、[历史候选检查](../../artifacts/real2sim/h7-wheel-response-integration-20261021/frozen-candidate-check/verification.json)。未对照旧RL俯仰，未启动训练、TensorBoard或硬件。
 
 ## 历史数据与参数来源
 
 旧原始XML按原始字节归档至artifacts/model-versions/<sha256>/source/model.xml，网格链接仍指向同一只读资产。real2sim加载旧录制时，当前XML哈希不匹配会查找该冻结版本，仍严格验证原哈希；不改写meta或录制、不跳过哈希检查。历史校准检查也对照录制版本，而非把已授权更新的活动模型误当作旧基线。
 
-当前同一录制会话先前已用于选择模型，本次2.779只是接入结果与既有候选一致的复现，**不是新的独立盲验证**。独立候选、首次失败、旧源码和旧指标均保留，来源/版本/哈希见[交付清单](../../artifacts/h7-wheel-response-integration-20261021/delivery-manifest.json)。
+当前同一录制会话先前已用于选择模型，本次2.779只是接入结果与既有候选一致的复现，**不是新的独立盲验证**。独立候选、首次失败、旧源码和旧指标均保留，来源/版本/哈希见[交付清单](../../artifacts/real2sim/h7-wheel-response-integration-20261021/delivery-manifest.json)。
 
 ## 训练影响与尚未验证项
 

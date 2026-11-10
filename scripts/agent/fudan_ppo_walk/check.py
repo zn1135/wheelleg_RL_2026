@@ -35,7 +35,7 @@ def main():
     protocol=manifest();assert len(protocol['samples'])==987
     (args.output/'protocol.json').write_text(json.dumps(protocol,indent=2)+'\n')
     root=Path(__file__).resolve().parents[3]
-    reference=root/'artifacts/fudan-ppo-walk-20261101/reference'
+    reference=root/'artifacts/fudan_ppo_walk/fudan-ppo-walk-20261101/reference'
     hashes=json.loads((reference/'manifest.json').read_text())
     assert all(hashlib.sha256((reference/path).read_bytes()).hexdigest()==sha for path,sha in hashes.items())
     package=root/'mjlab_training/src/ct_mjlab/fudan_ppo_walk'

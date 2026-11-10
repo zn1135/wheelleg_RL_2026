@@ -16,7 +16,7 @@ from types import SimpleNamespace
 
 
 ROOT = Path(__file__).resolve().parents[2]
-ART = ROOT/'artifacts/supermimic-v13-continuation-20261101-r1'
+ART = ROOT/'artifacts/supermimic/supermimic-v13-continuation-20261101-r1'
 MAIN = ROOT/'mjlab_training/src/ct_mjlab/supermimic/__main__.py'
 MAIN_SHA = '17051c4a88f66f62be54f17509382588f9620fa6bd959cd0e90a5e14ae76014d'
 TARGETS = (700, 1100, 1500, 2200, 5200)

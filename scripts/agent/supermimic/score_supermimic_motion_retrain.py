@@ -22,13 +22,13 @@ from ct_mjlab.supermimic.learner import ALGORITHM_CONTRACT, WORLD_LOSS_RECIPE
 from ct_mjlab.supermimic.state import NOISE, rotation_vector, unit_quat
 
 ROOT=Path(__file__).resolve().parents[3]
-ART=ROOT/'artifacts/supermimic-v12-retrain-20261031-r1'
+ART=ROOT/'artifacts/supermimic/supermimic-v12-retrain-20261031-r1'
 V12='chuanliantui-supermimic-motion-only-pd-reward-soft-termination-v12'
-OLD=ROOT/'artifacts/supermimic-v10-world-only-20261031-r1'
+OLD=ROOT/'artifacts/supermimic/supermimic-v10-world-only-20261031-r1'
 OLD_RUN=ROOT/'logs/mjlab/chuanliantui_supermimic_walk/20261031_v10_contact_worldonly_r1'
-V10_PT=ROOT/'artifacts/supermimic-v10-one-step-vs-rollout-20261031-r3/result/predictions.pt'
-V11_PT=ROOT/'artifacts/supermimic-v11-world-only-20261031-r1/score/predictions.pt'
-PREVIOUS_PT=ROOT/'artifacts/supermimic-v12-motion-only-20261031-r2/score/predictions.pt'
+V10_PT=ROOT/'artifacts/supermimic/supermimic-v10-one-step-vs-rollout-20261031-r3/result/predictions.pt'
+V11_PT=ROOT/'artifacts/supermimic/supermimic-v11-world-only-20261031-r1/score/predictions.pt'
+PREVIOUS_PT=ROOT/'artifacts/supermimic/supermimic-v12-motion-only-20261031-r2/score/predictions.pt'
 PARENT=ROOT/'logs/mjlab/chuanliantui_supermimic_walk/20261031_v7_worldfit4_actortransfer3600/checkpoint_000615.pt'
 REMOVED_REWARD_TERMS={'lin_vel_z','base_link_contact','wheels_airborne','action_rate','action_smooth'}
 LOCKED_NEW={

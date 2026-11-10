@@ -1236,6 +1236,6 @@
   ],
   "asset_deletion_user_confirmed": true,
   "deletion_performed": true,
-  "final_deletion_plan": "artifacts/retain-678-cleanup-20261101/deletion-plan.json",
-  "verification": "artifacts/retain-678-cleanup-20261101/verification.json"
+  "final_deletion_plan": "artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json",
+  "verification": "artifacts/maintenance/retain-678-cleanup-20261101/verification.json"
 }

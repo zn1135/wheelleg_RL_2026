@@ -35,14 +35,23 @@ def compare_initial(expected,actual,folder,sample_id):
     return result
 
 
-def restore_initial(wrapper,items,source,folders,checks,height):
+def restore_initial(wrapper,items,source,folders,checks,height,branches=BRANCHES,delay_steps=None):
     """Restore archived nominal fixtures, then refresh inputs without a physics step."""
     env=wrapper.env;action=wrapper.action;mapping=json.loads((source/'mapping.json').read_text())
     assert mapping['reset_contract']==wrapper.reset_contract==RESET_V2_CONTRACT
     assert not any(mapping['disturbances'][k] for k in ('action_delay','sensor_delay','pushes'))
-    assert not any(getattr(wrapper.disturbance_config,k) for k in ('action_delay','sensor_delay','pushes'))
+    if delay_steps is None:
+        assert not any(getattr(wrapper.disturbance_config,k) for k in ('action_delay','sensor_delay','pushes'))
+    else:
+        assert len(delay_steps)==2 and not wrapper.disturbance_config.pushes
+        for key,steps in zip(('action','sensor'),delay_steps):
+            assert isinstance(steps,int) and steps>=0
+            assert getattr(wrapper.disturbance_config,key+'_delay')==bool(steps)
+            if steps:
+                ms=steps*wrapper.cfg.sim.dt*1000
+                assert getattr(wrapper.disturbance_config,key+'_delay_ms')==(ms,ms)
     assert all(not sample['randomized'] for sample in items)
-    assert env.num_envs==len(items)*len(BRANCHES)
+    assert env.num_envs==len(items)*len(branches)
     for name,key in (('_motor_q_adr','motor_q'),('_motor_v_adr','motor_v'),('_spring_ids','spring_ids'),
             ('_spring_q_adr','spring_q'),('_spring_v_adr','spring_v')):
         assert getattr(action,name).cpu().tolist()==mapping[key],key
@@ -52,7 +61,7 @@ def restore_initial(wrapper,items,source,folders,checks,height):
     archived=[]
     for sample in items:
         with np.load(source/(sample['id']+'_initial.npz')) as f:archived.append({k:f[k].copy() for k in f.files})
-    records=archived*len(BRANCHES)
+    records=archived*len(branches)
     def batch(key,target):return torch.as_tensor(np.stack([r[key] for r in records]),device=target.device,dtype=target.dtype)
     for key in FIELDS:
         target=getattr(env.sim.model,key);target.copy_(batch(key,target))
@@ -86,10 +95,13 @@ def restore_initial(wrapper,items,source,folders,checks,height):
         state=action.disturbances;state.reset(slice(None),action.sensor_frame())
         state.action_steps.copy_(batch('action_delay_steps',state.action_steps))
         state.sensor_steps.copy_(batch('sensor_delay_steps',state.sensor_steps))
+        if delay_steps is not None:
+            assert len(state.actions)>delay_steps[0] and len(state.sensors)>delay_steps[1]
+            state.action_steps.fill_(delay_steps[0]);state.sensor_steps.fill_(delay_steps[1])
         state.push_seeds[:]=np.array([r['push_seed'] for r in records])
         action.push_force_scale.copy_(batch('push_force_scale',action.push_force_scale))
     wrapper.previous_position.copy_(wrapper.robot.data.root_link_pos_w);wrapper._update_state()
-    wrapper.commands.copy_(wrapper.commands.new_tensor([s['case']['segments'][0]['command'] for s in items]*len(BRANCHES)))
+    wrapper.commands.copy_(wrapper.commands.new_tensor([s['case']['segments'][0]['command'] for s in items]*len(branches)))
     wrapper.noise_mask=torch.zeros(env.num_envs,dtype=torch.bool,device=wrapper.device)
     clean=wrapper.frame().clone();obs,critic=wrapper.observations()
     wrapper.history=torch.cat((clean.repeat(1,4),wrapper._history_frame),-1)
@@ -102,16 +114,28 @@ def restore_initial(wrapper,items,source,folders,checks,height):
         actual.update(action_delay_steps=state.action_steps,sensor_delay_steps=state.sensor_steps,
             push_seed=torch.as_tensor(state.push_seeds),push_force_scale=action.push_force_scale)
     arrays_cpu={key:value.detach().cpu().numpy() for key,value in actual.items()}
-    for b,branch in enumerate(BRANCHES):
+    for b,branch in enumerate(branches):
         folder=folders[branch]
         for path in source.iterdir():
             if path.is_file():shutil.copy2(path,folder/'fixtures'/path.name)
+        if delay_steps is not None:
+            # 仅在新夹具中记录已声明的两项延迟变化，原归档数组保持不变。
+            mapping_copy=dict(mapping,disturbances=wrapper.disturbance_config.record())
+            (folder/'fixtures/mapping.json').write_text(json.dumps(mapping_copy,indent=2)+'\n')
+            for i,sample in enumerate(items):
+                fixture=dict(archived[i])
+                for key,value in zip(('action_delay_steps','sensor_delay_steps'),delay_steps):
+                    fixture[key]=np.asarray(value,dtype=fixture[key].dtype)
+                np.savez_compressed(folder/'fixtures'/(sample['id']+'_initial.npz'),**fixture)
         for i,sample in enumerate(items):
             idx=b*len(items)+i;expected=dict(archived[i],qpos=world[idx].cpu().numpy())
+            if delay_steps is not None:
+                expected.update(action_delay_steps=delay_steps[0],sensor_delay_steps=delay_steps[1])
             result=compare_initial(expected,{k:v[idx] for k,v in arrays_cpu.items()},folder,sample['id'])
-            checks.append(dict(height=height,branch=branch,sample_id=sample['id'],qpos_comparison='archive cast to runtime dtype plus environment origin',**result))
+            checks.append(dict(height=height,branch=branch,sample_id=sample['id'],qpos_comparison='archive cast to runtime dtype plus environment origin',
+                declared_delay_steps=delay_steps,**result))
     if any(not r['all_arrays_identical'] for r in checks):raise AssertionError('Initial state mismatch; see initial-differences arrays/JSON')
-    for b in range(1,len(BRANCHES)):
+    for b in range(1,len(branches)):
         lo=b*len(items);hi=lo+len(items)
         assert torch.equal(obs[:len(items)],obs[lo:hi]) and torch.equal(wrapper.history[:len(items)],wrapper.history[lo:hi]),'Branch observation/history mismatch'
     return obs,critic

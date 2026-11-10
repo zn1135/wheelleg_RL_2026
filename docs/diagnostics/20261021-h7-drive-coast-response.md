@@ -6,7 +6,7 @@
 
 ## 范围、来源与预先确定的两组
 
-仅在既有独立worktree，HEAD `d7c857f10c24751f8bb2e525438bf10bad499312`，原工作区不写入；无硬件连接、烧录、电机指令、Git提交/推送。H7/策略/机器配置/正式XML保持不变。依照用户“检验一下”，扩展的只有独立仿真候选执行器响应。固件、原始流、版本与受保护字段沿用[完整输入报告](20261021-fixed300-complete-input-calibration.md)，原始会话[划分与哈希](../../artifacts/fixed-h7-fixed300-data-20261021/split.json)不变。
+仅在既有独立worktree，HEAD `d7c857f10c24751f8bb2e525438bf10bad499312`，原工作区不写入；无硬件连接、烧录、电机指令、Git提交/推送。H7/策略/机器配置/正式XML保持不变。依照用户“检验一下”，扩展的只有独立仿真候选执行器响应。固件、原始流、版本与受保护字段沿用[完整输入报告](20261021-fixed300-complete-input-calibration.md)，原始会话[划分与哈希](../../artifacts/real2sim/fixed-h7-fixed300-data-20261021/split.json)不变。
 
 - **drive only / orange_losses**：惯量、阻尼、干摩擦全部固定为旧橙线，仅拟合驱动响应。
 - **drive + coast losses / coast_losses**：惯量仍固定为旧橙线，先仅从拟合会话零指令滑行段约束阻尼/干摩擦，再固定损耗拟合驱动响应。
@@ -31,7 +31,7 @@ G是低速等效增益，V是同向运动时驱动趋零的速度，p决定下�
 
 每阶段每轮100次实际MuJoCo目标函数调用、相同两个确定起点。驱动边界G=[0.25,6]、V=[30,180]rad/s、p=[0.5,4]：分别允许宽泛等效增益变化、覆盖已见约63rad/s平台、提供有限形状变化；不是硬件规格或物理置信区间。损耗边界沿用阻尼[0,.08]、干摩擦[0,2]；没有使用验证集扩界或选参。部分p到0.5下界，模型形状受边界限制，不称全局最优或已充分辨识。
 
-滑行损耗拟合阶段允许用**拟合会话**实测撤矩速度作为单独滑行小问题的初值，只约束损耗。最终训练/验证曲线全部从脉冲开始前初态连续预测，撤矩不注入实测值。完整拟合参数/逐调用轨迹见[parameters.json](../../artifacts/h7-drive-response-20261021/parameters.json)。
+滑行损耗拟合阶段允许用**拟合会话**实测撤矩速度作为单独滑行小问题的初值，只约束损耗。最终训练/验证曲线全部从脉冲开始前初态连续预测，撤矩不注入实测值。完整拟合参数/逐调用轨迹见[parameters.json](../../artifacts/real2sim/h7-drive-response-20261021/parameters.json)。
 
 | 候选/轮 | 附加armature | damping | frictionloss | G | V rad/s | p |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -61,9 +61,9 @@ G是低速等效增益，V是同向运动时驱动趋零的速度，p决定下�
 
 只改驱动已改善四方向加速，但右轮滑行误差比旧橙线更大；所以不能把“保留同样阻力”理解成“从不同撤矩速度出发也会得到同样减速曲线”。用零指令段重新约束阻力后，四方向两阶段MAE均改善，左负向减速仍明显弱于其他方向，未强行加方向专属损耗。
 
-左右/方向/速度区间0–3、3–10、10–30、30–50、50–80rad/s的样本数、MAE、RMSE、P95与偏差见[bench.json](../../artifacts/h7-drive-response-20261021/bench.json)的speed_summary；原始逐点predictions.csv包括边沿和初态。没有80rad/s以上实测速段可验证。
+左右/方向/速度区间0–3、3–10、10–30、30–50、50–80rad/s的样本数、MAE、RMSE、P95与偏差见[bench.json](../../artifacts/real2sim/h7-drive-response-20261021/bench.json)的speed_summary；原始逐点predictions.csv包括边沿和初态。没有80rad/s以上实测速段可验证。
 
-![完整连续预测与加速放大图](../../artifacts/h7-drive-response-20261021/validation-comparison.png)
+![完整连续预测与加速放大图](../../artifacts/real2sim/h7-drive-response-20261021/validation-comparison.png)
 
 左列全程，右列放大前0.45秒；虚线标注约300ms撤矩。黑=实测，橙=旧候选，绿=仅驱动，蓝=驱动加滑行损耗。绘图用原固件公共轮坐标，拟合中方向只映射一次。
 
@@ -77,7 +77,7 @@ G是低速等效增益，V是同向运动时驱动趋零的速度，p决定下�
 
 drive only 的 G/V 分别±1%时RMSE范围 6.3544～6.5519rad/s；drive + coast losses 的 G/V 分别±1%时RMSE范围 2.9156～3.2706rad/s。仅为此会话的有限扰动，不证明跨指令/温度/电压/负载稳健。
 
-新增正式检查`scripts/agent/check_h7_drive_response.py`核对93项已烧录预期来源/10项保护哈希、候选部件物理量/几何/接触/输入范围/齿比/非轮执行器不变、同一惯量及预算、重算全部悬空轮验证预测。具体检查范围/点数及差值见[verification.json](../../artifacts/h7-drive-response-20261021/verification.json)，passed仅表示有限软件检查。
+新增正式检查`scripts/agent/check_h7_drive_response.py`核对93项已烧录预期来源/10项保护哈希、候选部件物理量/几何/接触/输入范围/齿比/非轮执行器不变、同一惯量及预算、重算全部悬空轮验证预测。具体检查范围/点数及差值见[verification.json](../../artifacts/real2sim/h7-drive-response-20261021/verification.json)，passed仅表示有限软件检查。
 
 首次候选导出使用MjSpec.to_xml，舍入非轮几何使严格闭链姿态求解失败，未进入验证评分。失败XML与原因保留在failed-six-digit-export/；改为只编辑原始XML轮执行器字段，保留原几何文本及冻结的拟合参数，再继续评估。独立编译保护字段比较已通过；不是调物理参数来绕过初始化失败。
 
@@ -96,10 +96,10 @@ mjlab_training/.venv/bin/python scripts/agent/check_h7_drive_response.py --out "
 现有结果有限复核：
 
 ```bash
-mjlab_training/.venv/bin/python scripts/agent/check_h7_drive_response.py --out artifacts/h7-drive-response-20261021
-mjlab_training/.venv/bin/python artifacts/h7-drive-response-20261021/make_report.py
+mjlab_training/.venv/bin/python scripts/agent/check_h7_drive_response.py --out artifacts/real2sim/h7-drive-response-20261021
+mjlab_training/.venv/bin/python artifacts/real2sim/h7-drive-response-20261021/make_report.py
 ```
 
-需要指定其他宿主编译器时设置CC；构建命令、参数和版本保存在native-build.json、run.json及[交付哈希清单](../../artifacts/h7-drive-response-20261021/delivery-manifest.json)。中断评估后可以--resume-evaluation继续冻结参数的评分，不重新拟合；本次仅为修复导出使用。
+需要指定其他宿主编译器时设置CC；构建命令、参数和版本保存在native-build.json、run.json及[交付哈希清单](../../artifacts/real2sim/h7-drive-response-20261021/delivery-manifest.json)。中断评估后可以--resume-evaluation继续冻结参数的评分，不重新拟合；本次仅为修复导出使用。
 
 本次回答是：**可以将加速/减速规律放进同一个连续模型，这组悬空脉冲的改善成立。**若扩大轮端验证，下一项是不同幅值与反向制动的独立会话；本轮不执行新增采集。轴端力矩未独立测量，仍只称指令到响应的等效参数。整机效果未在本轮验证，不执行环境同步或训练。

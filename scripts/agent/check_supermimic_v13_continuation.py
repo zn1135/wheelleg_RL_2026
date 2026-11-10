@@ -18,7 +18,7 @@ from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
 from ct_mjlab.envs.chuanliantui_split.runner import contracts, validate
 
 ROOT = Path(__file__).resolve().parents[2]
-ART = ROOT/'artifacts/supermimic-v13-continuation-20261101-r1'
+ART = ROOT/'artifacts/supermimic/supermimic-v13-continuation-20261101-r1'
 COMPONENTS = ('actor','world','critic','opt_actor','opt_encoder','opt_world','opt_critic')
 COUNTERS = ('world','encoder','actor','critic')
 LRS = dict(actor=3e-5,encoder=1e-3,world=3e-4,critic=3e-4)
@@ -155,7 +155,7 @@ def audit_source(path):
     expected = budget.get('source_optimizer_counts',dict(world=1728,encoder=368,actor=368,critic=368))
     assert summary['actual_optimizer_counts']==expected
     assert expected['actor']==budget['source_actor_updates']
-    old = ROOT/'artifacts/supermimic-v13-alternating-20261031-r1'
+    old = ROOT/'artifacts/supermimic/supermimic-v13-alternating-20261031-r1'
     evidence = dict(training_exit=Path(budget.get('source_training_exit',old/'stage2-training-exit.json')),
         audit_exit=Path(budget.get('source_audit_exit',old/'stage2-audit-exit.json')),
         audit=Path(budget.get('source_audit',old/'stage2-audit.json')))

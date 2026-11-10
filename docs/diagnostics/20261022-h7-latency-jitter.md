@@ -8,7 +8,7 @@
 
 新增 `scripts/agent/analyze_h7_latency.py`，复用 `real2sim_huananhu.load_session`、镜像解析器及 `h7_output_capture`。运行环境为 mjlab venv；不加载策略，不建物理环境，不打开串口。
 
-本次最终结果目录：[h7-latency-20261022-184344](../../artifacts/h7-latency-20261022-184344/report.md)。大产物由 Git 忽略，仅本机保留。
+本次最终结果目录：[h7-latency-20261022-184344](../../artifacts/real2sim/h7-latency-20261022-184344/report.md)。大产物由 Git 忽略，仅本机保留。
 
 | 结果子目录 | 原始录制 | 原始流 SHA-256 |
 |---|---|---|
@@ -43,7 +43,7 @@
 
 各会话保留每项的最小值、中位数、均值、标准差、P95、P99、最大值、峰峰值、样本数；分状态统计在 `statistics.csv/json`，逐连续区间统计在 `segment-statistics.json`。`segments.csv`及各逐样本CSV提供区间号、原始事件编号、序号和板端时间。每项最大值附CSV行号，可回查原始记录。
 
-![主样本全部控制测点](../../artifacts/h7-latency-20261022-184344/session-01/control-all-metrics.png)
+![主样本全部控制测点](../../artifacts/real2sim/h7-latency-20261022-184344/session-01/control-all-metrics.png)
 
 ## 故障、完整性与验证
 

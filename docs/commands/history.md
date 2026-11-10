@@ -12,5 +12,5 @@ ct_smp_prior="logs/mjlab/chuanliantui_smp_prior/20261025_student170_remote10000-
 scripts/mjlab.sh play --checkpoint "$ct_checkpoint" --smp-prior "$ct_smp_prior" --num-envs 1
 ```
 
-模型来源、备份和本目录验证见[同步记录](../../artifacts/ppo400-sync-20261026-v1/README.md)。该轮停车未通过，不能据采纳决定写成超过LQR。
+模型来源、备份和本目录验证见[同步记录](../../artifacts/legacy_mjlab/ppo400-sync-20261026-v1/README.md)。该轮停车未通过，不能据采纳决定写成超过LQR。
 

@@ -1,6 +1,6 @@
 # H7完整输出记录v1（大机已烧录，断动力30秒USB采集通过）
 
-2026-10-22最终吞吐修复已烧录并完成断动力实采：48条/批、等价快速CRC和USB忙重试，预热后连续约55秒两队列无新增丢弃/缺号/CRC拒绝；开头输出2/时序6条丢弃和截断仍保留。[最终证据](../../artifacts/h7-capture-throughput-fix-20261022/report.md)。下段为首版候选阶段。
+2026-10-22最终吞吐修复已烧录并完成断动力实采：48条/批、等价快速CRC和USB忙重试，预热后连续约55秒两队列无新增丢弃/缺号/CRC拒绝；开头输出2/时序6条丢弃和截断仍保留。[最终证据](../../artifacts/real2sim/h7-capture-throughput-fix-20261022/report.md)。下段为首版候选阶段。
 
 2026-10-22吞吐修复候选：实测约78Hz镜像下，24条/包不足以导出禁用档约2000条/秒；已改48条/包并更新解码器，128项队列/记录布局/控制保持，软件与大小机构建通过，未烧录。[本轮状态](20261022-h7-latency-capture-v1.md)。下文首版24条/包及其验证为历史状态。
 
@@ -12,7 +12,7 @@
 
 旧接口是 [USB镜像v2/644字节](20261020-h7-ros-usb-mirror.md#只读对照信号v2)；新传输为 `h7-mirror-v2+output-capture-v1`：保留原v2镜像前缀，**同一次**USB提交追加一个 `H7OUT001` 二进制批次。后台仍只调用原 `Vofa_Debug_Send` → `Vofa_Send`，不增加RTOS任务、第二发送分支或控制收包。
 
-当前以作者已恢复的原控制源码为基线：轮0.1速度比例环、±3.9Nm限幅，原LQR/台架/门控不变，控制版本0。开始时worktree内旧补偿快照先存入 `artifacts/h7-output-capture-20261021/before-rebase/`，再核对复制原工作区的原控制版本；来源及哈希见同目录 `baseline.json`，原工作区没有回写。
+当前以作者已恢复的原控制源码为基线：轮0.1速度比例环、±3.9Nm限幅，原LQR/台架/门控不变，控制版本0。开始时worktree内旧补偿快照先存入 `artifacts/real2sim/h7-output-capture-20261021/before-rebase/`，再核对复制原工作区的原控制版本；来源及哈希见同目录 `baseline.json`，原工作区没有回写。
 
 不修改观测39/动作6、模型、策略、控制增益、时序配置、物理极性/零点/减速比/力矩换算、XML或质量惯量。不需要重训/重导出。记录功能会增加少量执行开销和USB负载，**尚未在板端证明不影响2ms节拍**；不能把软件通过写成调度/行为通过。大机已安装新增记录固件；断动力30秒USB采集已通过，RL实际节拍仍待验证，见文末。
 
@@ -55,7 +55,7 @@ CAN的HAL返回0只表示入队成功，不证明总线送达或电机执行。�
 
 ## 录制、版本与离线命令
 
-新增 `--firmware-manifest` 仅把预期构建JSON及其SHA256归档到会话；**不是读回板端固件或启动证明**。本次检查产物及后续待确认固件清单在 `artifacts/h7-output-capture-20261021/`。XML、机器配置和接收程序哈希仍由原录制器保存。
+新增 `--firmware-manifest` 仅把预期构建JSON及其SHA256归档到会话；**不是读回板端固件或启动证明**。本次检查产物及后续待确认固件清单在 `artifacts/real2sim/h7-output-capture-20261021/`。XML、机器配置和接收程序哈希仍由原录制器保存。
 
 未来完成独立烧录/接线/动力安排后，沿用一个real2sim进程录制（本次没有执行）：
 
@@ -63,7 +63,7 @@ CAN的HAL返回0只表示入队成功，不证明总线送达或电机执行。�
 mjlab_training/.venv/bin/python sim2sim/real2sim_huananhu.py \
   --port /dev/serial/by-id/<实际H7设备> \
   --machine-config deployment/H7_RL_ros/imcalib/config/machine_config.c \
-  --firmware-manifest artifacts/h7-output-capture-20261021/firmware-machine-0.json \
+  --firmware-manifest artifacts/real2sim/h7-output-capture-20261021/firmware-machine-0.json \
   --record artifacts/<新的完整会话名> --seconds 30
 ```
 
@@ -94,7 +94,7 @@ mjlab_training/.venv/bin/python sim2sim/h7_output_capture.py \
 
 复位后通过不暂停/不复位/不写内存的SWD读取检查：系统tick递增，记录生产持续推进，两次当前fault均0。SRAM保留128项记录（CONTROL/CAN各64），六路请求与四槽电流码均零；启动样本曾含IMU/遥控未就绪故障1/3，不能当作全程无故障。两个连续序号小段内控制周期范围0.996755～1.003593ms，仅是未投入RL的启动小样本，不证明500Hz RL截止时间。两个小段之间缺798项，400ms记录时间跳变跨过丢失数据，不解释为控制停顿。
 
-USB静态发送缓冲包含1个CRC正确的H7OUT001批次，但提交计数停在1、队列128项满且丢弃持续增加；**持续USB接收未通过/待定位**。可能缺少主机读取，也可能链路卡住，未确定原因。电脑只见下载器CDC，H7数据USB在Jetson，需要Jetson端继续只读收包及完整性检查。不能用SRAM包校验代替USB端到端通过。证据及可重复命令：`artifacts/h7-output-capture-20261021/flash-20261021-162829/flash-result.json`、`openocd.log`、`runtime-memory-read-command.json`、`runtime-dump-command.json`。预期构建清单保留原始未烧录快照，以本次flash-result作为实际写板证据；H7负责人复查待确认。
+USB静态发送缓冲包含1个CRC正确的H7OUT001批次，但提交计数停在1、队列128项满且丢弃持续增加；**持续USB接收未通过/待定位**。可能缺少主机读取，也可能链路卡住，未确定原因。电脑只见下载器CDC，H7数据USB在Jetson，需要Jetson端继续只读收包及完整性检查。不能用SRAM包校验代替USB端到端通过。证据及可重复命令：`artifacts/real2sim/h7-output-capture-20261021/flash-20261021-162829/flash-result.json`、`openocd.log`、`runtime-memory-read-command.json`、`runtime-dump-command.json`。预期构建清单保留原始未烧录快照，以本次flash-result作为实际写板证据；H7负责人复查待确认。
 
 ## Jetson连接持久化与30秒实际USB验收
 
@@ -122,12 +122,12 @@ fault全0、机器0/原控制版本0、六路请求和四槽电流码全0；镜�
 
 本次直接将Jetson只读数据通过SSH传入本worktree的原会话记录器；事件时间是Jetson读返回的单调时钟，SSH到达延迟不用于推断电机延迟。Jetson端只用已有虚拟环境和pyserial读取，没有write、DTR/RTS复位、控制指令或远端文件产物。接收结束后USB可能再次积压；后续采集必须持续读取并先确认排空/序号连续，再开始实际试验。
 
-所有原始流、warmup、负结果、哈希及统计在 `artifacts/h7-output-capture-20261021/jetson-usb/`；汇总 `result.json`，正式会话 `steady-30s/`，标准解码 `steady-analysis/report.json`。任务专用可重复命令（新目录名；运行前保持本次动力安排，不能与其他接收器同时占用USB）：
+所有原始流、warmup、负结果、哈希及统计在 `artifacts/real2sim/h7-output-capture-20261021/jetson-usb/`；汇总 `result.json`，正式会话 `steady-30s/`，标准解码 `steady-analysis/report.json`。任务专用可重复命令（新目录名；运行前保持本次动力安排，不能与其他接收器同时占用USB）：
 
 ```bash
 source ./.env.local
-CAPTURE_SESSION="artifacts/h7-output-capture-20261021/jetson-usb/usb-$(date +%Y%m%d-%H%M%S)"
-mjlab_training/.venv/bin/python   artifacts/h7-output-capture-20261021/jetson-usb/record_jetson_usb.py   --warmup 5 --seconds 30 --session "$CAPTURE_SESSION"
+CAPTURE_SESSION="artifacts/real2sim/h7-output-capture-20261021/jetson-usb/usb-$(date +%Y%m%d-%H%M%S)"
+mjlab_training/.venv/bin/python   artifacts/real2sim/h7-output-capture-20261021/jetson-usb/record_jetson_usb.py   --warmup 5 --seconds 30 --session "$CAPTURE_SESSION"
 mjlab_training/.venv/bin/python sim2sim/h7_output_capture.py   --session "$CAPTURE_SESSION" --out "${CAPTURE_SESSION}-analysis"
 ```
 
@@ -141,34 +141,34 @@ mjlab_training/.venv/bin/python sim2sim/h7_output_capture.py   --session "$CAPTU
 
 实际C状态机/最终分发/策略选择/通信停机仲裁检查通过，覆盖300ms边界、uint32回绕、原准备互锁、RUN中超速/NaN反馈/遥控离线及离档/反馈故障/发送失败/执行间隔变化、到时清零和四髋零请求。现有USB完整回归、输出采集652组驱动/缓存/CRC检查通过；大小机各107来源GCC编译链接成功，仅既有BMI088 packed告警。回归中两个已不再使用的测试替身产生unused提示，移除后单独重跑实际输出发布检查通过。未使用硬件故障注入，Keil未构建。
 
-候选与报告在 `artifacts/h7-bench-fixed300-20261021/`：`check/report.json`、`native-bench.json`、`output-producer-final.json`、`capture-check/report.json`、`firmware-machine-0.json`和`candidate-source/`。大机HEX SHA256 `c6bef66b74e45318bbaaef6566ff9c2f34c5a09d1365985e32e930876d3334e8`；源文件及ELF/HEX/BIN哈希在预期构建清单。未烧录此候选；板上仍是此前已验证USB的提前撤销版。当前作者已确认电机动力上电，下一次写板必须另获本次断动力确认。
+候选与报告在 `artifacts/real2sim/h7-bench-fixed300-20261021/`：`check/report.json`、`native-bench.json`、`output-producer-final.json`、`capture-check/report.json`、`firmware-machine-0.json`和`candidate-source/`。大机HEX SHA256 `c6bef66b74e45318bbaaef6566ff9c2f34c5a09d1365985e32e930876d3334e8`；源文件及ELF/HEX/BIN哈希在预期构建清单。未烧录此候选；板上仍是此前已验证USB的提前撤销版。当前作者已确认电机动力上电，下一次写板必须另获本次断动力确认。
 
 300ms是正常固件调度下的请求窗口，不是CAN断路、MCU停调度或断电时的物理力矩保证；名义3Nm不是独立测得轴矩。新固件尚未实测完整300ms脉冲、最高轮速、实际调度或机械行为。H7负责人复查待确认，不训练、不改正式XML、不提交/推送。
 
-本次新采集保存在 `artifacts/fixed-h7-new-data-20261021/`：预检10秒完整、全零请求；`first-pulse`含完整299960项记录，记录/批次缺口及新增丢弃0，左轮+3Nm请求58.998869ms后归零，归零轮速30.50077rad/s，峰值33.56041rad/s，四髋全零、fault0。reason=GATED（1），源码在许可函数中先汇总速度/反馈等条件，再由状态机写此原因；本次越过30rad/s与此路径一致，但原因码不独立证明唯一触发项。初次拟合集 `fit-session`未请求新脉冲，改为暂停/静态证据，不用于拟合；尚无完整新拟合集/验证集。用户要求变更后停止后续触发，`split.json`不把未完成会话冒充训练/验证数据。
+本次新采集保存在 `artifacts/real2sim/fixed-h7-new-data-20261021/`：预检10秒完整、全零请求；`first-pulse`含完整299960项记录，记录/批次缺口及新增丢弃0，左轮+3Nm请求58.998869ms后归零，归零轮速30.50077rad/s，峰值33.56041rad/s，四髋全零、fault0。reason=GATED（1），源码在许可函数中先汇总速度/反馈等条件，再由状态机写此原因；本次越过30rad/s与此路径一致，但原因码不独立证明唯一触发项。初次拟合集 `fit-session`未请求新脉冲，改为暂停/静态证据，不用于拟合；尚无完整新拟合集/验证集。用户要求变更后停止后续触发，`split.json`不把未完成会话冒充训练/验证数据。
 
 后续烧录和零输出复核通过后，采集需显式使用新预期清单，不能沿用旧清单：
 
 ```bash
 source ./.env.local
-mjlab_training/.venv/bin/python artifacts/fixed-h7-new-data-20261021/record_bench.py --warmup 5 --seconds 120 --session artifacts/fixed-h7-new-data-20261021/new-profile-session --firmware-manifest artifacts/h7-bench-fixed300-20261021/firmware-machine-0.json
+mjlab_training/.venv/bin/python artifacts/real2sim/fixed-h7-new-data-20261021/record_bench.py --warmup 5 --seconds 120 --session artifacts/real2sim/fixed-h7-new-data-20261021/new-profile-session --firmware-manifest artifacts/real2sim/h7-bench-fixed300-20261021/firmware-machine-0.json
 ```
 
 该命令只读，不自动触发电机；必须新会话名、实际板端版本与动力/台架安排相符，并先验证完整性再做拟合。旧版“左下/右下立即提前取消RUN”的操作不再适用于这个新候选，触发后要等300ms窗口结束。
 
 ## 2026-10-21 17:18 固定300ms固件实际烧录与断动力复核
 
-作者再次明确确认本次电机动力断开、H7和RX供电。新profile大机HEX由PowerDebugger/OpenOCD 200kHz SWD写入；Programming Finished、Verified OK、Resetting Target齐备，退出0，HEX SHA256 `c6bef66b74e45318bbaaef6566ff9c2f34c5a09d1365985e32e930876d3334e8`。实际证据 `artifacts/h7-bench-fixed300-20261021/flash-20261021-171749/`；此前编译段的“未烧录”是当时状态。预期构建清单及交付快照保留烧录前内容，不能用其中flashed=false代替实际烧录结论；当前状态另存current-status.json。
+作者再次明确确认本次电机动力断开、H7和RX供电。新profile大机HEX由PowerDebugger/OpenOCD 200kHz SWD写入；Programming Finished、Verified OK、Resetting Target齐备，退出0，HEX SHA256 `c6bef66b74e45318bbaaef6566ff9c2f34c5a09d1365985e32e930876d3334e8`。实际证据 `artifacts/real2sim/h7-bench-fixed300-20261021/flash-20261021-171749/`；此前编译段的“未烧录”是当时状态。预期构建清单及交付快照保留烧录前内容，不能用其中flashed=false代替实际烧录结论；当前状态另存current-status.json。
 
 复位后Jetson USB重新枚举；先持续读取5秒排空，再记录10秒：999批次/19980记录，完整观察区间true，CRC拒绝/记录缺口/新增丢弃/截包/HAL失败均0；CONTROL fault0、bench phase0，六路请求和四槽电流码全零，镜像999帧且序号无缺口、无电机使能或RL投入。完整数据和报告为postflash-10s/、postflash-analysis/、postflash-summary.json。证明程序启动及断动力记录链路正常，不证明300ms带动力响应或500Hz RL截止时间。
 
-按作者原采集请求继续使用独立数据目录artifacts/fixed-h7-fixed300-data-20261021/，与旧提前撤销版分开；先做1次完整输入采集检查，再安排按完整会话划分的拟合/验证。用户接通动力及手动触发状态按本次对话另行记录，主机不发电机控制命令。未训练、提交、推送或修改物理标定/正式XML；H7负责人复查待确认。
+按作者原采集请求继续使用独立数据目录artifacts/real2sim/fixed-h7-fixed300-data-20261021/，与旧提前撤销版分开；先做1次完整输入采集检查，再安排按完整会话划分的拟合/验证。用户接通动力及手动触发状态按本次对话另行记录，主机不发电机控制命令。未训练、提交、推送或修改物理标定/正式XML；H7负责人复查待确认。
 
 
 ## 2026-10-21 固定300ms有动力完整会话验收
 
 按用户确认的固定悬空条件完成小样本1次及独立拟合/验证各4次，使用新profile预期清单，不混入旧59ms样本。正式会话分别120秒、12000批次/240000记录，CRC/记录及批次缺口/新增队列丢弃/截包/HAL失败0；每次300条非零CONTROL与CAN提交、约300ms、到时DONE/reason0，四髋全0、fault0。只证明记录窗口内完整指令及悬空响应，不证明轴端实际力矩、RL500Hz截止时间或自由整机行为。
 
-本地record_bench.py已修复任意字节收尾会截断批次的问题：在计划时间后继续到完整CRC有效批次边界，warmup/正式切换保持同一串口，原始数据全保留。最初截尾253字节的fit-session整份排除，validation-session零脉冲尝试排除；旧失败数据和完整性false不改写。新完整会话哈希及会话划分锁定于artifacts/fixed-h7-fixed300-data-20261021/split.json，实际触发间隔并非全部10秒、温度未测，如实报告。
+本地record_bench.py已修复任意字节收尾会截断批次的问题：在计划时间后继续到完整CRC有效批次边界，warmup/正式切换保持同一串口，原始数据全保留。最初截尾253字节的fit-session整份排除，validation-session零脉冲尝试排除；旧失败数据和完整性false不改写。新完整会话哈希及会话划分锁定于artifacts/real2sim/fixed-h7-fixed300-data-20261021/split.json，实际触发间隔并非全部10秒、温度未测，如实报告。
 
 独立等预算轮端拟合及旧RL俯仰检查已完成，整机校准未通过；正式XML/机器标定/策略保持，不同步环境或训练。完整参数、搜索依据、左右/方向/速度/加减速误差、曲线、数值核验及复现见[完整输入校准报告](../diagnostics/20261021-fixed300-complete-input-calibration.md)。结束用户报告左下/右下，已告知断动力，未收到最终断动力确认；H7负责人复查仍待确认。

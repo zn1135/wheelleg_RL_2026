@@ -4,7 +4,7 @@
 
 2026-10-23，作者选定“几何换算”并要求实现，执行者Codex，H7部署负责人核对**待确认**。仅修改USB工程`deployment/H7_RL_ros`的大机RL命令入口；软件检查和大小机完整构建通过；作者本次重新确认断开电机动力、保留H7/RX供电后，**已于16:23:53完成大机写入、读回校验并复位，未验证真机效果**。本次替代当天15:53:22写入的直接截取腿长到0.27～0.34m版本；网络仍为model13842。
 
-训练与部署位于同仓`26_wheelleg`，基准HEAD为`27bbb4d0cd3587fae767fff24a969041af36115d`，工作区有先前训练、网络导入和本次未提交改动。交付模型来源、仓库来源与工具版本沿用[13842模型交付](../model-deliveries/20261023-model13842-h7-import.md)。本次精确源码快照、差异、受保护文件哈希、构建与固件哈希见[证据目录](../../artifacts/h7-leg-to-body-height-20261023/summary.json)。
+训练与部署位于同仓`26_wheelleg`，基准HEAD为`27bbb4d0cd3587fae767fff24a969041af36115d`，工作区有先前训练、网络导入和本次未提交改动。交付模型来源、仓库来源与工具版本沿用[13842模型交付](../model-deliveries/20261023-model13842-h7-import.md)。本次精确源码快照、差异、受保护文件哈希、构建与固件哈希见[证据目录](../../artifacts/real2sim/h7-leg-to-body-height-20261023/summary.json)。
 
 ## 命令含义与公式
 
@@ -44,9 +44,9 @@ obs[3] = h_cmd * 5
 
 ## 验证依据
 
-- [高度与模式检查](../../artifacts/h7-leg-to-body-height-20261023/height-check.json)：编译实际RC、观测、配置及K表C，设备状态用替身；两机各180组模式/在线/保留档/拨轮回归，五个高度点、死区、积分速率、限幅、离线复位、切LQR、恢复计时与失败锁定通过。改变实测关节/重力输入不会改变高度目标。
+- [高度与模式检查](../../artifacts/real2sim/h7-leg-to-body-height-20261023/height-check.json)：编译实际RC、观测、配置及K表C，设备状态用替身；两机各180组模式/在线/保留档/拨轮回归，五个高度点、死区、积分速率、限幅、离线复位、切LQR、恢复计时与失败锁定通过。改变实测关节/重力输入不会改变高度目标。
 - 同一检查使用当前XML验证4个直立腿长点，名义公式与网格接地高度最大差约0.04mm；这只核对训练模型参考，不是实机几何标定。
-- [策略计时检查](../../artifacts/h7-leg-to-body-height-20261023/policy-timing.json)：实际分频/恢复C的有限宿主检查通过，不证明板端调度。
-- [完整构建](../../artifacts/h7-leg-to-body-height-20261023/build-report.json)：大小机各108个编译单元及链接通过；两份BIN均含同一207128字节model13842权重。1290项受保护来源中仅上述5个C/H改变，其余保持。
+- [策略计时检查](../../artifacts/real2sim/h7-leg-to-body-height-20261023/policy-timing.json)：实际分频/恢复C的有限宿主检查通过，不证明板端调度。
+- [完整构建](../../artifacts/real2sim/h7-leg-to-body-height-20261023/build-report.json)：大小机各108个编译单元及链接通过；两份BIN均含同一207128字节model13842权重。1290项受保护来源中仅上述5个C/H改变，其余保持。
 
-复现入口与检查范围见[构建与测试](../ai/build-test.md)。本次未训练、重新导出模型、使能电机或采集板端控制数据。烧录前核对1290项来源与大机ELF/BIN/HEX哈希，保留旧板固件作回退；OpenOCD SWD200kHz退出0，耗时79.934秒，Programming Finished、Verified OK、Resetting Target齐备。大机HEX SHA256为`c1b1dcdc67550d8e7163321f8166947fb85a9692bef680ca1428454dcbce6305`。[烧录结果](../../artifacts/h7-leg-to-body-height-20261023/flash/result.json)、[原始日志](../../artifacts/h7-leg-to-body-height-20261023/flash/openocd.log)、[烧录前核对](../../artifacts/h7-leg-to-body-height-20261023/flash/preflight.json)。
+复现入口与检查范围见[构建与测试](../ai/build-test.md)。本次未训练、重新导出模型、使能电机或采集板端控制数据。烧录前核对1290项来源与大机ELF/BIN/HEX哈希，保留旧板固件作回退；OpenOCD SWD200kHz退出0，耗时79.934秒，Programming Finished、Verified OK、Resetting Target齐备。大机HEX SHA256为`c1b1dcdc67550d8e7163321f8166947fb85a9692bef680ca1428454dcbce6305`。[烧录结果](../../artifacts/real2sim/h7-leg-to-body-height-20261023/flash/result.json)、[原始日志](../../artifacts/real2sim/h7-leg-to-body-height-20261023/flash/openocd.log)、[烧录前核对](../../artifacts/real2sim/h7-leg-to-body-height-20261023/flash/preflight.json)。

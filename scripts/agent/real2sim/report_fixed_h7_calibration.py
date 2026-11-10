@@ -9,7 +9,7 @@ import platform
 import sys
 import numpy as np
 ROOT=Path(__file__).resolve().parents[3]
-BASE=ROOT/'artifacts/fixed-h7-calibration-20261021'
+BASE=ROOT/'artifacts/real2sim/fixed-h7-calibration-20261021'
 
 
 def main():

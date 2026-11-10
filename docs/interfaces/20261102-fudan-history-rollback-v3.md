@@ -8,7 +8,7 @@
 | 机器人、任务 | 本机实体闭链串联轮腿，`fudan_ppo_walk` |
 | 旧接口 | [物理25/125张量v1](20261101-fudan-ppo-walk.md)、[reset/history v2](20261101-fudan-reset-v2.md) |
 | 新接口 | 张量仍为`fudan-ppo-walk-physical25-history125-critic144-v1`；reset/history升为`fudan-physical-pd-centred-warmup-noisy5-clipped-history-v3` |
-| 训练源 | https://github.com/zn1135/wheelleg_RL_2026.git，分支`26_wheelleg`，HEAD `3794efd390a0eb68cb154839423a7d53e32ff61e`＋未提交工作区；以本次[源码及检查记录](../../artifacts/fudan-history-rollback-v3-20261102/README.md)为准 |
+| 训练源 | https://github.com/zn1135/wheelleg_RL_2026.git，分支`26_wheelleg`，HEAD `3794efd390a0eb68cb154839423a7d53e32ff61e`＋未提交工作区；以本次[源码及检查记录](../../artifacts/fudan_ppo_walk/fudan-history-rollback-v3-20261102/README.md)为准 |
 | 部署侧 | H7代码/固件未修改、未核对，负责人待确认；没有独立部署参考包交付 |
 | 权威实现 | `env.py::{reset_idx,observations,step}`、`measurement.py::{configure_samples,update_evaluation_commands}`、`native.py::Native.inputs`、`runner.py::FudanRunner.{load,save}`、`export.py::history_metadata` |
 
@@ -43,8 +43,8 @@
 
 | 侧 | 本次状态 |
 |---|---|
-| 训练/评估/Native/导出元数据 | 语义已同步；[31项输入检查](../../artifacts/fudan-history-rollback-v3-20261102/check-history-v3.json)通过，替代物理后端，张量/NumPy首帧与后续历史最大误差0 |
-| 学习状态迁入 | [CPU/CUDA真实载荷检查](../../artifacts/fudan-history-rollback-v3-20261102/check-history-migration-final.json)通过：模型/两Adam/学习率/RNG/计数逐位或数值一致，未做前向/更新；临时迁入夹具模型已删除 |
+| 训练/评估/Native/导出元数据 | 语义已同步；[31项输入检查](../../artifacts/fudan_ppo_walk/fudan-history-rollback-v3-20261102/check-history-v3.json)通过，替代物理后端，张量/NumPy首帧与后续历史最大误差0 |
+| 学习状态迁入 | [CPU/CUDA真实载荷检查](../../artifacts/fudan_ppo_walk/fudan-history-rollback-v3-20261102/check-history-migration-final.json)通过：模型/两Adam/学习率/RNG/计数逐位或数值一致，未做前向/更新；临时迁入夹具模型已删除 |
 | 旧v2保留 | 原正式`check_reset_v2`检查通过；保留旧模型/快照/视频/预检。旧源码保存在本次before目录及原训练source |
 | 新物理/新策略行为 | 未运行，当前只准备；追加训练轮数尚未获得明确回复 |
 | H7/板端时序/实机 | 未修改、未验证，负责人待确认 |

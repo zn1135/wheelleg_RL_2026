@@ -22,13 +22,13 @@ def sha(p):
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path,required=True);args=p.parse_args()
     args.output.mkdir(parents=True,exist_ok=False);torch.set_num_threads(2)
-    record_path=ROOT/'artifacts/supermimic-v13-wheel-response-20261101-r1/response.pt'
+    record_path=ROOT/'artifacts/supermimic/supermimic-v13-wheel-response-20261101-r1/response.pt'
     source=torch.load(record_path,map_location='cpu',weights_only=False)
     cp=ROOT/'logs/mjlab/chuanliantui_supermimic_walk/20261101_v13_continuation_to5200_r3/final.pt'
     assert sha(cp)==source['checkpoint_sha256']
     world=WorldModel().eval().requires_grad_(False)
     world.load_state_dict(torch.load(cp,map_location='cpu',weights_only=False,mmap=True)['world'],strict=True)
-    model=mujoco.MjModel.from_binary_path(str(ROOT/'artifacts/supermimic-v13-r3-a5200-seed43-20261101/scene.mjb'))
+    model=mujoco.MjModel.from_binary_path(str(ROOT/'artifacts/supermimic/supermimic-v13-r3-a5200-seed43-20261101/scene.mjb'))
     data=mujoco.MjData(model)
     names=[model.joint(i).name for i in range(model.njnt)]
     get_joint=lambda n:model.joint('robot/'+n if 'robot/'+n in names else n)

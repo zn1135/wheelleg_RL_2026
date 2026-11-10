@@ -33,7 +33,7 @@ mjlab_training/.venv/bin/python -m scripts.agent.motion.assess \
 
 ## 验证与证据
 
-证据目录为[本轮验证产物](../../artifacts/motion-normalization-20261101-r1/)。正式入口：
+证据目录为[本轮验证产物](../../artifacts/imitation/motion-normalization-20261101-r1/)。正式入口：
 
 ```bash
 PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.maintenance.check_script_merges
@@ -50,7 +50,7 @@ PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.m
 
 ## 计数与限制
 
-本次改动将两个独立检查合为一个模块，净减少1个文件；并行任务新增了另一个脚本，所以计数时工作区辅助Python文件仍为320个。该并行任务的新脚本与其对预测采集器的修改均未由本任务改动。本次负责文件的总行数增加309行，主要来自格式适配、数据完整性与回归检查，具体工作区及本次范围分列见[counts.json](../../artifacts/motion-normalization-20261101-r1/counts.json)。不将本轮声称为整体代码行减少，也不把文件移动计入减少。
+本次改动将两个独立检查合为一个模块，净减少1个文件；并行任务新增了另一个脚本，所以计数时工作区辅助Python文件仍为320个。该并行任务的新脚本与其对预测采集器的修改均未由本任务改动。本次负责文件的总行数增加309行，主要来自格式适配、数据完整性与回归检查，具体工作区及本次范围分列见[counts.json](../../artifacts/imitation/motion-normalization-20261101-r1/counts.json)。不将本轮声称为整体代码行减少，也不把文件移动计入减少。
 
 七个运行中保护入口的字节保持不变，训练／模型接口／物理参数、sim2sim生产源码与H7未修改；未启动新仿真、训练或设备采集，未提交／推送。当前只验证保存轨迹与有限程序检查，新增采集信号尚未做新物理运行验证。
 

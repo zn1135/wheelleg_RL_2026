@@ -6,7 +6,7 @@
 
 ## 已录到的证据
 
-`artifacts/h7-angle-reentry-validation-20261022/reentry-01` 完整 120 秒、11999 帧，82.466 秒观察到禁用→选择 RL 的边沿，未投入出力。首两秒 100 组近静止配对：
+`artifacts/real2sim/h7-angle-reentry-validation-20261022/reentry-01` 完整 120 秒、11999 帧，82.466 秒观察到禁用→选择 RL 的边沿，未投入出力。首两秒 100 组近静止配对：
 
 | 四腿模型坐标 | 左前 | 左后 | 右前 | 右后 |
 |---|---:|---:|---:|---:|
@@ -36,7 +36,7 @@
 
 两次完整录制之间有USB空档，明确为跨会话姿态对照，未拼接成连续数据。板时钟从首次末679218ms到补录首923829ms递增，未见清零；无法观察空档内事件，也没有板端启动签名证明。用户回位是机械姿态参考，未使用独立测角设备。此前左腿失联、带动力PD与站立仍未验证；部署负责人待确认。
 
-![两次重入的原始角与策略角对照](../../artifacts/h7-angle-reentry-validation-20261022/final-analysis/reentry.png)
+![两次重入的原始角与策略角对照](../../artifacts/real2sim/h7-angle-reentry-validation-20261022/final-analysis/reentry.png)
 
 图中左右纵轴缩放不同：左列原始角相差约一圈，右列显示保留的小幅手动回位差；虚线为各次独立录制的RL选择边沿。
 
@@ -44,10 +44,10 @@
 
 ```bash
 cd /home/zn/.codex/worktrees/fixed-h7-real2sim/Wheel-Legged-Gym
-bash artifacts/h7-angle-reentry-validation-20261022/reproduce.sh \
-  artifacts/h7-angle-reentry-validation-20261022/reproduced-01
+bash artifacts/real2sim/h7-angle-reentry-validation-20261022/reproduce.sh \
+  artifacts/real2sim/h7-angle-reentry-validation-20261022/reproduced-01
 ```
 
 静止配对阈值为每腿速度不超过 0.1 rad/s；原始反馈与策略快照分别为约 100/50 Hz，整周期余差阈值 0.02 rad；同姿态重复阈值 0.03 rad，只核验编码器等价表示，不能替代独立机械姿态测量。协议、软件哈希、原始元数据和首次/中断结果均在上述 artifacts 目录。
 
-本次只新增只读记录检查脚本和实验图/报告；控制、标定、XML与模型共9项来源哈希核对保持。完整结果见`artifacts/h7-angle-reentry-validation-20261022/result.json`，两次完整与中断的原始流/元数据、采集/分析软件SHA256见同目录`SHA256SUMS`。未提交/推送。
+本次只新增只读记录检查脚本和实验图/报告；控制、标定、XML与模型共9项来源哈希核对保持。完整结果见`artifacts/real2sim/h7-angle-reentry-validation-20261022/result.json`，两次完整与中断的原始流/元数据、采集/分析软件SHA256见同目录`SHA256SUMS`。未提交/推送。

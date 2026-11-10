@@ -47,6 +47,6 @@ PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.s
 PYTHONPATH=mjlab_training/src CUDA_VISIBLE_DEVICES='' mjlab_training/.venv/bin/python -m scripts.agent.supermimic.check_supermimic_heading_inputs --output artifacts/<新坐标检查目录>
 ```
 
-[终态检查](../../artifacts/supermimic-v13-control-endpoint-check-20261101-r1/report.json)：单增量终态精确一致；无中间补值；中间4帧改为NaN不改变损失/归一化；终态改动会改变损失；每条转移只更新1个增量样本；终态观测/奖励、队列置零且不被critic读取、世界和策略想象反向传播有限。
+[终态检查](../../artifacts/supermimic/supermimic-v13-control-endpoint-check-20261101-r1/report.json)：单增量终态精确一致；无中间补值；中间4帧改为NaN不改变损失/归一化；终态改动会改变损失；每条转移只更新1个增量样本；终态观测/奖励、队列置零且不被critic读取、世界和策略想象反向传播有限。
 
-[集成检查](../../artifacts/supermimic-v13-control-endpoint-integration-20261101-r1/report.json)与[坐标检查](../../artifacts/supermimic-v13-control-endpoint-heading-20261101-r1/report.json)另列。所有检查禁止Adam.step，不代表训练收敛、行为改善或板端通过。
+[集成检查](../../artifacts/supermimic/supermimic-v13-control-endpoint-integration-20261101-r1/report.json)与[坐标检查](../../artifacts/supermimic/supermimic-v13-control-endpoint-heading-20261101-r1/report.json)另列。所有检查禁止Adam.step，不代表训练收敛、行为改善或板端通过。

@@ -62,6 +62,19 @@ def from_task_config(task_cfg=None):
         max_push_vel=cfg.max_push_vel_xy
     )
 
+def from_sim2sim_config(task_cfg=None):
+    task = FudanWalkCfg() if task_cfg is None else task_cfg
+    cfg, domain = task.sim2sim, task.domain_rand
+    return DisturbanceConfig(
+        action_delay=cfg.randomize_action_delay,
+        sensor_delay=cfg.randomize_sensor_delay,
+        pushes=domain.push_robots,
+        action_delay_ms=cfg.delay_ms_range,
+        sensor_delay_ms=cfg.sensor_delay_ms_range,
+        push_interval_s=domain.push_interval_s,
+        max_push_vel=domain.max_push_vel_xy
+    )
+
 class DisturbanceState:
 
     def __init__(self, cfg, n, device, seed=1, physics_dt=None):

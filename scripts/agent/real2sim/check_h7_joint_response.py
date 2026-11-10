@@ -69,7 +69,7 @@ def rollout(predictor, q, v, inputs):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--session', type=Path, default=ROOT / 'artifacts/real2sim-latest-gap-20261021/real2sim-20261021-103443')
+    p.add_argument('--session', type=Path, default=ROOT / 'artifacts/real2sim/real2sim-latest-gap-20261021/real2sim-20261021-103443')
     p.add_argument('--out', type=Path, required=True)
     p.add_argument('--windows', type=int, default=64)
     args = p.parse_args()

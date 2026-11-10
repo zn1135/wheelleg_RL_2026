@@ -252,7 +252,8 @@ def build_model(model_path: Path = MODEL_ASSET):
 
 class Playback:
     def __init__(self, initial_pose: str = "normal", command=DEFAULT_COMMAND, *, model_path: Path = MODEL_ASSET,
-                 wheel_friction_compensation=None, motor_response_time_constant_s: float | None = None):
+                 wheel_friction_compensation=None, motor_response_time_constant_s: float | None = None,
+                 fitted_leg_load: bool = True):
         self.model = build_model(model_path)
         self.data = mujoco.MjData(self.model)
         self.h7_timing = json.loads(MODEL_ASSET.with_name("h7_timing.json").read_text())
@@ -280,6 +281,8 @@ class Playback:
         spring_joints = self.model.actuator_trnid[self.spring_ids, 0]
         self.spring_q = self.model.jnt_qposadr[spring_joints]
         self.spring_v = self.model.jnt_dofadr[spring_joints]
+        from ct_mjlab.envs.chuanliantui.fitted_leg_load import NativeLegLoad
+        self.leg_load = NativeLegLoad(self.model, self.data) if fitted_leg_load else None
         self.floor_geom = self.model.geom("sim2sim_flat_floor").id
         self.base_body = self.model.body("base_link").id
         self.wheel_bodies = tuple(self.model.body(name).id for name in ("lfwheel", "rfwheel"))
@@ -314,6 +317,8 @@ class Playback:
         if pose not in ("normal", "ground"):
             raise ValueError(f"Unknown initial pose: {pose}")
         mujoco.mj_resetData(self.model, self.data)
+        if self.leg_load is not None:
+            self.leg_load.reset()
         if pose == "normal":
             # The historical normal reset height is 0.38 m.  Use its exact
             # closed-chain solver for every passive coordinate rather than setting
@@ -429,6 +434,8 @@ class Playback:
                 self._motor_response_torque.fill(0.)
             self.data.ctrl[self.motor_ids] = self._motor_response_torque
             self.data.ctrl[self.spring_ids] = spring
+            if self.leg_load is not None:
+                self.leg_load.apply()
             mujoco.mj_step(self.model, self.data)
             substep_forces = np.zeros(2)
             for contact_id in range(self.data.ncon):

@@ -38,5 +38,5 @@
   "reference_vectors": "model_9845_opset13_reference_vectors.npz",
   "graph_scope": "deterministic actor only; no observation construction, PD, clipping or motor mapping",
   "deployment_status": "C network integrated; both variants compile/link and exact firmware weights verified; machine 0 flashed, read-back verified and reset 2026-10-22T22:51:30+08:00; zero-hold regression 8/32 to 4/32; hardware behavior not accepted",
-  "flash_evidence": "artifacts/model9845-h7-20261022-223919/flash-20261022-225027/flash-result.json"
+  "flash_evidence": "artifacts/real2sim/model9845-h7-20261022-223919/flash-20261022-225027/flash-result.json"
 }

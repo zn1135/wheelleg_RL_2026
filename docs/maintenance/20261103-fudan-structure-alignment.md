@@ -67,6 +67,6 @@ mjlab_training/.venv/bin/python -m tensorboard.main --logdir logs/mjlab/fudan_pp
 - 全套外层保护禁止构造真实`ManagerBasedRlEnv`、MuJoCo积分和真实Adam.step。允许CPU冻结网络前向与无提交的梯度检查；静态几何不推进时间。
 - [逐文件旧/新哈希记录](20261103-fudan-source-migration.json)包括迁移实现、兼容模块、新增文件，以及整理前已有停车/续训改动的明确来源链。旧快照和未知新哈希均严格校验，不能忽略全部差异；旧CPU原始源码只在历史归档保留。
 
-正式入口：`scripts.agent.fudan_ppo_walk.check_structure_suite --output <新检查目录>`。本轮执行结果、计数、原8000模型/归档输入/资源/H7哈希以及各检查日志见[交付证据](../../artifacts/fudan-structure-alignment-20261103/README.md)。
+正式入口：`scripts.agent.fudan_ppo_walk.check_structure_suite --output <新检查目录>`。本轮执行结果、计数、原8000模型/归档输入/资源/H7哈希以及各检查日志见[交付证据](../../artifacts/fudan_ppo_walk/fudan-structure-alignment-20261103/README.md)。
 
 实际物理行为、GPU轨迹、实际训练吞吐量和同墙钟预算的实际训练轮数未重测，不能声称训练或停车效果通过。8000模型及积分r2历史结论保持；本轮没有重跑积分、调整增益、修改H7或导出新ONNX，也没有Git提交/推送。

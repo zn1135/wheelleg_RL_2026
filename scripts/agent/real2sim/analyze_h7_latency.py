@@ -32,9 +32,9 @@ import h7_output_capture as capture
 
 U32 = 2**32
 DEFAULT_SESSIONS = (
-    'artifacts/model6848-startup-review-20261022-122136/session',
-    'artifacts/model6848-real-rl-20261021/session-01',
-    'artifacts/model6848-real-rl-20261021/session-02',
+    'artifacts/real2sim/model6848-startup-review-20261022-122136/session',
+    'artifacts/real2sim/model6848-real-rl-20261021/session-01',
+    'artifacts/real2sim/model6848-real-rl-20261021/session-02',
 )
 PHASES = ('idle', 'hold', 'recover', 'normal', 'failed')
 SOURCE_FILES = (
@@ -658,7 +658,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--session', type=Path, action='append', help='repeatable; default: the three agreed recordings')
     parser.add_argument('--selfcheck', action='store_true', help='finite synthetic boundary checks, no recording or hardware')
-    parser.add_argument('--out', type=Path, default=ROOT / 'artifacts' / ('h7-latency-' + datetime.now(ZoneInfo('Asia/Shanghai')).strftime('%Y%m%d-%H%M%S')))
+    parser.add_argument('--out', type=Path, default=ROOT / 'artifacts' / 'real2sim' / ('h7-latency-' + datetime.now(ZoneInfo('Asia/Shanghai')).strftime('%Y%m%d-%H%M%S')))
     args = parser.parse_args()
     if args.selfcheck:
         print(json.dumps(selfcheck(), ensure_ascii=False, indent=2))

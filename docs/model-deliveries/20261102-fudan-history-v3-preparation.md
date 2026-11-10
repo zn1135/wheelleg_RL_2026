@@ -2,7 +2,7 @@
 
 日期2026-11-02，Codex准备；接收人/H7负责人、独立复查人待确认。任务为`fudan_ppo_walk`，关联[历史v3接口](../interfaces/20261102-fudan-history-rollback-v3.md)。本记录仅确认输入语义和学习状态迁入准备，不是新模型发布或板端通过。
 
-训练仓https://github.com/zn1135/wheelleg_RL_2026.git，`26_wheelleg`，HEAD `3794efd390a0eb68cb154839423a7d53e32ff61e`＋未提交源码。修改前后源码与SHA位于[准备目录](../../artifacts/fudan-history-rollback-v3-20261102/README.md)；H7未修改，部署端版本/签认待负责人核对。只保存本任务相关源码，原模型的实际训练来源仍是原logs/source，不能由当前脏工作区HEAD代替。
+训练仓https://github.com/zn1135/wheelleg_RL_2026.git，`26_wheelleg`，HEAD `3794efd390a0eb68cb154839423a7d53e32ff61e`＋未提交源码。修改前后源码与SHA位于[准备目录](../../artifacts/fudan_ppo_walk/fudan-history-rollback-v3-20261102/README.md)；H7未修改，部署端版本/签认待负责人核对。只保存本任务相关源码，原模型的实际训练来源仍是原logs/source，不能由当前脏工作区HEAD代替。
 
 | 产物/状态 | 依据 |
 |---|---|

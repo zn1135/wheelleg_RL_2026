@@ -32,7 +32,7 @@ def main():
    assert info['objective_calls']==report['budget_per_wheel_per_group']
    assert [r['call'] for r in info['trace']]==list(range(1,info['objective_calls']+1))
  # Independent compiled-field comparison of the exported full-body XML files.
- manifest=json.loads((ROOT/'artifacts/h7-bench-fixed300-20261021/firmware-machine-0.json').read_text())
+ manifest=json.loads((ROOT/'artifacts/real2sim/h7-bench-fixed300-20261021/firmware-machine-0.json').read_text())
  for name,digest in manifest['protected_sha256'].items():
   path=ROOT/name
   if name.endswith('multimode_model3023/chuanliantui.xml') and hashlib.sha256(path.read_bytes()).hexdigest()!=digest:

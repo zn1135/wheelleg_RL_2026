@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[3]
-ART = ROOT/'artifacts/supermimic-v13-continuation-20261101-r3'
+ART = ROOT/'artifacts/supermimic/supermimic-v13-continuation-20261101-r3'
 
 
 def main():

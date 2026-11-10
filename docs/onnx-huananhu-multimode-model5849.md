@@ -2,7 +2,7 @@
 
 本文适用于当前交付的 39 维 checkpoint `model_5849.pt`（SHA-256 `d4be0bc98c20348911b7e43a6f52f5e3719cb78d74f5764f485b4bce82bb71ca7`）：无限平地、命令包线 vx ±1.5 m/s、yaw ±1.5 rad/s 的续训终态（2026-10-17）。它是 39 维 actor，不能替换仓库中旧 25/125 维、100 Hz 的 H7 网络，也不能加载到 V11 的 35/78 actor；历史基线 `model_3023` 及其固定 NORMAL 静站证据见 [model_3023 ONNX 使用说明](onnx-huananhu-multimode-model3023.md)。
 
-checkpoint 位于 `artifacts/flat-track-20261017-trained/models/`（随 `5f96589` 提交纳入版本管理）；专用 XML 与地面姿态库位于版本化资源目录 `resources/robots/chuanliantui_new_1/multimode_model3023/`。正式入口为：
+checkpoint 位于 `artifacts/legacy_mjlab/flat-track-20261017-trained/models/`（随 `5f96589` 提交纳入版本管理）；专用 XML 与地面姿态库位于版本化资源目录 `resources/robots/chuanliantui_new_1/multimode_model3023/`。正式入口为：
 
 ```text
 scripts/mjlab.sh export
@@ -24,7 +24,7 @@ sim2sim/mj_sim2sim_huananhu_multimode.py
 | 数值核对 | 256 组输入，最大绝对误差 `3.814697265625e-06`，小于 `1e-4` |
 | 详细记录 | [本次模型交付记录](model-deliveries/20261017-model5849-onnx-export.md) |
 
-给 H7 协作者的完整文件集见 [H7 适配交付包](../exports/chuanliantui_multimode/model5849-h7-20261017/README.md)，包含 ONNX、参考输入输出（NPZ／CSV）、导出记录和校验清单；该目录随本说明纳入版本管理，协作者拉取包含它的提交后即可取得。本机 `artifacts/model5849-onnx-20261017/` 中的原始产物被 Git 忽略，只作本机证据。
+给 H7 协作者的完整文件集见 [H7 适配交付包](../exports/chuanliantui_multimode/model5849-h7-20261017/README.md)，包含 ONNX、参考输入输出（NPZ／CSV）、导出记录和校验清单；该目录随本说明纳入版本管理，协作者拉取包含它的提交后即可取得。本机 `artifacts/legacy_mjlab/model5849-onnx-20261017/` 中的原始产物被 Git 忽略，只作本机证据。
 
 ONNX 是保存网络计算和权重的通用格式；**opset 是计算操作的版本号，13 不表示输入维数**。batch=1 表示每次推理一台机器人的一组观测。actor 是根据观测产生动作的策略网络；本图结构为 `39 → 256 → 128 → 64 → 6`，三个隐藏层使用 ELU 激活函数，最后输出不经过 `tanh` 限幅。
 
@@ -40,12 +40,12 @@ OUT_DIR=$(mktemp -d artifacts/model5849-onnx-XXXXXX)
 
 # 固定 batch=1、opset 13：优先给 Cube.AI 导入。
 scripts/mjlab.sh export \
-  --checkpoint artifacts/flat-track-20261017-trained/models/model_5849.pt \
+  --checkpoint artifacts/legacy_mjlab/flat-track-20261017-trained/models/model_5849.pt \
   --output "$OUT_DIR/model_5849_opset13.onnx" --opset 13
 
 # 固定 batch=1、opset 18：电脑端参考版本。
 scripts/mjlab.sh export \
-  --checkpoint artifacts/flat-track-20261017-trained/models/model_5849.pt \
+  --checkpoint artifacts/legacy_mjlab/flat-track-20261017-trained/models/model_5849.pt \
   --output "$OUT_DIR/model_5849_opset18.onnx" --opset 18
 ```
 
@@ -208,7 +208,7 @@ last_action = actions[0].copy()  # 保存原始动作，供下一策略周期使
 
 ```bash
 "$MLAB_PYTHON" sim2sim/mj_sim2sim_huananhu_multimode.py \
-  --checkpoint artifacts/flat-track-20261017-trained/models/model_5849.pt \
+  --checkpoint artifacts/legacy_mjlab/flat-track-20261017-trained/models/model_5849.pt \
   --onnx "$OUT_DIR/model_5849_opset13.onnx" --seconds 20
 ```
 

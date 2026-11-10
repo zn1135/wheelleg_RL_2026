@@ -24,7 +24,7 @@ sim2sim/mj_sim2sim_huananhu_multimode.py
 | 数值核对 | 256 组输入，最大绝对误差 `3.814697265625e-06`，小于 `1e-4` |
 | 详细记录 | [本次模型交付记录](20261017-model5849-onnx-export.md) |
 
-给 H7 协作者的完整文件集见 [H7 适配交付包](../../chuanliantui_multimode/model5849-h7-20261017/README.md)，包含 ONNX、参考输入输出（NPZ／CSV）、导出记录和校验清单；该目录随本说明纳入版本管理，协作者拉取包含它的提交后即可取得。本机 `artifacts/model5849-onnx-20261017/` 中的原始产物被 Git 忽略，只作本机证据。
+给 H7 协作者的完整文件集见 [H7 适配交付包](../../chuanliantui_multimode/model5849-h7-20261017/README.md)，包含 ONNX、参考输入输出（NPZ／CSV）、导出记录和校验清单；该目录随本说明纳入版本管理，协作者拉取包含它的提交后即可取得。本机 `artifacts/legacy_mjlab/model5849-onnx-20261017/` 中的原始产物被 Git 忽略，只作本机证据。
 
 ONNX 是保存网络计算和权重的通用格式；**opset 是计算操作的版本号，13 不表示输入维数**。batch=1 表示每次推理一台机器人的一组观测。actor 是根据观测产生动作的策略网络；本图结构为 `39 → 256 → 128 → 64 → 6`，三个隐藏层使用 ELU 激活函数，最后输出不经过 `tanh` 限幅。
 

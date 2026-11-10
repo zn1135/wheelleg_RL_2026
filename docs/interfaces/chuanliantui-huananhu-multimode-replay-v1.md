@@ -22,7 +22,7 @@ RL 侧已完成图检查和数值对比；H7 部署负责人须核对 39 维观�
 | 训练来源 | `/home/zn/文档/mjlab/wheelleg_RL` 的冻结验证快照 |
 | 任务 | `Chuanliantui-Huananhu-Multimode-v0` |
 | 接口标识 | `chuanliantui-huananhu-multimode-39-82-v1` |
-| checkpoint | `artifacts/multimode-v1-replay-20261014/models/model_3023.pt` |
+| checkpoint | `artifacts/legacy_mjlab/multimode-v1-replay-20261014/models/model_3023.pt` |
 | checkpoint SHA256 | `624ded630635f0fb51a7378cdd04a7350eee98ffb305acbe1104c3cc7705a88a` |
 | 专用回放资产 | `resources/robots/chuanliantui_new_1/multimode_model3023/`（XML 与地面姿态库） |
 
@@ -76,7 +76,7 @@ opset 18 是电脑回放参考版，opset 13 是 Cube.AI 优先导入版。历�
   sim2sim/mj_sim2sim_huananhu_multimode.py --onnx <model_3023_opset13.onnx> --render --seconds 0
 ```
 
-20 秒 headless ONNX 结果在 `artifacts/multimode-v1-replay-20261014/normal-static-20261015/cpu-sim2sim-onnx13/result.json`：1 秒后951个策略步最大高度误差 2.60 cm、最大倾角 1.81°、机身接触0、双轮接触951、ONNX/PyTorch 最大动作差 `8.34e-7`，通过本次 normal 静站条件。末态高度约0.324m，高于冻结 GPU MuJoCo/Warp 回放约0.308m，仍在3cm门限内；该差异是独立物理后端差异，不能据此推断真机高度误差。
+20 秒 headless ONNX 结果在 `artifacts/legacy_mjlab/multimode-v1-replay-20261014/normal-static-20261015/cpu-sim2sim-onnx13/result.json`：1 秒后951个策略步最大高度误差 2.60 cm、最大倾角 1.81°、机身接触0、双轮接触951、ONNX/PyTorch 最大动作差 `8.34e-7`，通过本次 normal 静站条件。末态高度约0.324m，高于冻结 GPU MuJoCo/Warp 回放约0.308m，仍在3cm门限内；该差异是独立物理后端差异，不能据此推断真机高度误差。
 
 ## 静止站立腿角摆动修正（2026-10-17）
 

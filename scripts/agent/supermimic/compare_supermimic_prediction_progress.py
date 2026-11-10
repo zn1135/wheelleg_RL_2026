@@ -15,7 +15,7 @@ from scripts.agent.supermimic import score_supermimic_motion_retrain as scoring
 from scripts.agent.supermimic.score_supermimic_prediction_details import overall_errors
 
 ROOT = Path(__file__).resolve().parents[3]
-ART = ROOT/'artifacts'
+ART = ROOT/'artifacts/supermimic'
 BASE = ART/'supermimic-v13-a2200-prediction-20261101-r1'
 
 

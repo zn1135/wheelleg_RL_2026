@@ -29,7 +29,7 @@ def main():
     p.add_argument('--out',type=Path,required=True)
     args=p.parse_args();args.out.mkdir(parents=True,exist_ok=True)
     active=training_model.MODEL_XML
-    selected=ROOT/'artifacts/h7-wheel-best-20261021/selected'
+    selected=ROOT/'artifacts/real2sim/h7-wheel-best-20261021/selected'
     parameters=json.loads((selected/'parameters.json').read_text())
     native=mujoco.MjModel.from_xml_path(str(active));prepare_wheel_response(native)
     gpu_source=training_model.load_spec().compile()
@@ -53,7 +53,7 @@ def main():
     assert np.all(native.actuator_gaintype[acts]==mujoco.mjtGain.mjGAIN_USER)
     # Existing board/calibration/weights must remain exact. The active XML change
     # is explicitly authorized and is checked above instead of its old hash.
-    firmware=json.loads((ROOT/'artifacts/h7-bench-fixed300-20261021/firmware-machine-0.json').read_text())
+    firmware=json.loads((ROOT/'artifacts/real2sim/h7-bench-fixed300-20261021/firmware-machine-0.json').read_text())
     for name,digest in {**firmware['source_sha256'],**firmware['protected_sha256']}.items():
         if name.endswith('multimode_model3023/chuanliantui.xml'):continue
         assert hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==digest,name
@@ -69,7 +69,7 @@ def main():
     np.testing.assert_allclose(actual[(uu[:,0]==3.9)&(ww[:,0]==0),0],3.9*gain[0,0])
     module=probe.load_data_module();session,pulses=module.load('validation-complete')
     assert session.model_path.resolve()==before.resolve(),'old recording did not load its exact archived model'
-    saved=list(csv.DictReader((ROOT/'artifacts/h7-wheel-best-20261021/study/predictions.csv').open()))
+    saved=list(csv.DictReader((ROOT/'artifacts/real2sim/h7-wheel-best-20261021/study/predictions.csv').open()))
     errors=[];max_difference=0.;rows=[]
     for pulse in pulses:
         # Only initialize once. All fitted properties now come from active XML,
@@ -87,7 +87,7 @@ def main():
                          'predicted_rad_s':float(pred[i]),'actual_rad_s':float(pulse.actual_v[i])})
     assert max_difference<1e-8,max_difference
     metrics=probe.dynamics.stats(errors)
-    target=json.loads((ROOT/'artifacts/h7-wheel-best-20261021/selection.json').read_text())['validation_metrics']['rmse']
+    target=json.loads((ROOT/'artifacts/real2sim/h7-wheel-best-20261021/selection.json').read_text())['validation_metrics']['rmse']
     assert abs(metrics['rmse']-target)<1e-8
     probe.previous.write_csv(args.out/'active-xml-predictions.csv',rows)
     _,coarse_pulses=module.load('validation-complete',dt=.002)

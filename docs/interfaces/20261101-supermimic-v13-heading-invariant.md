@@ -44,6 +44,6 @@ PYTHONPATH=mjlab_training/src CUDA_VISIBLE_DEVICES='' mjlab_training/.venv/bin/p
 PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.supermimic.check_supermimic_no_history --integration --output artifacts/<新的采集检查目录>
 ```
 
-[坐标报告](../../artifacts/supermimic-v13-heading-input-check-20261101-r1/report.json)：参考特征最大差3.58e−7，整体yaw/平移输入差1.43e−6，预测路径变换差5.96e−7；包括非零世界外力/力矩、四元数q/−q等价、有限梯度和同维旧合同拒绝。随机非零网络头参与检查，避免零初始化输出使对称性检查空过。优化器更新0。
+[坐标报告](../../artifacts/supermimic/supermimic-v13-heading-input-check-20261101-r1/report.json)：参考特征最大差3.58e−7，整体yaw/平移输入差1.43e−6，预测路径变换差5.96e−7；包括非零世界外力/力矩、四元数q/−q等价、有限梯度和同维旧合同拒绝。随机非零网络头参与检查，避免零初始化输出使对称性检查空过。优化器更新0。
 
-[采集与恢复检查](../../artifacts/supermimic-v13-heading-input-integration-20261101-r1/report.json)另列CPU/GPU证据。程序检查不代表预测精度、平衡或运动行为提升；未做训练或真机验证。
+[采集与恢复检查](../../artifacts/supermimic/supermimic-v13-heading-input-integration-20261101-r1/report.json)另列CPU/GPU证据。程序检查不代表预测精度、平衡或运动行为提升；未做训练或真机验证。

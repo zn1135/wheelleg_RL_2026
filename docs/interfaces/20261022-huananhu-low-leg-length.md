@@ -4,7 +4,7 @@
 右膝−0.12～0.77rad，对应姿态缓存同步恢复原版本，机械最短平面腿长回到0.171632642m。
 下文0.15m限位、重建姿态库及录制结果为恢复前的历史实验；录制scene.mjb保留当时模型，不随本次恢复改写。
 低位高度命令、奖励和恢复门槛的代码调整本轮保留，未继续训练，不能将当前配置称为可训练到0.15m。
-恢复后的静态几何核验见`artifacts/leg-length-audit-20261022/geometry-restored-limits.json`。
+恢复后的静态几何核验见`artifacts/real2sim/leg-length-audit-20261022/geometry-restored-limits.json`。
 
 作者确认最低约0.15m指髋关节轴心到轮轴中心的腿长，并授权从model_6848续训2048环境、新增1000轮。
 目标是扩展最低腿长训练，保留原有高位能力；预算用尽后不自动追加。H7负责人核对状态：待确认。
@@ -13,7 +13,7 @@
 
 训练仓分支`26_wheelleg`，HEAD `de9841cd8e9a3e4e2ca339669af9e5de80c138be`，脏工作区。
 原有COMMANDS.md、project-log.md、review.md及real2sim相关未提交文件保留。
-实际源码、差异与运行证据保存在`artifacts/leg-length-audit-20261022/`；几何报告记录输入源码哈希。
+实际源码、差异与运行证据保存在`artifacts/real2sim/leg-length-audit-20261022/`；几何报告记录输入源码哈希。
 本轮未交付新模型前，既有model3023基线及5849/6848历史结论保持原记录。
 
 | 项目 | 调整前 | 本次调整 |
@@ -83,5 +83,5 @@ mjlab_training/.venv/bin/python -m tensorboard.main \
 最低命令8环境的新回放平均腿长为左0.191418469、右0.181845397m，与原结果差0.000000918/0.000000646m。
 保存每20ms的qpos、实际左右腿长及用于渲染的编译场景；渲染只读取保存状态、执行mj_forward，不重新积分。
 柱图使用原测量均值，曲线使用新录制的8环境数据，视频选最接近原均值的env1，蓝左/橙右；不是把两个平均长度合成为一个假姿态。
-图、视频、复现差异在`artifacts/leg-length-audit-20261022/parent-visualization/rendered/`，原始轨迹在其相邻`recording/seed42/`。
+图、视频、复现差异在`artifacts/real2sim/leg-length-audit-20261022/parent-visualization/rendered/`，原始轨迹在其相邻`recording/seed42/`。
 本次记录确认父模型在该低位命令下稳定后仍约0.1914/0.1818m；不能称已学会0.15m最低腿长。

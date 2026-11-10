@@ -5,7 +5,8 @@
   <compiler angle="radian" meshdir="../meshes" autolimits="true" />
   <!-- 仿真器选项由 model.py 与 mjlab 配置统一设定。 -->
   <default>
-    <joint damping="0" armature="0" frictionloss="0" />
+    <!-- 闭链/限位沿用架空验证的约束参数；较大物理步长保留MuJoCo默认refsafe保护。 -->
+    <joint damping="0" armature="0" frictionloss="0" solreflimit="0.0004 1" solimplimit="0.999 0.9999 0.001 0.5 2" />
     <geom contype="1" conaffinity="1" condim="3" friction="0.5 0.005 0.0001" />
     <default class="visual">
       <geom type="mesh" contype="0" conaffinity="0" group="2" density="0" />
@@ -54,8 +55,8 @@
         <!-- CAD rf001 换算到 lf0 局部系：左气弹簧上端。 -->
         <site name="left_gas_spring_upper" pos="0.0256060577081279 -0.003500000000051 -0.0371052989312678" size="0.004" rgba="1 0 0 1" />
         <body name="lf1" pos="-0.165288729653417 0.0114999999999917 -0.129536233732335">
-          <!-- 采用源 Wheel-Legged-Gym/sim2sim/chuanliantui.xml 的 +Y 实体 rf1 限位（2026-09-24 修正）。 -->
-          <joint name="lf1" damping="0.01" armature="0.0001" type="hinge" axis="0 1 0" range="-0.77 0.12" />
+          <!-- 2026-11-04：膝折叠限位按USB实测覆盖区间向外取整0.01rad；轴向/零位保持。 -->
+          <joint name="lf1" damping="0.01" armature="0.0001" type="hinge" axis="0 1 0" range="-0.97 0.14" />
           <inertial pos="0.0780229590622458 0.0103199473600926 -0.0862619955363456" mass="0.414858419057853" fullinertia="0.00264006392006 0.00449630400849 0.00188319431138 -2.34405638911e-06 0.00206820524894 3.25800440586e-06" />
           <geom class="visual" mesh="rf1" material="metal" />
           <geom class="collision" mesh="rf1" />
@@ -94,7 +95,7 @@
         <!-- CAD lf001 换算到 rf0 局部系：右气弹簧上端。 -->
         <site name="right_gas_spring_upper" pos="0.025606057708123 0.003500000000049 -0.037105298931257" size="0.004" rgba="1 0 0 1" />
         <body name="rf1" pos="-0.165288729653418 -0.0115000000014235 -0.129536233732203">
-          <joint name="rf1" damping="0.01" armature="0.0001" type="hinge" axis="0 -1 0" range="-0.12 0.77" />
+          <joint name="rf1" damping="0.01" armature="0.0001" type="hinge" axis="0 -1 0" range="-0.16 1.01" />
           <inertial pos="0.078018324484777 -0.0103199473609263 -0.0862673341064149" mass="0.414858418961741" fullinertia="0.00264096842023 0.00449643859324 0.00188242439596 2.35673588989e-06 0.00206811984718 -3.24560463461e-06" />
           <geom class="visual" mesh="lf1" material="metal" />
           <geom class="collision" mesh="lf1" />
@@ -180,12 +181,12 @@
     </body>
   </worldbody>
   <equality>
-    <connect name="lf_loop1" body1="lf02" body2="lf0" anchor="-0.0890095381252 -1.37889699658e-13 0.101500256761" solref="0.01 1" solimp="0.95 0.99 0.001 0.5 2" />
-    <connect name="lf_loop2" body1="lf03" body2="lf1" anchor="-0.0760328156403 8.26005930321e-14 -0.0595866675176" solref="0.01 1" solimp="0.95 0.99 0.001 0.5 2" />
-    <connect name="rf_loop1" body1="rf02" body2="rf0" anchor="-0.0890095381252 1.98410732288e-12 0.101500256761" solref="0.01 1" solimp="0.95 0.99 0.001 0.5 2" />
-    <connect name="rf_loop2" body1="rf03" body2="rf1" anchor="-0.0760328156403 1.8801626922e-13 -0.0595866675175" solref="0.01 1" solimp="0.95 0.99 0.001 0.5 2" />
-    <connect name="left_spring_loop" site1="left_spring_tip" site2="left_gas_spring_lower" solref="0.01 1" solimp="0.95 0.99 0.001 0.5 2" />
-    <connect name="right_spring_loop" site1="right_spring_tip" site2="right_gas_spring_lower" solref="0.01 1" solimp="0.95 0.99 0.001 0.5 2" />
+    <connect name="lf_loop1" body1="lf02" body2="lf0" anchor="-0.0890095381252 -1.37889699658e-13 0.101500256761" solref="0.0004 1" solimp="0.999 0.9999 0.001 0.5 2" />
+    <connect name="lf_loop2" body1="lf03" body2="lf1" anchor="-0.0760328156403 8.26005930321e-14 -0.0595866675176" solref="0.0004 1" solimp="0.999 0.9999 0.001 0.5 2" />
+    <connect name="rf_loop1" body1="rf02" body2="rf0" anchor="-0.0890095381252 1.98410732288e-12 0.101500256761" solref="0.0004 1" solimp="0.999 0.9999 0.001 0.5 2" />
+    <connect name="rf_loop2" body1="rf03" body2="rf1" anchor="-0.0760328156403 1.8801626922e-13 -0.0595866675175" solref="0.0004 1" solimp="0.999 0.9999 0.001 0.5 2" />
+    <connect name="left_spring_loop" site1="left_spring_tip" site2="left_gas_spring_lower" solref="0.0004 1" solimp="0.999 0.9999 0.001 0.5 2" />
+    <connect name="right_spring_loop" site1="right_spring_tip" site2="right_gas_spring_lower" solref="0.0004 1" solimp="0.999 0.9999 0.001 0.5 2" />
   </equality>
   <actuator>
     <motor name="lf0_motor" joint="lf0" gear="1" ctrlrange="-40.0 40.0" />

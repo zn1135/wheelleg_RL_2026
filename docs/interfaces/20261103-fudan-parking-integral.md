@@ -23,6 +23,6 @@ PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.f
 
 饱和、门控原因、退出残留和实际覆盖写入比较JSON。合成检查通过不代表动态退出已覆盖；本协议没有另加退出/推扰工况，未发生的条件明确未验证。每高度正常1倍速并排37秒视频，保留原地7秒、后退停车15秒、前进停车15秒，失败不删。三分支每帧展示组别、原始/实际指令和时间。
 
-2026-11-03修复仅完成无物理验证，未启用新的GPU窗口，未修订首轮失败产物。后续动态试验须另获预算；原600秒窗口不续用。修复证据见[检查记录](../../artifacts/fudan-parking-integral-repair-20261103/README.md)。部署负责人尚未核对，本组件未接入H7。
+2026-11-03修复仅完成无物理验证，未启用新的GPU窗口，未修订首轮失败产物。后续动态试验须另获预算；原600秒窗口不续用。修复证据见[检查记录](../../artifacts/fudan_ppo_walk/fudan-parking-integral-repair-20261103/README.md)。部署负责人尚未核对，本组件未接入H7。
 
-后续有界GPU三组试验已另行执行，实际结果与适用范围见[项目实验记录](../ai/project-log.md)顶部及[完整交付](../../artifacts/fudan-parking-integral-8000-20261103-r2/README.md)。原失败窗口和修复检查分别保留，不互相覆盖；最终仍待用户视频验收。
+后续有界GPU三组试验已另行执行，实际结果与适用范围见[项目实验记录](../ai/project-log.md)顶部及[完整交付](../../artifacts/fudan_ppo_walk/fudan-parking-integral-8000-20261103-r2/README.md)。原失败窗口和修复检查分别保留，不互相覆盖；最终仍待用户视频验收。

@@ -1,6 +1,14 @@
 # 复旦 PPO 行走配方适配规格（fudan-ppo-walk-physical-v1）
 
-当前训练已统一进入`mjlab.sh train --task fudan_ppo_walk → scripts/train.py → task_registry → 任务环境/配置 → runner → PPO`。环境与集中配置在`envs/fudan_ppo_walk/`，训练算法组件在`rsl_rl/`；旧命令只作兼容转入。最新模型仍8000轮/v2，独立积分默认关闭；本轮仅无物理等价验证，未训练/评估。下文历史命令及记录按原日期保留，实际日常位置见[迁移与验证说明](maintenance/20261103-fudan-structure-alignment.md)。
+2026-11-09用户正式采用双腿镜像局部负载，训练`sim.fitted_leg_load=True`及GPU默认开启；参数资源JSON与共用代码见[采用记录](interfaces/20261109-adopted-mirrored-leg-load.md)。新PPO检查点记录物理profile/SHA。原8000模型默认新物理20例0/20，未启动重训；`evaluate --leg-load-profile legacy`回退旧物理。本段以下150N/90mm/50Ns/m仅是保留的名义气弹簧基础项，不包含新增等效负载和摩擦记忆。
+
+当前名义气弹簧弹性曲线为0～150N/90mm、CAD零位压缩10mm，并按用户确认保留50N·s/m阻尼；最终推力夹至0～150N，复旦训练及GPU评估的弹簧偏置均为0。两端共用`PhysicalAction`实际施力路径。实现与历史范围区别见[sim2sim约定](ai/sim2sim.md)，检查命令见[构建与验证](ai/build-test.md)。
+
+当前训练侧`domain_rand`按首轮板端测量近似设为动作2ms、传感2ms；sim2sim独立保持动作4ms、传感4ms。[测量复查与限制](interfaces/20261103-fudan-measured-training-delays.md)。既有模型和成绩仍属于各自原条件。
+
+2026-11-03用户选用**8000-v2＋停车+2°图外参考**，积分关闭。默认GPU评估省略`--checkpoint`即用该方案；显式指定检查点仍走原输入复现。配置见`FudanWalkCfg.inference`，[接口和未验证范围](interfaces/20261103-fudan-selected-pitch2.md)。九停车数值9/9，低高度平滑性有取舍，尚未完成45行走回归/987；不自动改训练或原ONNX。
+
+训练统一进入`mjlab.sh train --task fudan_ppo_walk → scripts/train.py → task_registry → 任务环境/配置 → runner → PPO`。环境与集中配置在`envs/fudan_ppo_walk/`，训练算法组件在`rsl_rl/`；旧命令只作兼容转入。下文历史命令及记录按原日期保留，实际日常位置见[迁移与验证说明](maintenance/20261103-fudan-structure-alignment.md)，最新模型状态以[实验记录顶部](ai/project-log.md)为准。
 
 2026-11-02新增[停车命令采样v1](interfaces/20261102-fudan-parking-commands.md)：`config.py/FudanWalkCfg.commands`默认10%原地保持、10%行驶3～5秒后停车至复位，停车回合覆盖0.22/0.26/0.30m；其余80%沿用原命令采样。两个比例设0可恢复原采样。只做代码准备与无物理检查，未训练新权重；16奖励、网络、PD与历史定义不变，固定评估命令不变。
 
@@ -12,13 +20,13 @@
 
 当前开发输入为用户要求的[history回退v3](interfaces/20261102-fudan-history-rollback-v3.md)：首帧同一带噪/限幅后观测重复5次、后续历史保存限幅后帧；PD中心合法复位/热步/相位和奖励/控制/物理保持。只完成无物理/无模型前向/无更新准备，追加轮数待回复；现有7000模型仍为v2。下文有日期的v1/v2实验记录保持原义，不能将旧成绩算作v3行为。
 
-**最新复核：CPU样本18确有弹飞，根高最高.7922m；有限数值/无警告不能代表动态可靠，暂不推进新训练。优先核对同初态2ms/.5ms CPU积分，尚未执行。** [已保存轨迹证据](../artifacts/fudan-reset-v2-20261101/launch-diagnosis-r2/report.json)。
+**最新复核：CPU样本18确有弹飞，根高最高.7922m；有限数值/无警告不能代表动态可靠，暂不推进新训练。优先核对同初态2ms/.5ms CPU积分，尚未执行。** [已保存轨迹证据](../artifacts/fudan_ppo_walk/fudan-reset-v2-20261101/launch-diagnosis-r2/report.json)。
 
 状态：2026-11-01，首轮1678轮有限试训结束；用户已指出机身撑地，视频验收不通过，且本轮存在下述训练入口偏差，不是完整参考配方复现。任务名 `fudan_ppo_walk`，独立命名空间；仅扩展当前三条维护线，不恢复五个旧 task。
 
 ## 范围与冻结来源
 
-固定源码：[yly-true/fudan_rl_wheel_leg，8204e853](https://github.com/yly-true/fudan_rl_wheel_leg/tree/8204e853dfd2ed06d85a322e1a998c3d20a3be2c/plane)。原文件及 SHA256 放 `artifacts/fudan-ppo-walk-20261101/reference/`。本机同名源码不是该版本，不作权威。注册链：envs/__init__.py → WheelLeggedCfg/WheelLeggedCfgPPO → LeggedRobot → task_registry → OnPolicyRunner → ActorCriticSequence/PPO；配置须合并基类和子类。读取源码而不运行原 Isaac 脚本。
+固定源码：[yly-true/fudan_rl_wheel_leg，8204e853](https://github.com/yly-true/fudan_rl_wheel_leg/tree/8204e853dfd2ed06d85a322e1a998c3d20a3be2c/plane)。原文件及 SHA256 放 `artifacts/fudan_ppo_walk/fudan-ppo-walk-20261101/reference/`。本机同名源码不是该版本，不作权威。注册链：envs/__init__.py → WheelLeggedCfg/WheelLeggedCfgPPO → LeggedRobot → task_registry → OnPolicyRunner → ActorCriticSequence/PPO；配置须合并基类和子类。读取源码而不运行原 Isaac 脚本。
 
 平地：前进、后退、原地转、边走边转、停车、变高；不含障碍、跳跃、倒地恢复、H7或真机验收。从零初始化，独立 PPO；不得暗接旧模型、SMP、BC、SuperMimic或旧奖励/外环。仅当前分支工作，无提交/推送，无H7/共享XML/质量/弹簧/极性改动，保留历史产物。
 
@@ -55,6 +63,8 @@ Actor帧槽：0:3机体系角速度×.25；3:6重力投影；6:9命令[vx×2,yaw
 环境训练信息141维：0:3真值机体线速度×2；3:28无噪声当前帧；28:34上拍动作；34:40上上拍动作；40:46六电机加速度×.0025；46:123共77个平地高度观测clip(z−.5−地面高度,−1,1)×5；123:129六PD力矩×.05；129base质量减批均值（按参考质量随机化前记录语义）；130:133 COM偏移；133:139六默认角偏移；139摩擦采样值；140恢复系数采样值。网络再加当前encoder三维估速，合计144。高度77槽平地可相同，但不能删去导致接口变形。critic在actor加噪声之前构造。
 
 ## 奖励、终止、验收分别定义
+
+2026-11-03停车奖励试验已按用户要求撤销，删除新增的`parking_velocity`及其尺度配置，当前恢复下列原16项奖励。9000轮的最终PT已删除，训练日志、指标、视频和源码快照保留为失败试验记录。当前选用的8000-v2＋停车+2°图外参考保持，积分关闭。
 
 奖励16项：tracking_lin_vel=1，tracking_lin_vel_enhance=1，tracking_ang_vel=1，tracking_ang_vel_enhance=1，base_height=1，nominal_state=−1，lin_vel_z=−1，ang_vel_xy=−.2，orientation=−100，dof_vel=−5e−5，dof_acc=−2.5e−7，torques=−.0001，action_rate=−.01，action_smooth=−.01，collision=−1，dof_pos_limits=−1。每项先乘系数×.01再夹到[−.01,.01]，总和允许负值。基础跟踪exp(−误差²/.25)，enhance=exp(−误差²/2.5)−1；高度exp(−误差²/.001)。nominal_state为左右真实腿角差平方；速度罚四腿，动作二阶差分仅四腿，加速度/力矩/一阶动作差分为六路。参考collision列表为空，实际为0，不擅自加机身接触惩罚。
 
@@ -125,7 +135,7 @@ scripts/mjlab.sh fudan-ppo-walk export --checkpoint <model.pt> --output <新导�
 
 ## 本轮结果入口
 
-[完整报告/视频/逐样本指标](../artifacts/fudan-ppo-walk-20261101/README.md)、[模型交付记录](model-deliveries/20261101-fudan-ppo-walk-trial01.md)。最终GPU987完整、CPU984完整/3数值提前结束，两个引擎联合技术均0/987，用户视频验收不通过。CPU0.5ms只对原3个数值失败样本完成诊断，3例完整/0数值异常，未替换原分母、未做该积分方案的全987例验证。
+[完整报告/视频/逐样本指标](../artifacts/fudan_ppo_walk/fudan-ppo-walk-20261101/README.md)、[模型交付记录](model-deliveries/20261101-fudan-ppo-walk-trial01.md)。最终GPU987完整、CPU984完整/3数值提前结束，两个引擎联合技术均0/987，用户视频验收不通过。CPU0.5ms只对原3个数值失败样本完成诊断，3例完整/0数值异常，未替换原分母、未做该积分方案的全987例验证。
 
 `check_initialization`已在无物理/无优化器更新夹具中调用真实FudanEnv.step/reset，验证500拍重采样、严格>2000超时、局部复位、全局total_steps课程边界和默认CLI。实际保存往返只验证模型/优化器/RNG载荷；没有完整恢复入口或完整环境状态，不宣称中途续训支持。旧模型仍对应原run/source快照，修复源码未追加训练。
 
@@ -143,24 +153,24 @@ D1启动零动作热步、D2复位角与PD中心/默认偏置关系、D3正常re
 
 用户后续已授权按参考关系实施初始化/历史修正。现有PD中心含每环境启动±.03偏置已可静态解出合法闭链并缓存，复位零动作P项为0；root初态约.330～.348m，目标仍.22～.30。默认训练顺序为reset→一次零动作10ms热步→随机首轮相位；正常reset为4净1噪，raw history先于current clip。保留本机fresh reset/清动作，不复制原缓存副作用。配置/预检/CPU/GPU输入路径已同步，新增reset_contract明确隔离旧trial01。
 
-[接口与检查范围](interfaces/20261101-fudan-reset-v2.md)、[正式结果及未运行训练命令](../artifacts/fudan-reset-v2-20261101/README.md)。用户后续另授权23:32—23:42最多10分钟预检：20环境初态合法、20样本CPU/GPU同状态无噪声观测误差0、两端各2秒数值有限，默认启动热步＋48采样实际通过。两端零动作均触地，CPU部分翻倒；无平衡策略参与，不能等同修正版策略失败。更新0、新训练未运行，旧训练预算不恢复，旧模型仍不通过。
+[接口与检查范围](interfaces/20261101-fudan-reset-v2.md)、[正式结果及未运行训练命令](../artifacts/fudan_ppo_walk/fudan-reset-v2-20261101/README.md)。用户后续另授权23:32—23:42最多10分钟预检：20环境初态合法、20样本CPU/GPU同状态无噪声观测误差0、两端各2秒数值有限，默认启动热步＋48采样实际通过。两端零动作均触地，CPU部分翻倒；无平衡策略参与，不能等同修正版策略失败。更新0、新训练未运行，旧训练预算不恢复，旧模型仍不通过。
 
 ## 2026-11-02用户新授权：从零3000轮
 
-用户最新要求直接训练3000轮。新预算以完整轮数为准，无新墙钟上限；专用入口支持`--iterations 3000`（与`--deadline`互斥）。seed1/512×48，目标73728000转移、PPO/encoder各60000次Adam；旧CPU弹飞仍未解决，不将本轮GPU训练当作CPU通过，也不隐式改积分或奖励/PD/接触参数。真实命令、TensorBoard、新logdir和当前状态见[本轮记录](../artifacts/fudan-ppo-walk-20261102-iter3000/RUNNING.md)。本轮不自动开展额外仿真验收。
+用户最新要求直接训练3000轮。新预算以完整轮数为准，无新墙钟上限；专用入口支持`--iterations 3000`（与`--deadline`互斥）。seed1/512×48，目标73728000转移、PPO/encoder各60000次Adam；旧CPU弹飞仍未解决，不将本轮GPU训练当作CPU通过，也不隐式改积分或奖励/PD/接触参数。真实命令、TensorBoard、新logdir和当前状态见[本轮记录](../artifacts/fudan_ppo_walk/fudan-ppo-walk-20261102-iter3000/RUNNING.md)。本轮不自动开展额外仿真验收。
 
-3000轮现已完成并核对：73728000转移、PPO/encoder各60000次更新，训练循环53分19秒。未做新行为评估或导出、CPU弹飞未解决；外层子训练退出码未捕获，不声称退出0。[最终模型与核对](../artifacts/fudan-ppo-walk-20261102-iter3000/README.md)。
+3000轮现已完成并核对：73728000转移、PPO/encoder各60000次更新，训练循环53分19秒。未做新行为评估或导出、CPU弹飞未解决；外层子训练退出码未捕获，不声称退出0。[最终模型与核对](../artifacts/fudan_ppo_walk/fudan-ppo-walk-20261102-iter3000/README.md)。
 
 ## 2026-11-02逐项奖励日志
 
-新训练记录`Rewards/<16项名>`，值是每轮48策略步×全部环境的加权/裁剪后平均贡献；`Train/reward`与控制台reward同步此口径，各项和应与总量一致。横轴step为完成训练轮数。旧3000轮Train/reward是每轮末步批均值且未存16项，历史不补写、不与新均值冒充同口径。TensorBoard用SCALARS→Horizontal Axis=STEP；Relative列只是耗时，不是迭代轴。[实现、事件检查与截图](../artifacts/fudan-reward-logging-20261102/README.md)。本次未启动新训练或仿真。
+新训练记录`Rewards/<16项名>`，值是每轮48策略步×全部环境的加权/裁剪后平均贡献；`Train/reward`与控制台reward同步此口径，各项和应与总量一致。横轴step为完成训练轮数。旧3000轮Train/reward是每轮末步批均值且未存16项，历史不补写、不与新均值冒充同口径。TensorBoard用SCALARS→Horizontal Axis=STEP；Relative列只是耗时，不是迭代轴。[实现、事件检查与截图](../artifacts/fudan_ppo_walk/fudan-reward-logging-20261102/README.md)。本次未启动新训练或仿真。
 
 ## 2026-11-02学习状态续训与4096环境
 
-用户新授权从3000轮继续新增3000轮并指定4096环境；CLI `--resume <checkpoint> --iterations 3000`的iterations为新增量，step累积到6000。严格恢复模型、两Adam/自适应学习率、累计计数、速度课程及CPU/CUDA RNG；物理、历史、命令、局部回合重新初始化，完整环境状态仍未保存/恢复。旧512源的全局拍数按原源样本数还原，不因4096变化错算。新增589824000转移、累计663552000，两Adam各新增60000/累计120000；未改奖励/PD/物理。16项日志在新run的3001～6000轮生效。实际命令、TensorBoard和来源/检查见[续训记录](../artifacts/fudan-resume-3000-to6000-20261102/RUNNING.md)。不持续监控、不自动追加评估。
+用户新授权从3000轮继续新增3000轮并指定4096环境；CLI `--resume <checkpoint> --iterations 3000`的iterations为新增量，step累积到6000。严格恢复模型、两Adam/自适应学习率、累计计数、速度课程及CPU/CUDA RNG；物理、历史、命令、局部回合重新初始化，完整环境状态仍未保存/恢复。旧512源的全局拍数按原源样本数还原，不因4096变化错算。新增589824000转移、累计663552000，两Adam各新增60000/累计120000；未改奖励/PD/物理。16项日志在新run的3001～6000轮生效。实际命令、TensorBoard和来源/检查见[续训记录](../artifacts/fudan_ppo_walk/fudan-resume-3000-to6000-20261102/RUNNING.md)。不持续监控、不自动追加评估。
 
-4096续训已于2026-11-02 05:39完成6000轮，新增3000轮/589824000转移、PPO及encoder各60000更新，累计663552000转移/两Adam各120000；训练/审计退出0，16项日志3001～6000完整。训练分数改善但尚无新回放，CPU弹飞未解决。[完成模型与结果](../artifacts/fudan-resume-3000-to6000-20261102/README.md)。
+4096续训已于2026-11-02 05:39完成6000轮，新增3000轮/589824000转移、PPO及encoder各60000更新，累计663552000转移/两Adam各120000；训练/审计退出0，16项日志3001～6000完整。训练分数改善但尚无新回放，CPU弹飞未解决。[完成模型与结果](../artifacts/fudan_ppo_walk/fudan-resume-3000-to6000-20261102/README.md)。
 
-2026-11-02用户再次授权6000→7000新增1000轮，继续4096环境、同配方与16项日志；新增196608000转移/两Adam各20000，累计860160000/各140000。只继承学习状态、仿真现场重置，不持续监控或自动评估。[本轮授权和新logdir](../artifacts/fudan-resume-6000-to7000-20261102/RUNNING.md)。
+2026-11-02用户再次授权6000→7000新增1000轮，继续4096环境、同配方与16项日志；新增196608000转移/两Adam各20000，累计860160000/各140000。只继承学习状态、仿真现场重置，不持续监控或自动评估。[本轮授权和新logdir](../artifacts/fudan_ppo_walk/fudan-resume-6000-to7000-20261102/RUNNING.md)。
 
-4096续训6000→7000已于2026-11-02 13:43:45完成，训练/审计退出0；新增196608000转移、两Adam各20000，累计860160000/各140000，16项日志6001～7000完整。7000行为尚未回放，6000原13个诊断成功样本仍须保留。[最终模型与结果](../artifacts/fudan-resume-6000-to7000-20261102/README.md)。
+4096续训6000→7000已于2026-11-02 13:43:45完成，训练/审计退出0；新增196608000转移、两Adam各20000，累计860160000/各140000，16项日志6001～7000完整。7000行为尚未回放，6000原13个诊断成功样本仍须保留。[最终模型与结果](../artifacts/fudan_ppo_walk/fudan-resume-6000-to7000-20261102/README.md)。

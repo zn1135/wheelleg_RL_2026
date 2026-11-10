@@ -4,17 +4,17 @@
 
 ## 来源、固件与采集条件
 
-工作仅在`/home/zn/.codex/worktrees/fixed-h7-real2sim/Wheel-Legged-Gym`，HEAD `d7c857f10c24751f8bb2e525438bf10bad499312`。原工作区未提交real2sim实现的复制来源/逐文件哈希见[迁入清单](../../artifacts/fixed-h7-calibration-20261021/migration-manifest.json)，既有数据盘点/控制链路/舍入复核见[前次报告](20261021-fixed-h7-real2sim.md)。本次新增文件及产物哈希见[交付清单](../../artifacts/fixed-h7-fixed300-data-20261021/delivery-manifest.json)。原工作区未被本轮写入；与最初迁入快照的后续差异已存在于先前来源审计，本轮另存当前哈希，不覆盖/还原原工作区。未提交/推送。
+工作仅在`/home/zn/.codex/worktrees/fixed-h7-real2sim/Wheel-Legged-Gym`，HEAD `d7c857f10c24751f8bb2e525438bf10bad499312`。原工作区未提交real2sim实现的复制来源/逐文件哈希见[迁入清单](../../artifacts/real2sim/fixed-h7-calibration-20261021/migration-manifest.json)，既有数据盘点/控制链路/舍入复核见[前次报告](20261021-fixed-h7-real2sim.md)。本次新增文件及产物哈希见[交付清单](../../artifacts/real2sim/fixed-h7-fixed300-data-20261021/delivery-manifest.json)。原工作区未被本轮写入；与最初迁入快照的后续差异已存在于先前来源审计，本轮另存当前哈希，不覆盖/还原原工作区。未提交/推送。
 
-USB工程`deployment/H7_RL_ros`，机器0大机；普通RL仍model5849生成网络、39/6接口、原轮速P控制版本0、500Hz控制/50Hz推理，未接入轮矩补偿。机器配置SHA256 `017665bc3ebcfdd20d846e2d781b6109c2e425ccdd9f1b4779124e2221ef5416`；正式XML `resources/robots/chuanliantui_new_1/multimode_model3023/chuanliantui.xml` SHA256 `1ea213314d8fd686841678d28246fbb588d53a5586e08c22ea977e95c0cb4ec5`。网络逐文件哈希、构建来源清单93项见[预期构建清单](../../artifacts/h7-bench-fixed300-20261021/firmware-machine-0.json)，关联ONNX/checkpoint哈希见前次报告。台架不运行策略，权重不参与轮脉冲拟合。
+USB工程`deployment/H7_RL_ros`，机器0大机；普通RL仍model5849生成网络、39/6接口、原轮速P控制版本0、500Hz控制/50Hz推理，未接入轮矩补偿。机器配置SHA256 `017665bc3ebcfdd20d846e2d781b6109c2e425ccdd9f1b4779124e2221ef5416`；正式XML `resources/robots/chuanliantui_new_1/multimode_model3023/chuanliantui.xml` SHA256 `1ea213314d8fd686841678d28246fbb588d53a5586e08c22ea977e95c0cb4ec5`。网络逐文件哈希、构建来源清单93项见[预期构建清单](../../artifacts/real2sim/h7-bench-fixed300-20261021/firmware-machine-0.json)，关联ONNX/checkpoint哈希见前次报告。台架不运行策略，权重不参与轮脉冲拟合。
 
-用户后续明确改为“取消全部提前停止，只保留300ms结束”；这是单独的台架刺激行为变更，profile `fixed300_no_early_stop_v1`，不能只凭controller_mode=0与旧保护版混为同一固件。RUN锁存指令至300ms，触发前准备检查保留，普通RL/LQR不改。用户本次确认断动力后17:18写入/校验/复位成功，HEX SHA256 `c6bef66b74e45318bbaaef6566ff9c2f34c5a09d1365985e32e930876d3334e8`；[实际烧录日志](../../artifacts/h7-bench-fixed300-20261021/flash-20261021-171749/flash-result.json)与10秒断动力零输出检查齐备。预期清单保留烧录前flashed=false快照，实际安装以烧录日志为证，并非录制内启动证明。
+用户后续明确改为“取消全部提前停止，只保留300ms结束”；这是单独的台架刺激行为变更，profile `fixed300_no_early_stop_v1`，不能只凭controller_mode=0与旧保护版混为同一固件。RUN锁存指令至300ms，触发前准备检查保留，普通RL/LQR不改。用户本次确认断动力后17:18写入/校验/复位成功，HEX SHA256 `c6bef66b74e45318bbaaef6566ff9c2f34c5a09d1365985e32e930876d3334e8`；[实际烧录日志](../../artifacts/real2sim/h7-bench-fixed300-20261021/flash-20261021-171749/flash-result.json)与10秒断动力零输出检查齐备。预期清单保留烧录前flashed=false快照，实际安装以烧录日志为证，并非录制内启动证明。
 
 用户确认车身可靠固定、双轮悬空、动力上电，再手动准备/触发。主机只读USB，不发电机指令；四髋请求全0。每次开始轮速记录均0；脉冲及随后2.5秒机身俯仰峰峰约0.096～0.115°、髋角峰峰最大9.59e-5rad，夹具近似有实录依据，但外部约束力未知。结束用户报告左下/右下；已告知断动力，**未收到结束后断动力确认，不声称已断电**。
 
 ## 完整会话划分
 
-先用`first-pulse`一脉冲完成小样本采集/解码/固定夹具MuJoCo自由积分检查，随后才扩大拟合。小样本不进入拟合/验证。冻结划分见[split.json](../../artifacts/fixed-h7-fixed300-data-20261021/split.json)。
+先用`first-pulse`一脉冲完成小样本采集/解码/固定夹具MuJoCo自由积分检查，随后才扩大拟合。小样本不进入拟合/验证。冻结划分见[split.json](../../artifacts/real2sim/fixed-h7-fixed300-data-20261021/split.json)。
 
 | 角色 | 完整会话 | CONTROL / CAN记录 | 完整性 | 原始stream SHA256 |
 | --- | --- | --- | --- | --- |
@@ -36,7 +36,7 @@ USB工程`deployment/H7_RL_ros`，机器0大机；普通RL仍model5849生成网�
 
 实际相邻触发间隔：拟合14.111/10.556/9.254秒；验证9.310/7.546/7.013秒，**并非均达到先前建议的10秒**。起始静止已核对，电机温度没有记录，不能排除热状态影响。独立采集会话仍是同一天同装置的有限复测，不等于跨日/温度独立实验。
 
-负结果不删除：当前目录`fit-session`最终截断253字节，虽然脉冲早于截断，仍整份排除；`validation-session`零脉冲，为修复收尾边界提前结束，排除。旧保护版`artifacts/fixed-h7-new-data-20261021/`的59ms脉冲及静态会话全部排除。收尾脚本现持续到CRC有效完整批次边界，warmup独立保存；[有限边界检查](../../artifacts/fixed-h7-fixed300-data-20261021/reader-boundary-check.json)通过，不隐去坏包/队列丢弃。
+负结果不删除：当前目录`fit-session`最终截断253字节，虽然脉冲早于截断，仍整份排除；`validation-session`零脉冲，为修复收尾边界提前结束，排除。旧保护版`artifacts/real2sim/fixed-h7-new-data-20261021/`的59ms脉冲及静态会话全部排除。收尾脚本现持续到CRC有效完整批次边界，warmup独立保存；[有限边界检查](../../artifacts/real2sim/fixed-h7-fixed300-data-20261021/reader-boundary-check.json)通过，不隐去坏包/队列丢弃。
 
 ## 输入、时间与自由积分
 
@@ -93,15 +93,15 @@ USB工程`deployment/H7_RL_ros`，机器0大机；普通RL仍model5849生成网�
 | 50-80 | 848.474 (n=846) | 1.444 (n=846) | 13.823 (n=846) | 1393.501 (n=1250) | 55.727 (n=1250) | 11.384 (n=1250) |
 | 80+ | 无样本 | 无样本 | 无样本 | 无样本 | 无样本 | 无样本 |
 
-逐左右/方向/速度/相位的MAE、RMSE、偏差、P95和样本数全量保存在[report.json](../../artifacts/fixed-h7-fixed300-data-20261021/fit-budget80/report.json)的speed_summary，逐点数据为predictions.csv。候选与基线完整量程图分别保存，避免原模型极大误差遮住候选缺陷。
+逐左右/方向/速度/相位的MAE、RMSE、偏差、P95和样本数全量保存在[report.json](../../artifacts/real2sim/fixed-h7-fixed300-data-20261021/fit-budget80/report.json)的speed_summary，逐点数据为predictions.csv。候选与基线完整量程图分别保存，避免原模型极大误差遮住候选缺陷。
 
-![候选与实测轮速](../../artifacts/fixed-h7-fixed300-data-20261021/fit-budget80/validation-candidates-public.png)
+![候选与实测轮速](../../artifacts/real2sim/fixed-h7-fixed300-data-20261021/fit-budget80/validation-candidates-public.png)
 
-[原模型同图完整量程](../../artifacts/fixed-h7-fixed300-data-20261021/fit-budget80/validation-full-public.png)。重复绘图用固件公共轮坐标，仅做一次反向显示映射，不更改数值拟合。
+[原模型同图完整量程](../../artifacts/real2sim/fixed-h7-fixed300-data-20261021/fit-budget80/validation-full-public.png)。重复绘图用固件公共轮坐标，仅做一次反向显示映射，不更改数值拟合。
 
 ## 电流反馈线索与模型限制
 
-[反馈审计](../../artifacts/fixed-h7-fixed300-data-20261021/current-feedback-audit.json)发现所有脉冲发送非零电流码绝对值始终10257，而电机上报电流码绝对值中位数从早段约7879～9500降至后段约460～1308，轮速同时到约62～65rad/s平台。反馈码与发送码没有在此独立校准，均非轴端测矩。
+[反馈审计](../../artifacts/real2sim/fixed-h7-fixed300-data-20261021/current-feedback-audit.json)发现所有脉冲发送非零电流码绝对值始终10257，而电机上报电流码绝对值中位数从早段约7879～9500降至后段约460～1308，轮速同时到约62～65rad/s平台。反馈码与发送码没有在此独立校准，均非轴端测矩。
 
 这提示应检查随速度变化的电气/驱动响应；常量惯量、干摩擦与线性阻尼难同时描述驱动平台和较慢自由减速。**这是依据实录的推测，尚不能定因为反电动势、电压饱和、限流或真实摩擦**。本次不扩展执行器模型，不改力矩换算来强行拟合。
 
@@ -135,7 +135,7 @@ USB工程`deployment/H7_RL_ros`，机器0大机；普通RL仍model5849生成网�
 
 ## 已验证范围与最小下一步
 
-新增正式有限检查`scripts/agent/check_h7_capture_calibration.py`核对两会话原始哈希/划分、4方向覆盖、每组每轮80次预算、10项机器/网络/正式XML保护哈希、独立编译候选后保护字段/非轮参数不变。重算32820个验证轮速点及9792个旧RL终点差0；每模型另取一窗重新积分差0。检查通过见[verification-with-rl.json](../../artifacts/fixed-h7-fixed300-data-20261021/fit-budget80/verification-with-rl.json)，其passed仅代表所列有限软件核验，不代表校准或实机行为验收。
+新增正式有限检查`scripts/agent/check_h7_capture_calibration.py`核对两会话原始哈希/划分、4方向覆盖、每组每轮80次预算、10项机器/网络/正式XML保护哈希、独立编译候选后保护字段/非轮参数不变。重算32820个验证轮速点及9792个旧RL终点差0；每模型另取一窗重新积分差0。检查通过见[verification-with-rl.json](../../artifacts/real2sim/fixed-h7-fixed300-data-20261021/fit-budget80/verification-with-rl.json)，其passed仅代表所列有限软件核验，不代表校准或实机行为验收。
 
 现有数据能检验固定输入的等效响应，但一档幅值/时长不足以区分电机随速度响应、惯量和损耗，且新完整RL输入缺失。下一项最小整机采集是在原策略/控制/标定不变条件下，录一份**独立短时RL会话，保存每拍500Hz实际请求/CAN、IMU和关节状态**，明确接触条件；保护装置不承力，若必须扶持则测外力。成功判据是完整输入无缺口且10/50/100ms轮速和俯仰同时不退化。
 
@@ -146,7 +146,7 @@ USB工程`deployment/H7_RL_ros`，机器0大机；普通RL仍model5849生成网�
 在本worktree根目录，用已有mjlab虚拟环境运行；输出指定新的目录，以下全部离线，不访问串口或执行训练：
 
 ```bash
-DATA=artifacts/fixed-h7-fixed300-data-20261021
+DATA=artifacts/real2sim/fixed-h7-fixed300-data-20261021
 OUT="$DATA/reproduce-$(date +%Y%m%d-%H%M%S)"
 mjlab_training/.venv/bin/python "$DATA/fit_capture.py" --budget 80 --out "$OUT"
 mjlab_training/.venv/bin/python sim2sim/calibrate_fixed_h7_huananhu.py rl --out "$OUT" --stride 20

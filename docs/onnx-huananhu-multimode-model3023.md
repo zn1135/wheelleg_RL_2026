@@ -2,7 +2,7 @@
 
 本文只适用于历史 checkpoint `model_3023.pt`（SHA-256 `624ded630635f0fb51a7378cdd04a7350eee98ffb305acbe1104c3cc7705a88a`）。它是 39 维 actor，不能替换仓库中旧 25/125 维、100 Hz 的 H7 网络，也不能加载到 V11 的 35/78 actor。
 
-checkpoint 位于 `artifacts/multimode-v1-replay-20261014/models/`；专用 XML 与地面姿态库位于版本化资源目录 `resources/robots/chuanliantui_new_1/multimode_model3023/`。正式入口为：
+checkpoint 位于 `artifacts/legacy_mjlab/multimode-v1-replay-20261014/models/`；专用 XML 与地面姿态库位于版本化资源目录 `resources/robots/chuanliantui_new_1/multimode_model3023/`。正式入口为：
 
 ```text
 scripts/export_huananhu_multimode_onnx.py
@@ -39,7 +39,7 @@ ONNX 是保存网络计算和权重的通用格式；**opset 是计算操作的�
 
 ```bash
 MLAB_PYTHON=./mjlab_training/.venv/bin/python
-OUT_DIR=$(mktemp -d artifacts/multimode-v1-replay-20261014/manual-onnx-XXXXXX)
+OUT_DIR=$(mktemp -d artifacts/legacy_mjlab/multimode-v1-replay-20261014/manual-onnx-XXXXXX)
 
 # 固定 batch=1、opset 13：优先给 Cube.AI 导入。
 "$MLAB_PYTHON" scripts/export_huananhu_multimode_onnx.py \

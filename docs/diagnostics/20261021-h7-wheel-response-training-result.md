@@ -6,7 +6,7 @@
 
 结束时间：2026-10-21T19:41:11.749906+08:00，退出0；总计1000次PPO更新、49,152,000次环境交互。日志编号5849～6848（两端包含），最终文件名model_6848是零起始循环的编号，不是只跑了999轮。checkpoint保存的common_step_counter比父模型增加24000（每轮24个策略步）。物理步2ms、策略周期20ms。
 
-父模型：`artifacts/flat-track-20261017-trained/models/model_5849.pt`，SHA256 `d4be0bc98c20348911b7e43a6f52f5e3719cb78d74f5764f4854bce82bb71ca7`。
+父模型：`artifacts/legacy_mjlab/flat-track-20261017-trained/models/model_5849.pt`，SHA256 `d4be0bc98c20348911b7e43a6f52f5e3719cb78d74f5764f4854bce82bb71ca7`。
 
 最终模型：`logs/mjlab/chuanliantui_huananhu_multimode_v1/2026-10-21_19-09-28_h7-wheel-joint-sharp-2ms/model_6848.pt`，SHA256 `4a96a4c216fed4cedc2153667defbc0ae7974b9a31eb857022a31b4658bb3001`。
 
@@ -68,6 +68,6 @@ mjlab_training/.venv/bin/python scripts/agent/assess_multimode_tracking.py --che
 mjlab_training/.venv/bin/python sim2sim/mj_sim2sim_huananhu_multimode.py --checkpoint <model_5849.pt或model_6848.pt> --pytorch-controller --seconds 12 --cmd-vx <0或1.5> --cmd-yaw 0 --cmd-height 0.27 --report <新目录>/cpu.json
 ```
 
-训练进程退出记录为artifacts/h7-wheel-train-20261021/exit.json，预算/哈希/有限张量检查为training-summary.json，配对结果result.json，完整逐样本与逐拍数据在evaluation/，训练源码快照在source/。本次不修改训练/控制/物理参数，不提交/推送；H7部署侧核对仍待确认。
+训练进程退出记录为artifacts/real2sim/h7-wheel-train-20261021/exit.json，预算/哈希/有限张量检查为training-summary.json，配对结果result.json，完整逐样本与逐拍数据在evaluation/，训练源码快照在source/。本次不修改训练/控制/物理参数，不提交/推送；H7部署侧核对仍待确认。
 
-![跟踪误差对比](../../artifacts/h7-wheel-train-20261021/tracking-comparison.png)
+![跟踪误差对比](../../artifacts/real2sim/h7-wheel-train-20261021/tracking-comparison.png)

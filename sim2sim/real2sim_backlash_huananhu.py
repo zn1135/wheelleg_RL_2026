@@ -21,8 +21,8 @@ import numpy as np
 import real2sim_dynamics_huananhu as dyn
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / 'artifacts/wheel-sine-test-20261021'
-PRIOR = ROOT / 'artifacts/real2sim-dynamics-20261021/verified-run'
+SOURCE = ROOT / 'artifacts/real2sim/wheel-sine-test-20261021'
+PRIOR = ROOT / 'artifacts/real2sim/real2sim-dynamics-20261021/verified-run'
 PARAMETERS = np.array(json.loads((PRIOR / 'candidate-parameters.json').read_text())['additional_parameters'])
 FIELDS = ['mae', 'rmse', 'phase_error_deg', 'amplitude_error_percent', 'bias_error_rad_s']
 

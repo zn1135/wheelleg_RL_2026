@@ -21,17 +21,17 @@ from ct_mjlab.supermimic.learner import ALGORITHM_CONTRACT, WORLD_LOSS_RECIPE
 
 ROOT = core.ROOT
 V11 = 'chuanliantui-supermimic-canonical-physics-fixed-support-scale-robust-wheel-angle-v11'
-OLD_TRIAL = ROOT/'artifacts/supermimic-v10-world-only-20261031-r1'
-REFERENCE = ROOT/'artifacts/supermimic-v10-one-step-vs-rollout-20261031-r3'
-NEW_TRIAL = ROOT/'artifacts/supermimic-v11-world-only-20261031-r1'
+OLD_TRIAL = ROOT/'artifacts/supermimic/supermimic-v10-world-only-20261031-r1'
+REFERENCE = ROOT/'artifacts/supermimic/supermimic-v10-one-step-vs-rollout-20261031-r3'
+NEW_TRIAL = ROOT/'artifacts/supermimic/supermimic-v11-world-only-20261031-r1'
 OLD_RUN = ROOT/'logs/mjlab/chuanliantui_supermimic_walk/20261031_v10_contact_worldonly_r1'
 LOCKS = dict(
     core='774de38163fe3524132f55ebd2636f8b345257ac7ba640a45636e157ff19f70d',
     teacher='40caf7750874c72de9244b3774ab0578a23a3798bb9617255d5852632523e685',
     old_manifest='f9297b547d969d5226e81de5d8cd678faf28f2ea8bc4fc99790f356852609c86',
     reference_predictions='b0646cd49a6f019b7ddf2cf0735a8b085230be1ff064c858fb25fffac08d3eb2',
-    reference_score='e6041aebc45ae298cd2b80bba20bf195d70d8f8ae775b43e167767deb1698b58',
-    reference_summary='3e35135f09e913f6f2f9e74c69ba7b63a7816e7462d4282dae77e893c4ac888c')
+    reference_score='3caf13e27ed9bd0836c0521522b702a03f758a90bd6f1afa1d8a051c682954b7',
+    reference_summary='cc59c2a6f7f5276649b815f656bec6eac605b3ac624d2dade734b613694f4596')
 SOURCE_PAIRS = {
     'supermimic/__main__.py': ('16533a9419e4db0d39c0b45fbdc3b28360439a9ac9d6082faf0618ba38880e9b',
         'bbcc213b28f46be8a95d8fc80dda394f3077ad70d9b45f34539a864f7571fb4a'),

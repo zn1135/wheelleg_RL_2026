@@ -9,9 +9,10 @@ import tarfile
 import tempfile
 import shutil
 from types import SimpleNamespace
+from scripts.agent.maintenance.check_sim2sim_artifact_paths import matches_baseline
 
 ROOT = Path(__file__).resolve().parents[3]
-OUT = ROOT/'artifacts/retain-678-cleanup-20261101'
+OUT = ROOT/'artifacts/maintenance/retain-678-cleanup-20261101'
 OLD_TASKS = ('chuanliantui', 'chuanliantui_stand', 'chuanliantui_stand_v2',
              'chuanliantui_getup', 'chuanliantui_walk')
 
@@ -52,7 +53,7 @@ def main():
             assert digest(ROOT/name) == before[name], f'Shared physical/model source changed: {name}'
     protection = json.loads((ROOT/'docs/maintenance/20261101-sim2sim-protection.json').read_text())
     for name, expected in protection['protected_files'].items():
-        assert digest(ROOT/name) == expected, f'MuJoCo source changed: {name}'
+        assert matches_baseline(ROOT/name, expected), f'MuJoCo source changed: {name}'
     # 原脚本的同级导入要求将sim2sim目录放在sys.path；不修改其代码。
     sys.path.insert(0, str(ROOT/'sim2sim'))
     importlib.import_module('mj_sim2sim_chuanliantui_two_policy')
@@ -115,7 +116,7 @@ def main():
     report = dict(tasks=list(task_registry.names()), retired_tasks_rejected=list(OLD_TASKS),
         plain_ppo_rejected=True, shared_env_sources_verified=len(shared),
         shared_env_files_byte_identical=len(shared)-1, unused_getup_wrappers_only_removed=True,
-        sim2sim_files_unchanged=len(protection['protected_files']), shared_helper_ast_equal=True,
+        sim2sim_files_verified=len(protection['protected_files']), shared_helper_ast_equal=True,
         removed_scripts=len(plan['script_delete']), removed_document_files=len(plan['doc_delete']),
         removed_asset_roots=len(plan['asset_delete']), retained_dependencies=len(plan['retained_dependencies']),
         imports_verified=True, historical_supermimic_actor_loaded=True,

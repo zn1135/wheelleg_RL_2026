@@ -46,4 +46,4 @@ scripts/mjlab.sh accept --task isaac --recording <Isaac_GPU结果JSON> --output 
 
 ## 版本与验证
 
-只改GPU入口限制、采集元数据/BC命令记录、共用评分接入和文档；训练函数、奖励、物理、观测、XML及H7不变。旧成绩、源快照、模型和视频原位保留，新标准写新目录。检查和既有轨迹复算见[实现记录](../../artifacts/unified-gpu-acceptance-20261102/README.md)；当前没有新GPU仿真、策略前向、训练或真机验证。
+只改GPU入口限制、采集元数据/BC命令记录、共用评分接入和文档；训练函数、奖励、物理、观测、XML及H7不变。旧成绩、源快照、模型和视频原位保留，新标准写新目录。检查和既有轨迹复算见[实现记录](../../artifacts/shared_validation/unified-gpu-acceptance-20261102/README.md)；当前没有新GPU仿真、策略前向、训练或真机验证。

@@ -79,7 +79,7 @@ def main():
     pole=world.inputs(vertical,p[:2],a[:2]);vg=torch.autograd.grad(pole.square().sum(),vertical)[0]
     assert torch.isfinite(pole).all() and torch.isfinite(vg).all()
     # The old129-wide model must not slip through just because tensor shapes match.
-    old_path=ROOT/'artifacts/supermimic-v13-no-history-check-20261101-r2/zero-update-roundtrip.pt'
+    old_path=ROOT/'artifacts/supermimic/supermimic-v13-no-history-check-20261101-r2/zero-update-roundtrip.pt'
     old=torch.load(old_path,map_location='cpu',weights_only=False)
     assert old['world']['in_norm.mean'].numel()==129 and old['algorithm_contract']!=ALGORITHM_CONTRACT
     command=SimpleNamespace(cfg=command_cfg('walk'),load_checkpoint_state=lambda _:None)

@@ -2,13 +2,14 @@
 import hashlib,json,subprocess
 from pathlib import Path
 from ct_mjlab.envs import task_registry
+from scripts.agent.maintenance.check_sim2sim_artifact_paths import matches_baseline
 
 
 def main():
     root=Path(__file__).resolve().parents[3]
     protection=json.loads((root/'docs/maintenance/20261101-sim2sim-protection.json').read_text())
     for name,digest in protection['protected_files'].items():
-        assert hashlib.sha256((root/name).read_bytes()).hexdigest()==digest,name
+        assert matches_baseline(root/name,digest),name
     unchanged=[]
     for base in ('mjlab_training/src/ct_mjlab/envs','resources','deployment'):
         paths=subprocess.check_output(['git','ls-files','-z',base],cwd=root,text=True).split('\0')

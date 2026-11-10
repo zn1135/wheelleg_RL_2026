@@ -59,7 +59,7 @@
     "machine": 0,
     "HEX_sha256": "cbfa46dde22e7cf7a267c7e70f59cefe5cad34c01cedd0694ff8e25a5f3b9e01",
     "flashed": true,
-    "flash_evidence": "artifacts/h7-model6848-flash-20261021/flash-result.json",
+    "flash_evidence": "artifacts/real2sim/h7-model6848-flash-20261021/flash-result.json",
     "board_numeric_and_timing": "pending H7 owner confirmation",
     "hardware_motor_tested": false
   }

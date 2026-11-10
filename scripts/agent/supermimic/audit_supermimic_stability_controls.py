@@ -25,8 +25,9 @@ def main():
     reference_decay=ref_args['lr_decay_iters'];base_lr=ref_args['lr']
     schedule={str(i):dict(factor=.03+.97*.5*(1+math.cos(math.pi*min(i,reference_decay)/reference_decay)),
         lr=base_lr*(.03+.97*.5*(1+math.cos(math.pi*min(i,reference_decay)/reference_decay)))) for i in (0,5200,8000,24000,120000)}
-    paths=[('SM615',ROOT/'artifacts/supermimic-v13-baseline615-current13-seed43-20261031'),('A2200',ROOT/'artifacts/supermimic-v13-r2-a2200-seed43-20261101')]
-    paths += [(f'A{n}',ROOT/f'artifacts/supermimic-v13-r3-a{n}-seed43-20261101') for n in (3200,4200,5200)]
+    paths=[('SM615',ROOT/'artifacts/supermimic/supermimic-v13-baseline615-current13-seed43-20261031'),('A2200',ROOT/'artifacts/supermimic/supermimic-v13-r2-a2200-seed43-20261101')]
+    paths += [(f'A{n}',ROOT/f'artifacts/supermimic/supermimic-v13-r3-a{n}-seed43-20261101') for n in (3200,4200)]
+    paths.append(('A5200',ROOT/'artifacts/supermimic/supermimic-v13-r3-a5200-seed43-20261101'))
     actions=[];hashes={}
     for label,directory in paths:
         s=json.loads((directory/'summary.json').read_text());p=directory/'trajectory.npz'
@@ -43,11 +44,11 @@ def main():
     for n,name in [(2200,'initial.pt'),(3200,'actor_003200.pt'),(4200,'actor_004200.pt'),(5200,'final.pt')]:
         s=torch.load(run/name,map_location='cpu',weights_only=False,mmap=True)
         rates.append(dict(actor_updates=n,collection_iteration=s['iteration'],optimizer_lrs={key:s['opt_'+key]['param_groups'][0]['lr'] for key in ('world','actor','encoder','critic')}))
-    prediction_path=ROOT/'artifacts/supermimic-v13-continuation-20261101-r3/prediction/predictions.pt'
+    prediction_path=ROOT/'artifacts/supermimic/supermimic-v13-continuation-20261101-r3/prediction/predictions.pt'
     pred=torch.load(prediction_path,map_location='cpu',weights_only=False,mmap=True)
     model=load_model();joint_indices=[i for i in range(1,model.njnt) if model.jnt_limited[i] and model.jnt_qposadr[i] not in (9,14)]
     limits=[dict(name=model.joint(i).name,qpos_index=int(model.jnt_qposadr[i]),low=float(model.jnt_range[i,0]),high=float(model.jnt_range[i,1])) for i in joint_indices]
-    sealed_path=ROOT/'artifacts/supermimic-v13-a2200-prediction-20261101-r1/historical/predictions.pt'
+    sealed_path=ROOT/'artifacts/supermimic/supermimic-v13-a2200-prediction-20261101-r1/historical/predictions.pt'
     sealed=torch.load(sealed_path,map_location='cpu',weights_only=False,mmap=True)
     truth_bounds=[]
     for index,window in enumerate(sealed['windows']):

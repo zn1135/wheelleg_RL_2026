@@ -104,7 +104,7 @@ def main():
         old=env.history.clone();cmd,_=enabled.begin(0,raw,angles);o=update_evaluation_commands(env,cmd,obs)
         verify('enabled_only_current_command_and_last_frame',torch.equal(env.history[:,:100],old[:,:100]) and torch.equal(o[:,6],torch.full((3,),.1)) and torch.equal(env.history[:,-19],o[:,6]))
         # Exercise the real archive restore against all 135 records, using tensors only.
-        initial_checks=[];root=Path('artifacts/fudan-gpu-replay-8000-20261102')
+        initial_checks=[];root=Path('artifacts/fudan_ppo_walk/fudan-gpu-replay-8000-20261102')
         for height in HEIGHTS:
             source=root/height/'gpu15';items=json.loads((source/'protocol.json').read_text())['samples']
             f=fixture(45,reset_contract=RESET_V2_CONTRACT);action=f.action
@@ -207,7 +207,7 @@ def main():
     protected=['fudan_ppo_walk/env.py','fudan_ppo_walk/network.py','fudan_ppo_walk/contract.py','fudan_ppo_walk/policy.py','envs/chuanliantui/pd_action.py','envs/chuanliantui/huananhu_action.py']
     source=Path('logs/mjlab/fudan_ppo_walk/20261102_parking_resume7000_to8000/source/ct_mjlab')
     for name in protected:
-        verify('8000_training_source_unchanged:'+name,(source/name).read_bytes()==(Path('artifacts/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab')/name).read_bytes())
+        verify('8000_training_source_unchanged:'+name,(source/name).read_bytes()==(Path('artifacts/fudan_ppo_walk/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab')/name).read_bytes())
     a.output.parent.mkdir(parents=True,exist_ok=True)
     paths=[Path(__file__),Path('scripts/agent/fudan_ppo_walk/diagnose_parking_integral.py'),Path('scripts/agent/fudan_ppo_walk/report_parking_integral.py'),
         Path('scripts/agent/fudan_ppo_walk/run_parking_integral.py'),

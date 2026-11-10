@@ -38,8 +38,8 @@ def main():
     for name in ['supermimic/buffer.py','supermimic/__main__.py','supermimic/learner.py','envs/chuanliantui_stand_v2/action.py']:
         assert sha(RUN/'snapshot/ct_mjlab'/name)==sources[name]
     recorded=[];hashes={str(initial_path):sha(initial_path)}
-    for n in (4200,5200):
-        directory=ROOT/f'artifacts/supermimic-v13-r3-a{n}-seed43-20261101'
+    for n,directory in [(4200,ROOT/'artifacts/supermimic/supermimic-v13-r3-a4200-seed43-20261101'),
+                        (5200,ROOT/'artifacts/supermimic/supermimic-v13-r3-a5200-seed43-20261101')]:
         s=json.loads((directory/'summary.json').read_text());path=directory/'trajectory.npz';assert sha(path)==s['trajectory_sha256']
         with np.load(path) as z:
             v=z['values'];layout=s['layout'];a=v[::5,:,slice(*layout['raw_action'])][:100];valid=(v[::5,:,layout['valid'][0]]>.5)[:100]
@@ -49,7 +49,7 @@ def main():
             eligible_pairs=int(mask.sum())))
         hashes[str(path)]=s['trajectory_sha256']
     alignment=[]
-    for label,directory in [('A2200',ROOT/'artifacts/supermimic-v13-a2200-prediction-20261101-r1/current-recording'),('A3200',ROOT/'artifacts/supermimic-v13-world-response-repair-20261101-r1/anchor-seed41')]:
+    for label,directory in [('A2200',ROOT/'artifacts/supermimic/supermimic-v13-a2200-prediction-20261101-r1/current-recording'),('A3200',ROOT/'artifacts/supermimic/supermimic-v13-world-response-repair-20261101-r1/anchor-seed41')]:
         meta=json.loads((directory/'record.json').read_text());path=directory/'transitions.pt';assert sha(path)==meta['transitions_sha256']
         r=torch.load(path,map_location='cpu',weights_only=False,mmap=True);d=r['data'];live=r['live_before']
         m1=live[1:]&live[:-1]&~d['done'][:-1]

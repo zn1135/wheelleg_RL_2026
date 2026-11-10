@@ -297,7 +297,7 @@
   "scripts/agent/real2sim/fit_h7_b_zero_from_cad.py": "fd9a7501321e882b947664b417603fd90ecff10f50fada00fa0f3c848b416d72",
   "scripts/agent/real2sim/render_h7_zero_command.py": "d8b433fbf039f70a70029c693bb9553c3eea4ff6b0280739df4db1b36ff45bba",
   "scripts/agent/real2sim/report_fixed_h7_calibration.py": "a9d0877a29e5bfa036f93aff4bf8294092daa60da39faf61f03e8035ca395d88",
-  "scripts/agent/real2sim/reproduce_fixed_h7_calibration.sh": "93a26018ecc3f74737b46555873c3aadaa1531e45595cba3e27bbc06d59fb0b0",
+  "scripts/agent/real2sim/reproduce_fixed_h7_calibration.sh": "f9935904462092c7f8b434c3c890628270c37974b275fd9db5f192f8abddd902",
   "scripts/agent/report_supermimic_v13_continuation.py": "b166f3c841dd09ff8b223d66c9de8cfc923c242de2f7fc0c45f97a53acc8f863",
   "scripts/agent/report_supermimic_v13_count_budget.py": "cb81c42b99faeaf65b2151cb9d35794c747cfdeb46265ebd834cad645757289a",
   "scripts/agent/runtime-protection.json": "5f34b3d7bd71c41af794830cad3462ceeede23f62c6597fbac694b38eaa8c3c6",

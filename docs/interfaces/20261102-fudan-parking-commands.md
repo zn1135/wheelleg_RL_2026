@@ -1,12 +1,12 @@
 # 复旦行走停车采样v1：代码准备，尚未训练
 
-后续状态：用户已授权仅新增1000轮停车采样续训，4096环境、7000→8000。使用显式`--preserve-history-v2`保留源历史；默认新训练仍为v3，不自动迁移。预检须同时匹配历史、停车采样和延迟/推扰配置，旧缺采样记录的预检不能放行。新命令及实际状态见[执行记录](../../artifacts/fudan-parking-resume7000-to8000-20261102/RUNNING.md)。本轮不额外训练原采样对照组，不用真值替换Actor，不自动开展策略评估。
+后续状态：用户已授权仅新增1000轮停车采样续训，4096环境、7000→8000。使用显式`--preserve-history-v2`保留源历史；默认新训练仍为v3，不自动迁移。预检须同时匹配历史、停车采样和延迟/推扰配置，旧缺采样记录的预检不能放行。新命令及实际状态见[执行记录](../../artifacts/fudan_ppo_walk/fudan-parking-resume7000-to8000-20261102/RUNNING.md)。本轮不额外训练原采样对照组，不用真值替换Actor，不自动开展策略评估。
 
 2026-11-02，当前分支`26_wheelleg`，基于提交`7e89033`后的工作区修改。用户授权先诊断估速与零速输出，再补停车样本。GPU诊断使用原7000-v2模型；新增采样只影响后续训练，没有用它产生新模型或验收成绩。
 
 ## 依据
 
-三组同初态GPU诊断显示：原模型将约−0.051m/s估成−0.023m/s；仅在停车稳定段换成同口径真实前向速度后，5秒后退从约25.5cm降至13.2cm，三轴真值后仍约12.8cm。估速有影响，但真值替换仍有零速残差。因此先补样本，保持原16项奖励。诊断不是部署修复，数据、窗口和重复误差见[报告](../../artifacts/fudan-parking-diagnostic-7000-20261102/report/README.md)。
+三组同初态GPU诊断显示：原模型将约−0.051m/s估成−0.023m/s；仅在停车稳定段换成同口径真实前向速度后，5秒后退从约25.5cm降至13.2cm，三轴真值后仍约12.8cm。估速有影响，但真值替换仍有零速残差。因此先补样本，保持原16项奖励。诊断不是部署修复，数据、窗口和重复误差见[报告](../../artifacts/fudan_ppo_walk/fudan-parking-diagnostic-7000-20261102/report/README.md)。
 
 ## 代码配置
 
@@ -57,6 +57,6 @@ PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.f
 PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_walk.check_history_v3 --output /tmp/fudan-parking-history-new-check.json
 ```
 
-输出需为新文件。正式检查覆盖实际复位／步进流程、三种模式、停止时刻、5秒边界、三高度、局部复位、固定评估指令不变、关闭后原随机序列、保存恢复来源及奖励／网络／物理函数不变。真实物理、网络前向和优化器更新均为0；[采样检查](../../artifacts/fudan-parking-diagnostic-7000-20261102/parking-commands-height-check.json)、[27项历史检查](../../artifacts/fudan-parking-diagnostic-7000-20261102/history-after-sampling-check.json)。
+输出需为新文件。正式检查覆盖实际复位／步进流程、三种模式、停止时刻、5秒边界、三高度、局部复位、固定评估指令不变、关闭后原随机序列、保存恢复来源及奖励／网络／物理函数不变。真实物理、网络前向和优化器更新均为0；[采样检查](../../artifacts/fudan_ppo_walk/fudan-parking-diagnostic-7000-20261102/parking-commands-height-check.json)、[27项历史检查](../../artifacts/fudan_ppo_walk/fudan-parking-diagnostic-7000-20261102/history-after-sampling-check.json)。
 
 下一步需要独立训练预算。在保持同一历史版本、相同起点和新增轮数的前提下，对照“原采样续训”和“新增停车采样续训”；先不加停车奖励。若以7000-v2为基线，须使用明确支持v2且预检匹配的实验入口，不能自动用当前v3默认配置替代。检查三高度的原地／前后停车漂移、原有行走转向是否退化，最终观看完整视频。原验收标准未在本次代码准备中改变。

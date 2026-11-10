@@ -1,0 +1,102 @@
+{
+  "format": "right-leg-length-fit-v1",
+  "candidate": {
+    "static_nm": [
+      0.5,
+      0.5
+    ],
+    "kinetic_nm": [
+      0.5,
+      0.5
+    ],
+    "velocity_scale_rad_s": [
+      0.005,
+      0.005
+    ],
+    "damping_nms_rad": [
+      0.1436058253984651,
+      0.9722270164207244
+    ],
+    "bias_delta_nm": [
+      -0.2567675173641736,
+      -0.5748304039435472
+    ],
+    "length_stiffness_delta_nm_rad": 1.4712679473717154,
+    "cross_stiffness_delta_nm_rad": -1.1305763928823884,
+    "friction_recovery_s": [
+      4.290575889676106,
+      9.414359293652577
+    ],
+    "friction_weakening_s": 0.002,
+    "length_quadratic_delta_nm_rad2": 12.86327290126757,
+    "seal_static_n": 110,
+    "seal_kinetic_n": 55.5,
+    "seal_velocity_scale_m_s": 0.0005,
+    "seal_recovery_s": 3.6,
+    "seal_damping_ns_m": 1999.9999999999998,
+    "seal_friction_route": "dahl",
+    "seal_bristle_stiffness_n_m": 299999.9999999999,
+    "seal_force_bias_n": 0.0
+  },
+  "baseline": {
+    "model": "local_conservative_load_plus_coulomb_viscous",
+    "reference_q_model_rad": [
+      -0.5606721828362514,
+      0.31297235659045075,
+      0.6760618967382109,
+      -0.18954849770350987
+    ],
+    "bias_nm": [
+      4.697142293111066,
+      -4.762528765730594,
+      -4.761855201726459,
+      5.119923286848883
+    ],
+    "stiffness_nm_rad": [
+      [
+        0.7418393214232525,
+        13.261239560861087,
+        0.0,
+        0.0
+      ],
+      [
+        13.261239560861087,
+        -0.23686634110464377,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.7131494217536903,
+        6.011500906230657
+      ],
+      [
+        0.0,
+        0.0,
+        6.011500906230657,
+        -0.14155176711775175
+      ]
+    ],
+    "friction_nm": [
+      1.3357196037276624,
+      1.3929530366328355,
+      1.7056962302934862,
+      0.9641077240773002
+    ],
+    "damping_nms_rad": [
+      0.4093393533338954,
+      0.24526568750076802,
+      4.103788817730339e-15,
+      0.8150994589105889
+    ]
+  },
+  "source": {
+    "artifacts/length-response-fit/20261109-bristle-final-full-01/parameters.json": "39501298fe98ff2eaddc6657dff1f7e86229d32e88ba0df111dbfd491a1095a2",
+    "artifacts/length-response-fit/20261109-inputs-02/baseline-parameters.json": "7f2818bfade5417732b4f328132eecef5d78941c05da5dcf1ec35118ddb2f313"
+  },
+  "sides": [
+    "left",
+    "right"
+  ]
+}

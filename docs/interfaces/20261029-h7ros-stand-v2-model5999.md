@@ -2,7 +2,7 @@
 
 2026-10-29，Codex实现与软件检查，独立代码复查见交付证据；H7部署负责人签认、台架与真机均待确认。用户指定5999并明确“适配固件并编译，暂不烧录”，随后确认可复用AIR支撑力估计。本次仅交付编译候选。
 
-训练与部署同仓`https://github.com/zn1135/wheelleg_RL_2026.git`，分支`26_wheelleg`，完整基点`952e4260aedf04e28fdbf366d5cb1c5562c75263`＋原有与本次未提交内容。源快照、差异与哈希在`artifacts/model5999-h7ros-20261029/`；模型和各阶段结果见[交付记录](../model-deliveries/20261029-stand-v2-model5999-h7ros.md)。
+训练与部署同仓`https://github.com/zn1135/wheelleg_RL_2026.git`，分支`26_wheelleg`，完整基点`952e4260aedf04e28fdbf366d5cb1c5562c75263`＋原有与本次未提交内容。源快照、差异与哈希在`artifacts/real2sim/model5999-h7ros-20261029/`；模型和各阶段结果见[交付记录](../model-deliveries/20261029-stand-v2-model5999-h7ros.md)。
 
 ## 模型与旧接口差异
 

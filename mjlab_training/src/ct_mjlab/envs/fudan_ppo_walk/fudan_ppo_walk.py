@@ -225,7 +225,8 @@ def make_env_cfg(*, play=False, disturbances=None, task_cfg=None):
         standup_landing_gate=False,
         standup_pushes=False,
         reference_randomization=not play,
-        disturbances=disturbances or from_task_config(task)
+        disturbances=disturbances or from_task_config(task),
+        fitted_leg_load=task.sim.fitted_leg_load
     )}
     cfg.observations = {'actor': ObservationGroupCfg(
         terms={'sensors': ObservationTermCfg(func=current_sensors)},

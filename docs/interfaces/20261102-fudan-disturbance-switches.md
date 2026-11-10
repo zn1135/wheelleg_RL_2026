@@ -1,5 +1,9 @@
 # 复旦行走：三个独立延迟／推扰开关
 
+2026-11-03后续训练侧已改为动作2ms、传感2ms；本页下文全关是历史设置。[最新复查](20261103-fudan-measured-training-delays.md)。
+
+2026-11-03后续：sim2sim的动作/传感延迟已从训练配置分离，当前按用户选择固定4ms＋4ms；训练/预检仍读`domain_rand`且全关。GPU评估改读`FudanWalkCfg.sim2sim`，见[独立配置与检查](20261103-fudan-sim2sim-delays.md)。本页下文共用开关描述保留原实现历史。
+
 后续变更：按[GPU最终验证约定](20261102-fudan-gpu-validation.md)撤销CPU物理后端；本页Native/两引擎核对记录仅代表当时实现与检查。GPU历史、扰动与模型合同保持。
 
 日期：2026-11-02。用户确认三个独立开关，默认全关。本次只有代码和无物理检查，不启动训练或动态评估，不修改H7。
@@ -85,6 +89,6 @@ PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.f
 scripts/mjlab.sh fudan-ppo-walk train --help
 ```
 
-已完成：[代码配置开关检查](../../artifacts/fudan-disturbance-switches-20261102/check-code-config.json)，包含CPU/CUDA队列与推力一致性、真实PD路径的0/2/4/6/8/10ms边界、传感槽位／Critic区分、局部复位、单拍外力清零、CPU夹具回放、保存恢复和不匹配预检拒绝。[31项原历史检查](../../artifacts/fudan-disturbance-switches-20261102/history-code-config.json)通过。所有检查实际物理步、网络前向和优化器更新均为0；Native控制流里的积分调用由测试替身替代，不作为物理仿真结果。
+已完成：[代码配置开关检查](../../artifacts/fudan_ppo_walk/fudan-disturbance-switches-20261102/check-code-config.json)，包含CPU/CUDA队列与推力一致性、真实PD路径的0/2/4/6/8/10ms边界、传感槽位／Critic区分、局部复位、单拍外力清零、CPU夹具回放、保存恢复和不匹配预检拒绝。[31项原历史检查](../../artifacts/fudan_ppo_walk/fudan-disturbance-switches-20261102/history-code-config.json)通过。所有检查实际物理步、网络前向和优化器更新均为0；Native控制流里的积分调用由测试替身替代，不作为物理仿真结果。
 
 下一步优先在另行确认的动态预算内，只开一种机制做20环境可视预检：核对实际延迟拍数／推扰次数与请求一致、复位无残留且状态有限；之后再决定训练或冻结策略对照。不同开关组合分别保存新目录，完整行为与失败按原视频验收规则交用户确认。此建议不启动新预算。

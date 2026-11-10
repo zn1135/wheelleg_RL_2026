@@ -6,7 +6,7 @@ from ct_mjlab.fudan_ppo_walk.contract import WEIGHTS,PPO_CONFIG
 
 def main():
     root=Path(__file__).resolve().parents[3]
-    reference=root/'artifacts/fudan-ppo-walk-20261101/reference/plane/wheel_legged_gym'
+    reference=root/'artifacts/fudan_ppo_walk/fudan-ppo-walk-20261101/reference/plane/wheel_legged_gym'
     current=root/'mjlab_training/src/ct_mjlab/fudan_ppo_walk'
     compared=[]
     for src,dst in [('modules/actor_critic_sequence.py','network.py'),('algorithms/ppo.py','ppo.py'),

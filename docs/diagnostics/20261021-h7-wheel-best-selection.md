@@ -1,6 +1,6 @@
 # 悬空轮端候选选择与联合优化（2026-10-21）
 
-**本轮选用joint_sharp作为后续悬空轮端回放候选。**现有留出会话轮速RMSE由上轮最佳3.0654降到2.7792rad/s，MAE1.6077降到1.4476rad/s。该选择以总体轮速RMSE为准，存在局部减速退化；不声称每一段都更好。选择记录为[selection.json](../../artifacts/h7-wheel-best-20261021/selection.json)，完整独立候选为[selected/](../../artifacts/h7-wheel-best-20261021/selected/README.md)。
+**本轮选用joint_sharp作为后续悬空轮端回放候选。**现有留出会话轮速RMSE由上轮最佳3.0654降到2.7792rad/s，MAE1.6077降到1.4476rad/s。该选择以总体轮速RMSE为准，存在局部减速退化；不声称每一段都更好。选择记录为[selection.json](../../artifacts/real2sim/h7-wheel-best-20261021/selection.json)，完整独立候选为[selected/](../../artifacts/real2sim/h7-wheel-best-20261021/selected/README.md)。
 
 只研究固定机身、双轮悬空的加速/滑行，不对照旧RL俯仰。正式XML/H7、物理标定、零件质量/重心/刚体惯量不改，不同步环境、不训练、不连接硬件、不提交/推送。仍是指令到响应的等效参数，不是实测轴端力矩/真实惯量摩擦。
 
@@ -33,27 +33,27 @@ MAE单位rad/s，旧=上轮coast_losses，新=本轮选用候选；正负为固�
 
 四方向加速均改善；左负向、右正向减速改善。右负向减速0.4760→0.6081、左正向0.5495→0.6871恶化，完整保留。左轮负向滑行仍贡献约92.1%的总平方误差，是下一步优先处理的残差。
 
-![当前选择与原最佳](../../artifacts/h7-wheel-best-20261021/selected-comparison.png)
+![当前选择与原最佳](../../artifacts/real2sim/h7-wheel-best-20261021/selected-comparison.png)
 
-左右/方向/速度区间/相位全量指标、边沿及逐点数据见[study/bench.json](../../artifacts/h7-wheel-best-20261021/study/bench.json)和predictions.csv；评分沿用原相位内部掩码，边沿/初态完整曲线另保存，不用平滑或删点降低误差。
+左右/方向/速度区间/相位全量指标、边沿及逐点数据见[study/bench.json](../../artifacts/real2sim/h7-wheel-best-20261021/study/bench.json)和predictions.csv；评分沿用原相位内部掩码，边沿/初态完整曲线另保存，不用平滑或删点降低误差。
 
 ## 选择怎样生效
 
 选用清单保存独立XML、完整精度参数和来源哈希；回放入口replay_selected.py读取selection.json，安装同一原生增益回调，再从实测初态连续积分现有留出会话。不重新拟合、不跑策略或RL、不接硬件。XML需要该回调，不能单独当作完整电机模型使用。
 
 ```bash
-mjlab_training/.venv/bin/python artifacts/h7-wheel-best-20261021/replay_selected.py --out "artifacts/h7-wheel-replay-$(date +%Y%m%d-%H%M%S)"
+mjlab_training/.venv/bin/python artifacts/real2sim/h7-wheel-best-20261021/replay_selected.py --out "artifacts/h7-wheel-replay-$(date +%Y%m%d-%H%M%S)"
 ```
 
 重新执行本次优化和有限检查（使用新输出目录）：
 
 ```bash
 OUT="artifacts/h7-wheel-joint-repeat-$(date +%Y%m%d-%H%M%S)"
-mjlab_training/.venv/bin/python artifacts/h7-wheel-best-20261021/fit_joint.py --out "$OUT" --budget 200
+mjlab_training/.venv/bin/python artifacts/real2sim/h7-wheel-best-20261021/fit_joint.py --out "$OUT" --budget 200
 mjlab_training/.venv/bin/python scripts/agent/check_h7_drive_response.py --out "$OUT"
 ```
 
-参数完整精度/每次目标函数轨迹/边界见[study/parameters.json](../../artifacts/h7-wheel-best-20261021/study/parameters.json)。既有正式有限检查已重算23192个验证点差0、重复逐位一致，保护固件/正式模型/部件物理字段/非轮执行器不变，见[study/verification.json](../../artifacts/h7-wheel-best-20261021/study/verification.json)。selected-replay/result.json另验证默认选择入口与冻结评分一致。版本/来源/数据/产物哈希见[交付清单](../../artifacts/h7-wheel-best-20261021/delivery-manifest.json)。
+参数完整精度/每次目标函数轨迹/边界见[study/parameters.json](../../artifacts/real2sim/h7-wheel-best-20261021/study/parameters.json)。既有正式有限检查已重算23192个验证点差0、重复逐位一致，保护固件/正式模型/部件物理字段/非轮执行器不变，见[study/verification.json](../../artifacts/real2sim/h7-wheel-best-20261021/study/verification.json)。selected-replay/result.json另验证默认选择入口与冻结评分一致。版本/来源/数据/产物哈希见[交付清单](../../artifacts/real2sim/h7-wheel-best-20261021/delivery-manifest.json)。
 
 ## 还有什么办法
 

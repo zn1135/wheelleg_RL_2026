@@ -26,8 +26,8 @@ def decomposition(minus,plus):
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path,required=True);args=p.parse_args()
     args.output.mkdir(parents=True,exist_ok=False);torch.set_num_threads(2)
-    source_path=ROOT/'artifacts/supermimic-v13-wheel-response-20261101-r1/response.pt'
-    hist_path=ROOT/'artifacts/supermimic-v13-wheel-history-control-20261101-r1/response.pt'
+    source_path=ROOT/'artifacts/supermimic/supermimic-v13-wheel-response-20261101-r1/response.pt'
+    hist_path=ROOT/'artifacts/supermimic/supermimic-v13-wheel-history-control-20261101-r1/response.pt'
     source=torch.load(source_path,map_location='cpu',weights_only=False)
     hist=torch.load(hist_path,map_location='cpu',weights_only=False)
     assert hist['intervention']=='previous_wheel_history_only'

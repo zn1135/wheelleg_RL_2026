@@ -53,7 +53,7 @@ CPU后续提频时同步修正了两处写死的10步趴地门控（PD请求和�
 
 输入模型为[已交付model9845](../model-deliveries/20261022-model9845-h7-import.md)；本次只做固定权重回放，不训练、不改模型、不操作硬件。
 
-证据目录：`artifacts/mjlab-policy100hz-20261023-fP6BGy/`。包含50 Hz改动前配置／评估脚本、两种频率各seed42/43的零速保持报告与轨迹、正式有限检查日志、CPU回归以及默认eval四环境2000步／20秒的实际报告。每种频率的零速保持为四高度×普通／趴地×两初态，共32组，按原20秒／最大位移5厘米判据测量。所有命令退出0；本次改动的源文件、差异、命令与校验值保存在证据目录的`source-after/`、`experiment.diff`和`manifest.json`，具体行为结果记录在[项目实验记录顶部](../ai/project-log.md)。
+证据目录：`artifacts/real2sim/mjlab-policy100hz-20261023-fP6BGy/`。包含50 Hz改动前配置／评估脚本、两种频率各seed42/43的零速保持报告与轨迹、正式有限检查日志、CPU回归以及默认eval四环境2000步／20秒的实际报告。每种频率的零速保持为四高度×普通／趴地×两初态，共32组，按原20秒／最大位移5厘米判据测量。所有命令退出0；本次改动的源文件、差异、命令与校验值保存在证据目录的`source-after/`、`experiment.diff`和`manifest.json`，具体行为结果记录在[项目实验记录顶部](../ai/project-log.md)。
 
 ```bash
 # 时序、延迟、部分复位与有限状态检查，不学习。
@@ -70,7 +70,7 @@ mjlab_training/.venv/bin/python scripts/agent/assess_multimode_zero_hold.py \
   --envs-per-case 2 --seed 42 --output artifacts/<新目录>/hold-100hz-seed42.json
 ```
 
-CPU后续同步的证据另放`artifacts/cpu-policy100hz-20261023-2NzBG4/`，含提频前CPU／检查脚本快照、正式CPU检查、时序检查、model9845 ONNX原生CPU回放报告和原生窗口日志；行为结论统一见[项目实验记录顶部](../ai/project-log.md)。原生交互回放命令：
+CPU后续同步的证据另放`artifacts/real2sim/cpu-policy100hz-20261023-2NzBG4/`，含提频前CPU／检查脚本快照、正式CPU检查、时序检查、model9845 ONNX原生CPU回放报告和原生窗口日志；行为结论统一见[项目实验记录顶部](../ai/project-log.md)。原生交互回放命令：
 
 ```bash
 mjlab_training/.venv/bin/python sim2sim/mj_sim2sim_huananhu_multimode.py \
@@ -88,4 +88,4 @@ mjlab_training/.venv/bin/python sim2sim/mj_sim2sim_huananhu_multimode.py \
 
 观测/动作/坐标/缩放/历史含义/默认角/PD/限幅/机械资产及恢复停止条件不变；上一动作观测间隔随策略缩为10ms。板端未人为加入训练随机等待或随机偏置，命令仍0.27～0.34m。旧50Hz权重张量可加载，但行为结论不能跨时序复用；回退须配套还原旧权重与分频20。
 
-导出256组、生成C64组及参数字节、大小机108编译单元/链接、分频与200/500ms恢复有限检查通过；用户本次确认动力断开后，大机于15:53:22烧录/校验/复位成功；未使能或实测控制。H7负责人/板端100Hz最坏时序与真机核对待确认。源码/配置/差异、模型与固件哈希见交付记录和`artifacts/model13842-h7-20261023/`。
+导出256组、生成C64组及参数字节、大小机108编译单元/链接、分频与200/500ms恢复有限检查通过；用户本次确认动力断开后，大机于15:53:22烧录/校验/复位成功；未使能或实测控制。H7负责人/板端100Hz最坏时序与真机核对待确认。源码/配置/差异、模型与固件哈希见交付记录和`artifacts/real2sim/model13842-h7-20261023/`。

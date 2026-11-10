@@ -88,6 +88,7 @@ def randomize_at_startup(env, env_ids):
     _material(env, state, "wheel", state.wheel_geom_ids, (.5, 1.2), (.4, 1.))
 
     robot = env.scene["robot"]
+    load = env.action_manager.get_term('pd').leg_load
     for index, name in enumerate(robot.joint_names):
         if name in GAS_SPRING_JOINTS:
             # The spring slider damping is applied once by HuananhuPdAction.
@@ -99,11 +100,17 @@ def randomize_at_startup(env, env_ids):
         else:
             dry, viscous = (.05, .1), (.01, .025)
         dof = int(robot.indexing.joint_v_adr[index])
+        nominal_dry = env.sim.get_default_field("dof_frictionloss")[dof]
+        nominal_viscous = env.sim.get_default_field("dof_damping")[dof]
+        if load is not None and name in ('lf0','lf00','rf0','rf00'):
+            motor = 0 if name in ('lf0','rf0') else 1
+            nominal_dry = load.p['static_nm'][motor]
+            nominal_viscous = load.p['damping_nms_rad'][motor]
         env.sim.model.dof_frictionloss[:, dof] = (
-            env.sim.get_default_field("dof_frictionloss")[dof]
+            nominal_dry
             + torch.empty(env.num_envs, device=env.device).uniform_(*dry))
         env.sim.model.dof_damping[:, dof] = (
-            env.sim.get_default_field("dof_damping")[dof]
+            nominal_viscous
             + torch.empty(env.num_envs, device=env.device).uniform_(*viscous))
 
 

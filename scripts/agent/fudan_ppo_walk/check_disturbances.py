@@ -33,7 +33,8 @@ def control_fixture(cfg,n=3,seed=43):
     robot.find_joints=find
     robot.set_joint_effort_target=lambda value,**kw:setattr(physics,'efforts',value.clone())
     action=PhysicalAction(PhysicalActionCfg(entity_name='robot',reference_randomization=False,
-        motor_randomization=False,randomize_delays=False,action_delay_s=0.,disturbances=cfg),physics)
+        motor_randomization=False,randomize_delays=False,action_delay_s=0.,disturbances=cfg,
+        fitted_leg_load=False),physics)  # This synthetic fixture checks PD/delays; the fitted load has real-GPU checks.
     env.action=action;physics.action_manager.get_term=lambda name:action
     env.disturbance_config=cfg;env.update_push_scale()
     action.reset();action.disturbances.sensors[:]=action.sensor_frame()
@@ -153,7 +154,7 @@ def main():
             except ValueError as exc:rejected='precheck' in str(exc)
             else:rejected=False
         verify('different_precheck_rejected_before_environment',rejected)
-        proof_data=json.loads(proof.read_text());proof_data['disturbances']=DisturbanceConfig(action_delay=True).record()
+        proof_data=json.loads(proof.read_text());proof_data['disturbances']=from_task_config().record()
         proof.write_text(json.dumps(proof_data));entered={}
         class EntryRunner:
             iteration=0

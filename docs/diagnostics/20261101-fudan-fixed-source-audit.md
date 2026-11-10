@@ -4,7 +4,7 @@
 
 ## 1. 公开模型不能证明当前plane配方已经不撑地
 
-固定来源：[yly-true/fudan_rl_wheel_leg@8204e853dfd2ed06d85a322e1a998c3d20a3be2c](https://github.com/yly-true/fudan_rl_wheel_leg/tree/8204e853dfd2ed06d85a322e1a998c3d20a3be2c)。完整recursive tree不截断，共447条；本地下载文件逐个核对Git blob SHA。证据：[tree](../../artifacts/fudan-ppo-walk-20261101/reference/github-tree.json)、[静态元数据与几何](../../artifacts/fudan-ppo-walk-20261101/fixed-reference-geometry/report.json)。
+固定来源：[yly-true/fudan_rl_wheel_leg@8204e853dfd2ed06d85a322e1a998c3d20a3be2c](https://github.com/yly-true/fudan_rl_wheel_leg/tree/8204e853dfd2ed06d85a322e1a998c3d20a3be2c)。完整recursive tree不截断，共447条；本地下载文件逐个核对Git blob SHA。证据：[tree](../../artifacts/fudan_ppo_walk/fudan-ppo-walk-20261101/reference/github-tree.json)、[静态元数据与几何](../../artifacts/fudan_ppo_walk/fudan-ppo-walk-20261101/fixed-reference-geometry/report.json)。
 
 | 项目 | 当前plane训练实际配置 | 同提交公开MuJoCo默认plane回放 |
 |---|---|---|
@@ -24,13 +24,13 @@
 | 上台阶3_angz+.onnx | 75d64a4b93235e9c9caabac33e9fca32df6fe73e | pytorch2.4.1，metadata/doc_string为空 |
 | p60.50.2把urdf中力矩限制为50.onnx | dce9282062f57002c8bd465f4f3e2f1df9f8f923 | pytorch2.2.2，metadata/doc_string为空 |
 
-Git路径历史进一步表明：[模型文件](https://github.com/yly-true/fudan_rl_wheel_leg/commit/0cd102e6bcff91fd0344d8808da758e8418fc344)于2026-08-18提交0cd102e6加入，之后到固定提交未变化；2026-08-22的8204e853才修改当前plane默认角、腿P10→20、轮D.1→.2、vx±1→±2、yaw±15→±2和课程上限1→2.5。公开模型文件早于这次训练配方修改。上传当时的默认角虽与回放一致，但腿P10仍不同于回放15、训练vx缩放2仍不同于回放3，依然不能据此断言模型使用那份旧配置训练。**上传日期不是训练日期。** [可复核API历史与patch](../../artifacts/fudan-ppo-walk-20261101/github-model-provenance-root.json)。
+Git路径历史进一步表明：[模型文件](https://github.com/yly-true/fudan_rl_wheel_leg/commit/0cd102e6bcff91fd0344d8808da758e8418fc344)于2026-08-18提交0cd102e6加入，之后到固定提交未变化；2026-08-22的8204e853才修改当前plane默认角、腿P10→20、轮D.1→.2、vx±1→±2、yaw±15→±2和课程上限1→2.5。公开模型文件早于这次训练配方修改。上传当时的默认角虽与回放一致，但腿P10仍不同于回放15、训练vx缩放2仍不同于回放3，依然不能据此断言模型使用那份旧配置训练。**上传日期不是训练日期。** [可复核API历史与patch](../../artifacts/fudan_ppo_walk/fudan-ppo-walk-20261101/github-model-provenance-root.json)。
 
 均为obs25＋obs_history125→actions6；形状相同不等于训练配置来源相同。未找到能用哈希绑定这两个图与某个训练checkpoint、配置、URDF及导出过程的记录。**无法据文件名或演示证明当前固定plane训练配方不撑地；也无法证明原机必然撑地。** 本次未执行公开模型或原环境。
 
 ## 2. 注册、配置覆盖与奖励/终止真实语义
 
-调用链为`plane/wheel_legged_gym/scripts/train.py`→`envs/__init__.py`注册wheel_legged→`WheelLeggedCfg/PPO`继承`LeggedRobotCfg/PPO`→`task_registry.make_env/make_alg_runner`→`LeggedRobot/BaseTask`和`OnPolicyRunner/ActorCriticSequence/PPO`。本地训练入口另存为[train-entry.py](../../artifacts/fudan-ppo-walk-20261101/reference/train-entry.py)，只读未执行。
+调用链为`plane/wheel_legged_gym/scripts/train.py`→`envs/__init__.py`注册wheel_legged→`WheelLeggedCfg/PPO`继承`LeggedRobotCfg/PPO`→`task_registry.make_env/make_alg_runner`→`LeggedRobot/BaseTask`和`OnPolicyRunner/ActorCriticSequence/PPO`。本地训练入口另存为[train-entry.py](../../artifacts/fudan_ppo_walk/fudan-ppo-walk-20261101/reference/train-entry.py)，只读未执行。
 
 - 默认8192环境、48步、4 minibatch、5 epoch。当前plane override默认角和20/1/.2增益、URDF路径、max_iterations=50000；网络为encoder125→128→64→3、actor28→128→64→32→6、critic144→256→128→64→1。Actor不接真值线速，encoder另一个Adam监督机体系线速×2；PPO只更新actor/critic/std。原算法四模块导入路径以外的字节一致检查保留。
 - 基类terrain.curriculum虽写True，`LeggedRobot._parse_cfg()`遇plane会改False。实际走平地命令课程：全局回合长度整倍数且存在复位组时检查tracking均值，vx>.7、yaw>.56（按最大每步对应奖励归一化）后全体vx每侧扩.1，封顶2.5。不是地形分支的增量。
@@ -52,7 +52,7 @@ Git路径历史进一步表明：[模型文件](https://github.com/yly-true/fuda
 
 原base inertial origin z=+.097142m，本机base inertial origin z≈−.009109m；“root高度”与质心高度的偏移不同。在单位姿态下，要匹配同一base质心高度，两个root数值约相差0.10625m；这只是frame原点差异，不是动态高度换算或行为结果。原高度奖励用base/root z减地形高度，plane地形高度0；本机同样测base_link/root，不是腿长或质心。将命令范围从.10～.20改到.22～.30是用户授权的几何适配，不能只凭数字比较两个机器人站高。
 
-本机base碰撞网格min z≈−.144938m、max z≈+.134370m，[局部几何/复位对照](../../artifacts/fudan-ppo-walk-20261101/fixed-reference-geometry/local-reset-comparison.json)来自静态STL解析，不是新仿真。本轮轨迹的root高度约.153m时机身实际触地，是轨迹中的接触力数据另行证实的事实。
+本机base碰撞网格min z≈−.144938m、max z≈+.134370m，[局部几何/复位对照](../../artifacts/fudan_ppo_walk/fudan-ppo-walk-20261101/fixed-reference-geometry/local-reset-comparison.json)来自静态STL解析，不是新仿真。本轮轨迹的root高度约.153m时机身实际触地，是轨迹中的接触力数据另行证实的事实。
 
 ## 4. 复位和启动：本轮仍需对齐的参考关系
 
@@ -103,7 +103,7 @@ Git路径历史进一步表明：[模型文件](https://github.com/yly-true/fuda
 
 ## 6. 既有轨迹证明什么、不证明什么
 
-[零速/行驶/停车逐样本接触与9项奖励复算](../../artifacts/fudan-ppo-walk-20261101/body-support-diagnosis/README.md)：两端代表样本机身力均值约37～40N，双轮支撑约72.5%～74.8%，root高度约.152～.154m（目标.22/.26），速度误差可以很小。本次状态仍获接近.01/步的线速与yaw正奖励，姿态项已饱和−.01，collision为0；高度奖励在较大误差时接近0。
+[零速/行驶/停车逐样本接触与9项奖励复算](../../artifacts/fudan_ppo_walk/fudan-ppo-walk-20261101/body-support-diagnosis/README.md)：两端代表样本机身力均值约37～40N，双轮支撑约72.5%～74.8%，root高度约.152～.154m（目标.22/.26），速度误差可以很小。本次状态仍获接近.01/步的线速与yaw正奖励，姿态项已饱和−.01，collision为0；高度奖励在较大误差时接近0。
 
 这些只证明本次失败行为与这些子项并存。缺完整动作/力矩/2ms实体关节历史，不能精确重放全部16项总return；没有原机匹配模型/配置轨迹，也没有本次修复前后同预算对照。因此不能认定某一奖励、某一个遗漏或某个控制差异为唯一根因。
 
@@ -132,7 +132,7 @@ D1/D2/D3/D4是参考一致性问题，不是新增机身碰撞奖励方案；本
 - **加噪幅度一致**：原noise_scale_vec执行值为角速±.05、重力±.05、腿角±.02、六关节速度±.075；命令/动作无噪声，Critic在加噪前构造。本机幅度与Critic顺序相同。**不同的是reset噪声相关性、清动作/缓存和历史clip位置**，见D3/D4。
 - **无额外延迟不是reset语义授权**：原动作delay开关False；本机动作/传感额外队列关闭符合第一阶段条件。这不自动授权更改reset的缓存、噪声复用和历史填充方式。
 - **随机化主要范围一致**：64摩擦桶[.6,1.4]、恢复系数[.6,1]、base加质量[−1,2]、COM各轴±.02、每body质量和惯量同乘[.9,1.1]、Kp/Kd/力矩倍率[.95,1.05]、default偏置±.03、无主动push。源和本机均以初始化采样为主。闭链有额外连杆/弹簧body，按其body采样不是原串联机器人同一质量分布；当前MuJoCo摩擦组合和solref恢复系数等效属于跨引擎近似，只有本次有限数值证据，不能称逐位或动态等效。default偏置未同步到闭链复位是已确证差异。
-- **PPO/encoder流程未发现公式移植改动**：network/ppo/storage/utils四模块仅包内import变化，字节审计见[reference-audit.json](../../artifacts/fudan-ppo-walk-20261101/reference-audit.json)。rollout保存当前obs/history、Critic141＋当时估速latent3、正态采样动作/logprob/mean/std；timeout按源方法bootstrap，GAE之后先PPO五epoch×四minibatch，再encoder五epoch×四minibatch的速度MSE，actor输入latent.detach。优化器集合与参考一致。此结论不包含环境输入/reset语义等价，也不证明数据或优化效果等价。
+- **PPO/encoder流程未发现公式移植改动**：network/ppo/storage/utils四模块仅包内import变化，字节审计见[reference-audit.json](../../artifacts/fudan_ppo_walk/fudan-ppo-walk-20261101/reference-audit.json)。rollout保存当前obs/history、Critic141＋当时估速latent3、正态采样动作/logprob/mean/std；timeout按源方法bootstrap，GAE之后先PPO五epoch×四minibatch，再encoder五epoch×四minibatch的速度MSE，actor输入latent.detach。优化器集合与参考一致。此结论不包含环境输入/reset语义等价，也不证明数据或优化效果等价。
 - **数据批量与实际课程**：本机每轮24576条、mini6144，为参考1/16；每单位转移发生的参数更新比例不同。本轮model_final.pt静态读取speed_limit=2.0，尚未解锁2.5；正式测试仍按冻结矩阵覆盖2.5。不能单凭这个结果归因于初始相位遗漏，训练期间早期终止会改变环境相位，且缺少对照。
 - **保存/恢复**：本机保存两优化器/RNG，但无完整环境状态恢复入口；只能证明已做保存载荷往返检查。没有用恢复后的训练来验证课程/回合/历史等完整恢复。
 

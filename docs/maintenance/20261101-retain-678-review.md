@@ -24,13 +24,13 @@
 
 逐文件清单与统计：
 
-- [实际删除清单](../../artifacts/retain-678-cleanup-20261101/deletion-plan.json)
-- [删除文件校验台账](../../artifacts/retain-678-cleanup-20261101/deleted-files.jsonl)
-- [删除结果](../../artifacts/retain-678-cleanup-20261101/deletion-result.json)
-- [代码与文件计数](../../artifacts/retain-678-cleanup-20261101/counts.json)
+- [实际删除清单](../../artifacts/maintenance/retain-678-cleanup-20261101/deletion-plan.json)
+- [删除文件校验台账](../../artifacts/maintenance/retain-678-cleanup-20261101/deleted-files.jsonl)
+- [删除结果](../../artifacts/maintenance/retain-678-cleanup-20261101/deletion-result.json)
+- [代码与文件计数](../../artifacts/maintenance/retain-678-cleanup-20261101/counts.json)
 - [原脚本路径的最终处置](../../scripts/agent/MIGRATION.md)
 
-删除前的源码／文字记录快照为`artifacts/retain-678-cleanup-20261101/before-source.tar.gz`，其校验清单为同目录`before-sha256.json`；仅作审计保全，不作为日常训练或旧线入口。没有备份54 GiB被批准删除的模型／产物。旧源码档案仍在，但缺失资产的旧实验不能宣称完整可复现。
+删除前的源码／文字记录快照为`artifacts/maintenance/retain-678-cleanup-20261101/before-source.tar.gz`，其校验清单为同目录`before-sha256.json`；仅作审计保全，不作为日常训练或旧线入口。没有备份54 GiB被批准删除的模型／产物。旧源码档案仍在，但缺失资产的旧实验不能宣称完整可复现。
 
 ## 明确保留的资产例外
 
@@ -50,7 +50,7 @@
 
 ## 验证结果
 
-[完整验证记录](../../artifacts/retain-678-cleanup-20261101/verification.json)：
+[完整验证记录](../../artifacts/maintenance/retain-678-cleanup-20261101/verification.json)：
 
 - 五个旧task的注册查询及CLI选择均拒绝；普通PPO入口拒绝后不创建环境。
 - 保留环境及BC／SMP／SuperMimic导入通过；7个正式CLI的参数帮助与13个代表辅助入口检查通过，Isaac导出入口使用其Python3.8环境。

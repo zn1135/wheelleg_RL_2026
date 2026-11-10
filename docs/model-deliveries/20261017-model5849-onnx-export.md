@@ -13,11 +13,11 @@
 
 ## 模型与产物
 
-原始产物位于本机 [导出目录](../../artifacts/model5849-onnx-20261017)，被 Git 忽略。模型、参考向量与 CSV 已逐字节复制到 [H7 适配交付包](../../exports/chuanliantui_multimode/model5849-h7-20261017/README.md)，随本交付记录一同纳入版本管理，供协作者拉取。交付包含无表头的 256×39 输入 CSV、256×6 期望输出 CSV 和 `SHA256SUMS`（覆盖交付目录其他六个文件）。
+原始产物位于本机 [导出目录](../../artifacts/legacy_mjlab/model5849-onnx-20261017)，被 Git 忽略。模型、参考向量与 CSV 已逐字节复制到 [H7 适配交付包](../../exports/chuanliantui_multimode/model5849-h7-20261017/README.md)，随本交付记录一同纳入版本管理，供协作者拉取。交付包含无表头的 256×39 输入 CSV、256×6 期望输出 CSV 和 `SHA256SUMS`（覆盖交付目录其他六个文件）。
 
 | 产物 | SHA-256 |
 |---|---|
-| [源 model_5849.pt](../../artifacts/flat-track-20261017-trained/models/model_5849.pt) | `d4be0bc98c20348911b7e43a6f52f5e3719cb78d74f5764f485b4bce82bb71ca7` |
+| [源 model_5849.pt](../../artifacts/legacy_mjlab/flat-track-20261017-trained/models/model_5849.pt) | `d4be0bc98c20348911b7e43a6f52f5e3719cb78d74f5764f485b4bce82bb71ca7` |
 | [model_5849_opset13.onnx](../../exports/chuanliantui_multimode/model5849-h7-20261017/model_5849_opset13.onnx) | `9143bc7ad8aabac05831dee9203f42f81c77d94e7616eccea9cc004c1f5616b4` |
 
 ONNX 为 208039 字节，内嵌权重、固定 batch=1、opset 13；输入 `obs: float32[1,39]`，输出 `actions: float32[1,6]`，动作顺序 `[lf0, lf00, lfwheel, rf0, rf00, rfwheel]`。只导出 actor，不含观测构造、PD、限幅或电机映射（完整槽位说明见 [ONNX 使用说明](../onnx-huananhu-multimode-model5849.md)）。相对 `model_3023` 交付，39 维接口与图结构不变，权重与参考向量更新；本 checkpoint 训练域为无限平地、命令包线 vx ±1.5 m/s、yaw ±1.5 rad/s。
@@ -28,8 +28,8 @@ ONNX 为 208039 字节，内嵌权重、固定 batch=1、opset 13；输入 `obs:
 
 ```bash
 scripts/mjlab.sh export \
-  --checkpoint artifacts/flat-track-20261017-trained/models/model_5849.pt \
-  --output artifacts/model5849-onnx-20261017/model_5849_opset13.onnx --opset 13
+  --checkpoint artifacts/legacy_mjlab/flat-track-20261017-trained/models/model_5849.pt \
+  --output artifacts/legacy_mjlab/model5849-onnx-20261017/model_5849_opset13.onnx --opset 13
 ```
 
 ONNX 图检查、固定输入输出形状检查通过。256 组固定随机输入逐个比较 ONNX 参考执行器与 PyTorch，最大绝对误差 `3.814697265625e-06`，小于容差 `1e-4`。源 checkpoint 的观测契约与控制契约元数据由导出器强制校验。
@@ -38,9 +38,9 @@ ONNX 图检查、固定输入输出形状检查通过。256 组固定随机输�
 
 | 阶段 | 状态 | 结果与证据 |
 |---|---|---|
-| ONNX 图检查与数值比较 | 通过 | 256 组，最大绝对误差 `3.814697265625e-06`；[导出日志](../../artifacts/model5849-onnx-20261017/export.log)、[可移植交付副本](../../exports/chuanliantui_multimode/model5849-h7-20261017/model_5849_opset13_export.json)、[板端核对参考向量](../../exports/chuanliantui_multimode/model5849-h7-20261017/model_5849_opset13_reference_vectors.npz) |
-| CPU MuJoCo 零速静站 20 s（入口摩擦口径 1.0） | 通过 | 1 秒后高度最大误差 0.0042 m、最大倾角 1.45°、双轮接触 951/951、ONNX／PyTorch 最大动作差 `1.0e-06`；[报告](../../artifacts/model5849-onnx-20261017/zero-command-report-opset13.json) |
-| CPU MuJoCo vx=1.5 m/s 20 s（入口摩擦口径 1.0） | 通过（2026-10-17 晚更正为引擎相关，见下） | mean |vx 误差| 0.178 m/s、最大倾角 1.50°、行进约 25.2 m；[报告](../../artifacts/model5849-onnx-20261017/vx1p5-report-opset13.json) |
+| ONNX 图检查与数值比较 | 通过 | 256 组，最大绝对误差 `3.814697265625e-06`；[导出日志](../../artifacts/legacy_mjlab/model5849-onnx-20261017/export.log)、[可移植交付副本](../../exports/chuanliantui_multimode/model5849-h7-20261017/model_5849_opset13_export.json)、[板端核对参考向量](../../exports/chuanliantui_multimode/model5849-h7-20261017/model_5849_opset13_reference_vectors.npz) |
+| CPU MuJoCo 零速静站 20 s（入口摩擦口径 1.0） | 通过 | 1 秒后高度最大误差 0.0042 m、最大倾角 1.45°、双轮接触 951/951、ONNX／PyTorch 最大动作差 `1.0e-06`；[报告](../../artifacts/legacy_mjlab/model5849-onnx-20261017/zero-command-report-opset13.json) |
+| CPU MuJoCo vx=1.5 m/s 20 s（入口摩擦口径 1.0） | 通过（2026-10-17 晚更正为引擎相关，见下） | mean |vx 误差| 0.178 m/s、最大倾角 1.50°、行进约 25.2 m；[报告](../../artifacts/legacy_mjlab/model5849-onnx-20261017/vx1p5-report-opset13.json) |
 | GPU 训练后端／eval | 已有历史证据 | 跟踪 98/98、64 强制地面初态 63/64，见[项目记录](../ai/project-log.md)；本次未重跑 |
 | Cube.AI 导入、板端数值／时序、真机 | 未执行 | H7 部署负责人核对状态为待确认 |
 

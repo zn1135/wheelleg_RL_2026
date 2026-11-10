@@ -44,6 +44,6 @@ PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.f
 
 ## 本次离线结果
 
-[全部55例与配对明细](../../artifacts/fudan-acceptance-v2-20261102/offline-comparison-final/README.md)保留每例v1/v2和修改原因；6000轮18/20，7000轮20/20，0.30m7000轮单列15/15。原v1分别13/20、13/20、10/15，全部保留。7000相对6000在同一v2下保留18例，新增2例，无回退。
+[全部55例与配对明细](../../artifacts/fudan_ppo_walk/fudan-acceptance-v2-20261102/offline-comparison-final/README.md)保留每例v1/v2和修改原因；6000轮18/20，7000轮20/20，0.30m7000轮单列15/15。原v1分别13/20、13/20、10/15，全部保留。7000相对6000在同一v2下保留18例，新增2例，无回退。
 
 本次仅既有名义GPU诊断；未完成987例、随机物理、CPU或实机验收。用户此前对7000轮原7个争议片段的“未观察到失败”意见保留，不能据此扩展为未观看范围全部通过。时间门槛是用户确认的工程标准，尚未经实机验证。

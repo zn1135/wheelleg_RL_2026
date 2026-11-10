@@ -10,7 +10,7 @@
 
 ## 来源与模型
 
-原仓为 `/home/zn/文档/mjlab/wheelleg_RL`，历史 checkpoint 为 `Chuanliantui-Huananhu-Multimode-v0` 的 `model_3023.pt`，记录累计训练 7525 次更新。当前工作区复制了当时验证使用的源码快照、资产、checkpoint 和评估器，副本位于 `artifacts/multimode-v1-replay-20261014/`；导入清单与逐文件 SHA256 见 `IMPORT_MANIFEST.json`。
+原仓为 `/home/zn/文档/mjlab/wheelleg_RL`，历史 checkpoint 为 `Chuanliantui-Huananhu-Multimode-v0` 的 `model_3023.pt`，记录累计训练 7525 次更新。当前工作区复制了当时验证使用的源码快照、资产、checkpoint 和评估器，副本位于 `artifacts/legacy_mjlab/multimode-v1-replay-20261014/`；导入清单与逐文件 SHA256 见 `IMPORT_MANIFEST.json`。
 
 | 产物 | SHA256 | 说明 |
 |---|---|---|
@@ -43,11 +43,11 @@ GPU 运行退出 0，且严格加载显示 actor/critic 为 39/82、动作维度
 
 ## 4096 环境续训尝试
 
-用户指定从 `model_3023.pt` 恢复并以 4096 环境追加 300 次 PPO 更新。训练在首次环境 reset 创建 Warp CUDA 图时因 RTX 4060 Laptop GPU（8 GiB）报 `Warp CUDA error 2: out of memory` 而退出；尚未加载 checkpoint 进入 runner 或调用学习循环，PPO 更新数为 0，未产生候选 checkpoint。因此不存在“300 轮后是否退化”的结果。输入模型、冻结源码和失败配置保留在 `artifacts/multimode-v1-replay-20261014/resume300-4096-20261014/`，其中 `failure.md` 与 `provenance.json` 可复核；本次没有自动改用 2048 环境。
+用户指定从 `model_3023.pt` 恢复并以 4096 环境追加 300 次 PPO 更新。训练在首次环境 reset 创建 Warp CUDA 图时因 RTX 4060 Laptop GPU（8 GiB）报 `Warp CUDA error 2: out of memory` 而退出；尚未加载 checkpoint 进入 runner 或调用学习循环，PPO 更新数为 0，未产生候选 checkpoint。因此不存在“300 轮后是否退化”的结果。输入模型、冻结源码和失败配置保留在 `artifacts/legacy_mjlab/multimode-v1-replay-20261014/resume300-4096-20261014/`，其中 `failure.md` 与 `provenance.json` 可复核；本次没有自动改用 2048 环境。
 
 随后按用户要求把 12 个训练地形块全部改为原来的 flat 配置，同时保留原 terrain generator、传感器与 39/82 接口，再次以 4096 环境作无学习初始化。它仍在同一 Warp CUDA 图创建点 OOM，尚未加载模型或学习。这表明显存主要来自 4096 份机器人闭链物理、接触状态与 Warp 图，而非坡／台阶／楼梯地形；记录在 `resume300-4096-flat-check-20261014/failure.md`。
 
-进一步分档验证全平地环境：2048、3072、3584 均能初始化并运行 100 步；3840、3968、4096 均 OOM。3584 档的 Python CUDA 进程峰值为 6580 MiB，而桌面常驻进程占约 855 MiB，只余约 753 MiB；线性外推4096环境／Warp进程约7520 MiB，加桌面约8375 MiB，已超过8188 MiB物理显存，图捕获的临时内存会进一步提高门槛。无遗留训练进程。详见 `artifacts/multimode-v1-replay-20261014/memory-analysis-20261014.md`。
+进一步分档验证全平地环境：2048、3072、3584 均能初始化并运行 100 步；3840、3968、4096 均 OOM。3584 档的 Python CUDA 进程峰值为 6580 MiB，而桌面常驻进程占约 855 MiB，只余约 753 MiB；线性外推4096环境／Warp进程约7520 MiB，加桌面约8375 MiB，已超过8188 MiB物理显存，图捕获的临时内存会进一步提高门槛。无遗留训练进程。详见 `artifacts/legacy_mjlab/multimode-v1-replay-20261014/memory-analysis-20261014.md`。
 
 ## 全平地 2048 环境续训 300 轮（拒绝）
 

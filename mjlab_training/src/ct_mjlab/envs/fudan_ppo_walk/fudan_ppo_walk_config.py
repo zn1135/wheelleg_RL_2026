@@ -2,6 +2,19 @@
 
 
 class FudanWalkCfg:
+    class inference:
+        # GPU评估未指定checkpoint时，使用用户选定的模型和图外停车参考。
+        checkpoint = 'logs/mjlab/fudan_ppo_walk/20261102_parking_resume7000_to8000/model_final.pt'
+        checkpoint_sha256 = '39fa104d176f82a33db8317a75b4db28749362daf6bc4d2e06cb83d2c5ae32c9'
+        parking_pitch_deg = 2.
+
+    class sim2sim:
+        # 仅GPU sim2sim生效；上下限相同表示固定延迟，不改训练侧domain_rand。
+        randomize_action_delay = True
+        delay_ms_range = [4., 4.]
+        randomize_sensor_delay = True
+        sensor_delay_ms_range = [4., 4.]
+
     class parking_integral:
         # 独立停车积分试验；训练、普通评估和导出不自动接入。
         enabled = False
@@ -43,13 +56,13 @@ class FudanWalkCfg:
         friction_range = [.6, 1.4]
         restitution_range = [.6, 1.]
         friction_buckets = 64
-        # 额外动作延迟；范围来自复旦参考，并非本机实测。
-        randomize_action_delay = False
-        delay_ms_range = [0., 10.]
+        # 首轮板端时序的2ms量化近似；不包含未知电机内部响应。
+        randomize_action_delay = True
+        delay_ms_range = [2., 2.]
 
-        # 额外传感数据延迟；开启前填写已确定的毫秒范围。
-        randomize_sensor_delay = False
-        sensor_delay_ms_range = None
+        # 板端接收后数据龄约1.3ms，按物理步长近似为2ms。
+        randomize_sensor_delay = True
+        sensor_delay_ms_range = [2., 2.]
 
         # 与复旦配置同名：主动推扰开关、间隔和冲量速度尺度。
         push_robots = False
@@ -66,6 +79,7 @@ class FudanWalkCfg:
 
     class sim:
         dt = .002
+        fitted_leg_load = True  # User-adopted mirrored local load; False replays the legacy plant.
 
     class control:
         decimation = 5

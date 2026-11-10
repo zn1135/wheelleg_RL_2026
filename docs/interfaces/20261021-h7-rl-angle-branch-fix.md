@@ -4,7 +4,7 @@
 
 2026-10-22断动力只读补验通过：两次独立录制均捕获禁用→RL，四路偏移分别为±3圈/±2圈并正确消除，近似同姿态的策略角最大差0.018696rad，小于预设0.03rad；请求全0。中间USB断连未拼接，失败段保留，恢复后另录；带动力PD、左腿失联及站立仍未验证。[数据、曲线与边界](../diagnostics/20261022-h7-angle-reentry-validation.md)。以下为此前烧录及离线阶段历史。
 
-2026-10-21本次用户明确要求烧录并确认电机动力已断开、H7/RX保持供电。当前源码重新完整编译退出0，HEX本次生成；与已验证候选仅CubeAI生成网络的编译时间字符串3字节不同，其余全部609496字节Flash地址/内容一致。随后PowerDebugger/OpenOCD SWD1000kHz实际写入，Programming Finished、Verified OK、Resetting Target齐备，退出0；到此停止。当前大机HEX SHA256 `57c2a6813b071a6d1a249e29e7ec86463f5f4904531e8aa85a0a55ac90ba726e`，模型仍6848，初始角度分支锁存修复已写入。尚未做板端只读角度核对或动力响应试验，不声称左腿失联/饱和已经消除。H7负责人待确认。证据：`artifacts/h7-rl-angle-branch-fix-20261021/flash-01/flash-result.json`。
+2026-10-21本次用户明确要求烧录并确认电机动力已断开、H7/RX保持供电。当前源码重新完整编译退出0，HEX本次生成；与已验证候选仅CubeAI生成网络的编译时间字符串3字节不同，其余全部609496字节Flash地址/内容一致。随后PowerDebugger/OpenOCD SWD1000kHz实际写入，Programming Finished、Verified OK、Resetting Target齐备，退出0；到此停止。当前大机HEX SHA256 `57c2a6813b071a6d1a249e29e7ec86463f5f4904531e8aa85a0a55ac90ba726e`，模型仍6848，初始角度分支锁存修复已写入。尚未做板端只读角度核对或动力响应试验，不声称左腿失联/饱和已经消除。H7负责人待确认。证据：`artifacts/real2sim/h7-rl-angle-branch-fix-20261021/flash-01/flash-result.json`。
 
 以下“未烧录”为本次写板前的离线候选阶段记录，保留验证边界。最新状态以本节及current-status.json为准。
 
@@ -18,7 +18,7 @@ RL_Motor_Map新增由执行任务持有的rl_motor_map_state_t。进入RL、首�
 
 模型事实更正：复核XML后，前驱动关节range约q_reference±100rad，后驱动关节limited=false，并非四驱动关节都有有限硬限位。此前分析把它们称为有限行程关节不准确。q_reference±3.14是训练PD的目标限制，不是机械真实限位。因此本修复仅在初始化时选分支，运行中允许连续角跨过该区间，不用逐拍wrap掩盖真实运动。
 
-修改位置：rl_observation.c/.h的映射和状态；task_actuation.c新增执行任务独占状态、退出RL清初始化、映射调用传入原驱动周期；rl_types.h和machine_config.h仅同步角度定义注释。相对本任务开始的准确小补丁在artifacts/h7-rl-angle-branch-fix-20261021/candidate.patch，避免把该工作区此前所有改动误算成本任务。
+修改位置：rl_observation.c/.h的映射和状态；task_actuation.c新增执行任务独占状态、退出RL清初始化、映射调用传入原驱动周期；rl_types.h和machine_config.h仅同步角度定义注释。相对本任务开始的准确小补丁在artifacts/real2sim/h7-rl-angle-branch-fix-20261021/candidate.patch，避免把该工作区此前所有改动误算成本任务。
 
 ## 已完成验证
 
@@ -29,7 +29,7 @@ RL_Motor_Map新增由执行任务持有的rl_motor_map_state_t。进入RL、首�
 - 原eIDE/unify_builder配置独立完整重编大小机，两者退出0、build successfully、ELF/HEX/BIN均生成，当前O0不变。只见原BMI088 packed告警。首次调用因新输出目录尚未创建而工具在.lock处退出134；保留日志，建立目录后成功，不是源码编译错误。
 - machine_config.c、dm.c、dji.c、rl_torque.c、6848模型/ONNX、XML哈希保持，原始录制不改。来源、产物哈希及命令见同目录result.json和commands.txt。
 
-大机候选HEX：artifacts/h7-rl-angle-branch-fix-20261021/build-machine-0/CtrBoard-H7_ALL.hex，SHA256 5b7175773ead3fc194e3f3c6bb64e1a2a90ea5642c31ce5253064f3b43e351ca。
+大机候选HEX：artifacts/real2sim/h7-rl-angle-branch-fix-20261021/build-machine-0/CtrBoard-H7_ALL.hex，SHA256 5b7175773ead3fc194e3f3c6bb64e1a2a90ea5642c31ce5253064f3b43e351ca。
 
 小机仅做兼容编译，不授权替换小机模型或上板测试。
 

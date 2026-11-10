@@ -71,6 +71,7 @@ docs/reference/
 /artifacts/**
 !/artifacts/**/
 !/artifacts/*/models/**/*.pt
+!/artifacts/legacy_mjlab/*/models/**/*.pt
 
 # 内置 H7 工程配置；编译输出由子目录的 .gitignore 管理。
 !/deployment/H7_RL/.vscode/

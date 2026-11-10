@@ -11,7 +11,7 @@ import time
 
 ROOT = Path(__file__).resolve().parents[2]
 HISTORICAL_TOOL = ROOT / 'scripts/agent/report_supermimic_v13_continuation.py'
-HISTORICAL_TOOL_SHA = 'b166f3c841dd09ff8b223d66c9de8cfc923c242de2f7fc0c45f97a53acc8f863'
+HISTORICAL_TOOL_SHA = 'b46fa983f95f738a73ecc31f4d10e24c9843ffedd1a842883023ba4d6ac7d9e1'
 with HISTORICAL_TOOL.open('rb') as stream:
     assert hashlib.file_digest(stream, 'sha256').hexdigest() == HISTORICAL_TOOL_SHA
 spec = importlib.util.spec_from_file_location('_historical_saved_behavior', HISTORICAL_TOOL)
@@ -20,7 +20,7 @@ spec.loader.exec_module(old)
 assert old.sha(HISTORICAL_TOOL) == HISTORICAL_TOOL_SHA
 REFERENCES = dict(old.REFERENCES)
 REFERENCES['A700'] = dict(
-    directory=ROOT / 'artifacts/supermimic-v13-continuation-a700-seed43-20261101-r1',
+    directory=ROOT / 'artifacts/supermimic/supermimic-v13-continuation-a700-seed43-20261101-r1',
     summary_sha256='e2a03ae9528fb40801d9d9d776faf88be200807d8ce099278e536c8ed8f06acd',
     checkpoint_sha256='48f909a2da93917b2b6b2e4c0bf74dee471b1295946b2b46e43dc09e1119d978')
 PHASE_METRICS = ('actual_vx_mean_m_s', 'vx_mae_mean_m_s',

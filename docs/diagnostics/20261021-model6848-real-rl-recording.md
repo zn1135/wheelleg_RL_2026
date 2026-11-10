@@ -17,11 +17,11 @@
 
 预期固件为本次已烧录6848、machine0，HEX SHA256 `cbfa46dde22e7cf7a267c7e70f59cefe5cad34c01cedd0694ff8e25a5f3b9e01`，模型/PT/ONNX/XML/配置/录制程序哈希见 `acquisition.json`。构建清单是预期版本；本次未做设备启动身份回读或录制观测的电脑策略复算，不能仅凭清单宣称板端权重数值已独立验证。H7负责人复核待确认。
 
-原始文件：`artifacts/model6848-real-rl-20261021/session-01/stream.jsonl` 与 `session-02/stream.jsonl`，每段meta包含原始流SHA256及固件/配置/XML元数据；`analysis/trajectory.csv` 含姿态、关节反馈、命令、动作、PD目标/反馈及门控后请求；`output-01/outputs.csv`、`output-02/outputs.csv` 为高频请求/CAN提交历史。上述请求不是实测轴端力矩。`summary.json` 含完整档位分段和质量指标，图在各会话analysis目录。
+原始文件：`artifacts/real2sim/model6848-real-rl-20261021/session-01/stream.jsonl` 与 `session-02/stream.jsonl`，每段meta包含原始流SHA256及固件/配置/XML元数据；`analysis/trajectory.csv` 含姿态、关节反馈、命令、动作、PD目标/反馈及门控后请求；`output-01/outputs.csv`、`output-02/outputs.csv` 为高频请求/CAN提交历史。上述请求不是实测轴端力矩。`summary.json` 含完整档位分段和质量指标，图在各会话analysis目录。
 
 结论：已记录真实RL输入与响应及异常，但正常RL出力片段过短、故障和CAN失败明显，不能据此验证连续正常运行、实际位移、零速漂移或sim2real gap。下一项最小采集是排清这些故障后，在明确落地/扶持条件下采一段连续有效RL的5～10秒原始数据；本次不改控制或自动追加试验。
 
-复现读取/分析命令见 `artifacts/model6848-real-rl-20261021/commands.txt`。不提交、不推送。
+复现读取/分析命令见 `artifacts/real2sim/model6848-real-rl-20261021/commands.txt`。不提交、不推送。
 
 ## 用户报告进入RL后异常：已录数据的时序复核
 

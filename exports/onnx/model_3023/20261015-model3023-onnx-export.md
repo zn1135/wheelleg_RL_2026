@@ -13,7 +13,7 @@
 
 ## 模型与产物
 
-原始产物位于本机 [导出目录](../../../artifacts/model3023-onnx-20261015-FmsnA2)，被 Git 忽略。为交给 H7 协作者适配，已将模型及参考向量逐字节复制到 [H7 适配交付包](../../chuanliantui_multimode/model3023-h7-20261015/README.md)，随本交付记录一同纳入版本管理，供协作者拉取。
+原始产物位于本机 [导出目录](../../../artifacts/real2sim/model3023-onnx-20261015-FmsnA2)，被 Git 忽略。为交给 H7 协作者适配，已将模型及参考向量逐字节复制到 [H7 适配交付包](../../chuanliantui_multimode/model3023-h7-20261015/README.md)，随本交付记录一同纳入版本管理，供协作者拉取。
 
 交付包另含无表头的 256×39 输入 CSV、256×6 期望输出 CSV，与 NPZ 的 float32 数值逐项一致。导出 JSON 保留原验证结果，将本机绝对路径改为仓库相对路径，并补充导出代码 SHA、工具版本及 H7 待确认状态。`SHA256SUMS` 覆盖交付目录内其他六个文件。源 checkpoint 已在仓库中跟踪，本次无需再次复制。
 
@@ -31,12 +31,12 @@ ONNX 为 208259 字节，内嵌权重、固定 batch=1、opset 13；输入 `obs:
 ```bash
 mjlab_training/.venv/bin/python scripts/export_huananhu_multimode_onnx.py \
   --opset 13 \
-  --output artifacts/model3023-onnx-20261015-FmsnA2/model_3023_opset13.onnx
+  --output artifacts/real2sim/model3023-onnx-20261015-FmsnA2/model_3023_opset13.onnx
 ```
 
 ONNX 图检查、固定输入输出形状检查通过。256 组固定随机输入逐个比较 ONNX 参考执行器与 PyTorch，最大绝对误差 `1.9073486328125e-06`，小于容差 `1e-4`。源 checkpoint 哈希由导出器强制检查。
 
-- [导出日志](../../../artifacts/model3023-onnx-20261015-FmsnA2/export.log)
+- [导出日志](../../../artifacts/real2sim/model3023-onnx-20261015-FmsnA2/export.log)
 - [形状、校验值及数值结果（可移植交付副本）](../../chuanliantui_multimode/model3023-h7-20261015/model_3023_opset13_export.json)
 - [板端核对参考向量](../../chuanliantui_multimode/model3023-h7-20261015/model_3023_opset13_reference_vectors.npz)
 

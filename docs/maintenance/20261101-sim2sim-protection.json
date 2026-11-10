@@ -121,7 +121,7 @@
       "before": "b4d88cbca87d91cb06e051888ec67f84f172c6bea5e9d4ad135be0fc5f13fe7e",
       "after": "f8b5b5f2453b4524949df070e6c7b05941c71dc5e334408aac0d803dface1038",
       "reason": "User requested GPU final validation and unified reports; CPU rejection, GPU pipeline and read-only report metadata",
-      "source_archive": "artifacts/unified-gpu-acceptance-20261102/before/sim2sim/eval_isaac.py"
+      "source_archive": "artifacts/shared_validation/unified-gpu-acceptance-20261102/before/sim2sim/eval_isaac.py"
     }
   ]
 }

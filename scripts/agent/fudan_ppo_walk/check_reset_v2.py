@@ -120,7 +120,7 @@ def main():
         assert data['reset_contract']==RESET_CONTRACT and data['primary_updates']==data['encoder_updates']==0
         assert 'physics_state' not in data
     # Reward/domain-randomization code and all recipe coefficients remain exactly unchanged.
-    before=root/'artifacts/fudan-reset-v2-20261101/before/fudan_ppo_walk'
+    before=root/'artifacts/fudan_ppo_walk/fudan-reset-v2-20261101/before/fudan_ppo_walk'
     def function(text,name):
         return next(n for n in ast.walk(ast.parse(text)) if isinstance(n,ast.FunctionDef) and n.name==name)
     from ct_mjlab.fudan_ppo_walk.source_migration import legacy_source_directory

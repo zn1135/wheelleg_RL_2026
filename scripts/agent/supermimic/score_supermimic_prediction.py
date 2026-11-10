@@ -17,7 +17,7 @@ from ct_mjlab.supermimic.networks import RunningNorm
 
 ROOT = Path(__file__).resolve().parents[3]
 LOGS = ROOT/'logs/mjlab/chuanliantui_supermimic_walk'
-SEALED = ROOT/'artifacts/supermimic-v12-retrain-20261031-r1/score/predictions.pt'
+SEALED = ROOT/'artifacts/supermimic/supermimic-v12-retrain-20261031-r1/score/predictions.pt'
 SEALED_SHA = '5e8a4586d205955a11da3782903c0700e2bd97615ed33fad5f30f7b130f5c3db'
 ENTRIES = (
     ('V12', '20261031_v12_motiononly_retrain_r1', None),

@@ -9,12 +9,12 @@
   "scripts/agent/check_stand_v2_tight_training.py": [],
   "scripts/agent/check_supermimic_v13_continuation.py": [
     {
-      "path": "artifacts/supermimic-v13-continuation-20261101-r1",
+      "path": "artifacts/supermimic/supermimic-v13-continuation-20261101-r1",
       "exists": true,
       "kind": "directory"
     },
     {
-      "path": "artifacts/supermimic-v13-alternating-20261031-r1",
+      "path": "artifacts/supermimic/supermimic-v13-alternating-20261031-r1",
       "exists": true,
       "kind": "directory"
     }
@@ -23,34 +23,34 @@
   "scripts/agent/inspect_supermimic_motion_milestone.py": [],
   "scripts/agent/report_supermimic_v13_continuation.py": [
     {
-      "path": "artifacts/supermimic-v13-continuation-20261101-r1",
+      "path": "artifacts/supermimic/supermimic-v13-continuation-20261101-r1",
       "exists": true,
       "kind": "directory"
     },
     {
-      "path": "artifacts/supermimic-v13-alternating-20261031-r1/baseline-historical615-success-audit.json",
+      "path": "artifacts/supermimic/supermimic-v13-alternating-20261031-r1/baseline-historical615-success-audit.json",
       "exists": true,
       "kind": "file"
     },
     {
-      "path": "artifacts/supermimic-v13-baseline615-current13-seed43-20261031",
+      "path": "artifacts/supermimic/supermimic-v13-baseline615-current13-seed43-20261031",
       "exists": true,
       "kind": "directory"
     },
     {
-      "path": "artifacts/supermimic-v13-midpoint-seed43-20261031",
+      "path": "artifacts/supermimic/supermimic-v13-midpoint-seed43-20261031",
       "exists": true,
       "kind": "directory"
     },
     {
-      "path": "artifacts/supermimic-v13-final-seed43-20261031",
+      "path": "artifacts/supermimic/supermimic-v13-final-seed43-20261031",
       "exists": true,
       "kind": "directory"
     }
   ],
   "scripts/agent/report_supermimic_v13_count_budget.py": [
     {
-      "path": "artifacts/supermimic-v13-continuation-a700-seed43-20261101-r1",
+      "path": "artifacts/supermimic/supermimic-v13-continuation-a700-seed43-20261101-r1",
       "exists": true,
       "kind": "directory"
     }
@@ -59,7 +59,7 @@
   "scripts/agent/report_walk_estimator_only.py": [],
   "scripts/agent/review_zero_hold_training.py": [
     {
-      "path": "artifacts/model6848-startup-review-20261022-122136/zero-command-frozen-v2/cpu-ground-seed42.json",
+      "path": "artifacts/real2sim/model6848-startup-review-20261022-122136/zero-command-frozen-v2/cpu-ground-seed42.json",
       "exists": true,
       "kind": "file"
     }
@@ -92,7 +92,7 @@
   "scripts/agent/summarize_walk_v8_regression.py": [],
   "scripts/agent/train_supermimic_v13_continuation.py": [
     {
-      "path": "artifacts/supermimic-v13-continuation-20261101-r1",
+      "path": "artifacts/supermimic/supermimic-v13-continuation-20261101-r1",
       "exists": true,
       "kind": "directory"
     }

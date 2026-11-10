@@ -37,5 +37,5 @@
     "numpy": "2.5.3"
   },
   "h7_review_status": "待确认；未执行 Cube.AI 导入、板端数值/时序或真机验证",
-  "source_export_record": "artifacts/model5849-onnx-20261017/model_5849_opset13_export.json"
+  "source_export_record": "artifacts/legacy_mjlab/model5849-onnx-20261017/model_5849_opset13_export.json"
 }

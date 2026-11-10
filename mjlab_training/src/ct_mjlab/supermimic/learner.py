@@ -343,7 +343,7 @@ class Learner:
         path = Path(path).resolve()
         root = Path(__file__).resolve().parents[4]
         source_run = root/'logs/mjlab/chuanliantui_supermimic_walk/20261031_v12_motiononly_retrain_r1'
-        trial = root/'artifacts/supermimic-v12-retrain-20261031-r1'
+        trial = root/'artifacts/supermimic/supermimic-v12-retrain-20261031-r1'
         source_sha = '3a06b3ece5d284d658cdff7b95ddf932fb81f40b26e97e59073e9fb7afe09646'
         if path != source_run/'final.pt' or hashlib.sha256(path.read_bytes()).hexdigest() != source_sha:
             raise ValueError('World transfer requires the verified completed V12 final')
@@ -400,6 +400,7 @@ class Learner:
             if counts['world']>=warmup_updates else 'world_warmup')
 
     def save(self, path, command, *, config, iteration, transitions, world_updates, interrupted=False):
+        from ct_mjlab.envs.chuanliantui.fitted_leg_load import parameter_record
         if self.actor.supermimic_action_clip != ACTION_CLIP:
             raise ValueError('Legacy inference actor cannot be saved as the bounded-action training recipe')
         if config.get('world_loss_recipe') != WORLD_LOSS_RECIPE or config.get('alternating_recipe') != ALTERNATING_RECIPE:
@@ -408,6 +409,8 @@ class Learner:
         if counts['world'] != world_updates:
             raise ValueError('World update count differs from actual Adam steps')
         state = dict(algorithm_contract=ALGORITHM_CONTRACT, asset_sha256=asset_digest(), infos=contracts(command.cfg),
+            physical_leg_load=(command._env.action_manager.get_term('pd').leg_load.record
+                if command._env.action_manager.get_term('pd').leg_load is not None else parameter_record(False)),
             curriculum=command.checkpoint_state(), config=config, iteration=iteration,transitions=transitions,
             world_updates=world_updates,initialization=config['initialization'],
             optimizer_update_counts=counts,training_phase=self._phase_for_counts(counts,config['policy_warmup_updates']),

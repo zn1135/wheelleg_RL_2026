@@ -14,7 +14,7 @@
 
 独立CPU MuJoCo与mjlab `play=True`保持共享配置中的固定2 ms；共享`h7_timing.json`未改。原观测延迟、噪声、电机响应配置、500 Hz控制与50 Hz策略均保持。旧checkpoint接口兼容，但训练配方改变后的学习效果和行为尚未验收；本次不训练、不改固件，H7负责人核对待确认。
 
-正式检查`check_h7_simulation_latency.py`已通过：128组腿/轮抽样覆盖3/4/5拍及独立取值、三种延迟的真实PD首次使用与旧动作保持、部分复位采样范围、CPU 2/22 ms首用与复位，以及训练/play各四环境32策略步有限状态和39/82维观测。证据目录为`artifacts/training-delay-6-10ms-20261022-213725/`。这些检查不代表行为验收。
+正式检查`check_h7_simulation_latency.py`已通过：128组腿/轮抽样覆盖3/4/5拍及独立取值、三种延迟的真实PD首次使用与旧动作保持、部分复位采样范围、CPU 2/22 ms首用与复位，以及训练/play各四环境32策略步有限状态和39/82维观测。证据目录为`artifacts/real2sim/training-delay-6-10ms-20261022-213725/`。这些检查不代表行为验收。
 
 ## 首次接入记录（以下为历史2 ms配置）
 
@@ -24,7 +24,7 @@
 
 首次接入时共享参数为[资源目录的h7_timing.json](../../resources/robots/chuanliantui_new_1/mjlab/h7_timing.json)，训练`make_multimode_env_cfg`与独立CPU `Playback`读取同一文件，训练、play及评估默认生效；后续训练覆盖见上方最新配置。
 
-来源为[20:51录制及分析](../../artifacts/h7-latency-rl-20261022-205148/report.md)：正常投入、无故障的连续区间，原始流SHA256 `4e00c027e6faf383d176b7df8e836376040eb0236d6f66d775dfae9524b4bd42`。按缓存、策略、首次PD记录关联的1017个样本，缓存到首次PD均值2003.130μs，范围1996.102～2010.922μs；全部按最近2 ms网格量化为一拍。不是把各环节最大值相加。
+来源为[20:51录制及分析](../../artifacts/real2sim/h7-latency-rl-20261022-205148/report.md)：正常投入、无故障的连续区间，原始流SHA256 `4e00c027e6faf383d176b7df8e836376040eb0236d6f66d775dfae9524b4bd42`。按缓存、策略、首次PD记录关联的1017个样本，缓存到首次PD均值2003.130μs，范围1996.102～2010.922μs；全部按最近2 ms网格量化为一拍。不是把各环节最大值相加。
 
 |实测项目|实现方式|
 |---|---|
@@ -55,7 +55,7 @@ mjlab_training/.venv/bin/python scripts/agent/check_motor_response.py \
   --out artifacts/<新目录>/motor-response.json
 ```
 
-证据目录为`artifacts/h7-motor-response-candidate-20261022-213039/`。非实测4ms时间常数下，CPU/GPU真实PD执行路径与独立指数卷积对照通过，六路正负输入最大两端差1.513e-7；复位/部分复位/禁用清零、四环境32策略步有限性通过。默认0与改动前CPU源码16策略步的qpos/qvel/ctrl逐值一致，原CPU一致性检查通过。以上为软件模型检查，不是电机参数辨识或行为验收。
+证据目录为`artifacts/real2sim/h7-motor-response-candidate-20261022-213039/`。非实测4ms时间常数下，CPU/GPU真实PD执行路径与独立指数卷积对照通过，六路正负输入最大两端差1.513e-7；复位/部分复位/禁用清零、四环境32策略步有限性通过。默认0与改动前CPU源码16策略步的qpos/qvel/ctrl逐值一致，原CPU一致性检查通过。以上为软件模型检查，不是电机参数辨识或行为验收。
 
 ## 文件与兼容性
 
@@ -74,4 +74,4 @@ mjlab_training/.venv/bin/python scripts/agent/check_h7_simulation_latency.py \
   --out artifacts/<新目录>/timing-check.json
 ```
 
-共享配置、1017个配对样本范围量化、CPU连续两次动作的2/22 ms首用时刻、CPU复位、GPU真实PD首次保持/下一拍生效、四环境部分复位不串历史、32策略步有限状态及39/82维观测均通过。原`check_multimode_cpu_sim2sim.py`通过；model6848训练配置四环境32步有限检查和2秒CPU回放完成。证据在[本轮目录](../../artifacts/h7-simulation-latency-20261022-211023/)。这些检查不替代完整起立、平衡、速度跟踪或实机验收。
+共享配置、1017个配对样本范围量化、CPU连续两次动作的2/22 ms首用时刻、CPU复位、GPU真实PD首次保持/下一拍生效、四环境部分复位不串历史、32策略步有限状态及39/82维观测均通过。原`check_multimode_cpu_sim2sim.py`通过；model6848训练配置四环境32步有限检查和2秒CPU回放完成。证据在[本轮目录](../../artifacts/real2sim/h7-simulation-latency-20261022-211023/)。这些检查不替代完整起立、平衡、速度跟踪或实机验收。

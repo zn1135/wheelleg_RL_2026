@@ -147,10 +147,12 @@ class FudanRunner:
         return restored
 
     def save(self, name):
+        from ct_mjlab.envs.chuanliantui.fitted_leg_load import parameter_record
         path = self.log_dir / name
         torch.save(
             dict(
                 contract=CONTRACT,
+                physical_leg_load=self.env.action.leg_load.record if self.env.action.leg_load is not None else parameter_record(False),
                 reset_contract=getattr(self.env, 'reset_contract', RESET_CONTRACT),
                 reference=REFERENCE,
                 model_state_dict=self.policy.state_dict(),
@@ -287,5 +289,8 @@ def snapshot(output):
     shutil.copytree(source, output / 'source/ct_mjlab', ignore=shutil.ignore_patterns('__pycache__'))
     root = source.parents[2]
     paths = [*source.rglob('*.py'), root / 'resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml', root / 'docs/mjlab-fudan-ppo-walk.md']
+    parameters=root/'resources/robots/chuanliantui_new_1/mjlab/fitted_leg_load.json'
+    target=output/'source/resources/robots/chuanliantui_new_1/mjlab/fitted_leg_load.json'
+    target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(parameters,target);paths.append(parameters)
     hashes = {str(p.relative_to(root)): sha(p) for p in paths}
     (output / 'source_sha256.json').write_text(json.dumps(hashes, indent=2) + '\n')

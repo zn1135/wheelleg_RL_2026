@@ -16,11 +16,11 @@ from scipy.optimize import least_squares
 import real2sim_dynamics_huananhu as d
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = ROOT/'artifacts/fixed-h7-calibration-20261021'
-TRAIN = ['artifacts/wheel-bench-test-20261021/wheel-bench-pulses-20261021',
-         'artifacts/wheel-bench-1p70-test-20261021/wheel-bench-1p70-pulses-20261021']
-VALID = 'artifacts/wheel-bench-3p00-300ms-speed30-test-20261021/wheel-bench-3p00-speed30-pulses-20261021'
-RL = 'artifacts/real2sim-latest-gap-20261021/real2sim-20261021-103443'
+BASE = ROOT/'artifacts/real2sim/fixed-h7-calibration-20261021'
+TRAIN = ['artifacts/real2sim/wheel-bench-test-20261021/wheel-bench-pulses-20261021',
+         'artifacts/real2sim/wheel-bench-1p70-test-20261021/wheel-bench-1p70-pulses-20261021']
+VALID = 'artifacts/real2sim/wheel-bench-3p00-300ms-speed30-test-20261021/wheel-bench-3p00-speed30-pulses-20261021'
+RL = 'artifacts/real2sim/real2sim-latest-gap-20261021/real2sim-20261021-103443'
 # Broad conditional response bounds: J below .020 at 3Nm permits 150rad/s²;
 # losses cover observed .05Nm stiction and high-speed coasting, not CAD uncertainty.
 UPPER = np.array([.020, .08, .8])

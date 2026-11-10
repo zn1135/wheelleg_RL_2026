@@ -6,7 +6,7 @@ from ct_mjlab.envs.fudan_ppo_walk.parking_integral import configuration
 from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
 
 CHECKPOINT=Path('logs/mjlab/fudan_ppo_walk/20261102_parking_resume7000_to8000/model_final.pt')
-RECORDING=Path('artifacts/fudan-gpu-replay-8000-20261102')
+RECORDING=Path('artifacts/fudan_ppo_walk/fudan-gpu-replay-8000-20261102')
 EXPECTED_SHA='39fa104d176f82a33db8317a75b4db28749362daf6bc4d2e06cb83d2c5ae32c9'
 
 

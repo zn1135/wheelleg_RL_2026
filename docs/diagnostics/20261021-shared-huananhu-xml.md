@@ -8,12 +8,12 @@
 
 CPU的POSE_BANK仍显式保留在multimode_model3023/huananhu_pose_bank.npz，没有因XML路径调整而切换到训练侧姿态库。模型权重、网格和历史模型目录的其他文件均保留，不合并策略或姿态库。
 
-合并前后30项编译字段（质量、惯量、几何/网格、关节、轮端参数、执行器及约束）逐项完全一致。正式有限检查check_multimode_cpu_sim2sim.py通过，覆盖单一来源/兼容链接/姿态库路径、训练与CPU初态、观测/控制公式/限幅、弹簧、接触选项及恢复高度检查。仅表示这些有限检查，不是新策略行为验收。证据见[验证记录](../../artifacts/shared-huananhu-xml-20261021/verification.json)与[CPU结果](../../artifacts/shared-huananhu-xml-20261021/check-cpu.json)。
+合并前后30项编译字段（质量、惯量、几何/网格、关节、轮端参数、执行器及约束）逐项完全一致。正式有限检查check_multimode_cpu_sim2sim.py通过，覆盖单一来源/兼容链接/姿态库路径、训练与CPU初态、观测/控制公式/限幅、弹簧、接触选项及恢复高度检查。仅表示这些有限检查，不是新策略行为验收。证据见[验证记录](../../artifacts/real2sim/shared-huananhu-xml-20261021/verification.json)与[CPU结果](../../artifacts/real2sim/shared-huananhu-xml-20261021/check-cpu.json)。
 
 ```bash
-mjlab_training/.venv/bin/python scripts/agent/check_multimode_cpu_sim2sim.py --out artifacts/shared-huananhu-xml-20261021/recheck.json
+mjlab_training/.venv/bin/python scripts/agent/check_multimode_cpu_sim2sim.py --out artifacts/real2sim/shared-huananhu-xml-20261021/recheck.json
 ```
 
-本轮是用户最新“合成一份”的来源统一，物理参数保持不变；此前选定的joint_sharp仍独立保存在artifacts/h7-wheel-best-20261021/selected/，尚未写入该共享XML或训练执行器。不能将来源统一称为最优驱动响应已同步或重训已使用新模型。没有启动训练、同步到原工作区、操作硬件、提交或推送。
+本轮是用户最新“合成一份”的来源统一，物理参数保持不变；此前选定的joint_sharp仍独立保存在artifacts/real2sim/h7-wheel-best-20261021/selected/，尚未写入该共享XML或训练执行器。不能将来源统一称为最优驱动响应已同步或重训已使用新模型。没有启动训练、同步到原工作区、操作硬件、提交或推送。
 
-工作位于独立worktree；合并前文件字节与哈希保存在artifacts/shared-huananhu-xml-20261021/before/和before-manifest.json，便于复核。本次不删除任何模型权重、历史录制、网格或姿态库。
+工作位于独立worktree；合并前文件字节与哈希保存在artifacts/real2sim/shared-huananhu-xml-20261021/before/和before-manifest.json，便于复核。本次不删除任何模型权重、历史录制、网格或姿态库。

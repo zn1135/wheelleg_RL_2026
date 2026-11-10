@@ -24,7 +24,7 @@ import mj_sim2sim_huananhu_multimode as sim
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--out',type=Path,required=True)
     p.add_argument('--small',action='store_true');args=p.parse_args();args.out.mkdir(parents=True,exist_ok=False)
-    old=ROOT/'artifacts/real2sim-dynamics-20261021/verified-run'
+    old=ROOT/'artifacts/real2sim/real2sim-dynamics-20261021/verified-run'
     params=np.array(json.loads((old/'candidate-parameters.json').read_text())['additional_parameters'])
     model=args.out/'historical-candidate.xml';d.export_candidate(sim.MODEL_ASSET,model,params)
     # Verify old absolute mesh path relocation changes no compiled physical values.
@@ -95,8 +95,8 @@ def main():
         report['divergence'].append({'case':name,'first_metric_difference_over_1e-3_s':next((float(arr[i,0]) for i in np.flatnonzero(delta>1e-3)),None),
                                      'max_metric_difference':float(max(delta))})
     if not args.small:
-        for case,rel in [('full_a','artifacts/real2sim-wheel-closed-loop-20261021/friction-compensation-cli.json'),
-                         ('rounded_a','artifacts/real2sim-wheel-response-h7-20261021/sim-approved-coefficients.json')]:
+        for case,rel in [('full_a','artifacts/real2sim/real2sim-wheel-closed-loop-20261021/friction-compensation-cli.json'),
+                         ('rounded_a','artifacts/real2sim/real2sim-wheel-response-h7-20261021/sim-approved-coefficients.json')]:
             oldrows=json.loads((ROOT/rel).read_text())['trajectory']
             arr=np.array([[r['time_s'],r['x_m'],r['y_m'],r['vx_m_s'],r['yaw_rate_rad_s'],*r['roll_pitch_deg']] for r in oldrows])
             report[case+'_vs_historical_max_abs']=float(np.max(abs(traces[case]-arr)))

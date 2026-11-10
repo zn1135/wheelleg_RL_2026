@@ -41,6 +41,6 @@ PYTHONPATH=mjlab_training/src CUDA_VISIBLE_DEVICES='' mjlab_training/.venv/bin/p
 PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.supermimic.check_supermimic_no_history --integration --output artifacts/<新的GPU检查目录>
 ```
 
-CPU检查已通过：[r1报告](../../artifacts/supermimic-v13-no-history-check-20261101-r1/report.json)。覆盖非零网络头的历史扰动不变、历史梯度缺失/当前动作梯度保留、归一化不读历史、世界拟合损失不依赖历史、解析延迟PD历史保留、旧完整包及假新合同错形状拒绝、新包保存恢复和旧actor逐字节一致。优化器更新0。
+CPU检查已通过：[r1报告](../../artifacts/supermimic/supermimic-v13-no-history-check-20261101-r1/report.json)。覆盖非零网络头的历史扰动不变、历史梯度缺失/当前动作梯度保留、归一化不读历史、世界拟合损失不依赖历史、解析延迟PD历史保留、旧完整包及假新合同错形状拒绝、新包保存恢复和旧actor逐字节一致。优化器更新0。
 
-GPU有限采集检查结果另见[r2报告](../../artifacts/supermimic-v13-no-history-check-20261101-r2/report.json)；未训练新权重，未做完整行为、独立种子或真机验收。H7负责人核对不适用本次内部世界模型改动，新策略交付时仍需共同核对。
+GPU有限采集检查结果另见[r2报告](../../artifacts/supermimic/supermimic-v13-no-history-check-20261101-r2/report.json)；未训练新权重，未做完整行为、独立种子或真机验收。H7负责人核对不适用本次内部世界模型改动，新策略交付时仍需共同核对。

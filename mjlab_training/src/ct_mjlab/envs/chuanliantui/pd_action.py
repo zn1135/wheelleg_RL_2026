@@ -42,6 +42,7 @@ class ChuanliantuiPdActionCfg(ActionTermCfg):
     spring_force_bias_range: tuple[float, float] = (-50.0, 50.0)
     motor_randomization: bool = False
     standup_pushes: bool = False
+    fitted_leg_load: bool = True
 
     def build(self, env: ManagerBasedRlEnv) -> "ChuanliantuiPdAction":
         return ChuanliantuiPdAction(self, env)
@@ -110,6 +111,8 @@ class ChuanliantuiPdAction(ActionTerm):
         low, high = cfg.spring_force_bias_range
         if low > high:
             raise ValueError("Spring force bias lower bound exceeds upper bound")
+        from .fitted_leg_load import TorchLegLoad
+        self.leg_load = TorchLegLoad(self) if cfg.fitted_leg_load else None
 
     @property
     def action_dim(self) -> int:
@@ -187,6 +190,8 @@ class ChuanliantuiPdAction(ActionTerm):
             self._env.sim.data.qvel[:, self._spring_v_adr],
             self._spring_force_bias,
         )
+        if self.leg_load is not None:
+            self.leg_load.apply()
 
     def reset(self, env_ids: torch.Tensor | slice | None = None) -> None:
         if env_ids is None:
@@ -197,3 +202,6 @@ class ChuanliantuiPdAction(ActionTerm):
         self._action_history[:, env_ids] = 0.0
         low, high = self.cfg.spring_force_bias_range
         self._spring_force_bias[env_ids] = torch.empty_like(self._spring_force_bias[env_ids]).uniform_(low, high)
+        if self.leg_load is not None:
+            ids = self._env_ids[env_ids]
+            self.leg_load.reset(ids)

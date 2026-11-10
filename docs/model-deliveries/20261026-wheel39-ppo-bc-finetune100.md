@@ -6,7 +6,7 @@
 
 当前共享XML串联腿，任务`chuanliantui`，正常趴地起立、零速平衡和平滑／停车；不训练移动和倒置恢复。actor39／critic82／动作6，接口`chuanliantui-huananhu-wheel-angle-39-82-handover-v2`，新训练模式见[配置记录](../interfaces/20261026-wheel39-bc-ppo-finetune.md)。
 
-训练仓当前detached HEAD `2893b88ae99b61c3f9d06f06cb54b8d3ea94c4c3`，含大量已有未提交／未跟踪实现；不是该HEAD单独可重现的模型。实际运行60个生产源码及逐文件哈希见[训练源码记录](../../artifacts/ppo-bc-finetune100-20261026-v1/training-source-manifest.json)，对应运行目录`snapshot/ct_mjlab`；实际env与PPO配置见运行目录`params`。没有Git提交、PR、推送或H7改动。
+训练仓当前detached HEAD `2893b88ae99b61c3f9d06f06cb54b8d3ea94c4c3`，含大量已有未提交／未跟踪实现；不是该HEAD单独可重现的模型。原记录的训练源码清单及对应运行目录在当前工作区缺失，60个生产源码的逐文件哈希、`snapshot/ct_mjlab`及`params`暂无法核对。没有Git提交、PR、推送或H7改动。
 
 本地RTX4060 Laptop 8GB，mjlab虚拟环境；seed42、2048环境、100轮、每轮24步与5×4个小批次。前20轮仅价值网络，动作噪声腿0.001／轮0.005，固定学习率、原BC软约束、冻结SMP先验、名义物理、无观测噪声／传感延迟、腿轮动作2或4ms。实际时间北京时间13:41:46～13:46:27。
 
@@ -29,6 +29,6 @@ SHA256：`226cccc53ecd836adda711b147980008ae10a2f3485d897e8347d9d08e0c6fb4`。�
 | Isaac | 不适用：本轮为mjlab |
 | 移动、10ms压力、CPU sim2sim、ONNX、板端、真机 | 未执行，不在本轮范围 |
 
-完整执行脚本、命令、失败检查记录及逐物理步独立复算见[报告](../../artifacts/ppo-bc-finetune100-20261026-v1/README.md)。原40组已用于模型选择，不能当新泛化；原生LQR1ms／0秒门控与学生2ms／0.2秒门控差异已明确记录。
+原记录引用的完整执行脚本、命令、失败检查记录及逐物理步独立复算报告在当前工作区缺失。原40组已用于模型选择，不能当新泛化；原生LQR1ms／0秒门控与学生2ms／0.2秒门控差异已明确记录。
 
 本模型保留为100轮对照；用户允许自主配置，下一段新增300轮、累计400轮已启动，尚未交付其结果。当前整体目标仍未达到；稳定BC和旧PPO均保留供对照与回退，H7负责人待确认。

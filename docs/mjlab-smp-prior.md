@@ -212,7 +212,7 @@ mjlab_training/.venv/bin/python -m scripts.agent.imitation.check_teacher_pd_inte
 ```bash
 env MUJOCO_GL=egl PYTHONPATH=mjlab_training/src OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 \
   mjlab_training/.venv/bin/python -m scripts.agent.imitation.check_smp_policy_source \
-  --checkpoint artifacts/multimode-v1-replay-20261014/models/model_3023.pt \
+  --checkpoint artifacts/legacy_mjlab/multimode-v1-replay-20261014/models/model_3023.pt \
   --num-envs 160 --seeds 42,43 --output artifacts/smp-source-matrix-new --video
 
 # 已有验收状态直接补导视频，不重新运行策略或物理

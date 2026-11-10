@@ -12,19 +12,19 @@ import subprocess
 import time
 
 ROOT=Path(__file__).resolve().parents[2]
-ART=ROOT/'artifacts/supermimic-v13-continuation-20261101-r1'
+ART=ROOT/'artifacts/supermimic/supermimic-v13-continuation-20261101-r1'
 PYTHON=ROOT/'mjlab_training/.venv/bin/python'
 COMPARATOR=ROOT/'scripts/agent/compare_supermimic_behavior.py'
 COMPARATOR_SHA='e88b119ac65b5fad0ad22ec3e51f94c997ff16ebe7dc9f5aa4ea6ba412942105'
 REFERENCES={
- 'SM615-current13':dict(directory=ROOT/'artifacts/supermimic-v13-baseline615-current13-seed43-20261031',
+ 'SM615-current13':dict(directory=ROOT/'artifacts/supermimic/supermimic-v13-baseline615-current13-seed43-20261031',
   summary_sha256='bf127e2dae99f57aa1ab3f3efa39e247f9e02a045f4ba7f78bdc14da4f21d102',checkpoint_sha256='42b63440cc90e60bd5aa12ba35e473c153a7a91c90e34dd660d6cc25a3bb8063'),
- 'A170':dict(directory=ROOT/'artifacts/supermimic-v13-midpoint-seed43-20261031',
+ 'A170':dict(directory=ROOT/'artifacts/supermimic/supermimic-v13-midpoint-seed43-20261031',
   summary_sha256='b277e7de1689f9f5bdc91f0ec6db0b9344d312d4b2ec10f6cb4977bccb0b7e1d',checkpoint_sha256='d306fe738b073ec600005330bc6c8929b19fc0e2086f979631c52cbd864c32dc'),
- 'A368':dict(directory=ROOT/'artifacts/supermimic-v13-final-seed43-20261031',
+ 'A368':dict(directory=ROOT/'artifacts/supermimic/supermimic-v13-final-seed43-20261031',
   summary_sha256='1936f767e6c12c64ccee39f53f98c74a1a0c399e074a462f7aacc4d1f4483757',checkpoint_sha256='088d4a4a7eebd3a11412ab0e62cdb640b064caee9333a4772b23f62ce54d8e22')}
-HISTORICAL_AUDIT=ROOT/'artifacts/supermimic-v13-alternating-20261031-r1/baseline-historical615-success-audit.json'
-HISTORICAL_AUDIT_SHA='71d000c46a274de309ffcf0be470ed025aea25d9053c1ad669beb926e3b674d6'
+HISTORICAL_AUDIT=ROOT/'artifacts/supermimic/supermimic-v13-alternating-20261031-r1/baseline-historical615-success-audit.json'
+HISTORICAL_AUDIT_SHA='d81ac447e9392b5601a9e2a5d4a7cb8c1886f4f549cd969137ee4ad27670148f'
 
 
 def sha(path):

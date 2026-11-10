@@ -8,7 +8,7 @@
 
 - 原会话：Jetson `~/real2sim/artifacts/model6848-startup-20261022-122136/`，北京时间2026-10-22 12:21:37开始，120.021293820秒，221143项原始事件，元数据complete=true、error=null。
 - 用户确认：初始绳子松弛、无人扶持；随后确认“轮子停转就是绳子拉紧的结果”，并表示将补录视频。当前没有同次视频或绳索开始受力的精确时刻。若视频来自另一试验，必须与其自己的新录制配对，不能移用到本次确定外力开始时间。
-- 本地原样副本、Jetson当时XML/配置/录制程序和全部分析输出：`artifacts/model6848-startup-review-20261022-122136/`。原始流SHA256：`047c43d0630b4c87097b3245bf235ffe1b66f0de138fbe0b08fb57f36ace94ea`。
+- 本地原样副本、Jetson当时XML/配置/录制程序和全部分析输出：`artifacts/real2sim/model6848-startup-review-20261022-122136/`。原始流SHA256：`047c43d0630b4c87097b3245bf235ffe1b66f0de138fbe0b08fb57f36ace94ea`。
 - Git为`26_wheelleg`，HEAD `de9841cd8e9a3e4e2ca339669af9e5de80c138be`；工作区已有未提交文档/实验脚本，保留。本次只取回数据并离线分析，不改H7、标定、网络、XML或训练代码，不烧录、不复位、不发电机指令。
 - 录制配置SHA256 `017665bc3ebcfdd20d846e2d781b6109c2e425ccdd9f1b4779124e2221ef5416`，与本地USB配置一致；Jetson录制程序SHA256 `cde8824a809b35b3ef8cf20e20f1fc5e38642105fb34013d8058ac7056691c30`。
 - Jetson显示XML SHA256 `1ea213314d8fd686841678d28246fbb588d53a5586e08c22ea977e95c0cb4ec5`，严格读取对应冻结模型；它不是当前训练共享XML，也不是板端网络身份。首轮实录检查没有做MuJoCo自由积分预测，后续独立CPU诊断见上方链接；未把实测姿态回放当作动力学验证。
@@ -50,7 +50,7 @@
 - 全部4124组去重后的新鲜obs39/action6配对（包括启动段），重复快照内容一致；用model6848批量复算最大动作差`4.76837158203125e-6`，RMSE `4.229269734423724e-7`，低于`1e-4`容差。保存逐组原始输入、实录输出和预测值于`details-final/policy-all.npz`。
 - 全部11993帧fault=0、online_mask=255；有效PD期间六电机上报来源年龄最大均1ms，未见此前左腿>50ms现象。以上仅覆盖本次记录，不证明此前失联物理根因已永久消除。
 
-![启动过程：实录目标、角度、请求和姿态](../../artifacts/model6848-startup-review-20261022-122136/details-final/startup.png)
+![启动过程：实录目标、角度、请求和姿态](../../artifacts/real2sim/model6848-startup-review-20261022-122136/details-final/startup.png)
 
 ## 后半段已确认受绳索约束
 
@@ -58,7 +58,7 @@
 
 用户已确认轮子停转是绳子拉紧的结果，因此本段解释为外部约束下轮速接近零、控制器仍持续请求轮矩，不能当作自主零速站立，也不再将停轮现象归因于尚未辨明的静摩擦或驱动不响应。受拉后的非零目标包含外力改变观测后的策略反馈，不能直接推断无绳时一定保持同样动作。当前缺少独立位移与绳索力测量；只在确定拉紧前的窗口后分析零命令下的前移原因，不用受拉片段拟合无外力参数，不调PD或轮端参数。
 
-![全程实录](../../artifacts/model6848-startup-review-20261022-122136/details-final/overview.png)
+![全程实录](../../artifacts/real2sim/model6848-startup-review-20261022-122136/details-final/overview.png)
 
 ## 数据完整性与验证范围
 
@@ -74,18 +74,18 @@
 
 ```bash
 mjlab_training/.venv/bin/python scripts/agent/analyze_h7_rl_capture.py \
-  --session artifacts/model6848-startup-review-20261022-122136/session --seconds 120 \
+  --session artifacts/real2sim/model6848-startup-review-20261022-122136/session --seconds 120 \
   --checkpoint deployment/H7_RL_ros/models/model6848-20261021/model_6848.pt \
-  --out artifacts/model6848-startup-review-20261022-122136/recheck-chronology
+  --out artifacts/real2sim/model6848-startup-review-20261022-122136/recheck-chronology
 
 # 此命令预期退出2，原始全文件历史缺口仍应检出。
 mjlab_training/.venv/bin/python sim2sim/h7_output_capture.py \
-  --session artifacts/model6848-startup-review-20261022-122136/session \
-  --out artifacts/model6848-startup-review-20261022-122136/recheck-output
+  --session artifacts/real2sim/model6848-startup-review-20261022-122136/session \
+  --out artifacts/real2sim/model6848-startup-review-20261022-122136/recheck-output
 
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 mjlab_training/.venv/bin/python \
-  artifacts/model6848-startup-review-20261022-122136/analyze_details.py \
-  artifacts/model6848-startup-review-20261022-122136/recheck-details
+  artifacts/real2sim/model6848-startup-review-20261022-122136/analyze_details.py \
+  artifacts/real2sim/model6848-startup-review-20261022-122136/recheck-details
 ```
 
 首次chronology入口退出0；标准完整输出入口退出2；补充测量与全部策略配对检查退出0。`details-final`修正了初版曲线目标虚线的配色，数值结果未变；初版`details`保留。补充脚本及所读报告/NPZ的SHA256列在`details-final/report.json`，输入侧Jetson源码原样保存在`jetson-source/`。这些是离线诊断，不是训练、物理参数标定或真机行为验收。

@@ -64,7 +64,7 @@ def rounding():
 
 def scoring():
     from scripts.agent.supermimic import _motion_scoring as shared
-    saved_path = ROOT / 'artifacts/supermimic-v12-retrain-20261031-r1/score/predictions.pt'
+    saved_path = ROOT / 'artifacts/supermimic/supermimic-v12-retrain-20261031-r1/score/predictions.pt'
     saved = torch.load(saved_path, map_location='cpu', weights_only=False, mmap=True)
     reports = []
     for name in ('score_supermimic_motion', 'score_supermimic_motion_retrain'):
@@ -143,7 +143,7 @@ def motion_saved():
     """保存轨迹与独立旧统计逐项比较；不加载策略或运行仿真。"""
     import math
     from scripts.agent.motion.assess import supermimic_phase, reevaluate
-    directory = ROOT/'artifacts/supermimic-v13-final-seed43-20261031'
+    directory = ROOT/'artifacts/supermimic/supermimic-v13-final-seed43-20261031'
     meta = json.loads((directory/'summary.json').read_text())
     old = original_functions('assess_chuanliantui_supermimic', ['phase_metrics'],
                              dict(np=np, math=math, HEIGHT=.26))['phase_metrics']

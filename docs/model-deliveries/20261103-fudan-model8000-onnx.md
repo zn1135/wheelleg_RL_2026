@@ -16,7 +16,7 @@
 
 [导出源码完整快照](../../exports/fudan_ppo_walk/20261103_model8000_v2/source/)、[逐文件SHA](../../exports/fudan_ppo_walk/20261103_model8000_v2/source-sha256.json)、[已跟踪差异快照](../../exports/fudan_ppo_walk/20261103_model8000_v2/working-tree.patch)覆盖当前导出源码，包含参与运行的未跟踪文件；原训练来源以原run的source、source_sha256.json和training_report.json为准，未修改历史内容。
 
-原训练为4096环境、seed1，7000→8000新增1000轮，恢复两Adam与RNG、物理回合重新初始化，显式保留v2历史。原训练命令/配置/审计见[完成记录](../../artifacts/fudan-parking-resume7000-to8000-20261102/COMPLETED.md)，日志在`logs/mjlab/fudan_ppo_walk/20261102_parking_resume7000_to8000/`。本轮无新训练。
+原训练为4096环境、seed1，7000→8000新增1000轮，恢复两Adam与RNG、物理回合重新初始化，显式保留v2历史。原训练命令/配置/审计见[完成记录](../../artifacts/fudan_ppo_walk/fudan-parking-resume7000-to8000-20261102/COMPLETED.md)，日志在`logs/mjlab/fudan_ppo_walk/20261102_parking_resume7000_to8000/`。本轮无新训练。
 
 Python运行于mjlab_training虚拟环境；PyTorch2.14.0、ONNX1.22.0、MuJoCo3.11.0。导出及数值检查仅CPU，无物理积分；XML路径/实际SHA、源快照/差异SHA详见[export-report.json](../../exports/fudan_ppo_walk/20261103_model8000_v2/export-report.json)。部署仓未修改，负责人核对待确认。
 

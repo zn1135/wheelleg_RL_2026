@@ -6,7 +6,7 @@
 
 ## 输入与控制核对
 
-旧RL完整会话：`artifacts/real2sim-latest-gap-20261021/real2sim-20261021-103443`，raw SHA256 `7e1bcd2eefbea88000f7a6b6d7349bae7db13d078b473a05e26749528642fee3`；活动XML SHA256 `cac8061de2850602bfd1421fc856bf217c4e5040a11c8f5d33cf1abe61d5f0cf`。原录制模型按原始哈希冻结加载以重构状态，动力学预测显式使用当前共享XML，不篡改录制版本。机器配置SHA256 `017665bc3ebcfdd20d846e2d781b6109c2e425ccdd9f1b4779124e2221ef5416`。
+旧RL完整会话：`artifacts/real2sim/real2sim-latest-gap-20261021/real2sim-20261021-103443`，raw SHA256 `7e1bcd2eefbea88000f7a6b6d7349bae7db13d078b473a05e26749528642fee3`；活动XML SHA256 `cac8061de2850602bfd1421fc856bf217c4e5040a11c8f5d33cf1abe61d5f0cf`。原录制模型按原始哈希冻结加载以重构状态，动力学预测显式使用当前共享XML，不篡改录制版本。机器配置SHA256 `017665bc3ebcfdd20d846e2d781b6109c2e425ccdd9f1b4779124e2221ef5416`。
 
 源码流程：`rl_torque.c:RL_Torque_Compute`将action按真实四髋槽重排，位置目标=nominal+0.5×action并按reference±3.14裁剪；力矩=60×位置误差−2×实测速率，限幅±40Nm，RL坐标转回固件坐标；`task_actuation.c:output_dispatch/Mirror_Output_Publish`在最终许可后记录实际请求和HAL返回状态；`dm.c:Dm_Send_Torque`按既有输出极性编码为12位MIT力矩，量程±54Nm、kp/kd置零。这里的2是速度阻尼，不再乘/除dt；MIT反馈也只按既有驱动映射转换一次。
 
@@ -79,12 +79,12 @@ OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 mjlab_training/.venv/bin/python scripts
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 mjlab_training/.venv/bin/python scripts/agent/check_h7_joint_response.py --windows 64 --out artifacts/h7-joint-response-recheck
 ```
 
-正式入口scripts/agent/check_h7_joint_response.py；结果/版本/哈希为artifacts/h7-joint-response-20261021/study/report.json与manifest.json。源快照包含已有映射/动力学初始化和活动XML，只在内存模型中计算。bench-inventory.json重新计算两个完整轮会话raw哈希并核对原summary，明确四髋零请求。
+正式入口scripts/agent/check_h7_joint_response.py；结果/版本/哈希为artifacts/real2sim/h7-joint-response-20261021/study/report.json与manifest.json。源快照包含已有映射/动力学初始化和活动XML，只在内存模型中计算。bench-inventory.json重新计算两个完整轮会话raw哈希并核对原summary，明确四髋零请求。
 
-首次小样本因复用的数值表达式助手不支持一元负号，读取带负数的配置失败；日志artifacts/h7-joint-small.log及空small目录保留。改为沿用映射读取的字面浮点解析后small-02与study退出0。没有改任何物理公式或旧助手。
+首次小样本因复用的数值表达式助手不支持一元负号，读取带负数的配置失败；日志artifacts/real2sim/h7-joint-response-20261021/logs/h7-joint-small.log及空small目录保留。改为沿用映射读取的字面浮点解析后small-02与study退出0。没有改任何物理公式或旧助手。
 
 training-source-preservation.json核对启动时所有训练源码/XML/姿态库/父模型哈希未变；未重启或追加正在进行的训练。H7负责人对新增采集接口/实测复查仍待确认。
 
-![64窗误差对照](../../artifacts/h7-joint-response-20261021/joint-errors.png)
+![64窗误差对照](../../artifacts/real2sim/h7-joint-response-20261021/joint-errors.png)
 
-![按时间顺序首窗曲线](../../artifacts/h7-joint-response-20261021/study/joint-response.png)
+![按时间顺序首窗曲线](../../artifacts/real2sim/h7-joint-response-20261021/study/joint-response.png)

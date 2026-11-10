@@ -1,5 +1,5 @@
 {
-  "reason": "只撤销旧入口/注册、迁移保留线调用，额外删除两个未调用的getup工厂包装；物理函数不变；用户另授权新增独立复旦PPO任务，仅扩注册/CLI及新包，保留共享物理/旧任务保护；2026-11-02用户确认统一GPU与通用验收；相对本次before训练函数/物理不变，历史HEAD已存在的动作clip/更新预算差异不归入本次实现，逐文件证据见artifacts/unified-gpu-acceptance-20261102/source-migration.json",
+  "reason": "只撤销旧入口/注册、迁移保留线调用，额外删除两个未调用的getup工厂包装；物理函数不变；用户另授权新增独立复旦PPO任务，仅扩注册/CLI及新包，保留共享物理/旧任务保护；2026-11-02用户确认统一GPU与通用验收；相对本次before训练函数/物理不变，历史HEAD已存在的动作clip/更新预算差异不归入本次实现，逐文件证据见artifacts/shared_validation/unified-gpu-acceptance-20261102/source-migration.json",
   "changed": {
     "envs/__init__.py": {
       "before": "9a610103c4f559e0b2df27e40d847ae6aeb795b6adab38cacfbc54e637ed14d9",

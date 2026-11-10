@@ -27,7 +27,7 @@
 
 ## 验证证据
 
-全部结果保存在[本次输出目录](../../artifacts/script-cleanup-20261101-r1/verification.json)，所有新结果使用新目录。
+全部结果保存在[本次输出目录](../../artifacts/maintenance/script-cleanup-20261101-r1/verification.json)，所有新结果使用新目录。
 
 1. `check_script_layout`：退出0；核对3048份原始文件哈希、333个Python脚本及3项辅助资产、312个分类源码的语法／内部导入／常量路径、迁移表和7个运行中保护文件的依赖闭包。
 2. `check_script_entries`：23/23通过；覆盖9个分类的代表入口，Isaac导出使用已安装Isaac Gym的Python 3.8环境。仅导入和`--help`，没有启动实验。

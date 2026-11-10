@@ -156,6 +156,8 @@ class HuananhuPdAction(ChuanliantuiPdAction):
         state = getattr(self._env, "_huananhu_randomization", None)
         if state is not None:
             state.apply_local_wrench()
+        if self.leg_load is not None:
+            self.leg_load.apply()
 
     def reset(self, env_ids: torch.Tensor | slice | None = None) -> None:
         super().reset(env_ids)

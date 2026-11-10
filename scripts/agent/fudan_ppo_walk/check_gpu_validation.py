@@ -14,6 +14,7 @@ import numpy as np
 import torch
 from ct_mjlab.fudan_ppo_walk import policy,export
 from ct_mjlab.fudan_ppo_walk.protocol import samples,manifest
+from scripts.agent.maintenance.check_sim2sim_artifact_paths import matches_baseline
 from . import evaluate,precheck
 
 
@@ -79,7 +80,7 @@ def main():
         changes=json.loads(Path('docs/maintenance/20261101-sim2sim-protection.json').read_text()).get('authorized_updates',[])
         for name,digest in protected.items():
             actual=hashlib.sha256(Path(name).read_bytes()).hexdigest()
-            assert actual==digest or any(c['path']==name and c['before']==digest and c['after']==actual for c in changes) or historical_path_matches(name,digest),name
+            assert matches_baseline(Path.cwd()/name,digest) or any(c['path']==name and c['before']==digest and c['after']==actual for c in changes) or historical_path_matches(name,digest),name
         verify('protected_sources_unchanged_or_explicit_gpu_entry_update',True)
     result=dict(passed=True,checks=checks,count=len(checks),matrix_sha256=manifest()['sha256'],
         physics_steps=0,model_forwards=0,optimizer_updates=0,

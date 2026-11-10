@@ -38,7 +38,7 @@ Jetson实际CDC链接为`/dev/serial/by-id/usb-STMicroelectronics_STM32_Virtual_
 
 ## 验证依据
 
-本次证据在`artifacts/h7-usb-mirror-20261020/`，均未连接训练或发出电机命令。
+本次证据在`artifacts/real2sim/h7-usb-mirror-20261020/`，均未连接训练或发出电机命令。
 
 - `check-build.json`：目标目录自身eIDE来源，大小机各105个来源完整ARM GCC编译、链接通过。仅原BMI088 packed告警；报告列出的过时、缺失虚拟来源未纳入构建，未改工程清单。产物在工程外独立目录。
 - `check-software.json`：实际C打包7帧，覆盖节拍、忙、回绕和失效来源；实际USB发送器配CDC替身，检查未连接、忙时不覆盖、提交失败、恢复发送、196字节及CRC保持；伪串口断连／无下行、损坏流拒绝、96组模型姿态及200ms过期检查通过。替身不等于USB硬件故障注入。
@@ -107,7 +107,7 @@ mjlab_training/.venv/bin/python sim2sim/real2sim_huananhu.py \
 | 硬件采集与离线重现 | 最终1072帧完整会话、分析和原速回放完成，最终qpos最大差0、源状态一致；不作为受控静止实验 |
 | 动态配合验收 | 待台架；用户逐关节／轮子及机身变姿配合，核对模型对应部位和方向，断流200ms冻结并显示过期 |
 
-证据位于`artifacts/real2sim-record-replay-20261020/`：
+证据位于`artifacts/real2sim/real2sim-record-replay-20261020/`：
 
 - `check-usb-final-v3.json`为正式USB软件检查，结果`ok=true`；真实C打包／发送替身、96组模型姿态、伪串口只读／断连和会话检查均通过。新增两项模拟窗口时序回归：初始化不占采样预算、关闭延迟不将新鲜最终来源误标过期。默认主工程最终`check-uart-final.json`同样`ok=true`，不是本轮UART硬件验收；较早的`check-uart-regression.json`保留。
 - `jetson-capture.json`：首次GUI采集退出码0、录制完整，774有效帧，CRC拒绝／序号缺口／重复／重启均0。约2.8秒GUI初始化消耗首次`--seconds`预算；旧最终报告关窗后取状态导致五源STALE，但原始流分析的`stale_intervals`为空，不能将这个收尾显示问题写成实际USB断流。
@@ -127,9 +127,9 @@ mjlab_training/.venv/bin/python sim2sim/real2sim_huananhu.py \
 
 用户30秒录制在命令退出时遇到`Segmentation fault`。Jetson的`artifacts/real2sim-20261020-223221`已确认完整保存2999有效帧，CRC拒绝／序号缺口0、`complete=true`；保留旧数据，不把退出崩溃直接解释为数据丢失。
 
-`artifacts/real2sim-recording-info-20261020/gdb-before-fix.json`记录无USB离线回放`--seconds 2`复现：渲染线程在`glfwDestroyWindow`，主线程同时经`_dl_close_worker`、`glfwTerminate`清理GLFW。窗口daemon线程销毁未完成时解释器已退出清理，存在竞争；当前修复在启动前后通过公开线程列表保存新增daemon线程，关闭窗口后锁外等待线程结束，再退出解释器，不使用固定等待、私有MuJoCo API或依赖升级。
+`artifacts/real2sim/real2sim-recording-info-20261020/gdb-before-fix.json`记录无USB离线回放`--seconds 2`复现：渲染线程在`glfwDestroyWindow`，主线程同时经`_dl_close_worker`、`glfwTerminate`清理GLFW。窗口daemon线程销毁未完成时解释器已退出清理，存在竞争；当前修复在启动前后通过公开线程列表保存新增daemon线程，关闭窗口后锁外等待线程结束，再退出解释器，不使用固定等待、私有MuJoCo API或依赖升级。
 
-本轮仅增加录制状态和退出等待，原始会话格式、H7、XML及物理标定保持。新证据同样保存在`artifacts/real2sim-recording-info-20261020/`：
+本轮仅增加录制状态和退出等待，原始会话格式、H7、XML及物理标定保持。新证据同样保存在`artifacts/real2sim/real2sim-recording-info-20261020/`：
 
 - `check-usb.json`：`ok=true`，右上角及终端录制进度、`RECORDING`至`SAVED`、精确流字节数、待写事件0和v1完整会话检查通过；模拟close后延迟50ms的渲染线程销毁，主函数返回前线程已结束。
 - `gdb-after-fix.json`：Jetson相同离线回放`--seconds 2`正常退出、无信号；修前`gdb-before-fix.json`的SIGSEGV保留，未改写旧证据。
@@ -139,7 +139,7 @@ mjlab_training/.venv/bin/python sim2sim/real2sim_huananhu.py \
 
 ## 最新30秒录制的反馈分析
 
-最新完整会话为`real2sim-20261020-225538`，采集起始为北京时间22:55:40，时长30.93秒，原速Jetson回放完成3000帧，CRC拒绝／发送序号缺口／重启均0，无200ms USB过期段。证据在`artifacts/real2sim-gap-20261020/`；`assessment.json`汇总、`consistency-audit.json`为内部一致性检查、`oscillation-audit.json`为摆动窗口测量，图为`gap-overview.png`。
+最新完整会话为`real2sim-20261020-225538`，采集起始为北京时间22:55:40，时长30.93秒，原速Jetson回放完成3000帧，CRC拒绝／发送序号缺口／重启均0，无200ms USB过期段。证据在`artifacts/real2sim/real2sim-gap-20261020/`；`assessment.json`汇总、`consistency-audit.json`为内部一致性检查、`oscillation-audit.json`为摆动窗口测量，图为`gap-overview.png`。
 
 - 本段RL实际投入12.55秒（会话约2.69～15.24秒），并非全程遥控失能。选择8～14.8秒的680帧，反馈全部有效、故障0；前后相邻两半8～11.4／11.4～14.8秒，俯仰P95−P5摆幅约9.69°→17.60°，主周期约0.56→0.84秒；双轮速摆幅也增大。P95−P5排除两端各5%极端值。增长不是逐周期单调，截去末尾0.8秒后仍可见；这些只是实机反馈现象，不能据此确定PD、策略、接触或摩擦根因。
 - 约15.53～17.39秒有186帧部分来源无效：四腿91帧、IMU137帧、左／右轮137／174帧；USB始终有合法帧。用户明确中途切换过遥控开关；RL退出与来源故障先后相隔约0.29秒，记录时序关联，不能直接认定固件故障或确定因果。
@@ -190,7 +190,7 @@ v2仍为板载USB CDC固定100Hz尝试发送，160个小端float32加JustFloat�
 
 用户提出可提高波特率；当前CDC的SET_LINE_CODING只保存主机串口参数，不参与USB发送节拍，提高`--baud`数字不会提高采集频率。因此本轮不凭波特率数字宣称链路提速，真实吞吐及更高遥测率须另测，控制周期保持原值。
 
-启动和录制命令不变；新版`sim2sim/real2sim_huananhu.py`已备份同步Jetson，SHA256为`54c72b4c14caf2d1145386cdf38fd45a0c7d7217bbeb5091c92010759a40f3e6`。对应大机固件已于2026-10-21在本次断电确认后安装，烧录及实收记录见下一节。扩展实现的软件证据在`artifacts/real2sim-telemetry-v2-20261020/`：
+启动和录制命令不变；新版`sim2sim/real2sim_huananhu.py`已备份同步Jetson，SHA256为`54c72b4c14caf2d1145386cdf38fd45a0c7d7217bbeb5091c92010759a40f3e6`。对应大机固件已于2026-10-21在本次断电确认后安装，烧录及实收记录见下一节。扩展实现的软件证据在`artifacts/real2sim/real2sim-telemetry-v2-20261020/`：
 
 | 验证层次 | 结果与证据 |
 | --- | --- |
@@ -205,7 +205,7 @@ v2仍为板载USB CDC固定100Hz尝试发送，160个小端float32加JustFloat�
 
 用户本次明确要求烧录，并重新确认“电机动力已断开，H7仍供电”。重新从`H7_RL_ros`实际工程配置独立编译大小机，各105来源、链接成功；大机HEX经PowerDebugger／OpenOCD 200kHz SWD写入，退出码0，`Programming Finished`、`Verified OK`、`Resetting Target`齐全。HEX SHA256：`8cbc011d7a8d799baef3ae6cd5cc82b486cc3983133d0e70c9e1486be6d30190`。大机ELF SHA256为`c170b5aa66c0ba1fbacb574322b756d3ca9c17806eb1a5436084710d43aac085`，明确`MACHINE_DEFAULT=0`，与前次完成软件检查的产物相同。
 
-证据目录为`artifacts/real2sim-telemetry-v2-flash-20261021/`：`check-h7-build.json`、`prepared-firmware.json`、`build-inputs-sha256.json`、`flash.json`／`flash.log`。没有改源码、机器配置、网络、XML或主H7_RL，没有训练、提交或推送。
+证据目录为`artifacts/real2sim/real2sim-telemetry-v2-flash-20261021/`：`check-h7-build.json`、`prepared-firmware.json`、`build-inputs-sha256.json`、`flash.json`／`flash.log`。没有改源码、机器配置、网络、XML或主H7_RL，没有训练、提交或推送。
 
 随后使用Jetson已有v2接收器只读、无窗口采集十秒，正常退出且会话完整。`jetson-capture.json`及本机`jetson-session/analysis/report.json`确认：
 
@@ -220,7 +220,7 @@ v2仍为板载USB CDC固定100Hz尝试发送，160个小端float32加JustFloat�
 
 ## 2026-10-21 10:34最新动态录制的部署与跟踪核对
 
-用户要求获取最新数据分析gap。本次选取Jetson最新完成的`real2sim-20261021-103443`，北京时间10:34:44开始、30.936秒；不是此前10:24的60秒遥控离线样本。用户明确本段“轮子着地但有人扶持或支架约束”，外力未测量，不能作为自由站立的动力学辨识数据。原始流SHA256为`7e1bcd2eefbea88000f7a6b6d7349bae7db13d078b473a05e26749528642fee3`，证据保存在`artifacts/real2sim-latest-gap-20261021/`，汇总为`assessment.json`。
+用户要求获取最新数据分析gap。本次选取Jetson最新完成的`real2sim-20261021-103443`，北京时间10:34:44开始、30.936秒；不是此前10:24的60秒遥控离线样本。用户明确本段“轮子着地但有人扶持或支架约束”，外力未测量，不能作为自由站立的动力学辨识数据。原始流SHA256为`7e1bcd2eefbea88000f7a6b6d7349bae7db13d078b473a05e26749528642fee3`，证据保存在`artifacts/real2sim/real2sim-latest-gap-20261021/`，汇总为`assessment.json`。
 
 - 3001帧全v2，CRC拒绝／序号缺口／重启0，来源始终有效、故障0；2898帧RL投入，2876帧有效PD。按序号去重后1501个策略配对；同一序号内容不变，所有PD实用动作均与引用策略配对相同。100Hz遥测不是完整500Hz输出历史，抽样的动作保持时间与相关滞后不当作控制延迟，见`quality-audit.json`。
 - 对1501个实际obs39逐对复算model5849 ONNX，最大动作差`1.430511474609375e-6`，MAE约`1.1764e-7`，全部小于`1e-4`；输入／动作配对无冲突。当前H7源权重与交付ONNX八组权重逐字节一致，结果见`policy-audit.json`、`policy-pairs.csv`。这验证本段推理数值，不证明物理观测轴向／零点已校准。
@@ -242,39 +242,39 @@ v2仍为板载USB CDC固定100Hz尝试发送，160个小端float32加JustFloat�
 | `static-level-gap-20261021` | 11:49:13 | 1000 | 1／0／0 | `06aeb92e447dfeec1121b5a6c9981b2d3da64291a3366334d325e2056c6be98a` |
 | `wheel-coast-gap-20261021` | 11:55:43 | 3000 | 0／0／0 | `3dc31c336111f1ac76a9266c5ba8e408b5457e6342a1cbc22cfbf4619cc8fb87` |
 
-Jetson保存于`~/real2sim/artifacts/`，本机下载及离线分析在`artifacts/real2sim-gap-candidates-20261021/`。新静态姿态的模型双轮最低点差约0.22mm，不支持把动态段约5mm差异直接改成统一IMU横滚补偿。悬空手转检测到真实减速，但零力矩请求只能约束损耗／惯量比，不能分离绝对惯量和机械力矩常数。候选动力学参数仅在离线诊断进程内试算，整机预测未通过预设误差约束，未采用为当前配置。详细量化结果与候选采纳状态统一见[项目实验记录](../ai/project-log.md#2026-10-21-双轮接触实测与轮轴损耗候选验证)；H7负责人及多姿态物理标定仍待确认。
+Jetson保存于`~/real2sim/artifacts/`，本机下载及离线分析在`artifacts/real2sim/real2sim-gap-candidates-20261021/`。新静态姿态的模型双轮最低点差约0.22mm，不支持把动态段约5mm差异直接改成统一IMU横滚补偿。悬空手转检测到真实减速，但零力矩请求只能约束损耗／惯量比，不能分离绝对惯量和机械力矩常数。候选动力学参数仅在离线诊断进程内试算，整机预测未通过预设误差约束，未采用为当前配置。详细量化结果与候选采纳状态统一见[项目实验记录](../ai/project-log.md#2026-10-21-双轮接触实测与轮轴损耗候选验证)；H7负责人及多姿态物理标定仍待确认。
 
 ## 2026-10-21 单轮台架模式（已烧录，待实体激励）
 
-用户最终授权左上/右上单轮短脉冲测试，左上/右中RL投入暂注释，LQR原有档位保持；测试准备期间独占输出以避免经过中间档误投入，退出后释放。独立实现/操作与保护见[工程总览](../../deployment/H7_RL_ros/md/file-guide.md#单轮短脉冲测试2026-10-21待台架)。USB仍只读v2/160路/644字节，rc_strategy新增值5，其余通道含义与接收脚本不变。旧录制/模型兼容，不需训练或导出；本版已于同日按用户本次断电确认烧录/校验/复位，固件及日志见`artifacts/wheel-bench-flash-20261021/`。部署负责人复查待确认。软件/大小机验证见`artifacts/wheel-bench-20261021/final/check.json`；未实体激励，不能以烧录或编译通过认定测得真实轮矩或消除gap。
+用户最终授权左上/右上单轮短脉冲测试，左上/右中RL投入暂注释，LQR原有档位保持；测试准备期间独占输出以避免经过中间档误投入，退出后释放。独立实现/操作与保护见[工程总览](../../deployment/H7_RL_ros/md/file-guide.md#单轮短脉冲测试2026-10-21待台架)。USB仍只读v2/160路/644字节，rc_strategy新增值5，其余通道含义与接收脚本不变。旧录制/模型兼容，不需训练或导出；本版已于同日按用户本次断电确认烧录/校验/复位，固件及日志见`artifacts/real2sim/wheel-bench-flash-20261021/`。部署负责人复查待确认。软件/大小机验证见`artifacts/real2sim/wheel-bench-20261021/final/check.json`；未实体激励，不能以烧录或编译通过认定测得真实轮矩或消除gap。
 
 ## 2026-10-21 单轮小脉冲实测及源码增幅
 
-±0.05Nm版完成1001帧零输出预检与9901帧/7次手动脉冲录制。采样所见各次请求约100ms后归零，电流符号有响应、轮角只有编码器分辨率附近微动，未可靠辨识绝对惯量/摩擦；期间约3.28秒遥控故障段请求全为0。原始数据、分析和曲线见`artifacts/wheel-bench-test-20261021/result.json`及同目录会话。用户要求稍增幅后，源码现为用户最终指定的±0.80Nm（±0.10Nm中间版未烧录），100ms/3rad/s保护、USB布局与接收器保持；板端仍为±0.05Nm，新值待烧录及实测。详细结果以项目实验记录本日条目为准，H7负责人复查待确认。
+±0.05Nm版完成1001帧零输出预检与9901帧/7次手动脉冲录制。采样所见各次请求约100ms后归零，电流符号有响应、轮角只有编码器分辨率附近微动，未可靠辨识绝对惯量/摩擦；期间约3.28秒遥控故障段请求全为0。原始数据、分析和曲线见`artifacts/real2sim/wheel-bench-test-20261021/result.json`及同目录会话。用户要求稍增幅后，源码现为用户最终指定的±0.80Nm（±0.10Nm中间版未烧录），100ms/3rad/s保护、USB布局与接收器保持；板端仍为±0.05Nm，新值待烧录及实测。详细结果以项目实验记录本日条目为准，H7负责人复查待确认。
 
 ## 2026-10-21 单轮测试最终追加至±1.7Nm（源码）
 
-用户明确追加“给到1.7”；当前源码为±1.70Nm，保持100ms／3rad/s保护，±0.10／0.80Nm中间版均未烧录。板端仍为±0.05Nm；新幅值的软件与大小机报告`artifacts/wheel-bench-1p70-20261021/check.json`，烧录、实测及H7负责人复查待确认。USB/模型/物理标定接口保持。
+用户明确追加“给到1.7”；当前源码为±1.70Nm，保持100ms／3rad/s保护，±0.10／0.80Nm中间版均未烧录。板端仍为±0.05Nm；新幅值的软件与大小机报告`artifacts/real2sim/wheel-bench-1p70-20261021/check.json`，烧录、实测及H7负责人复查待确认。USB/模型/物理标定接口保持。
 
 ## 2026-10-21 ±1.7Nm版实际烧录通过
 
-用户本次明确调用烧录技能并重新确认电机动力断开后，已重新编译并完成大机±1.7Nm版写入、校验和复位。板端不再是±0.05Nm；±0.10／0.80Nm中间版从未烧录。固定100ms／3rad/s保护、拨杆定义和只读USB布局保持。固件/构建/校验日志见`artifacts/wheel-bench-1p70-flash-20261021/`；新幅值实际触发/收包和轮子响应待台架，H7负责人复查待确认。
+用户本次明确调用烧录技能并重新确认电机动力断开后，已重新编译并完成大机±1.7Nm版写入、校验和复位。板端不再是±0.05Nm；±0.10／0.80Nm中间版从未烧录。固定100ms／3rad/s保护、拨杆定义和只读USB布局保持。固件/构建/校验日志见`artifacts/real2sim/wheel-bench-1p70-flash-20261021/`；新幅值实际触发/收包和轮子响应待台架，H7负责人复查待确认。
 
 ## 2026-10-21 ±1.7Nm版实采与门限待选
 
-固定悬空台架录得61.25秒6123帧、6次左右正负脉冲；无坏包、丢帧、重启或故障，四髋请求全0，结束时零请求且轮停稳。3rad/s门限下每次非零请求仅1～2个100Hz样本，峰值约5.07rad/s；不能解释为已实现物理硬限速，具体中止reason当前未导出。完整原始数据/CSV/曲线见`artifacts/wheel-bench-1p70-test-20261021/`。用户说明台架环境安全后已提出3→30rad/s门限，仍待选择；本轮未改固件、USB布局或控制参数。人眼方向及H7负责人核对待确认。
+固定悬空台架录得61.25秒6123帧、6次左右正负脉冲；无坏包、丢帧、重启或故障，四髋请求全0，结束时零请求且轮停稳。3rad/s门限下每次非零请求仅1～2个100Hz样本，峰值约5.07rad/s；不能解释为已实现物理硬限速，具体中止reason当前未导出。完整原始数据/CSV/曲线见`artifacts/real2sim/wheel-bench-1p70-test-20261021/`。用户说明台架环境安全后已提出3→30rad/s门限，仍待选择；本轮未改固件、USB布局或控制参数。人眼方向及H7负责人核对待确认。
 
 ## 2026-10-21 用户确认30rad/s撤销门限
 
-用户已明确选择3→30rad/s，源码与宿主边界检查已调整，±1.7Nm/100ms及其余保护保持。完整软件/大小机报告`artifacts/wheel-bench-1p70-speed30-20261021/check.json`；板端仍是3rad/s，新门限待烧录/实测。既有6123帧/6脉冲属于旧门限，不作新门限验收。USB布局、模型、标定和主H7_RL不变。
+用户已明确选择3→30rad/s，源码与宿主边界检查已调整，±1.7Nm/100ms及其余保护保持。完整软件/大小机报告`artifacts/real2sim/wheel-bench-1p70-speed30-20261021/check.json`；板端仍是3rad/s，新门限待烧录/实测。既有6123帧/6脉冲属于旧门限，不作新门限验收。USB布局、模型、标定和主H7_RL不变。
 
 ## 2026-10-21 用户最终追加±3Nm／300ms／30rad/s
 
-在明确选择30rad/s撤销门限后，用户进一步要求幅值3Nm、时长300ms并烧录。当前源码已改为±3Nm、最长300ms、30rad/s门限；软件/大小机报告`artifacts/wheel-bench-3p00-300ms-speed30-20261021/check.json`。板端仍为旧配置，新组合待本次断电确认后写入；USB布局、映射/标定、XML和主H7_RL不变。旧6123帧记录不作为新配置验收。
+在明确选择30rad/s撤销门限后，用户进一步要求幅值3Nm、时长300ms并烧录。当前源码已改为±3Nm、最长300ms、30rad/s门限；软件/大小机报告`artifacts/real2sim/wheel-bench-3p00-300ms-speed30-20261021/check.json`。板端仍为旧配置，新组合待本次断电确认后写入；USB布局、映射/标定、XML和主H7_RL不变。旧6123帧记录不作为新配置验收。
 
 ## 2026-10-21 ±3Nm／300ms／30rad/s实际烧录通过
 
-用户本次断电确认后，完成新组合大机独立eIDE/GCC全量编译、写入、校验和复位；软件/大小机检查通过。证据`artifacts/wheel-bench-3p00-300ms-speed30-flash-20261021/flash.json`及同目录日志。板端已更新，新组合实体触发/采集待核对；旧6123帧会话不作新参数验收。
+用户本次断电确认后，完成新组合大机独立eIDE/GCC全量编译、写入、校验和复位；软件/大小机检查通过。证据`artifacts/real2sim/wheel-bench-3p00-300ms-speed30-flash-20261021/flash.json`及同目录日志。板端已更新，新组合实体触发/采集待核对；旧6123帧会话不作新参数验收。
 
 ## 离线MuJoCo动力学对照
 
@@ -304,22 +304,22 @@ OPENBLAS_NUM_THREADS=1 mjlab_training/.venv/bin/python sim2sim/real2sim_dynamics
 
 ## 2026-10-21 ±3Nm／300ms／30rad/s实际采集完成
 
-完整会话95.37秒9534帧，8次单轮正反请求（两组各4次），41个活跃样本均故障0/四髋失能且请求0，结束时零请求且双轮停稳；初段遥控离线期间未出力。拒绝2个候选、有效序号无缺口/重启/断连。每次实际请求约40～70ms即归零，峰值约37rad/s，不能当作完整300ms或硬限速验收。记录与单轮条件拟合证据`artifacts/wheel-bench-3p00-300ms-speed30-test-20261021/`；仅以现有Nm刻度推得等效惯量/损耗候选，XML/标定未更改，详细限制和拟合/留出结果见项目实验记录本日条目。USB字段未变，仍缺实际bench事件/高频逐拍输入；人眼方向和H7负责人复查待确认。
+完整会话95.37秒9534帧，8次单轮正反请求（两组各4次），41个活跃样本均故障0/四髋失能且请求0，结束时零请求且双轮停稳；初段遥控离线期间未出力。拒绝2个候选、有效序号无缺口/重启/断连。每次实际请求约40～70ms即归零，峰值约37rad/s，不能当作完整300ms或硬限速验收。记录与单轮条件拟合证据`artifacts/real2sim/wheel-bench-3p00-300ms-speed30-test-20261021/`；仅以现有Nm刻度推得等效惯量/损耗候选，XML/标定未更改，详细限制和拟合/留出结果见项目实验记录本日条目。USB字段未变，仍缺实际bench事件/高频逐拍输入；人眼方向和H7负责人复查待确认。
 
 ## 轮端惯量分配与闭环诊断
 
 `sim2sim/real2sim_coupling_huananhu.py --dynamics-run <完整旧运行> --out <新目录>`使用旧运行的相同初态，在独立模型中比较关节附加惯量与轮本体惯量的分配。0/5/10/15%为预先指定的诊断比例，不重新拟合；维持台架总轴惯量、阻尼、干摩擦及所有质量/质心/几何/坐标/限位不变。按既有轮质量与网格半径计算必要上界，不允许直接把全部约0.004kg·m²塞到原轮本体；该上界本身不证明实际轮质量分布。
 
-已完成`artifacts/real2sim-coupling-20261021/fixed-initials/`：旧录制每十个有效起点取一，共272起点、3种边界、5个模型。保存全部轨迹/统计和曲线；复核16320终点、2640统计、6528个旧基线终点均一致，18条轨迹重新步进一致。另保留93个相同观测重复解闭链的对照，说明少数窗口会放大微小初态差异。该诊断未消除短时俯仰偏差，旧完整2713窗口结果继续有效，不将其当作独立新采集。
+已完成`artifacts/real2sim/real2sim-coupling-20261021/fixed-initials/`：旧录制每十个有效起点取一，共272起点、3种边界、5个模型。保存全部轨迹/统计和曲线；复核16320终点、2640统计、6528个旧基线终点均一致，18条轨迹重新步进一致。另保留93个相同观测重复解闭链的对照，说明少数窗口会放大微小初态差异。该诊断未消除短时俯仰偏差，旧完整2713窗口结果继续有效，不将其当作独立新采集。
 
 完整策略闭环可在原CPU入口指定独立模型，并显式启用实验轮端干摩擦补偿；报告记录实际模型及补偿路径/哈希，默认仍为正式XML且补偿关闭：
 
 ```bash
 mjlab_training/.venv/bin/python sim2sim/mj_sim2sim_huananhu_multimode.py \
-  --checkpoint artifacts/flat-track-20261017-trained/models/model_5849.pt \
+  --checkpoint artifacts/legacy_mjlab/flat-track-20261017-trained/models/model_5849.pt \
   --onnx exports/chuanliantui_multimode/model5849-h7-20261017/model_5849_opset13.onnx \
-  --model artifacts/real2sim-dynamics-20261021/verified-run/candidate.xml \
-  --wheel-friction-compensation artifacts/real2sim-dynamics-20261021/verified-run/candidate-parameters.json \
+  --model artifacts/real2sim/real2sim-dynamics-20261021/verified-run/candidate.xml \
+  --wheel-friction-compensation artifacts/real2sim/real2sim-dynamics-20261021/verified-run/candidate-parameters.json \
   --cmd-vx 0 --cmd-yaw 0 --cmd-height 0.27 --seconds 30 \
   --report artifacts/<新名称>/candidate-normal.json
 ```

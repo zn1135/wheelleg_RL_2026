@@ -15,7 +15,7 @@
 | 父模型 SHA256 | `83314f8b551c45bbae9c1b678c650da87b945701a1064da536442ebccb5467ce` |
 | 训练证据 | `artifacts/20261029-155722_tight_fromA4999_2048/`中的run-info/result、env/agent、source及workspace.patch；原始shell命令未单独保存，不重构成执行收据 |
 | 训练完成 | 训练入口completed=true；无独立外部shell退出收据，不能把完成检查退出0当训练退出码 |
-| 源码快照 | `artifacts/model5999-h7ros-20261029/export-source.tar.gz`、firmware-source.tar.gz、两份workspace差异及firmware-sources-sha256.json；训练时原快照仍在上行原训练证据目录 |
+| 源码快照 | `artifacts/real2sim/model5999-h7ros-20261029/export-source.tar.gz`、firmware-source.tar.gz、两份workspace差异及firmware-sources-sha256.json；训练时原快照仍在上行原训练证据目录 |
 | XML | `resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml`，SHA256 `cac8061de2850602bfd1421fc856bf217c4e5040a11c8f5d33cf1abe61d5f0cf` |
 | 配方 | `stand-v2-upright-first-tracking-active-weight1-tight-v6` |
 | 课程 | 高度已解锁0.22m；速度仍第0级±0.5m/s，未解锁±1/±1.5 |
@@ -46,7 +46,7 @@ ONNX结构检查通过；256组[-1,1]随机历史，图与checkpoint策略路径
 
 ST Edge AI Core `v2.2.0-20266` / CubeAI10.2.0，`--target stm32h7 --name networkzn1 --compression none --optimization time --c-api legacy`；生成退出0，成套7个C/H及报告替换。SDK运行库保持。319272字节生成权重中的14个ONNX参数张量均逐字节匹配。工具的RAM/ROM估算路径提示不等同于固件链接结果。
 
-工具版本：Python3.12.3、PyTorch2.14.0+cu130、NumPy2.5.3、ONNX1.22.0、MuJoCo3.11.0。原始命令/日志与工具、源码及权重校验记录在`artifacts/model5999-h7ros-20261029/`。
+工具版本：Python3.12.3、PyTorch2.14.0+cu130、NumPy2.5.3、ONNX1.22.0、MuJoCo3.11.0。原始命令/日志与工具、源码及权重校验记录在`artifacts/real2sim/model5999-h7ros-20261029/`。
 
 | 阶段 | 结果/范围 |
 |---|---|
@@ -69,7 +69,7 @@ ST Edge AI Core `v2.2.0-20266` / CubeAI10.2.0，`--target stm32h7 --name network
 
 AIR按1kHz运行独立状态，采用现有电机反馈估力，不读取LQR目标F或共享flight。仅为估力准备实体弹簧/重力，不叠加到RL输出。机高为现有几何＋训练参考偏移；缺少机身触地传感器，首次起立采用姿态/几何/估算双轮承重代理。W取XML名义131.4008700N，**不是实机称重或物理标定**。这些代理与新增1kHz计算负荷尚未台架确认，不宣称严格训练状态等价。
 
-大机固件：`artifacts/model5999-h7ros-20261029/final-build/h7-machine-0/firmware.hex`，SHA256 `63ce2f7123644c5799de3df14ef5167f5eb9863025a25b2dd05b8fc013d4fd0a`。同时保存ELF/BIN；小机只编译且RL配置仍未启用，不作为本模型的部署对象。两机BIN中均找到唯一319272字节、逐字节一致的生成网络权重块，证据见`firmware-verification.json`。
+大机固件：`artifacts/real2sim/model5999-h7ros-20261029/final-build/h7-machine-0/firmware.hex`，SHA256 `63ce2f7123644c5799de3df14ef5167f5eb9863025a25b2dd05b8fc013d4fd0a`。同时保存ELF/BIN；小机只编译且RL配置仍未启用，不作为本模型的部署对象。两机BIN中均找到唯一319272字节、逐字节一致的生成网络权重块，证据见`firmware-verification.json`。
 
 1381项受保护输入只改变19项：7个生成网络C/H、32维观测/历史/SDK接口、执行层恢复/估力接入、遥测、策略发布及观测缩放/频率注释；物理标定、原PD增益/限矩、AIR/LQR算法和硬件配置保持。原C机器表逐字节核对，除gyro/joint速度观测缩放0.5/0.1→0.25/0.05外保持。源快照/差异/文件与固件校验值均保留，不覆盖历史产物。
 
@@ -78,7 +78,7 @@ AIR按1kHz运行独立状态，采用现有电机反馈估力，不读取LQR目�
 ```bash
 ARM_CC=/usr/bin/arm-none-eabi-gcc mjlab_training/.venv/bin/python \
   scripts/agent/check_real2sim_huananhu.py --h7-root deployment/H7_RL_ros \
-  --build-only --out artifacts/model5999-h7ros-20261029/final-build/check.json
+  --build-only --out artifacts/real2sim/model5999-h7ros-20261029/final-build/check.json
 ```
 
 后续CubeMX重新生成前须将IOC中历史Windows模型来源改选本包ONNX；当前CLI转换和编译不读取该旧来源。本轮未连接下载器、Jetson、串口或电机。
@@ -87,6 +87,6 @@ ARM_CC=/usr/bin/arm-none-eabi-gcc mjlab_training/.venv/bin/python \
 
 本次不重跑训练或物理回放。历史仿真见窄核效果记录（对应旧训练线已清理）：相对A4999速度跟踪有所改善，但两组零速原成功各丢20例，拒绝作为全面升级替换A。此次为用户指定候选导入，不撤销原行为退化结论。
 
-该ONNX与旧39维model13842固件不兼容，不能仅换权重。回退必须成套恢复旧网络及旧观测/策略/恢复代码；旧模型包仍在`models/model13842-20261023/`，本次修改前H7源文件备份及1381项受保护文件哈希在`artifacts/model5999-h7ros-20261029/before/`和`protected-before.json`。UART工程`deployment/H7_RL`未修改。
+该ONNX与旧39维model13842固件不兼容，不能仅换权重。回退必须成套恢复旧网络及旧观测/策略/恢复代码；旧模型包仍在`models/model13842-20261023/`，本次修改前H7源文件备份及1381项受保护文件哈希在`artifacts/real2sim/model5999-h7ros-20261029/before/`和`protected-before.json`。UART工程`deployment/H7_RL`未修改。
 
 未执行Isaac、独立CPU物理sim2sim、板端真实100Hz最坏周期、CAN反馈/出力及真机行为验收；当前CPU入口不支持本速度配方。H7部署负责人核对待确认。

@@ -4,7 +4,7 @@
 
 用户要求“最终验证sim2sim用gpu，cpu删除”。本条只适用于`fudan_ppo_walk`：最终验证使用mjlab / MuJoCo Warp GPU，CPU物理评估及活动诊断入口删除；其他任务的`sim2sim/`、共享XML、PD、训练配方和H7保持。
 
-GPU与原生CPU在同状态、同输入下生成的轮地接触点不同，证据见[单拍对照](../../artifacts/fudan-single-step-7000-20261102/report-final/README.md)。选择GPU是统一后续验证后端，不是证明CPU更不准确，也不把GPU结果当作CPU跨引擎迁移或真机通过。
+GPU与原生CPU在同状态、同输入下生成的轮地接触点不同，证据见[单拍对照](../../artifacts/fudan_ppo_walk/fudan-single-step-7000-20261102/report-final/README.md)。选择GPU是统一后续验证后端，不是证明CPU更不准确，也不把GPU结果当作CPU跨引擎迁移或真机通过。
 
 ## 当前入口
 
@@ -25,6 +25,6 @@ PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.f
 - 删除`ct_mjlab/fudan_ppo_walk/native.py`；原`load_policy`函数原样迁到`policy.py`，GPU评估和ONNX导出共用。
 - 删除活动脚本`check_native`、`diagnose_native_integration`、`probe_refresh_timing`、`check_refresh_probe`、`audit_refresh_repeat`、`probe_single_step`。已完成的CPU动态诊断不再作为当前入口。
 - 输入/历史/扰动检查去掉CPU物理分支，保留GPU使用的张量、CLI、保存恢复检查。CPU上的离线评分、模型读取、ONNX数值校验和历史结果读取不属于CPU物理仿真，不删除。
-- 旧CPU轨迹、视频、日志、模型和报告原位保留；清理前的整套复旦源码及相关文档另存于[清理记录](../../artifacts/fudan-gpu-only-validation-20261102/README.md)。历史报告不改标为GPU结果。
+- 旧CPU轨迹、视频、日志、模型和报告原位保留；清理前的整套复旦源码及相关文档另存于[清理记录](../../artifacts/fudan_ppo_walk/fudan-gpu-only-validation-20261102/README.md)。历史报告不改标为GPU结果。
 
 本次只改入口、依赖和文档，未新训练、回放或导出。当前检查与未验证项见清理记录。

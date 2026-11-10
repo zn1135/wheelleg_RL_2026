@@ -66,7 +66,9 @@ def timeline(record):
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--diagnosis',type=Path,required=True);args=p.parse_args()
     out=args.diagnosis/'analysis';out.mkdir(exist_ok=False)
-    original={n:load(ROOT/f'artifacts/supermimic-v13-r3-a{n}-seed43-20261101') for n in (4200,5200)}
+    original={n:load(directory) for n,directory in [
+        (4200,ROOT/'artifacts/supermimic/supermimic-v13-r3-a4200-seed43-20261101'),
+        (5200,ROOT/'artifacts/supermimic/supermimic-v13-r3-a5200-seed43-20261101')]}
     assert all(np.array_equal(v,original[5200]['fixed'][k]) for k,v in original[4200]['fixed'].items())
     diagnostic=json.loads((args.diagnosis/'result.json').read_text())
     comparisons={};cross={}

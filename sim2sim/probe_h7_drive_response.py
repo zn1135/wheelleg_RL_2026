@@ -21,7 +21,7 @@ import calibrate_fixed_h7_huananhu as previous
 import real2sim_dynamics_huananhu as dynamics
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = ROOT/'artifacts/fixed-h7-fixed300-data-20261021'
+DATA = ROOT/'artifacts/real2sim/fixed-h7-fixed300-data-20261021'
 OLD = DATA/'fit-budget80'
 GROUPS = ('orange_losses', 'coast_losses')
 BOUNDS = np.array([[.25, 30., .5], [6., 180., 4.]])

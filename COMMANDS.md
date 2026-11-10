@@ -21,8 +21,14 @@
 
 ## 复旦 PPO 行走适配
 
+双腿负载已按用户要求设为训练/仿真默认。保留旧物理回放时，evaluate增加`--leg-load-profile legacy`；[参数版本、回退与验证边界](docs/interfaces/20261109-adopted-mirrored-leg-load.md)。本次没有启动新训练。
+
+sim2sim延迟独立在`FudanWalkCfg.sim2sim`设置，当前动作4ms＋传感4ms；训练`domain_rand`不变。下一次GPU评估生效，旧视频/轨迹不变；[参数与时序](docs/interfaces/20261103-fudan-sim2sim-delays.md)。
+
+当前选用8000-v2＋停车+2°：`PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_walk.evaluate --output <新GPU目录> --deadline <本次截止Unix秒>`。省略`--checkpoint`读取集中配置并核模型SHA；显式指定检查点则使用原始输入。[选用配方](docs/interfaces/20261103-fudan-selected-pitch2.md)。动态运行仍须本次预算，完整行走回归未完成。
+
 最终sim2sim验证仅用GPU，CPU物理入口已删除。`PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_walk.evaluate --checkpoint <model.pt> --output <新GPU目录> --deadline <本次截止Unix秒>`；完整987例，`--diagnostic`另列诊断。评分/视频和边界见[GPU验证约定](docs/interfaces/20261102-fudan-gpu-validation.md)。
 
 任务 `fudan_ppo_walk`训练统一使用 `scripts/mjlab.sh train --task fudan_ppo_walk`（仍须明确预算、预检和新log-dir）；旧`fudan-ppo-walk train`只兼容转入同一注册链路，导出仍用`fudan-ppo-walk export`；20环境可视预检、期限参数、GPU987样本矩阵与TensorBoard命令见[冻结规格](docs/mjlab-fudan-ppo-walk.md)。普通SMP训练入口及五个旧任务禁用规则保持。
 
-复旦初始化修正版本为reset/history v2；新20环境可视预检尚未执行，旧trial01预检不能放行。命令和新预算建议见[修正交付](artifacts/fudan-reset-v2-20261101/README.md)。
+复旦初始化修正版本为reset/history v2；新20环境可视预检尚未执行，旧trial01预检不能放行。命令和新预算建议见[修正交付](artifacts/fudan_ppo_walk/fudan-reset-v2-20261101/README.md)。

@@ -10,7 +10,7 @@
 
 ## 来源与对齐
 
-- 实录：`artifacts/model6848-startup-review-20261022-122136/chronology/frames.npz`，H7约100Hz镜像；沿用此前策略配对/角度映射数值核对。
+- 实录：`artifacts/real2sim/model6848-startup-review-20261022-122136/chronology/frames.npz`，H7约100Hz镜像；沿用此前策略配对/角度映射数值核对。
 - 仿真：同目录`measured-start-dynamics-final/original-limits.npz`，50Hz保存的qpos/qvel/obs/action；原模型限位，没有采用放宽膝限位的诊断组。
 - 相同6848权重SHA256：`4a96a4c216fed4cedc2153667defbc0ae7974b9a31eb857022a31b4658bb3001`。历史实录对应性由此前输入/输出数值核对支持，不新增板端身份声明。
 - 时间零点取高频CONTROL首次非零请求的板端时间`3681442.102089ms`，没有混用USB接收时间或把时钟差当电机延迟。
@@ -37,16 +37,16 @@
 
 第4～6秒亦为相同趋势：四电机实际角波动实录0.58～0.92°、仿真7.81～8.83°；前向轮速均值实录1.059、仿真0.214rad/s。它仍不是确认无绳外力的片段。
 
-![实录橙色、仿真蓝色；虚线为目标、实线为实际反馈](../../artifacts/model6848-leg-oscillation-20261022-v2/post-start.png)
+![实录橙色、仿真蓝色；虚线为目标、实线为实际反馈](../../artifacts/real2sim/model6848-leg-oscillation-20261022-v2/post-start.png)
 
 ## 复现与产物
 
-正式入口`scripts/agent/compare_6848_leg_oscillation.py`读取已有数据，退出0；产物为`artifacts/model6848-leg-oscillation-20261022-v2/`的报告、哈希、对齐信号NPZ、启动图与起立后图、脚本快照。图已检查，显示窗口内数据独立缩放坐标范围；不混入窗口外启动峰值。首版目录保留，指标相同但图的坐标范围被窗口外启动峰值拉大，不作为主要图。
+正式入口`scripts/agent/compare_6848_leg_oscillation.py`读取已有数据，退出0；产物为`artifacts/real2sim/model6848-leg-oscillation-20261022-v2/`的报告、哈希、对齐信号NPZ、启动图与起立后图、脚本快照。图已检查，显示窗口内数据独立缩放坐标范围；不混入窗口外启动峰值。首版目录保留，指标相同但图的坐标范围被窗口外启动峰值拉大，不作为主要图。
 
 ```bash
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 mjlab_training/.venv/bin/python \
   scripts/agent/compare_6848_leg_oscillation.py \
-  --capture-root artifacts/model6848-startup-review-20261022-122136 \
+  --capture-root artifacts/real2sim/model6848-startup-review-20261022-122136 \
   --out artifacts/<新目录>/model6848-leg-oscillation
 ```
 

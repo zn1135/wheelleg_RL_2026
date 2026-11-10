@@ -86,7 +86,7 @@ def verify_training_sources(checkpoint, output, policy_kind):
 
 def verify_ppo_resources(checkpoint, output):
     candidates = [checkpoint.parent/'physical-files-sha256.json']
-    reference = ROOT/'artifacts/walk25-v8-resume2000-20261030-211315'
+    reference = ROOT/'artifacts/legacy_mjlab/walk25-v8-resume2000-20261030-211315'
     launch = reference/'launch.json'
     if launch.is_file() and Path(json.loads(launch.read_text())['log_dir']).resolve() == checkpoint.parent:
         candidates.append(reference/'physical-files-sha256.json')
