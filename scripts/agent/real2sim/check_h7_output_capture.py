@@ -205,10 +205,10 @@ int main(int argc,char **argv) {
     files=[directory/n for n in ('driver.bin','stream.bin','overflow.bin','wrapped.bin','transport.bin','stress.bin')]
     subprocess.run([str(exe),*map(str,files)],check=True)
     # Run the exact pre-instrumentation driver with the same commands and HAL stub.
-    old=(ROOT/'artifacts/h7-output-capture-20261021/source-baseline/deployment/H7_RL_ros/imcalib/drivers/dji.c').read_text()
+    old=(ROOT/'artifacts/real2sim/h7-output-capture-20261021/source-baseline/deployment/H7_RL_ros/imcalib/drivers/dji.c').read_text()
     for name in ('Dji_Torque_To_Current','Dji_Send_Wheel_Torque','Dji_All_Stop'):
         assert extract(old,name)==extract(driver,name), 'original driver behavior changed: '+name
-    before=ROOT/'artifacts/h7-output-capture-20261021/source-baseline/deployment/H7_RL_ros/imcalib/Algorithm/rl_torque.c'
+    before=ROOT/'artifacts/real2sim/h7-output-capture-20261021/source-baseline/deployment/H7_RL_ros/imcalib/Algorithm/rl_torque.c'
     assert before.read_bytes()==(H7/'imcalib/Algorithm/rl_torque.c').read_bytes(), 'RL controller changed'
     old_text=text.replace('\n'.join(extract(driver,n) for n in names),'\n'.join(extract(old,n) for n in names))
     # Baseline does not enqueue driver records, so use the same queue assertions on control-only cases.

@@ -25,6 +25,8 @@ typedef enum {
     CTRL_STRATEGY_DISABLE,      /* 左下 / 离线 */
     CTRL_STRATEGY_COMPENSATION = 4, /* 补偿台架 */
     CTRL_STRATEGY_WHEEL_BENCH = 5, /* 独立单轮短脉冲 */
+    CTRL_STRATEGY_LEG_TEST = 6, /* 架空腿长测试 */
+    CTRL_STRATEGY_JOINT_CAPTURE = 7, /* PACE关节位置扫频 */
 } ctrl_strategy_t;
 
 typedef struct {
@@ -56,6 +58,9 @@ typedef struct {
     float vel;          /* 前进 m/s */
     float yaw;          /* 转向 rad/s */
     float len;          /* 目标 m */
+    float leg_test_rate; /* 专用测试拨轮归一化方向诊断 m/s；步进模式不按此值持续积分 */
+    int32_t leg_test_steps; /* 专用测试累计步数，每步10mm；执行层只消费新增步数 */
+    uint8_t leg_test_arm; /* 测试准备阶段0~4，仅作诊断 */
     uint8_t s1;         /* 左拨杆 */
     uint8_t s2;         /* 右拨杆 */
     uint8_t online;

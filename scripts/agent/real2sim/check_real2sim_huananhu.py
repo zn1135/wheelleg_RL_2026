@@ -45,7 +45,7 @@ typedef struct { uint8_t seen; uint64_t received_ns; } feedback_sample_t;
 typedef struct { float quat[4], gyro_rad_s[3]; uint8_t online; } imu_t;
 typedef struct { float pos_continuous_rad[4], vel_rad_s[4], trq_nm[4]; uint64_t parsed_rx_ns[4]; uint8_t online[4]; } dm_t;
 typedef struct { float angle_total_rad[2], vel_rad_s[2]; int16_t current_raw[2]; uint64_t parsed_rx_ns[2]; uint8_t online[2]; } dji_t;
-typedef struct { struct { uint8_t strategy, rc_enable, engage; } mode; uint8_t online; } rc_t;
+typedef struct { struct { uint8_t strategy, rc_enable, engage; } mode; uint8_t online,s1,s2,leg_test_arm; float leg_test_rate; } rc_t;
 typedef struct { struct { uint8_t valid; } output; } leg_t;
 typedef struct {
     imu_t imu; struct { dm_t dm; dji_t dji; } motor;
@@ -75,6 +75,7 @@ uint8_t Dm_Is_Enabled(uint8_t i);
 uint8_t output_task_lqr_engaged(void);
 uint8_t output_task_rl_engaged(void);
 uint8_t Vofa_Send(const float *data,uint8_t n);
+uint8_t Vofa_Uart_Send(const float *data);
 #define DM_MOTOR_NUM 4u
 #define DJI_MOTOR_NUM 2u
 #define DM_MOTOR_LEG_F_LFT 0u
@@ -98,8 +99,11 @@ def c_packets(directory: Path, usb=False):
     tail = bytes(int(value.strip(), 0) for value in tail_text.split(","))
     assert channels in (48, 160)
     packer = (H7 / 'imcalib/task/vofa_debug.c').read_text()
+    dual_uart = 'Vofa_Uart_Send' in packer
     version = int(float(re.search(r'dbg\[4\]\s*=\s*([\d.]+)', packer).group(1)))
-    obs_dim = 32 if version == 3 else 39
+    obs_header = (H7 / 'imcalib/common/rl_types.h').read_text()
+    obs_dim = int(re.search(r'#define\s+RL_OBS_SIZE\s+(\d+)', obs_header).group(1))
+    assert obs_dim <= (32 if version == 3 else 39)
     frame_bytes = channels * 4 + len(tail)
     assert frame_bytes == mirror.FRAME_BYTES_BY_VERSION[version]
     assert tail == mirror.TAIL, "actual Vofa_Send tail differs from mirror protocol"
@@ -131,6 +135,8 @@ static robot_feedback_t source;
 static uint32_t tick;
 static unsigned attempts;
 static uint8_t ready = 1;
+static unsigned uart_attempts;
+static uint8_t uart_ready = 1;
 static FILE *output;
 uint32_t HAL_GetTick(void) { return tick; }
 uint8_t Dm_Is_Enabled(uint8_t i) { return 0; }
@@ -156,6 +162,14 @@ uint8_t Vofa_Send(const float *data,uint8_t n) {
     assert(fwrite(tail,1,4,output)==4);
     return 1;
 }
+uint8_t Vofa_Uart_Send(const float *data) {
+    uart_attempts++;
+    for(unsigned i=0;i<4;i++) {
+        assert(!memcmp(data+2*i,&source.motor.dm.pos_continuous_rad[i],sizeof(float)));
+        assert(!memcmp(data+2*i+1,&source.motor.dm.trq_nm[i],sizeof(float)));
+    }
+    return uart_ready;
+}
 int main(int argc,char **argv) {
     float halves[2];
     assert(Mirror_Crc16((const uint8_t *)"123456789",9)==0x29b1);
@@ -166,6 +180,7 @@ int main(int argc,char **argv) {
     source.imu.quat[0]=1;
     source.imu_meta.seen=source.motor_meta.seen=1;
     source.rc.mode.strategy=0; source.rc.mode.rc_enable=source.rc.mode.engage=1;
+    source.rc.s1=3;source.rc.s2=2;source.rc.leg_test_rate=-.05f;source.rc.leg_test_arm=2;
     mirror_policy_snapshot.valid=mirror_output_snapshot.valid=1;
     mirror_policy_snapshot.sequence=0x12345u; mirror_policy_snapshot.sample_tick_ms=6;
     mirror_policy_snapshot.published_tick_ms=8; mirror_policy_snapshot.run_us=250;
@@ -204,7 +219,14 @@ int main(int argc,char **argv) {
     fclose(output); return 0;
 }
 ''')
-    probe.write_text(probe.read_text().replace('i<39', f'i<{obs_dim}'))
+    extra_uart = r'''
+    assert(uart_attempts==8);
+    ready=0;uart_ready=0;tick=14;Vofa_Debug_Send();assert(uart_attempts==9);
+    uart_ready=1;tick=15;Vofa_Debug_Send();assert(uart_attempts==10);
+    tick=20;Vofa_Debug_Send();assert(uart_attempts==10); /* USB断开不加速UART。 */
+    tick=25;Vofa_Debug_Send();assert(uart_attempts==11); /* USB断开时UART仍100Hz。 */
+''' if dual_uart else ''
+    probe.write_text(probe.read_text().replace('i<39', f'i<{obs_dim}').replace('fclose(output);', extra_uart+'\n    fclose(output);'))
     executable, data = directory / "probe", directory / "h7-frames.bin"
     subprocess.run([os.environ.get("CC", "cc"), "-std=c11", "-Wall", "-I", str(stub), "-I", str(H7 / "imcalib/drivers"),
                     "-I", str(H7 / "imcalib/Algorithm"), str(probe), *([str(response)] if response.exists() else []),
@@ -231,7 +253,13 @@ int main(int argc,char **argv) {
         assert mirror.read_u32(frames[0][50:52]) == 6 and mirror.read_u32(frames[0][52:54]) == 8
         assert np.allclose(frames[0][54:57], [.2, -.3, .31])
         assert np.array_equal(frames[0][57:57 + obs_dim], np.arange(100, 100 + obs_dim))
-        assert np.all(frames[0][57 + obs_dim:96] == 0)
+        if version==3 and 'feedback.rc.leg_test_arm' in packer:
+            assert np.all(frames[0][57 + obs_dim:89] == 0)
+            assert np.allclose(frames[0][89:93], [3,2,-.05,2]) and np.all(frames[0][93:96]==0)
+            decoded=mirror.telemetry_row(frames[0])
+            assert decoded['rc_left_switch']==3 and decoded['rc_right_switch']==2 and abs(decoded['leg_test_dial_rate_m_s']+.05)<1e-6 and decoded['leg_test_arm_state']==2
+        else:
+            assert np.all(frames[0][57 + obs_dim:96] == 0)
         assert np.allclose(frames[0][96:102], -.1 * np.arange(6)) and frames[0][102] == 250
         assert mirror.read_u32(frames[0][103:105]) == 0x23456
         assert mirror.read_u32(frames[0][105:107]) == 9 and mirror.read_u32(frames[0][107:109]) == 0x12345
@@ -342,8 +370,27 @@ def check_usb_sender(directory: Path, raw: bytes):
     """Run the actual USB sender with CDC connection/completion/failure stubs."""
     stub = directory / "usb-stub"
     stub.mkdir()
-    for name in ("main.h", "usart.h", "machine_config.h"):
-        (stub / name).write_text('#include <stdint.h>\n#define MACHINE_VOFA_PORT 10u\n')
+    dual_uart = 'Vofa_Uart_Send' in (H7 / 'imcalib/bsp/Vofa_send.c').read_text()
+    (stub / 'main.h').write_text(r'''
+#ifndef TX_HARDWARE_STUB
+#define TX_HARDWARE_STUB
+#include <stdint.h>
+#define MACHINE_VOFA_PORT 10u
+#define HAL_UART_STATE_READY 1u
+#define HAL_OK 0u
+typedef struct { uint32_t gState; } UART_HandleTypeDef;
+extern UART_HandleTypeDef huart10;
+typedef struct { uint32_t CCR; } SCB_Type;
+extern SCB_Type simulated_scb;
+#define SCB (&simulated_scb)
+#define SCB_CCR_DC_Msk 1u
+#define __DSB() ((void)0)
+void SCB_CleanDCache_by_Addr(uint32_t *address,int32_t size);
+uint8_t HAL_UART_Transmit_DMA(UART_HandleTypeDef *uart,const uint8_t *data,uint16_t size);
+#endif
+''')
+    for name in ('usart.h', 'machine_config.h'):
+        (stub / name).write_text('#include "main.h"\n')
     capture = (H7 / 'imcalib/bsp/output_capture.h').exists()
     capture_stub = r'''
 #include "''' + str(H7 / 'imcalib/bsp/output_capture.h') + r'''"
@@ -371,6 +418,21 @@ static uint8_t configured, busy, fail_submit;
 static uint8_t *pending;
 static uint16_t pending_size;
 static unsigned submissions;
+UART_HandleTypeDef huart10={HAL_UART_STATE_READY};
+SCB_Type simulated_scb={SCB_CCR_DC_Msk};
+static const uint8_t *uart_pending;
+static uint16_t uart_size;
+static unsigned cache_cleans,uart_submissions;
+static uint8_t uart_fail;
+void SCB_CleanDCache_by_Addr(uint32_t *address,int32_t size) {
+    assert(((uintptr_t)address%32)==0 && size>=36);cache_cleans++;
+}
+uint8_t HAL_UART_Transmit_DMA(UART_HandleTypeDef *uart,const uint8_t *data,uint16_t size) {
+    assert(uart==&huart10 && uart->gState==HAL_UART_STATE_READY && cache_cleans);
+    uart_submissions++;
+    if(uart_fail)return 1u;
+    uart_pending=data;uart_size=size;uart->gState=2u;return HAL_OK;
+}
 uint8_t CDC_Transmit_Ready_HS(void) { return configured && !busy; }
 uint8_t CDC_Transmit_HS(uint8_t *data, uint16_t size) {
     submissions++;
@@ -405,6 +467,22 @@ int main(int argc, char **argv) {
 '''.replace('pending_size == sizeof(original)', 'pending_size == sizeof(original)' + (' + 42u' if capture else ''))
        .replace('fwrite(pending, 1, pending_size, stdout) == pending_size', 'fwrite(pending, 1, sizeof(original), stdout) == sizeof(original)'))
     executable, frame = directory / "usb-sender", directory / "usb-input.bin"
+    if dual_uart:
+        uart_checks = r'''
+    float joint[8]={.1f,.5f,.2f,1.f,.3f,1.5f,.4f,2.f};
+    uint8_t uart_copy[36];
+    configured=0; /* UART发送不要求USB连接。 */
+    assert(Vofa_Uart_Send(joint) && uart_submissions==1 && uart_size==36);
+    assert(!memcmp(uart_pending,joint,32) && !memcmp(uart_pending+32,"\0\0\200\177",4));
+    memcpy(uart_copy,uart_pending,36);joint[0]+=1;
+    assert(!Vofa_Uart_Send(joint) && uart_submissions==1 && !memcmp(uart_copy,uart_pending,36));
+    assert(!memcmp(pending,original,sizeof(original))); /* UART不覆盖USB待发缓冲。 */
+    configured=1;busy=0;assert(Vofa_Send(values,VOFA_MAX_CH));
+    assert(!memcmp(uart_copy,uart_pending,36)); /* USB不覆盖UART待发缓冲。 */
+    huart10.gState=HAL_UART_STATE_READY;uart_fail=1;assert(!Vofa_Uart_Send(joint));
+    uart_fail=0;assert(Vofa_Uart_Send(joint) && !memcmp(uart_pending,joint,32));
+'''
+        source.write_text(source.read_text().replace('assert(fwrite(pending,', uart_checks+'\n    assert(fwrite(pending,'))
     frame.write_bytes(raw)
     subprocess.run([os.environ.get("CC", "cc"), "-std=c11", "-Wall", "-I", str(stub),
                     str(source), "-o", str(executable)], check=True)
@@ -412,7 +490,8 @@ int main(int argc, char **argv) {
     assert sent == raw and np.array_equal(mirror.decode_frame(sent), mirror.decode_frame(raw))
     return {"actual_c_sender": True, "disconnected_busy_buffer_preserved": True,
             "submit_failure_reconnect": True, "wire_bytes_and_crc_unchanged": True,
-            "scope": "actual sender with CDC stubs; USB enumeration/completion need hardware"}
+            "uart_busy_dma_buffer_cache_and_usb_independence": dual_uart,
+            "scope": "actual sender with CDC/UART stubs; electrical links and completion need hardware"}
 
 
 def check_policy_producer(directory):
@@ -1367,6 +1446,43 @@ def check_serial(raw, directory):
 
 def check_sessions(directory, raw):
     """Exercise persisted raw chunks, replay timing and offline data validity."""
+    from contextlib import redirect_stdout, redirect_stderr
+    import io
+    from unittest.mock import patch
+
+    class SelectedConfig(Exception):
+        pass
+
+    for project, project_config in mirror.H7_PROJECT_CONFIGS.items():
+        observed = []
+
+        def selected_pose(model, config):
+            observed.append(config)
+            raise SelectedConfig
+
+        # Stop before receiver creation: choosing a project must not access hardware here.
+        with patch.object(sys, "argv", ["mirror", "--port", "unused", "--h7-project", project]), \
+                patch.object(mirror, "MirrorPose", side_effect=selected_pose), redirect_stdout(io.StringIO()):
+            try:
+                mirror.main()
+            except SelectedConfig:
+                pass
+        assert observed == [project_config]
+        selected = mirror.SessionRecorder(directory / ("project-" + project), machine_config=project_config)
+        selected.finish()
+        metadata, _, recorded_config = mirror.load_session(selected.directory)
+        assert metadata["h7_project"] == project
+        assert recorded_config.resolve() == project_config.resolve()
+        assert metadata["machine_config"] == mirror.file_identity(project_config)
+    for argv in (["--port", "unused", "--h7-project", "H7_ros", "--machine-config", "unused"],
+                 ["--replay", "unused", "--h7-project", "H7_ros"]):
+        with patch.object(sys, "argv", ["mirror", *argv]), redirect_stderr(io.StringIO()):
+            try:
+                mirror.main()
+            except SystemExit as exc:
+                assert exc.code == 2
+            else:
+                raise AssertionError("conflicting project selection was accepted")
     config = H7 / "imcalib/config/machine_config.c"
     pose = mirror.MirrorPose(machine_config=config)
     base = mirror.decode_frame(raw)
@@ -1589,6 +1705,8 @@ def check_sessions(directory, raw):
     assert not json.loads((saturated.directory / "meta.json").read_text())["complete"]
     rejected(lambda: mirror.load_session(saturated.directory))
     return {"raw_chunks_preserved_fragmentation_bad_crc": True,
+            "H7_H7_ros_cli_selection_and_recorded_identity": True,
+            "conflicting_config_and_replay_project_selection_rejected": True,
             "reconnect_discards_partial_frame": True,
             "replay_original_timing_200ms_stale_no_serial": True,
             "sequence_tick_wrap_gaps_duplicates_restart": True,
@@ -1715,6 +1833,8 @@ def check_viewer_timing(directory, raw):
     assert not worker.is_alive() and not errors, errors
     report = json.loads(report_path.read_text())
     assert viewer.closed and report["recording_complete"] and report["accepted_frames"] > 5
+    assert report["h7_project"] == mirror.h7_project_name(config)
+    assert report["machine_config"] == mirror.file_identity(config)
     assert report["sources"] == ["OK"] * 5, report
     panels = [text[2] for update in viewer.text_updates for text in update
               if text[1] == mujoco.mjtGridPos.mjGRID_TOPRIGHT.value]
@@ -1736,13 +1856,15 @@ def check_viewer_timing(directory, raw):
     data = [event for event in mirror.iter_session_events(session) if event["type"] == "data"]
     active_seconds = (meta["duration_ns"] - data[0]["t_ns"]) / 1e9
     assert data[0]["t_ns"] >= 240_000_000, "fake viewer startup did not delay USB reading"
-    assert active_seconds >= .15, ("viewer startup consumed --seconds budget", active_seconds)
+    # The budget starts before the first serial read; allow its one20ms polling interval.
+    assert saved["elapsed_s"] >= .15 and active_seconds >= .13, ("viewer startup consumed --seconds budget", active_seconds)
     return {"delayed_viewer_start_does_not_consume_sampling_budget": True,
             "delayed_viewer_close_does_not_mark_fresh_final_sources_stale": True,
             "renderer_destruction_finishes_before_main_returns": True,
             "recording_hud_elapsed_frames_bytes_directory": True,
             "terminal_recording_and_saved_with_exact_stream_bytes": True,
             "requested_sampling_s": .15, "first_data_to_stop_s": active_seconds,
+            "sampling_budget_elapsed_s": saved["elapsed_s"], "first_read_allowance_s": .02,
             "scope": "fake viewer and PTY only; no real graphics or H7 hardware"}
 
 

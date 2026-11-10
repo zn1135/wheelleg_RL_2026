@@ -1,0 +1,15 @@
+{
+  "checkpoint": "/home/zn/\u6587\u6863/Wheel-Legged-Gym/artifacts/fudan_ppo_walk/20261110-fitted-resume12000-to14000-01/frozen/model_14000.pt",
+  "sha256": "5320e927d2ef2387a2d9ef1678102abc79942cde1b1a616828de9b2f133dd6ce",
+  "iterations": 14000,
+  "initial_iterations": 12000,
+  "additional_iterations": 2000,
+  "source_checkpoint_sha256": "39354a2344f9effd170064c0b9875c1ae7b197470a2682074640debcdcc84119",
+  "weights_frozen_for_all_evaluations": true,
+  "physical_leg_load": {
+    "profile": "mirrored-local-load-dahl-20261109-v1",
+    "sha256": "e6ef82fa4380fa01341fa2166be56282c5290c82fec2b2a04e5b3107ce49218f",
+    "mirrored_left": true,
+    "initial_memory_force_n": 0.0
+  }
+}

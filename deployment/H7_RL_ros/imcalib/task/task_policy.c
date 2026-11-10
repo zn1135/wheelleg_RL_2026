@@ -1,6 +1,6 @@
 /*
- * 100Hz策略：复制500Hz最新反馈及原始动作历史→组装32维帧/160维历史→推理→发布原始action6。
- * 同帧复制公共遥控与恢复标志；趴地启动保持由执行任务控制，不以SDK就绪替代模型激活。
+ * 100Hz策略：复制500Hz最新反馈及动作历史→组装25维帧/125维历史→推理→发布裁剪action6。
+ * 直立承重且请求投入后才构造历史；等待/退出时清零，不能把未执行动作带入接管。
  * 共享样本/动作只在短临界区读写，观测构建和网络调用均放在临界区之外。
  */
 #include "robot_control.h"
@@ -46,7 +46,7 @@ void ctrl_task_body(void)
     if (!machine->rl.configured) { Policy_Timing_End(&timing, 0u); return; }
     /* 样本缓存由高优先级执行任务推进，先在临界区复制，避免读取半更新帧。 */
     taskENTER_CRITICAL();
-    selected = (uint8_t)(rc_command.online && rc_command.mode.strategy == CTRL_STRATEGY_RL);
+    selected = (uint8_t)(rc_command.online && rc_command.mode.strategy == CTRL_STRATEGY_RL && rc_command.mode.engage && rl_control.recovery.phase == RL_RECOVERY_NORMAL && rl_control.recovery.has_stood);
     reset_count = action_state.reset_count;
     timing.reset_count = reset_count;
     timing.value[4] = mirror_policy_snapshot.sequence;
@@ -107,10 +107,10 @@ void ctrl_task_body(void)
         return;
     }
     timing.value[3] = rl_control.policy.run_us;
-    /* 请求动作不反号、不全局裁剪；观测裁剪与目标裁剪由各自生成端完成。
+    /* 请求动作不反号；SDK封装按训练process_actions裁剪到±100。
      * 推理期间可能退出RL，发布前重查模式，防止新动作覆盖退出时的清零。 */
     taskENTER_CRITICAL();
-    if (reset_count == action_state.reset_count && rc_command.online && rc_command.mode.strategy == CTRL_STRATEGY_RL)
+    if (reset_count == action_state.reset_count && rc_command.online && rc_command.mode.strategy == CTRL_STRATEGY_RL && rc_command.mode.engage && rl_control.recovery.phase == RL_RECOVERY_NORMAL && rl_control.recovery.has_stood)
     {
         RL_Observation_Set_Last_Action(&rl_control.observation, action);
         memcpy(action_state.a, action, sizeof(action_state.a));
@@ -121,8 +121,8 @@ void ctrl_task_body(void)
         memcpy(mirror_policy_snapshot.obs, observation.obs, sizeof(mirror_policy_snapshot.obs));
         memcpy(mirror_policy_snapshot.action, action, sizeof(mirror_policy_snapshot.action));
         mirror_policy_snapshot.command[0] = observation.command_velocity;
-        mirror_policy_snapshot.command[1] = 0.0f;
-        mirror_policy_snapshot.command[2] = 0.22f;
+        mirror_policy_snapshot.command[1] = observation.obs[RL_OBS_CMD_YAW_RATE] / 0.25f;
+        mirror_policy_snapshot.command[2] = observation.obs[RL_OBS_CMD_HEIGHT] / machine->rl.observation.height_scale;
         mirror_policy_snapshot.sequence++;
         mirror_policy_snapshot.sample_tick_ms = sample_tick_ms;
         mirror_policy_snapshot.published_tick_ms = (uint32_t)(Mono_Ns_Get() / 1000000u);

@@ -17,7 +17,7 @@
 #define RC_DEADBAND_YAW     20u
 #define RC_DEADBAND_LEN     20u
 
-/* 遥控指令: 速度 + 转向 + 腿长 + 拨杆 */
+/* 遥控指令：速度/转向/腿长/拨杆；腿测试拨轮每次回中后触发一个10mm目标步。 */
 
 
 void Rc_Command_Update(rc_command_t *cmd, const dr16_t *rc, float dt);

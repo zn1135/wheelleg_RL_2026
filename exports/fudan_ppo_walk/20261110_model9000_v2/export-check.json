@@ -1,0 +1,34 @@
+{
+  "iterations": 9000,
+  "transitions": 1253376000,
+  "source_checkpoint": "logs/mjlab/fudan_ppo_walk/20261104_resume8000_to9000_2ms/model_final.pt",
+  "checkpoint_sha256": "4ff0c038f26b7aa9d9d9919c97e59cd4e8124f1ddee5eaec1d2944436f8a37a3",
+  "onnx_sha256": "727b2abbf4756eafeb72652192fc089329ed453f515c5d7fc920897704f1e201",
+  "contract": "fudan-ppo-walk-physical25-history125-critic144-v1",
+  "reset_contract": "fudan-physical-pd-centred-warmup-clean4-noisy1-unclipped-history-v2",
+  "disturbances": {
+    "version": "fudan-optional-disturbances-v1",
+    "action_delay": true,
+    "sensor_delay": true,
+    "pushes": false,
+    "action_delay_ms": [
+      2.0,
+      2.0
+    ],
+    "sensor_delay_ms": [
+      2.0,
+      2.0
+    ],
+    "push_interval_s": 7.0,
+    "max_push_vel": 2.0
+  },
+  "physics_profile_recorded": null,
+  "samples": 256,
+  "onnx_max_abs_error": 1.049041748046875e-05,
+  "atol": 0.0001,
+  "export_only": true,
+  "h7_weights_and_firmware_unchanged": true,
+  "motion_and_real_validation_this_export": "not_executed",
+  "torch_version": "2.14.0+cu130",
+  "onnx_version": "1.22.0"
+}

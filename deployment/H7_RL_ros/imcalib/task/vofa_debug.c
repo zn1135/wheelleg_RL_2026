@@ -1,5 +1,5 @@
 /*
- * 文件职责：固定160通道镜像v2赋值与VOFA发送（vofa_debug.c）。
+ * 文件职责：固定160通道USB镜像与独立UART八通道VOFA赋值（vofa_debug.c）。
  * 输入/来源：共享反馈/控制/离地/补偿诊断及驱动记录。
  * 输出/去向：后台每次调用固定赋值后提交一帧；改通道时手动注释旧赋值、启用新赋值。
  * 关键边界：只读观测，不推进检测或修改目标；异步来源同帧不等于同一物理采样时刻，通道表见md/file-guide.md#vofa。
@@ -65,7 +65,7 @@ static float Mirror_Received_Age(uint64_t received_ns, uint8_t seen, uint64_t ca
 }
 
 /*
- * 只读镜像：未投入RL也发送公共反馈；成功提交约100Hz限速，USB忙不等待并在下一后台拍重试。
+ * 只读镜像：未投入RL也发送公共反馈；USB和UART各按成功提交约100Hz限速，互不等待。
  * valid位0=IMU，1~4=四髋，5~6=两轮；无效来源报文填0，不修改原反馈或控制许可。
  * seq只计算USB提交成功的帧；软件快照仍包含异步来源，不能称为同步采样。
  */
@@ -76,6 +76,7 @@ void Vofa_Debug_Send(void)
     static mirror_output_snapshot_t output;
     static float dbg[VOFA_MAX_CH];
     static uint32_t last_send_ms;
+    static uint32_t last_uart_send_ms;
     static uint32_t sequence;
     uint32_t now_ms = HAL_GetTick();
     uint32_t candidate = sequence + 1u;
@@ -83,7 +84,7 @@ void Vofa_Debug_Send(void)
     uint8_t online_mask;
     uint8_t valid_mask = 0u;
 
-    if ((uint32_t)(now_ms - last_send_ms) < 10u)
+    if ((uint32_t)(now_ms - last_send_ms) < 10u && (uint32_t)(now_ms - last_uart_send_ms) < 10u)
     {
         return;
     }
@@ -93,6 +94,24 @@ void Vofa_Debug_Send(void)
     output = mirror_output_snapshot;
     (void)Robot_Feedback_Read(&feedback);
     taskEXIT_CRITICAL();
+    if ((uint32_t)(now_ms - last_uart_send_ms) >= 10u)
+    {
+        float joints[8];
+        for (uint8_t i = 0u; i < DM_MOTOR_NUM; i++)
+        {
+            /* 每台电机位置/反馈力矩相邻，直接复用同一反馈快照，不重设零点或极性。 */
+            joints[2u * i] = feedback.motor.dm.pos_continuous_rad[i];
+            joints[2u * i + 1u] = feedback.motor.dm.trq_nm[i];
+        }
+        if (Vofa_Uart_Send(joints))
+        {
+            last_uart_send_ms = now_ms;
+        }
+    }
+    if ((uint32_t)(now_ms - last_send_ms) < 10u)
+    {
+        return;
+    }
     memset(dbg, 0, sizeof(dbg));
     online_mask = feedback.imu.online ? 0x01u : 0x00u;
     online_mask |= feedback.rc.online ? 0x02u : 0x00u;
@@ -152,7 +171,7 @@ void Vofa_Debug_Send(void)
     dbg[0] = (float)online_mask;
     dbg[1] = (float)state_bits;
     dbg[3] = 7101.0f;
-    dbg[4] = 3.0f; /* v3: 57~88为32维当前帧，89~95保留0；旧v2解析器须拒载。 */
+    dbg[4] = 3.0f; /* v3固定槽位：57~81复旦25维帧，82~88清零，89~92腿测试诊断。 */
     dbg[5] = (float)MACHINE_DEFAULT;
     Mirror_U32(&dbg[6], candidate);
     Mirror_U32(&dbg[8], (uint32_t)(feedback.captured_ns / 1000000u));
@@ -165,6 +184,10 @@ void Vofa_Debug_Send(void)
     Mirror_U32(&dbg[52], policy.published_tick_ms);
     memcpy(&dbg[54], policy.command, sizeof(policy.command));
     memcpy(&dbg[57], policy.obs, sizeof(policy.obs));
+    dbg[89] = (float)feedback.rc.s1;
+    dbg[90] = (float)feedback.rc.s2;
+    dbg[91] = feedback.rc.leg_test_rate;
+    dbg[92] = (float)feedback.rc.leg_test_arm;
     memcpy(&dbg[96], policy.action, sizeof(policy.action));
     dbg[102] = (float)policy.run_us;
     Mirror_U32(&dbg[103], output.sequence);

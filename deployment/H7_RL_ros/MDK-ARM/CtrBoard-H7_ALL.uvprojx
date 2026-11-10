@@ -1277,6 +1277,16 @@
               <FilePath>../imcalib/Algorithm/Attitude_Algorithm.c</FilePath>
             </File>
             <File>
+              <FileName>joint_chirp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../imcalib/Algorithm/joint_chirp.c</FilePath>
+            </File>
+            <File>
+              <FileName>joint_capture.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../imcalib/Algorithm/joint_capture.c</FilePath>
+            </File>
+            <File>
               <FileName>leg_solver.c</FileName>
               <FileType>1</FileType>
               <FilePath>../imcalib/Algorithm/leg_solver.c</FilePath>

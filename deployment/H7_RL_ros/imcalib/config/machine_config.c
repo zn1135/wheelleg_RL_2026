@@ -58,7 +58,7 @@ const machine_cfg_t machine_table[MACHINE_NUM] = {
         .gravity = &gravity_big,
         .dji_type       = 1u,                          /* M3508 + C620 */
         .dji_gear_ratio = 15.3333333f,                       /* 转子→轮子总减速比 */
-        .dji_trq_clamp  = (0.30f * 20.0f) * (15.5f / 19.2f), /* 满电流 */
+        .dji_trq_clamp  = (0.30f * 20.0f) * (15.3333333f / 19.2f), /* 满电流 */
         .wheel_r        = 0.0525f,                     /* 作者确认 */
         .dm_pos_max     = 3.14159f,                    /* DM-J8009P: 上位机 ±π */
         .dm_vel_max     = 45.0f,
@@ -75,8 +75,8 @@ const machine_cfg_t machine_table[MACHINE_NUM] = {
         /* 腿几何: 杆长 0.21/0.25; 腿长区间为实测工作区间 */
         .leg_lu         = 0.21f,
         .leg_lg         = 0.25f,
-        .leg_len_min    = 0.13f,
-        .leg_len_max    = 0.34f,
+        .leg_len_min    = 0.14f,
+        .leg_len_max    = 0.33f,
         .leg_off_phi0   = {-0.0f, -0.0f},
         /* IMU 轴映射待台架核对 */
         .imu = {

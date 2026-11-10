@@ -6,6 +6,14 @@
 
 #define OUTPUT_CAPTURE_CONTROL 1u
 #define OUTPUT_CAPTURE_CAN 2u
+#define OUTPUT_CAPTURE_LEG_STATE 3u
+#define OUTPUT_CAPTURE_LEG_GEOMETRY 4u
+#define OUTPUT_CAPTURE_JOINT_TARGET 5u /* 四固件角目标+Kp/Kd，阶段/轴/饱和/停止原因。 */
+#define OUTPUT_CAPTURE_JOINT_SMALL_HIGH 0x0004u /* 类型5 bit2：120秒、0.05rad、2到5Hz独立验证。 */
+#define OUTPUT_CAPTURE_JOINT_RIGHT_POSE 0x0008u /* 类型5 bit3：单右腿190mm/30度，5秒接管+20秒定位；另含Ki20和冻结负载补偿。 */
+#define OUTPUT_CAPTURE_JOINT_RIGHT_LENGTH 0x0010u /* 类型5 bit4：右腿只改长度至190mm，腿角锁定接管实测值；5秒接管+20秒定位。 */
+#define OUTPUT_CAPTURE_LEG_SOFT_BOUNDARY 0x0040u /* 类型4 bit6：腿长越工作边界时保留向内返回控制。 */
+#define OUTPUT_CAPTURE_LEG_STEP10 0x0080u /* 类型4 bit7：拨轮单次10mm目标步进，原速率平滑执行。 */
 #define OUTPUT_CAPTURE_CAPACITY 128u
 #define OUTPUT_CAPTURE_BATCH 48u /* 实测镜像约78Hz；批量需覆盖禁用档每秒约2000条记录。 */
 #define OUTPUT_CAPTURE_HEADER_BYTES 40u
@@ -31,6 +39,10 @@ typedef struct {
     uint8_t wheel_online;
     uint8_t controller_mode; /* 本轮固定原控制器0，不接入补偿。 */
 } output_capture_record_t;
+
+/* 类型3保存四电机角/速和反馈年龄；类型4保存四电机估计力矩、遥控腿长目标和左右腿长/腿角。
+ * 类型4 flags bit3表示腿长测试运行、bit4表示失败锁定、bit5表示仅收腿接管、bit6表示本版边界返回控制，current_raw字节装两侧测试目标float。
+ * 两条记录的id与同拍CONTROL相同；具体线格式由解码器对应解释。 */
 
 /* 多任务生产端只做固定大小复制；队满只计数，不等待、不影响原输出。 */
 void Output_Capture_Push(const output_capture_record_t *record);

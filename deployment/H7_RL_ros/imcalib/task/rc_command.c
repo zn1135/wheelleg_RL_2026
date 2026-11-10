@@ -24,17 +24,28 @@ static float Rc_Axis(int16_t raw, uint16_t deadband)
     return (float)value / (float)DR16_CH_LIMIT;
 }
 
-/* 公共指令换算与唯一模式解码；离线清除模式请求，拨轮沿用原累加公式。 */
+/* 公共指令及唯一模式解码；专用腿测试拨轮每次离开中位走一步，其余模式沿用原累加。 */
 void Rc_Command_Update(rc_command_t *cmd, const dr16_t *rc, float dt)
 {
     float len_min;
     float len_max;
+    static uint8_t leg_arm_state;
+    static float leg_arm_time;
+    static uint8_t leg_step_ready;
+    static float leg_step_center_time;
 
     cmd->mode.strategy = CTRL_STRATEGY_DISABLE;
     cmd->mode.rc_enable = 0u;
     cmd->mode.engage = 0u;
+    cmd->leg_test_rate = 0.0f;
+    cmd->leg_test_arm = 0u;
     if (!rc->online)
     {
+        leg_arm_state = 0u;
+        leg_arm_time = 0.0f;
+        leg_step_ready = 0u;
+        leg_step_center_time = 0.0f;
+        cmd->leg_test_steps = 0;
         cmd->vel = 0.0f;
         cmd->yaw = 0.0f;
         cmd->len = machine->rc.len_init;
@@ -48,16 +59,66 @@ void Rc_Command_Update(rc_command_t *cmd, const dr16_t *rc, float dt)
     cmd->s1 = rc->s1;
     cmd->s2 = rc->s2;
     cmd->online = 1u;
+    cmd->leg_test_rate = Rc_Axis(rc->wheel, RC_DEADBAND_LEN) * 0.05f;
 
-    if (cmd->s1 == DR16_SW_UP && cmd->s2 == DR16_SW_UP)
+    /* 左中/右中恢复LQR，左上/右中切RL；原关节采集入口暂时停用。 */
+
+    /* 左下右中且拨轮回中保持1秒准备，再右下、左中进入腿测试。 */
+    if (wheel_bench.reserved)
+    {
+        leg_arm_state = 0u;
+        leg_arm_time = 0.0f;
+    }
+    else if (leg_arm_state == 0u)
+    {
+        if (cmd->s1 == DR16_SW_DOWN && cmd->s2 == DR16_SW_MID && DR16_Deadline(rc->wheel, RC_DEADBAND_LEN) == 0)
+        {
+            leg_arm_time += dt;
+            if (leg_arm_time >= 1.0f) { leg_arm_state = 2u; leg_arm_time = 0.0f; }
+        }
+        else { leg_arm_time = 0.0f; }
+    }
+    else if (leg_arm_state == 2u)
+    {
+        if (DR16_Deadline(rc->wheel, RC_DEADBAND_LEN) != 0) { leg_arm_state = 0u; leg_arm_time = 0.0f; }
+        else if (cmd->s1 == DR16_SW_DOWN && cmd->s2 == DR16_SW_MID) { leg_arm_time = 0.0f; }
+        else
+        {
+            leg_arm_time += dt;
+            if (leg_arm_time >= 5.0f) { leg_arm_state = 0u; leg_arm_time = 0.0f; }
+            else if (cmd->s1 == DR16_SW_MID && cmd->s2 == DR16_SW_DOWN) { leg_arm_state = 3u; }
+            else if (cmd->s1 != DR16_SW_DOWN || cmd->s2 != DR16_SW_DOWN) { leg_arm_state = 0u; leg_arm_time = 0.0f; }
+        }
+    }
+    else if (leg_arm_state == 3u && (cmd->s1 != DR16_SW_MID || cmd->s2 != DR16_SW_DOWN))
+    {
+        leg_arm_state = 4u; /* 测试后必须先回左下，禁止直接切进其他出力模式。 */
+        leg_arm_time = 0.0f;
+    }
+    else if (leg_arm_state == 4u && cmd->s1 == DR16_SW_DOWN) { leg_arm_state = 0u; }
+    cmd->leg_test_arm = (uint8_t)(leg_arm_state == 0u && leg_arm_time > 0.0f ? 1u : leg_arm_state);
+
+    if (leg_arm_state == 4u)
+    {
+        /* 离开测试后等待回到失能档。 */
+    }
+    else if (cmd->s1 == DR16_SW_UP && cmd->s2 == DR16_SW_UP)
     {
         cmd->mode.strategy = CTRL_STRATEGY_WHEEL_BENCH;
         cmd->mode.rc_enable = 1u;
         cmd->mode.engage = 1u;
     }
-    /* 测试独占期间不进入经过的补偿或RL档；退出测试后LQR档位保持原样。 */
+    /* 测试独占期间不进入经过的补偿、LQR或RL档。 */
     else if (!wheel_bench.reserved)
     {
+        if (leg_arm_state == 3u)
+        {
+            cmd->mode.strategy = CTRL_STRATEGY_LEG_TEST;
+            cmd->mode.rc_enable = 1u;
+            cmd->mode.engage = 1u;
+        }
+        else
+        {
         /* 拨杆语义 */
         switch (cmd->s1)
         {
@@ -85,6 +146,28 @@ void Rc_Command_Update(rc_command_t *cmd, const dr16_t *rc, float dt)
         case DR16_SW_DOWN:
         default:
             break;
+        }
+        }
+    }
+
+    /* 测试模式一次拨动只记一档；回中稳定100ms后重新允许，按住或直接反向不连跳。 */
+    if (cmd->mode.strategy != CTRL_STRATEGY_LEG_TEST)
+    {
+        leg_step_ready = 0u;
+        leg_step_center_time = 0.0f;
+    }
+    else if (cmd->leg_test_rate == 0.0f)
+    {
+        leg_step_center_time += dt;
+        if (leg_step_center_time >= 0.1f) { leg_step_ready = 1u; leg_step_center_time = 0.1f; }
+    }
+    else
+    {
+        leg_step_center_time = 0.0f;
+        if (leg_step_ready)
+        {
+            cmd->leg_test_steps += cmd->leg_test_rate > 0.0f ? 1 : -1;
+            leg_step_ready = 0u;
         }
     }
 

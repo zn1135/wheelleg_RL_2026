@@ -28,7 +28,11 @@ from scipy.optimize import least_squares
 
 ROOT = Path(__file__).resolve().parents[1]
 MODEL = ROOT / "resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml"
-MACHINE_CONFIG = ROOT / "deployment/H7_RL/imcalib/config/machine_config.c"
+H7_PROJECT_CONFIGS = {
+    "H7": ROOT / "deployment/H7_RL/imcalib/config/machine_config.c",
+    "H7_ros": ROOT / "deployment/H7_RL_ros/imcalib/config/machine_config.c",
+}
+MACHINE_CONFIG = H7_PROJECT_CONFIGS["H7"]
 TAIL, FRAME_BYTES = bytes.fromhex("0000807f"), 196
 FRAME_BYTES_BY_VERSION = {1: FRAME_BYTES, 2: 644, 3: 644}
 MAX_FRAME_BYTES = max(FRAME_BYTES_BY_VERSION.values())
@@ -324,6 +328,11 @@ def file_identity(path: Path) -> dict:
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
 
 
+def h7_project_name(machine_config: Path) -> str:
+    return next((name for name, path in H7_PROJECT_CONFIGS.items()
+                 if path.resolve() == machine_config.resolve()), "custom")
+
+
 class SessionRecorder:
     """A bounded disk queue keeps slow storage out of the USB read loop."""
 
@@ -346,6 +355,7 @@ class SessionRecorder:
             "started_utc": datetime.now(timezone.utc).isoformat(),
             "timebase": "Jetson monotonic elapsed ns at read return; not sensor sample time",
             "model": file_identity(model_path), "machine_config": file_identity(machine_config),
+            "h7_project": h7_project_name(machine_config),
             "program": file_identity(Path(__file__)),
             "wheel_response_catalog": WHEEL_RESPONSE_CATALOG,
             "firmware_manifest": firmware_info,
@@ -622,6 +632,7 @@ def telemetry_row(frame: np.ndarray) -> dict:
                "output_sequence", "output_tick_ms", "output_used_policy_sequence", "output_flags",
                "output_zero", "output_dm_hal_success", "output_dji_hal_success", "output_enabled", "drive_permitted",
                "imu_sample_age_ms", "rc_sample_age_ms", "rc_strategy", "rc_flags",
+               "rc_left_switch", "rc_right_switch", "leg_test_dial_rate_m_s", "leg_test_arm_state",
                "recovery_phase", "policy_ready", "action_reset_count", "wheel_response_mode",
                "wheel_compensation_l_nm", "wheel_compensation_r_nm", "wheel_compensation_smoothing_rad_s"]
     columns += [f"obs_{i:02d}" for i in range(39)]
@@ -660,6 +671,9 @@ def telemetry_row(frame: np.ndarray) -> dict:
     for i, key in enumerate(("command_vx_m_s", "command_yaw_rad_s", height_key)):
         row[key] = number(54 + i, policy_ok)
     row["observation_dim"] = 32 if frame[4] == 3 else 39
+    if frame[4]==3 and frame[89] in (1.,2.,3.) and frame[90] in (1.,2.,3.):
+        for key,index in (("rc_left_switch",89),("rc_right_switch",90),("leg_test_dial_rate_m_s",91),("leg_test_arm_state",92)):
+            row[key]=number(index)
     for i in range(row["observation_dim"]):
         row[f"obs_{i:02d}"] = number(57 + i, policy_ok)
     for i, name in enumerate(ACTION_MOTORS):
@@ -842,6 +856,7 @@ def analyze_session(directory: Path, model_path: Path | None = None,
         "no_data_before_first_frame_s": first_at if first_at is not None else duration,
         "stale_intervals": stale_intervals, "status_counts": status_counts, "channels": channels,
         "model": metadata["model"], "machine_config": metadata["machine_config"],
+        "h7_project": metadata.get("h7_project", h7_project_name(machine_config)),
         "known_differences": metadata.get("known_differences", []),
         "world_translation_measured": False, "physical_mapping_verified": False,
     }
@@ -1023,11 +1038,16 @@ def main():
     parser.add_argument("--firmware-manifest", type=Path, help="archive the expected build manifest with --record; not boot attestation")
     parser.add_argument("--baud", type=int, default=1152000, help="UART baud rate; CDC accepts line coding but uses USB link speed")
     parser.add_argument("--model", type=Path, help="live model or recorded-model override (matching SHA256)")
-    parser.add_argument("--machine-config", type=Path, help="live mapping or recorded-config override (matching SHA256)")
+    config = parser.add_mutually_exclusive_group()
+    config.add_argument("--h7-project", choices=tuple(H7_PROJECT_CONFIGS),
+                        help="live firmware project: H7 or H7_ros (default: H7); replay uses its recorded configuration")
+    config.add_argument("--machine-config", type=Path, help="live mapping or recorded-config override (matching SHA256)")
     parser.add_argument("--headless", action="store_true")
     parser.add_argument("--seconds", type=float, default=0., help="0 keeps the display open until closed")
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
+    if args.h7_project and not args.port:
+        parser.error("--h7-project requires --port; replay/analyze use the recorded configuration")
     if args.seconds < 0 or not np.isfinite(args.seconds):
         parser.error("--seconds must be finite and nonnegative")
     if args.record and not args.port:
@@ -1048,8 +1068,12 @@ def main():
     if args.replay:
         _, model_path, config_path = load_session(args.replay, args.model, args.machine_config)
     else:
-        model_path, config_path = args.model or MODEL, args.machine_config or MACHINE_CONFIG
+        model_path = args.model or MODEL
+        config_path = args.machine_config or H7_PROJECT_CONFIGS[args.h7_project or "H7"]
     pose = MirrorPose(model_path, config_path)
+    project_name, config_identity = h7_project_name(config_path), file_identity(config_path)
+    if args.port:
+        print(json.dumps({"h7_project": project_name, "machine_config": config_identity}), flush=True)
     recorder = SessionRecorder(args.record, model_path, config_path, args.firmware_manifest) if args.record else None
     receiver = ReplayReceiver(args.replay) if args.replay else SerialReceiver(args.port, args.baud, recorder)
     viewer, applied, last_status, last_record_error = None, None, None, None
@@ -1149,6 +1173,7 @@ def main():
             args.report.parent.mkdir(parents=True, exist_ok=True)
             args.report.write_text(json.dumps({
                 "scope": "read-only pose/control telemetry; world translation fixed; mapping unverified on bench",
+                "h7_project": project_name, "machine_config": recorder.metadata["machine_config"] if recorder else config_identity,
                 **wire_info(receiver.parser),
                 "accepted_frames": receiver.parser.accepted, "rejected_candidates": receiver.parser.rejected,
                 "missing_submitted_frames": receiver.clock.missing,

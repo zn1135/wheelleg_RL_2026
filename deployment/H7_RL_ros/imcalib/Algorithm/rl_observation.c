@@ -1,6 +1,6 @@
 /*
- * model5999稳站v2输入与恢复模式：原生电机反馈、实际速度命令、五帧历史。
- * 位置/速度使用rad、rad/s；先缩放、拼接再整体裁剪。机器配置直接取固定表，不扫描配置合法性。
+ * 复旦model14000输入：原生电机反馈、实际运动命令、v2五帧历史。
+ * 位置/速度使用rad、rad/s；历史先入队，当前帧再裁剪。机器配置直接取固定表。
  * 执行任务保存最新反馈，策略任务复制后构建；不添加训练噪声或延迟，不调用网络或发送电机。
  */
 #include "rl_observation.h"
@@ -16,11 +16,10 @@ void RL_Recovery_Reset(rl_recovery_state_t *state)
 {
     memset(state, 0, sizeof(*state));
 }
-/* 5999已解锁目标0.22m；拨轮不再改变本模型的训练高度命令。 */
+/* 沿用既有腿长→模型参考高度换算，范围来自复旦行走训练命令。 */
 float RL_Command_Height(float leg_length_command)
 {
-    (void)leg_length_command;
-    return 0.22f;
+    return clampf(leg_length_command + MACHINE_RL_LEG_TO_HEIGHT, MACHINE_RL_HEIGHT_MIN, MACHINE_RL_HEIGHT_MAX);
 }
 /*
  * 每10ms推进一次模式/起立计时，失败须退出投入才复位。
@@ -135,10 +134,9 @@ uint8_t RL_Observation_Read_Sample(const rl_observation_state_t *state, rl_obser
     *sample = state->sample;
     return 1u;
 }
-/* 100Hz构造一帧；5999为已解锁0.22m、yaw=0、速度第0档±0.5m/s。 */
+/* 100Hz构造一帧；保护未就绪时运动命令归零，不添加仿真噪声或延迟。 */
 uint8_t RL_Observation_Build(rl_observation_state_t *state, const machine_rl_cfg_t *config, const rl_observation_sample_t *sample, const rc_command_t *command, const rl_recovery_state_t *recovery, uint8_t source_valid)
 {
-    float target;
     memset(state->obs, 0, sizeof(state->obs));
     state->valid = 0u;
     if (!source_valid || recovery->phase == RL_RECOVERY_FAILED)
@@ -147,19 +145,18 @@ uint8_t RL_Observation_Build(rl_observation_state_t *state, const machine_rl_cfg
         state->command_velocity = 0.0f;
         return 0u;
     }
-    /* 只把实际限速命令送入历史；恢复/未起立时当拍归零，不走减速斜坡。 */
+    /* 复旦没有旧稳站课程斜坡；命令按训练范围限幅，保留直立承重许可。 */
     if (recovery->phase == RL_RECOVERY_NORMAL && recovery->has_stood && recovery->tracking_ms >= 500u)
     {
-        target = clip(command->vel, 0.5f);
-        state->command_velocity += clip(target - state->command_velocity, 1.0f * MACHINE_POLICY_DT);
+        state->command_velocity = clip(command->vel, 2.5f);
+        state->obs[RL_OBS_CMD_YAW_RATE] = clip(command->yaw, 2.0f) * 0.25f;
     }
     else
     {
         state->command_velocity = 0.0f;
     }
     state->obs[RL_OBS_CMD_VX] = state->command_velocity * 2.0f;
-    state->obs[RL_OBS_CMD_YAW_RATE] = 0.0f;
-    state->obs[RL_OBS_CMD_HEIGHT] = 0.22f * config->observation.height_scale;
+    state->obs[RL_OBS_CMD_HEIGHT] = RL_Command_Height(command->len) * config->observation.height_scale;
     for (uint8_t i = 0u; i < 3u; i++)
     {
         state->obs[RL_OBS_GYRO_X + i] = sample->gyro[i] * config->observation.gyro_scale;
@@ -174,12 +171,7 @@ uint8_t RL_Observation_Build(rl_observation_state_t *state, const machine_rl_cfg
         state->obs[RL_OBS_MOTOR_VEL + RL_Action_Index(i)] = sample->vel[i] * config->observation.joint_vel_scale;
         state->obs[RL_OBS_LAST_ACTION + i] = state->last_action[i];
     }
-    state->obs[RL_OBS_CONTROL_MODE + (recovery->phase == RL_RECOVERY_NORMAL ? 0u : 3u)] = 1.0f;
-    /* 训练先缩放、拼接再整体裁剪；不能套旧39维的缩放前速度裁剪。 */
-    for (uint8_t i = 0u; i < RL_OBS_SIZE; i++)
-    {
-        state->obs[i] = clip(state->obs[i], config->observation.obs_clip);
-    }
+    /* 先拒绝坏帧，不能让裁剪把无穷值掩盖成有限输入。 */
     if (!Float_Array_Finite(state->obs, RL_OBS_SIZE))
     {
         state->history_initialized = 0u;
@@ -198,6 +190,11 @@ uint8_t RL_Observation_Build(rl_observation_state_t *state, const machine_rl_cfg
     {
         memmove(state->history, &state->history[RL_OBS_SIZE], (RL_HISTORY_SIZE - RL_OBS_SIZE) * sizeof(float));
         memcpy(&state->history[RL_HISTORY_SIZE - RL_OBS_SIZE], state->obs, sizeof(state->obs));
+    }
+    /* v2历史保存未裁剪帧；硬件无人工噪声，首帧重复五次。 */
+    for (uint8_t i = 0u; i < RL_OBS_SIZE; i++)
+    {
+        state->obs[i] = clip(state->obs[i], config->observation.obs_clip);
     }
     state->valid = 1u;
     return 1u;

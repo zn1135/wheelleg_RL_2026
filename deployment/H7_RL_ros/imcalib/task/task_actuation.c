@@ -20,6 +20,7 @@
 #include "wheel_bench.h"
 #include "output_capture.h"
 #include "dr16.h"
+#include "joint_capture.h"
 #include <math.h>
 #include <string.h>
 
@@ -44,6 +45,16 @@ static uint64_t output_dispatch_started_ns;
 /* 与control_frame数值同批复制，不能用后来的接收时刻冒充当拍源头。 */
 static uint64_t latency_source_rx_ns[8];
 static uint64_t latency_frame_captured_ns;
+static float leg_test_target[2];
+static float leg_test_goal[2];
+static int32_t leg_test_applied_steps;
+static uint8_t leg_test_running;
+static uint8_t leg_test_blocked;
+static uint8_t leg_test_recovering;
+static uint16_t leg_test_wait_ticks;
+static joint_capture_t joint_capture;
+static uint8_t joint_capture_divider;
+static torque_output_t joint_capture_torque;
 volatile float rl_output_dm_cmd_nm[DM_MOTOR_NUM];
 volatile float rl_output_wheel_cmd_nm[DJI_MOTOR_NUM];
 
@@ -55,7 +66,6 @@ uint8_t Robot_Control_Enable_Allowed(void)
     if (wheel_bench.reserved || rc_command.mode.strategy == CTRL_STRATEGY_WHEEL_BENCH) { return 0u; }
     if (rc_command.mode.strategy == CTRL_STRATEGY_RL && rl_control.recovery.phase == RL_RECOVERY_FAILED) { return 0u; }
     recovery = (uint8_t)(standup_control.enabled && standup_control.recovery_enabled && rc_command.mode.strategy == CTRL_STRATEGY_LQR && rc_command.mode.engage);
-    recovery |= (uint8_t)(machine->rl.configured && rc_command.mode.strategy == CTRL_STRATEGY_RL && rc_command.mode.engage);
     return (uint8_t)(rc_command.mode.rc_enable && rc_command.online && ctrl_fault == FAULT_NONE && (!robot_state.fallen || recovery));
 }
 
@@ -149,7 +159,7 @@ static void Control_Frame_Read(void)
     taskEXIT_CRITICAL();
 }
 
-/* 恢复仅改变RL许可/观测，不动LQR离地检测。实际投入/退出清历史，模式切换只撤销旧动作就绪。 */
+/* LQR正常平衡时提前检查RL承重许可；沿用原阈值/计时，不动LQR控制或离地检测。 */
 static void Control_RL_Recovery_Update(void)
 {
     rl_recovery_state_t recovery;
@@ -160,7 +170,7 @@ static void Control_RL_Recovery_Update(void)
 
     recovery = rl_control.recovery;
     previous = recovery.phase;
-    request = (uint8_t)(control_frame.rc.online && control_frame.rc.mode.rc_enable && control_frame.rc.mode.strategy == CTRL_STRATEGY_RL && control_frame.rc.mode.engage);
+    request = (uint8_t)(control_frame.rc.online && control_frame.rc.mode.rc_enable && control_frame.rc.mode.engage && (control_frame.rc.mode.strategy == CTRL_STRATEGY_RL || (control_frame.rc.mode.strategy == CTRL_STRATEGY_LQR && lqr_running && (!standup_control.enabled || standup_control.phase == STANDUP_DONE))));
     input.imu = &control_frame.imu;
     input.leg[0] = &control_frame.left;
     input.leg[1] = &control_frame.right;
@@ -232,6 +242,77 @@ uint8_t output_task_rl_engaged(void)
 }
 
 /* ================= 3 分发层: 唯一下发点 ================= */
+/* 只复制本拍已有反馈和命令，不生成运动目标。 */
+static void Capture_Leg_State(const control_frame_t *frame, const output_capture_record_t *control)
+{
+    static uint64_t last_record_ns;
+    output_capture_record_t state = {0};
+    output_capture_record_t geometry = {0};
+
+    /* 基础执行可达1kHz；限制额外记录到最多500Hz，降低队列负荷。 */
+    if (control->strategy == CTRL_STRATEGY_JOINT_CAPTURE)
+    {
+        if ((!joint_capture.running || joint_capture.blocked) ? (control->id & 1u) : (joint_capture_divider != 0u)) { return; }
+    }
+    else if (control->end_ns - last_record_ns < 2000000u) { return; }
+    last_record_ns = control->end_ns;
+    state.kind = OUTPUT_CAPTURE_LEG_STATE;
+    state.begin_ns = latency_frame_captured_ns;
+    state.end_ns = control->end_ns;
+    state.id = control->id;
+    state.fault = control->fault;
+    state.strategy = control->strategy;
+    state.machine = control->machine;
+    state.flags = control->flags;
+    for (uint8_t i = 0u; i < 4u; i++)
+    {
+        state.torque_nm[i] = frame->motor_pos[i];
+        if (i < 2u) { state.torque_nm[i + 4u] = frame->motor_vel[i]; }
+        else { state.wheel_speed[i - 2u] = frame->motor_vel[i]; }
+    }
+    for (uint8_t i = 0u; i < 2u; i++) { state.wheel_age_us[i] = Latency_Age_Us(state.begin_ns, latency_source_rx_ns[i + 1u]); }
+    for (uint8_t i = 0u; i < 2u; i++)
+    {
+        uint32_t age = Latency_Age_Us(state.begin_ns, latency_source_rx_ns[i + 3u]);
+        memcpy(&state.current_raw[i * 2u], &age, sizeof(age));
+    }
+    geometry.kind = OUTPUT_CAPTURE_LEG_GEOMETRY;
+    geometry.begin_ns = state.begin_ns;
+    geometry.end_ns = state.end_ns;
+    geometry.id = state.id;
+    geometry.fault = state.fault;
+    geometry.strategy = state.strategy;
+    geometry.machine = state.machine;
+    geometry.flags = (uint16_t)((frame->left.output.valid ? 1u : 0u) | (frame->right.output.valid ? 2u : 0u) | (frame->motor_valid ? 4u : 0u) | (leg_test_running && !leg_test_blocked ? (8u | OUTPUT_CAPTURE_LEG_SOFT_BOUNDARY | OUTPUT_CAPTURE_LEG_STEP10) : 0u) | (leg_test_blocked ? 16u : 0u) | (leg_test_recovering ? 32u : 0u));
+    for (uint8_t i = 0u; i < 4u; i++) { geometry.torque_nm[i] = frame->joint_torque[i]; }
+    geometry.torque_nm[4] = frame->rc.len;
+    geometry.torque_nm[5] = frame->left.output.virtual_leg_length;
+    geometry.wheel_speed[0] = frame->right.output.virtual_leg_length;
+    geometry.wheel_speed[1] = frame->left.output.virtual_leg_angle;
+    memcpy(&geometry.wheel_age_us[0], &frame->right.output.virtual_leg_angle, sizeof(float));
+    memcpy(geometry.current_raw, leg_test_target, sizeof(leg_test_target));
+    Output_Capture_Push(&state);
+    Output_Capture_Push(&geometry);
+    if (control->strategy == CTRL_STRATEGY_JOINT_CAPTURE)
+    {
+        output_capture_record_t target = {0};
+        target.kind = OUTPUT_CAPTURE_JOINT_TARGET;
+        target.begin_ns = state.begin_ns; target.end_ns = control->end_ns;
+        target.id = control->id; target.fault = control->fault; target.strategy = control->strategy;
+        target.machine = control->machine;
+        for (uint8_t i = 0u; i < 4u; i++)
+        { target.torque_nm[i] = machine->rl.motor_sign[i] * joint_capture.target[i] + machine->rl.motor_zero[i]; }
+        target.torque_nm[4] = machine->rl.torque.p_gains[0];
+        target.torque_nm[5] = machine->rl.torque.d_gains[0];
+        target.wheel_speed[0] = fminf(40.0f, machine->dm_trq_clamp);
+        target.wheel_age_us[0] = joint_capture.elapsed_ms;
+        target.flags = (uint16_t)(OUTPUT_CAPTURE_JOINT_RIGHT_LENGTH | (joint_capture.running ? 1u : 0u) | (joint_capture.blocked ? 2u : 0u) | (joint_capture.saturated << 8));
+        target.bench_phase = joint_capture.stage; target.bench_reason = joint_capture.axis;
+        /* 本次右腿长度定位60/2/20另含负载表/积分；bit4与旧变角定位/纯PD扫频分开。 */
+        Output_Capture_Push(&target);
+    }
+}
+
 /* 只读诊断在发送返回后一次发布，避免新命令配到上一拍HAL结果。 */
 static void Mirror_Output_Publish(mirror_output_snapshot_t *next, const torque_output_t *applied)
 {
@@ -272,6 +353,7 @@ static void Mirror_Output_Publish(mirror_output_snapshot_t *next, const torque_o
         record.wheel_age_us[i] = (!control_frame.wheel_rx_ns[i] || control_frame.wheel_rx_ns[i] > output_dispatch_started_ns || age_us >= UINT32_MAX) ? UINT32_MAX : (uint32_t)age_us;
     }
     Output_Capture_Push(&record);
+    Capture_Leg_State(&control_frame, &record);
     Latency_Dispatch_End();
 }
 
@@ -318,7 +400,10 @@ static void output_dispatch(const torque_output_t *torque, mirror_output_snapsho
     {
         zero_output = 1u;
     }
-    if (ctrl_strategy == CTRL_STRATEGY_RL && rl_control.recovery.phase != RL_RECOVERY_NORMAL && rl_control.recovery.phase != RL_RECOVERY_RECOVER) { zero_output = 1u; }
+    /* 行走模型没有起立策略；只在直立承重许可后出力，RECOVER仅为等待状态。 */
+    if (ctrl_strategy == CTRL_STRATEGY_RL && (rl_control.recovery.phase != RL_RECOVERY_NORMAL || !rl_control.recovery.has_stood)) { zero_output = 1u; }
+    if (ctrl_strategy == CTRL_STRATEGY_LEG_TEST && zero_output && leg_test_running) { leg_test_blocked = 1u; }
+    if (ctrl_strategy == CTRL_STRATEGY_JOINT_CAPTURE && zero_output && joint_capture.running) { joint_capture.blocked = 1u; }
     diagnostic->flags |= zero_output ? 0x02u : 0u;
     diagnostic->flags |= torque_output_enabled ? 0x10u : 0u;
     diagnostic->flags |= control_frame.drive ? 0x20u : 0u;
@@ -606,6 +691,123 @@ static void solve_lqr_standup(torque_output_t *torque)
     }
 }
 
+/* 独立腿长反馈控制：每个新增拨轮步改变目标10mm，沿原0.05m/s平滑到位。
+ * m、m/s反馈生成轴向N，再映射四关节Nm；轮矩/摆矩为零。
+ * 工作边界外保留退回方向控制；失能、失联、解算失败或出力许可丢失仍锁止并须重新准备。 */
+static void solve_joint_capture(torque_output_t *torque)
+{
+    float previous[4];
+    uint8_t valid = (uint8_t)(control_frame.drive && control_frame.joint_ready && control_frame.motor_valid && control_frame.rc.online && ctrl_fault == FAULT_NONE);
+    uint64_t now = Mono_Ns_Get();
+    if (!control_frame.drive && !joint_capture.running && ctrl_fault == FAULT_NONE && control_frame.rc.online)
+    { Torque_Output_Clear(torque); return; }
+    for (uint8_t i = 0u; i < 4u; i++)
+    {
+        previous[i] = rl_output_dm_cmd_nm[i];
+        if (machine->rl.torque.p_gains[i] != machine->rl.torque.p_gains[0] || machine->rl.torque.d_gains[i] != machine->rl.torque.d_gains[0]) { valid = 0u; }
+        if (!latency_source_rx_ns[i + 1u] || now < latency_source_rx_ns[i + 1u] || now - latency_source_rx_ns[i + 1u] > 5000000u) { valid = 0u; }
+    }
+    valid &= Joint_Capture_Geometry(control_frame.motor_pos, machine->leg_lu, machine->leg_lg);
+    if (!valid) { joint_capture.blocked = 1u; }
+    if (joint_capture.blocked) { Torque_Output_Clear(torque); return; }
+    if (joint_capture.running && ++joint_capture_divider < MACHINE_RL_CTRL_DIV)
+    { *torque = joint_capture_torque; return; }
+    joint_capture_divider = 0u;
+    Torque_Output_Clear(&joint_capture_torque);
+    joint_capture_torque.valid = Joint_Capture_Update(&joint_capture, (uint32_t)(now / 1000000u), valid,
+        control_frame.motor_pos, control_frame.motor_vel, previous, machine->rl.motor_sign, machine->rl.motor_zero,
+        machine->rl.torque.p_gains, machine->rl.torque.d_gains, machine->leg_lu, machine->leg_lg, fminf(40.0f, machine->dm_trq_clamp), joint_capture_torque.dm);
+    *torque = joint_capture_torque;
+}
+
+static void solve_leg_test(torque_output_t *torque)
+{
+    const leg_state_t *leg[2] = {&control_frame.left, &control_frame.right};
+    float force;
+    float step;
+    float limit = fminf(40.0f, machine->dm_trq_clamp);
+
+    if (ctrl_fault != FAULT_NONE || !control_frame.rc.online)
+    {
+        leg_test_blocked = 1u;
+    }
+    if (!control_frame.drive)
+    {
+        if (leg_test_running || ++leg_test_wait_ticks >= 1000u) { leg_test_blocked = 1u; }
+        return;
+    }
+    if (leg_test_blocked) { return; }
+    leg_test_wait_ticks = 0u;
+    for (uint8_t i = 0u; i < 2u; i++)
+    {
+        float length = leg[i]->output.virtual_leg_length;
+        if (!leg[i]->output.valid || !leg[i]->output.force_valid || !isfinite(length) || !isfinite(leg[i]->output.d_virtual_leg_length))
+        {
+            leg_test_blocked = 1u;
+            return;
+        }
+    }
+    if (!leg_test_running)
+    {
+        for (uint8_t i = 0u; i < 2u; i++)
+        {
+            leg_test_target[i] = leg[i]->output.virtual_leg_length;
+            leg_test_goal[i] = leg_test_target[i];
+            leg_test_recovering |= (uint8_t)(leg_test_target[i] > machine->leg_len_max);
+        }
+        leg_test_running = 1u;
+        leg_test_applied_steps = control_frame.rc.leg_test_steps; /* 接管前的拨动不补执行。 */
+        torque->valid = 1u; /* 首拍零力矩，目标从各自实测值开始。 */
+        return;
+    }
+    step = (float)((int64_t)control_frame.rc.leg_test_steps - leg_test_applied_steps) * 0.010f;
+    leg_test_applied_steps = control_frame.rc.leg_test_steps;
+    for (uint8_t i = 0u; i < 2u; i++)
+    {
+        if (leg_test_recovering)
+        {
+            /* 超长接管不跳到0.33m：目标只能缩短，提前回收的实测位置不被往外拉。 */
+            leg_test_goal[i] = fmaxf(machine->leg_len_min, fminf(leg_test_goal[i], leg[i]->output.virtual_leg_length) + fminf(step, 0.0f));
+            leg_test_target[i] = fminf(leg_test_target[i], leg[i]->output.virtual_leg_length);
+            leg_test_target[i] = fmaxf(machine->leg_len_min, leg_test_target[i] + clampf(leg_test_goal[i] - leg_test_target[i], -0.05f * MACHINE_LQR_DT, 0.0f));
+        }
+        else
+        {
+            leg_test_goal[i] = clampf(leg_test_goal[i] + step, machine->leg_len_min, machine->leg_len_max);
+            leg_test_target[i] = clampf(leg_test_target[i] + clampf(leg_test_goal[i] - leg_test_target[i], -0.05f * MACHINE_LQR_DT, 0.05f * MACHINE_LQR_DT), machine->leg_len_min, machine->leg_len_max);
+        }
+        force = machine->lqr.leg_len[i].kp * (leg_test_target[i] - leg[i]->output.virtual_leg_length) - machine->lqr.leg_len[i].kd * MACHINE_LQR_DT * leg[i]->output.d_virtual_leg_length;
+        if (leg_test_recovering && isfinite(force)) { force = fminf(force, 0.0f); }
+        /* 实长越工作边界只禁止继续向外出力，保留退回控制，不能清零后任弹簧伸展。 */
+        if (isfinite(force))
+        {
+            if (leg[i]->output.virtual_leg_length >= machine->leg_len_max) { force = fminf(force, 0.0f); }
+            else if (leg[i]->output.virtual_leg_length <= machine->leg_len_min) { force = fmaxf(force, 0.0f); }
+        }
+        if (!isfinite(force) || !Leg_Force_Map_Forward(leg[i], force, 0.0f, &torque->dm[2u * i]))
+        {
+            leg_test_blocked = 1u;
+            Torque_Output_Clear(torque);
+            return;
+        }
+    }
+    for (uint8_t i = 0u; i < DM_MOTOR_NUM; i++)
+    {
+        if (!isfinite(torque->dm[i]))
+        {
+            leg_test_blocked = 1u;
+            Torque_Output_Clear(torque);
+            return;
+        }
+        torque->dm[i] = clampf(torque->dm[i], -limit, limit);
+    }
+    if (leg_test_recovering && control_frame.rc.leg_test_rate == 0.0f && leg_test_target[0] <= machine->leg_len_max && leg_test_target[1] <= machine->leg_len_max && leg[0]->output.virtual_leg_length <= machine->leg_len_max && leg[1]->output.virtual_leg_length <= machine->leg_len_max)
+    {
+        leg_test_recovering = 0u;
+    }
+    torque->valid = 1u;
+}
+
 /* ================= 主体: 估计 → 求解 → 分发 ================= */
 /*
  * 单周期主链：反馈快照 → 估计/离地/速度融合 → 策略路由求解 → 诊断发布 → 唯一输出口。
@@ -659,6 +861,11 @@ void output_task_body(void)
     memset(&diagnostic, 0, sizeof(diagnostic));
     memset(&pending_compensation, 0, sizeof(pending_compensation));
     strategy = Wheel_Bench_Output_Valid(HAL_GetTick()) ? CTRL_STRATEGY_WHEEL_BENCH : (control_frame.rc.mode.rc_enable ? control_frame.rc.mode.strategy : CTRL_STRATEGY_DISABLE);
+    /* 每次进出RL均撤销旧动作和历史；在途推理由reset_count拒绝。 */
+    if (strategy != ctrl_strategy && (strategy == CTRL_STRATEGY_RL || ctrl_strategy == CTRL_STRATEGY_RL))
+    {
+        Action_State_Clear();
+    }
     ctrl_strategy = strategy;
     if (!standup_control.enabled || strategy == CTRL_STRATEGY_COMPENSATION || (control_frame.rc.online && !(control_frame.rc.mode.strategy == CTRL_STRATEGY_LQR && control_frame.rc.mode.engage)))
     {
@@ -670,14 +877,38 @@ void output_task_body(void)
     }
     rl_engaged = 0u;
     dispatch = 1u;
+    if (strategy != CTRL_STRATEGY_JOINT_CAPTURE)
+    {
+        memset(&joint_capture, 0, sizeof(joint_capture));
+        joint_capture_divider = 0u;
+        Torque_Output_Clear(&joint_capture_torque);
+    }
     if (strategy != CTRL_STRATEGY_RL)
     {
         rl_wait_ticks = 0u;
         rl_motor_map.initialized = 0u;
     }
+    if (strategy != CTRL_STRATEGY_LEG_TEST)
+    {
+        leg_test_running = 0u;
+        leg_test_blocked = 0u;
+        leg_test_recovering = 0u;
+        leg_test_wait_ticks = 0u;
+        memset(leg_test_target, 0, sizeof(leg_test_target));
+        memset(leg_test_goal, 0, sizeof(leg_test_goal));
+        leg_test_applied_steps = 0;
+    }
 
     switch (strategy)
     {
+        case CTRL_STRATEGY_JOINT_CAPTURE:
+            lqr_idle();
+            solve_joint_capture(&torque);
+            break;
+        case CTRL_STRATEGY_LEG_TEST:
+            lqr_idle();
+            solve_leg_test(&torque);
+            break;
         case CTRL_STRATEGY_WHEEL_BENCH:
             lqr_idle();
             torque = bench_torque;
@@ -707,7 +938,7 @@ void output_task_body(void)
 
         case CTRL_STRATEGY_RL:
         {
-            /* 基础任务仍1kHz；选中RL后每2拍采样/PD，策略每20拍更新一次原始action。 */
+            /* 基础任务仍1kHz；选中RL后每2拍采样/PD，策略每10拍更新一次action。 */
             uint8_t tick = (uint8_t)(rl_wait_ticks == 0u);
             lqr_running = 0u;
             rl_wait_ticks = tick ? MACHINE_RL_CTRL_DIV - 1u : rl_wait_ticks - 1u;
@@ -735,7 +966,7 @@ void output_task_body(void)
                 Latency_Capture_Push(&sample_timing);
             }
             rl_engaged = (uint8_t)(control_frame.drive && control_frame.rc.mode.engage && rl_control.recovery.phase != RL_RECOVERY_IDLE && rl_control.recovery.phase != RL_RECOVERY_FAILED);
-            if (rl_engaged && rl_control.recovery.phase != RL_RECOVERY_HOLD && action_state.rl_ready && control_frame.rl_motor.valid)
+            if (rl_engaged && rl_control.recovery.phase == RL_RECOVERY_NORMAL && rl_control.recovery.has_stood && action_state.rl_ready && control_frame.rl_motor.valid)
             {
                 /* 正常间隔拍保持上次已发命令；故障/退出不走保持分支，仍每基础拍清零。 */
                 if (tick)

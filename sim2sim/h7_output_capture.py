@@ -7,6 +7,7 @@ contain actual attempted bytes and HAL status; neither is measured shaft torque.
 from __future__ import annotations
 import argparse
 import binascii
+from collections import Counter
 import csv
 import hashlib
 import json
@@ -50,7 +51,7 @@ class CaptureParser:
             records=[]
             for i in range(count):
                 row=RECORD.unpack_from(raw,HEADER.size+i*size)
-                if row[1] not in (1,2) or row[-3] not in (0,1) or row[-1]!=0:
+                if row[1] not in (1,2,3,4,5) or row[-3] not in (0,1) or row[-1]!=0:
                     raise ValueError('unsupported record type, machine or controller')
                 records.append(row)
             packets.append({'sequence':packet_seq,'produced':produced,'dropped':dropped,
@@ -89,9 +90,9 @@ def analyze_session(session, out):
             elif delta!=1:gaps.append({'after':last_seq,'before':seq,'missing':delta-1})
         if kind in last_end and begin>=last_end[kind]:intervals.append({'kind':kind,'period_us':(begin-last_end[kind])/1000})
         last_end[kind]=begin;last_seq,last_conn=seq,conn
-        v={'connection':conn,'receive_ns':receive,'sequence':seq,'kind':'control' if kind==1 else 'can',
-           'begin_ns':begin,'end_ns':end,'id':identifier,'fault':fault if kind==1 else '',
-           'flags_or_hal':row[20],'strategy':row[21] if kind==1 else '',
+        v={'connection':conn,'receive_ns':receive,'sequence':seq,'kind':{1:'control',2:'can',3:'leg_state',4:'leg_geometry',5:'joint_target'}[kind],
+           'begin_ns':begin,'end_ns':end,'id':identifier,'fault':fault if kind in (1,3,4,5) else '',
+           'flags_or_hal':row[20],'strategy':row[21] if kind in (1,3,4,5) else '',
            'bench_phase':row[22] if kind==1 else '', 'bench_reason':row[23] if kind==1 else '',
            'machine':row[24],'wheel_online':row[25] if kind==1 else '', 'controller_mode':row[26]}
         for j in range(6):v[f'request_{j}_firmware_nm']=row[6+j] if kind==1 else ''
@@ -99,6 +100,24 @@ def analyze_session(session, out):
             v[f'wheel_{j}_speed_rad_s']=row[12+j] if kind==1 else ''
             v[f'wheel_{j}_rx_age_us']=row[14+j] if kind==1 and row[14+j]!=0xffffffff else ''
         for j in range(4):v[f'can_current_slot_{j}']=row[16+j] if kind==2 else ''
+        for j in range(4):
+            v[f'leg_{j}_position_rad'] = row[6+j] if kind==3 else ''
+            v[f'leg_{j}_velocity_rad_s'] = row[10+j] if kind==3 else ''
+            v[f'leg_{j}_feedback_torque_nm'] = row[6+j] if kind==4 else ''
+            age = (row[14+j] if j<2 else struct.unpack('<I',struct.pack('<hh',row[16+2*(j-2)],row[17+2*(j-2)]))[0]) if kind==3 else 0xffffffff
+            v[f'leg_{j}_rx_age_us'] = age if age!=0xffffffff else ''
+        v['leg_length_command_m'] = row[10] if kind==4 else ''
+        v['left_leg_length_m'] = row[11] if kind==4 else ''
+        v['right_leg_length_m'] = row[12] if kind==4 else ''
+        v['left_leg_angle_rad'] = row[13] if kind==4 else ''
+        v['right_leg_angle_rad'] = struct.unpack('<f',struct.pack('<I',row[14]))[0] if kind==4 else ''
+        v['leg_valid_flags'] = row[20] if kind==4 else ''
+        for j,side in enumerate(('left','right')):
+            v[f'{side}_leg_test_target_m'] = struct.unpack('<f',struct.pack('<hh',row[16+2*j],row[17+2*j]))[0] if kind==4 and row[20]&8 else ''
+        for j in range(4):v[f'joint_{j}_target_firmware_rad']=row[6+j] if kind==5 else ''
+        for key,value in (('joint_kp',row[10]),('joint_kd',row[11]),('joint_torque_limit_nm',row[12]),
+                          ('joint_elapsed_ms',row[14]),('joint_stage',row[22]),('joint_axis',row[23])):
+            v[key]=value if kind==5 else ''
         rows.append(v)
     packet_gaps=[];drop_increase=0
     for previous,current in zip(packets,packets[1:]):
@@ -108,12 +127,22 @@ def analyze_session(session, out):
         drops=(current['dropped']-previous['dropped'])&0xffffffff
         if drops<2**31:drop_increase+=drops
     complete=bool(records) and not (parser.rejected or gaps or restarts or packet_gaps or fragments or drop_increase)
+    counts={kind:Counter((conn,row[4]) for conn,_,row in records if row[1]==kind) for kind in (1,3,4,5)}
+    leg_present=bool(counts[3] or counts[4])
+    leg_paired=leg_present and counts[3]==counts[4] and all(count<=counts[1][key] for key,count in counts[3].items())
+    if leg_present and not leg_paired:complete=False
+    sweep_states=Counter((conn,row[4]) for conn,_,row in records if row[1]==3 and row[21]==7)
+    joint_present=bool(counts[5] or sweep_states)
+    joint_paired=bool(joint_present and counts[5]==sweep_states and all(n<=counts[1][key] for key,n in counts[5].items()))
+    if joint_present and not joint_paired:complete=False
     period={}
     for kind,label in ((1,'control'),(2,'can')):
         values=[x['period_us'] for x in intervals if x['kind']==kind]
         period[label]={'count':len(values),'min_us':min(values) if values else None,
                        'max_us':max(values) if values else None,'mean_us':sum(values)/len(values) if values else None}
     report={'format':'h7-output-capture-analysis','complete_observed_span':complete,
+            'leg_records_present':leg_present,'leg_records_match_control':leg_paired,
+            'joint_target_records_present':joint_present,'joint_target_records_match_state':joint_paired,
             'session':str(session),'stream_sha256':meta['stream_sha256'],'model':meta['model'],
             'machine_config':meta['machine_config'],'firmware_expectation':meta.get('firmware_manifest'),
             'packets':len(packets),'records':len(records),'crc_or_schema_rejections':parser.rejected,

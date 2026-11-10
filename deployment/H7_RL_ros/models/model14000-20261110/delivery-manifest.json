@@ -1,0 +1,145 @@
+{
+  "created_at": "2026-11-10T18:03:41.635211+08:00",
+  "branch": "26_wheelleg",
+  "head": "c3c8fdffe0739aed314fb71c69f2a2d3135b3fb9",
+  "dirty_workspace": true,
+  "checkpoint_sha256": "5320e927d2ef2387a2d9ef1678102abc79942cde1b1a616828de9b2f133dd6ce",
+  "onnx_sha256": "b50383472f5dea07aece73f5539ebb13281924480635f547c2c7d92212b9317a",
+  "physics_profile": "mirrored-local-load-dahl-20261109-v1",
+  "physics_sha256": "e6ef82fa4380fa01341fa2166be56282c5290c82fec2b2a04e5b3107ce49218f",
+  "iterations": 14000,
+  "hardware": "STM32H723VGTx big wheelleg; H7_RL_ros",
+  "software_adapter": "completed; independent owner review pending",
+  "hardware_flash": "programmed_verified_reset_success",
+  "board_numeric_and_worst_timing": "not_executed",
+  "motion_acceptance": {
+    "passed": 11,
+    "total": 987,
+    "accepted": false
+  },
+  "simulation_load_is_not_hardware_compensation": true,
+  "sensor_velocity_equivalence": "pending: hardware native feedback versus training 2ms angle difference",
+  "parking_pitch_offset_deg": 0,
+  "extra_simulated_delays_on_hardware": false,
+  "physical_calibration_c_unchanged": true,
+  "rl_torque_c_unchanged": true,
+  "changed_h7_files": [
+    "deployment/H7_RL_ros/md/sysid-change-map.md",
+    "deployment/H7_RL_ros/md/file-guide.md",
+    "deployment/H7_RL_ros/X-CUBE-AI/App/networkzn1_data_params.h",
+    "deployment/H7_RL_ros/X-CUBE-AI/App/networkzn1.c",
+    "deployment/H7_RL_ros/X-CUBE-AI/App/networkzn1_generate_report.txt",
+    "deployment/H7_RL_ros/X-CUBE-AI/App/networkzn1.h",
+    "deployment/H7_RL_ros/X-CUBE-AI/App/networkzn1_config.h",
+    "deployment/H7_RL_ros/X-CUBE-AI/App/networkzn1_data_params.c",
+    "deployment/H7_RL_ros/X-CUBE-AI/App/networkzn1_data.h",
+    "deployment/H7_RL_ros/X-CUBE-AI/App/networkzn1_data.c",
+    "deployment/H7_RL_ros/imcalib/Algorithm/rl_policy.h",
+    "deployment/H7_RL_ros/imcalib/Algorithm/rl_observation.c",
+    "deployment/H7_RL_ros/imcalib/Algorithm/rl_policy.c",
+    "deployment/H7_RL_ros/imcalib/Algorithm/rl_observation.h",
+    "deployment/H7_RL_ros/imcalib/config/machine_config.h",
+    "deployment/H7_RL_ros/imcalib/task/task_actuation.c",
+    "deployment/H7_RL_ros/imcalib/task/task_policy.c",
+    "deployment/H7_RL_ros/imcalib/task/vofa_debug.c",
+    "deployment/H7_RL_ros/imcalib/common/rl_types.h"
+  ],
+  "tool_versions": {
+    "torch": "2.14.0+cu130",
+    "onnx": "1.22.0",
+    "arm_gcc": "13.2.1",
+    "stedgeai": "2.2.0-20266 / CubeAI10.2.0"
+  },
+  "firmware": {
+    "ok": true,
+    "scope": "linked firmware contains actual generated weights; not board flash/readback",
+    "builds": [
+      {
+        "machine": 0,
+        "parameter_bytes": 155304,
+        "unique_weight_offset": 191904,
+        "firmware": {
+          "elf": {
+            "path": "artifacts/fudan_ppo_walk/20261110-model14000-h7ros-deploy-01/final-build/h7-machine-0/firmware.elf",
+            "bytes": 3189824,
+            "sha256": "d780fb2ac01ca6f4e1b85b2b6d8ecc02c5a53980a61565ce099c91a03783b374"
+          },
+          "hex": {
+            "path": "artifacts/fudan_ppo_walk/20261110-model14000-h7ros-deploy-01/final-build/h7-machine-0/firmware.hex",
+            "bytes": 1004435,
+            "sha256": "ce93dd024293ca589f0abe5760dfc8f7d9a119319fcc84d0c104c6ba31815779"
+          },
+          "bin": {
+            "path": "artifacts/fudan_ppo_walk/20261110-model14000-h7ros-deploy-01/final-build/h7-machine-0/firmware.bin",
+            "bytes": 357108,
+            "sha256": "93145e68b540e4a34136e2e203115e2f6b776a5273e1c00297591dd5e11e2d12"
+          }
+        }
+      },
+      {
+        "machine": 1,
+        "parameter_bytes": 155304,
+        "unique_weight_offset": 187968,
+        "firmware": {
+          "elf": {
+            "path": "artifacts/fudan_ppo_walk/20261110-model14000-h7ros-deploy-01/final-build/h7-machine-1/firmware.elf",
+            "bytes": 3183032,
+            "sha256": "1967cf05ba82bb559c3dd3325d65c3c7a66ec85984e1ce0048a72c46a5a3ab4a"
+          },
+          "hex": {
+            "path": "artifacts/fudan_ppo_walk/20261110-model14000-h7ros-deploy-01/final-build/h7-machine-1/firmware.hex",
+            "bytes": 993410,
+            "sha256": "61dc431a7917a549b3951719931221059c24ec5601f7d3e65052825dcb4dea62"
+          },
+          "bin": {
+            "path": "artifacts/fudan_ppo_walk/20261110-model14000-h7ros-deploy-01/final-build/h7-machine-1/firmware.bin",
+            "bytes": 353172,
+            "sha256": "74fd1455192ce70eaa2ceb20f7bf7d88700b28a31f6bfe4865b1042e17febc65"
+          }
+        }
+      }
+    ]
+  },
+  "host_check": {
+    "ok": true,
+    "scope": "CPU host: actual generated C, SDK wrapper, FIFO, training frame, PD and extracted output permission; no board execution or motion acceptance",
+    "checkpoint_sha256": "5320e927d2ef2387a2d9ef1678102abc79942cde1b1a616828de9b2f133dd6ce",
+    "onnx_sha256": "b50383472f5dea07aece73f5539ebb13281924480635f547c2c7d92212b9317a",
+    "samples": 256,
+    "onnx_pytorch_max_abs": 1.1444091796875e-05,
+    "c_onnx_max_abs": 1.1444091796875e-05,
+    "sensor_frames": 80,
+    "sensor_training_frame_max_abs": 0.0,
+    "torque_cases": 256,
+    "torque_max_abs": 0.0,
+    "recovery_c_assertions": true,
+    "walk_only_output_gates_actual_c": true,
+    "source_sha256": {
+      "artifacts/fudan_ppo_walk/20261110-model14000-h7ros-deploy-01/check-host-final-02/check.c": "c81ad8bef7a034d97af4f7c086edd74897c4285741a2be14635540fa82e5ade9",
+      "deployment/H7_RL_ros/imcalib/Algorithm/rl_policy.c": "bd822577c1753c795d57c820e171ff5cb2ad714ffb1945d72f582385d2fc8566",
+      "deployment/H7_RL_ros/imcalib/Algorithm/rl_observation.c": "17db19362adfa03fdbc7bb575c2fe80644241d3a90a2aebf96cdc972782a50a1",
+      "deployment/H7_RL_ros/imcalib/Algorithm/rl_torque.c": "155737cb631f9cd2ad94f3db94c9c761385b01c265b0fa9acb8a13129595388e",
+      "deployment/H7_RL_ros/X-CUBE-AI/App/networkzn1.c": "4965597e44bd61859a9b6e13f641d1489611fce8b04667385ae31ef167b3f699",
+      "deployment/H7_RL_ros/X-CUBE-AI/App/networkzn1_data.c": "54c2ca5e64ed7e19657717198dcf8045544d08d1a71f28306ae8ff110a866641",
+      "deployment/H7_RL_ros/X-CUBE-AI/App/networkzn1_data_params.c": "31fec1caf81a1e89874e0d296c7f4c1fa1774897642b0d312725f8e1b1ff5c34",
+      "deployment/H7_RL_ros/imcalib/config/machine_config.c": "1c52edf1a9287c9e11e8d01976c141dee0e59793ed940b363b89a580b7250d2b",
+      "deployment/H7_RL_ros/imcalib/task/task_policy.c": "d2896ff5234ac0ce5857c8da9b7adabf32c94c685798592bcba31690f6ceea3e",
+      "deployment/H7_RL_ros/imcalib/task/task_actuation.c": "8390747389e47d003f043082dd121c8a19cb870634d5d1fd57bd9ea2404fd5e3"
+    }
+  },
+  "evidence": "artifacts/fudan_ppo_walk/20261110-model14000-h7ros-deploy-01",
+  "rollback_source": "artifacts/fudan_ppo_walk/20261110-model14000-h7ros-deploy-01/h7ros-before.tar.gz",
+  "source_after_sha256": "f970ae34c7e6c73627f6c78211150971add198e0c5df65950e24f13430e814aa",
+  "workspace_before_diff_sha256": "0a29b6d1d993033339530a476ecf43479ab3764535f96fcd78279b55c24faac7",
+  "h7_owner_review": "pending",
+  "git_commit_push": false,
+  "user_final_decision": "subsequently authorized this flash and confirmed motor power disconnected",
+  "flash_result": "artifacts/fudan_ppo_walk/20261110-model14000-h7ros-flash-01/flash-result.json",
+  "flash_finished_at": "2026-11-10T18:40:08.601613+08:00",
+  "flashed_hex_sha256": "ce93dd024293ca589f0abe5760dfc8f7d9a119319fcc84d0c104c6ba31815779",
+  "current_firmware_hex_sha256": "72377777fc6edc59a49e5a66f1727d13f634ba80f058ddc57bc82249f5f9039c",
+  "current_firmware_variant": "LQR to RL manual handoff; joint capture RC entry disabled",
+  "current_firmware_flash_result": "artifacts/fudan_ppo_walk/20261110-model14000-lqr-handoff-01/flash-01/result.json",
+  "current_firmware_cold_validation": "pending USB re-enumeration",
+  "known_unresolved_issue": "user reports no output after switching RL; no runtime state read or root cause identified"
+}

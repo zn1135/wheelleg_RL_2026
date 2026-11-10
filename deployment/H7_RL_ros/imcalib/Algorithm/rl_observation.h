@@ -1,4 +1,4 @@
-/* 稳站v2输入：500Hz原生反馈；100Hz构造32维当前帧和五帧历史。 */
+/* 复旦行走v2：500Hz原生反馈；100Hz构造25维当前帧和五帧历史。 */
 #ifndef RL_OBSERVATION_H
 #define RL_OBSERVATION_H
 #include "rl_types.h"
@@ -21,13 +21,12 @@ typedef struct {
     float wheel_force[2];          /* 独立AIR反馈估力N；不是LQR目标力。 */
     uint8_t support_valid;         /* 本次反馈估力有效，不表示已承重。 */
 } rl_recovery_state_t;
-/* 32维帧的顺序与训练一致；速度和上一动作按网络左右两侧排列。 */
+/* 25维帧的顺序与训练一致；速度和上一动作按网络左右两侧排列。 */
 typedef enum {
     RL_OBS_GYRO_X = 0, RL_OBS_GYRO_Y, RL_OBS_GYRO_Z,
     RL_OBS_GRAV_X, RL_OBS_GRAV_Y, RL_OBS_GRAV_Z,
     RL_OBS_CMD_VX, RL_OBS_CMD_YAW_RATE, RL_OBS_CMD_HEIGHT,
-    RL_OBS_MOTOR_POS = 9, RL_OBS_MOTOR_VEL = 13, RL_OBS_LAST_ACTION = 19,
-    RL_OBS_CONTROL_MODE = 25, RL_OBS_JUMP_HEIGHT = 30, RL_OBS_PHASE_TIME
+    RL_OBS_MOTOR_POS = 9, RL_OBS_MOTOR_VEL = 13, RL_OBS_LAST_ACTION = 19
 } rl_obs_index_t;
 /* 一份模型坐标反馈，未进行观测缩放或减名义角。 */
 typedef struct {
@@ -38,13 +37,13 @@ typedef struct {
 } rl_observation_sample_t;
 typedef struct {
     float obs[RL_OBS_SIZE];         /* 当前帧，整体按训练裁剪到±100 */
-    float history[RL_HISTORY_SIZE]; /* 唯一网络输入；旧→新，末32维等于obs */
-    float command_velocity;        /* 限斜率后的实际前向命令，m/s */
+    float history[RL_HISTORY_SIZE]; /* 第二输入；旧→新，保存裁剪前25维帧 */
+    float command_velocity;        /* 保护许可后的前向命令，m/s */
     uint8_t history_initialized;    /* 首帧填满五格；退出/失败重新播种 */
-    float last_action[RL_ACTION_SIZE]; /* 上一次网络原始请求，保持左右两侧顺序 */
+    float last_action[RL_ACTION_SIZE]; /* 上一次动作裁剪到±100，保持网络顺序 */
     rl_observation_sample_t sample; /* 最新500Hz反馈，不主动添加观测延迟 */
     uint8_t sample_valid;           /* 最新反馈可用，坏反馈立即清除 */
-    uint8_t valid;                  /* 本次32维帧和160维历史构建成功 */
+    uint8_t valid;                  /* 本次25维帧和125维历史构建成功 */
 } rl_observation_state_t;
 /* 执行任务独占：首次有效RL反馈锁存整周期偏移，退出RL才重新选分支。 */
 typedef struct {
