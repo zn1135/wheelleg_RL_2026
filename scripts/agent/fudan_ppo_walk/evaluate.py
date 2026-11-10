@@ -55,7 +55,7 @@ def gpu(args):
     protocol=protocol_record(items,args.diagnostic)
     protocol.update(validation_engine='gpu',validation_backend='mujoco_warp_gpu',
         disturbances=disturbances.record(),training_disturbances=from_record(metadata.get('disturbances')).record())
-    fitted = getattr(args,'leg_load_profile','fitted')=='fitted' and getattr(args,'response_parameters',None) is None
+    fitted = getattr(args,'leg_load_profile','legacy')=='fitted' and getattr(args,'response_parameters',None) is None
     protocol['physical_leg_load']=parameter_record(fitted)
     if getattr(args,'response_parameters',None) is not None:
         import hashlib
@@ -128,7 +128,7 @@ def main():
     p.add_argument('--diagnostic',action='store_true');p.add_argument('--batch-size',type=int,default=512)
     p.add_argument('--diagnostic-height',type=float,choices=(.22,.26,.30))
     p.add_argument('--response-parameters',type=Path,help='opt-in length-fit plant bundle with right or mirrored-both sides; no training-default change')
-    p.add_argument('--leg-load-profile',choices=('fitted','legacy'),default='fitted',help='adopted mirrored load by default; legacy preserves the old nominal plant')
+    p.add_argument('--leg-load-profile',choices=('fitted','legacy'),default='legacy',help='original linear-spring plant by default; fitted explicitly replays the archived mirrored load')
     a=p.parse_args();a.selection=None
     if a.checkpoint is None:
         a.selection=selection_record();a.checkpoint=Path(a.selection['checkpoint'])

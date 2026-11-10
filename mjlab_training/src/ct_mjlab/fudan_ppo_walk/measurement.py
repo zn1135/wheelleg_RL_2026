@@ -128,6 +128,9 @@ def configure_samples(wrapper, samples, out):
                 if enabled:
                     target[i] = int(np.rint(rng.uniform(*bounds) / 2.0))
             state.push_seeds[i] = int(rng.integers(0, 2 ** 31)) if disturbances.pushes else 0
+            for columns, bounds in ((slice(0, 3), disturbances.external_force_range), (slice(3, 6), disturbances.external_torque_range)):
+                if bounds != (0., 0.):
+                    state.episode_wrench[i, columns] = torch.as_tensor(rng.uniform(*bounds, 3), device=env.device)
     wrapper.previous_position.copy_(wrapper.robot.data.root_link_pos_w)
     wrapper._update_state()
     for i, sample in enumerate(samples):
@@ -138,13 +141,14 @@ def configure_samples(wrapper, samples, out):
     wrapper.history = torch.cat((clean.repeat(1, 4), wrapper._history_frame), -1) if wrapper.reset_contract == RESET_V2_CONTRACT else obs.repeat(1, 5)
     wrapper._history_needs_fill.zero_()
     mapping = dict(reset_contract=wrapper.reset_contract, disturbances=disturbances.record(), motor_q=action._motor_q_adr.cpu().tolist(), motor_v=action._motor_v_adr.cpu().tolist(), motor_ids=[model.actuator('robot/' + n + '_motor').id for n in MOTORS], spring_ids=action._spring_ids.cpu().tolist(), spring_q=action._spring_q_adr.cpu().tolist(), spring_v=action._spring_v_adr.cpu().tolist(), base=base, wheels=[model.body('robot/' + n).id for n in ('lfwheel', 'rfwheel')], wheel_response=action._wheel_response.cpu().tolist(), reference=action.reference_positions[0].cpu().tolist())
+    mapping['episode_wrench_frame'] = 'body_at_base_com'
     (out / 'mapping.json').write_text(json.dumps(mapping, indent=2) + '\n')
     for i, sample in enumerate(samples):
         pose = qpos[i].copy()
         pose[:2] = 0.0
         disturbance_initial = {}
         if hasattr(action, 'disturbances'):
-            disturbance_initial = dict(action_delay_steps=int(state.action_steps[i]), sensor_delay_steps=int(state.sensor_steps[i]), push_seed=int(state.push_seeds[i]), push_force_scale=float(action.push_force_scale[i]))
+            disturbance_initial = dict(action_delay_steps=int(state.action_steps[i]), sensor_delay_steps=int(state.sensor_steps[i]), push_seed=int(state.push_seeds[i]), push_force_scale=float(action.push_force_scale[i]), episode_wrench_body=state.episode_wrench[i].cpu().numpy())
         np.savez_compressed(out / (sample['id'] + '_initial.npz'), qpos=pose, qvel=qvel[i], nominal=action.nominal_positions[i].cpu().numpy(), kp=kp[i], kd=kd[i], strength=strength[i], **disturbance_initial, **{k: v[i] for k, v in snapshots.items()})
     return (obs, critic)
 

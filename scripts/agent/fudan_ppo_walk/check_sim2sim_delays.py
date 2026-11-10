@@ -29,11 +29,11 @@ def main():
         for name in ('mujoco.mj_step','mujoco.mj_step1','mujoco.mj_step2','mjlab.envs.ManagerBasedRlEnv.step','torch.nn.Linear.forward','torch.optim.Adam.step','torch.cuda._lazy_init'):
             stack.enter_context(patch(name,side_effect=forbidden))
         cfg=from_sim2sim_config();training=from_task_config()
-        verify('sim2sim_fixed4ms_both',cfg.action_delay and cfg.sensor_delay and cfg.action_delay_ms==(4.,4.) and cfg.sensor_delay_ms==(4.,4.))
-        verify('training_delays_fixed2ms',training.action_delay and training.sensor_delay and training.action_delay_ms==(2.,2.) and training.sensor_delay_ms==(2.,2.))
+        verify('sim2sim_action10ms_sensor4ms',cfg.action_delay and cfg.sensor_delay and cfg.action_delay_ms==(10.,10.) and cfg.sensor_delay_ms==(4.,4.))
+        verify('training_action6to14ms_sensor2ms',training.action_delay and training.sensor_delay and training.action_delay_ms==(6.,14.) and training.sensor_delay_ms==(2.,2.))
         training_state=control_fixture(training).action.disturbances
-        verify('training_runtime_delays_both_one_tick',training_state.action_steps.eq(1).all() and training_state.sensor_steps.eq(1).all())
-        verify('pushes_still_off',not cfg.pushes and not training.pushes)
+        verify('training_runtime_action3to7_sensor1_ticks',training_state.action_steps.ge(3).all() and training_state.action_steps.le(7).all() and training_state.sensor_steps.eq(1).all())
+        verify('small_pushes_enabled_in_shared_config',cfg.pushes and training.pushes and cfg.max_push_vel==training.max_push_vel==.3 and cfg.push_interval_s==training.push_interval_s==7.)
         verify('legacy_checkpoint_conditions_not_reinterpreted',not from_record().action_delay and not from_record().sensor_delay)
         for action,sensor in ((False,False),(True,False),(False,True),(True,True)):
             task=FudanWalkCfg()
@@ -42,18 +42,18 @@ def main():
                 verify(f'independent_switches_{action}_{sensor}',sim.action_delay==action and sim.sensor_delay==sensor)
                 verify(f'training_unchanged_{action}_{sensor}',from_task_config(task)==training)
         task=FudanWalkCfg()
-        with patch.object(task.domain_rand,'delay_ms_range',[10.,10.]):
+        with patch.object(task.domain_rand,'delay_ms_range',[6.,6.]):
             verify('sim2sim_does_not_inherit_training_delay',from_sim2sim_config(task)==cfg)
         verify('physical_config_consumes_explicit_sim2sim_delays',make_env_cfg(disturbances=cfg).actions['pd'].disturbances==cfg)
         verify('training_physical_config_uses_training_only',make_env_cfg().actions['pd'].disturbances==training)
         env=control_fixture(cfg);state=env.action.disturbances
-        verify('runtime_delay_steps_both2',state.action_steps.eq(2).all() and state.sensor_steps.eq(2).all())
+        verify('runtime_action5_sensor2_ticks',state.action_steps.eq(5).all() and state.sensor_steps.eq(2).all())
         env.action.process_actions(torch.full((3,6),.1));torques=[]
-        for tick in range(5):
+        for tick in range(8):
             env.action.apply_actions();torques.append(env.action.torques[:,0].clone())
         observed=torch.stack(torques)
-        expected=torch.tensor([0.,0.,3.,3.,3.])[:,None].expand(-1,3)
-        verify('new_action_reaches_PD_after_two2ms_ticks',torch.allclose(observed,expected,atol=1e-4))
+        expected=torch.tensor([0.,0.,0.,0.,0.,3.,3.,3.])[:,None].expand(-1,3)
+        verify('new_action_reaches_PD_after_five2ms_ticks',torch.allclose(observed,expected,atol=1e-4))
         for tick in range(1,6):
             theta=torch.tensor(tick*.01)
             env.env.sim.data.qpos[:,3:7]=torch.tensor([torch.cos(theta/2),0.,torch.sin(theta/2),0.])
@@ -70,7 +70,7 @@ def main():
         other=state.sensors[:,[0,2]].clone();env.action.reset(torch.tensor([1]))
         verify('reset_keeps_other_sensor_queues',torch.equal(other,state.sensors[:,[0,2]]))
         verify('reset_fills_fresh_sensor_values',torch.equal(state.sensors[:,1],env.action.sensor_frame()[1].expand(len(state.sensors),-1)))
-        verify('reset_keeps_fixed_delays',state.action_steps.eq(2).all() and state.sensor_steps.eq(2).all())
+        verify('reset_keeps_fixed_delays',state.action_steps.eq(5).all() and state.sensor_steps.eq(2).all())
         selected=selection_record();verify('selected8000_pitch2_integral_off',selected['parking_pitch_deg']==2 and not selected['integral_enabled'])
         class BeforePhysics(Exception):pass
         for selected_recipe in (None,selected):

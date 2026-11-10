@@ -1,10 +1,14 @@
 # 复旦 PPO 行走配方适配规格（fudan-ppo-walk-physical-v1）
 
-2026-11-09用户正式采用双腿镜像局部负载，训练`sim.fitted_leg_load=True`及GPU默认开启；参数资源JSON与共用代码见[采用记录](interfaces/20261109-adopted-mirrored-leg-load.md)。新PPO检查点记录物理profile/SHA。原8000模型默认新物理20例0/20，未启动重训；`evaluate --leg-load-profile legacy`回退旧物理。本段以下150N/90mm/50Ns/m仅是保留的名义气弹簧基础项，不包含新增等效负载和摩擦记忆。
+2026-11-10强外载续训在10009发生物理NaN后，保留外载/随机化与原2ms积分/PD、10ms策略，仅将倒地连续等待100拍改为0，同角度阈值触发即失败结束，NaN仍报错停机。4096环境20.01秒对照及5项语义检查通过，已接续原预算剩991轮到11000；不代表任意倒地姿态的求解已修复。[终止语义](interfaces/20261110-fudan-fallen-episode-termination.md)、[恢复运行](../artifacts/fudan_ppo_walk/20261110-wide-wrench-resume10009-to11000-02/README.md)。
+
+2026-11-10后续新增每回合机身各轴±10N/±10N·m持续外载，在机身质心施加，机身坐标保持、逐物理步旋转，与短推扰相加；局部复位仅重抽对应环境。训练/GPU新进程共用，当前9000→10000训练不变，旧无外载成绩不移作抗扰通过。[实现和验证](interfaces/20261110-fudan-episode-wrench.md)。
+
+2026-11-10按用户要求回退：训练`sim.fitted_leg_load=False`，GPU默认`--leg-load-profile legacy`，恢复原线性气弹簧与原关节物理。拟合JSON和实现保留，只有显式`--leg-load-profile fitted`才回放旧候选；闭链和标定限位保持。[回退范围与验证](interfaces/20261110-leg-load-rollback.md)。既有拟合物理权重和原成绩不改写。
 
 当前名义气弹簧弹性曲线为0～150N/90mm、CAD零位压缩10mm，并按用户确认保留50N·s/m阻尼；最终推力夹至0～150N，复旦训练及GPU评估的弹簧偏置均为0。两端共用`PhysicalAction`实际施力路径。实现与历史范围区别见[sim2sim约定](ai/sim2sim.md)，检查命令见[构建与验证](ai/build-test.md)。
 
-当前训练侧`domain_rand`按首轮板端测量近似设为动作2ms、传感2ms；sim2sim独立保持动作4ms、传感4ms。[测量复查与限制](interfaces/20261103-fudan-measured-training-delays.md)。既有模型和成绩仍属于各自原条件。
+2026-11-10用户选择只准备下一次扩大随机化，后续要求其余随机化也打开/扩大：训练动作6～14ms、电机倍率±15%、质量/惯量倍率±15%、附加质量−1.5～3kg、COM±30mm、接触/零位/噪声加宽、小推扰每7秒/0.3m/s；传感仍2ms。当前9000→10000轮保留原设置；新GPU评估延迟仍10/4ms，但共用推扰开启和随机组加大噪声，旧成绩不是同条件基线。[最新范围与检查](interfaces/20261110-fudan-full-randomization-next.md)。
 
 2026-11-03用户选用**8000-v2＋停车+2°图外参考**，积分关闭。默认GPU评估省略`--checkpoint`即用该方案；显式指定检查点仍走原输入复现。配置见`FudanWalkCfg.inference`，[接口和未验证范围](interfaces/20261103-fudan-selected-pitch2.md)。九停车数值9/9，低高度平滑性有取舍，尚未完成45行走回归/987；不自动改训练或原ONNX。
 

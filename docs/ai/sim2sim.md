@@ -1,5 +1,15 @@
 # sim2sim 与部署契约
 
+2026-11-10扩大随机化/持续外矩下，步行训练将倒地等待100→0拍，同阈值倒地即失败重置，NaN仍停机；已恢复剩991轮，未改2ms积分/PD或10ms策略。正式GPU回放不自动重置失败样本，统一评分标准保持，不能把更早训练重置当通过。[调整、验证和限制](../interfaces/20261110-fudan-fallen-episode-termination.md)。
+
+2026-11-10再新增回合持续六轴外载：机身各轴力±10N、矩±10N·m，逐物理步转世界坐标施加于质心，与原短推扰相加；局部复位只重抽选中环境。GPU夹具按case/seed保存body外载，当前训练不变。[接口/验证](../interfaces/20261110-fudan-episode-wrench.md)。
+
+2026-11-10用户进一步要求其余随机化也打开/扩大，下一次训练的物理/零位/噪声范围加宽并开启7秒/0.3m/s小推扰。已有实现共享推扰开关与随机组噪声，新GPU评估也随之改变，动作/传感仍10/4ms；冻结工况/物理抽样代码保持不表示全部评估条件保持。当前1000轮不变。[最新范围与验证](../interfaces/20261110-fudan-full-randomization-next.md)。
+
+2026-11-10后续仅为下一次训练准备更宽随机化：动作6～14ms、Kp/Kd/力矩倍率0.85～1.15，训练传感2ms；当前9000→10000进程保持原10ms/±5%，GPU评估仍10/4ms与原冻结矩阵，不因新训练范围扩大而改旧验收分布。[范围和检查](../interfaces/20261110-fudan-wider-randomization-next.md)。
+
+2026-11-10按用户要求回退双腿负载拟合：共同PD动作、复旦训练/GPU评估及原生MuJoCo默认关闭`fitted_leg_load`，恢复原线性气弹簧及原关节摩擦/阻尼基线；闭链、实测限位、轮模型不变。下方11-09默认采用描述为历史记录。参数JSON、实录、模型和Word保留，H7未改。[回退范围与验证](../interfaces/20261110-leg-load-rollback.md)。
+
 2026-11-09后续用户明确正式采用双腿镜像局部负载：PD训练/复旦GPU/原生Playback默认开启同源负载和独立记忆；物理JSON与代码共同构成模型，XML仅机构/限位/原弹簧不变。复旦`--leg-load-profile legacy`回退，显式旧诊断包先关闭默认，防重复。启动随机化在新基线上叠加；新检查点保存profile与参数SHA。0训练/硬件操作，默认8000模型20例仍0/20，不称独立real校准通过。下方同日“未采纳默认”是本次决定前的历史状态。[正式采用与边界](../interfaces/20261109-adopted-mirrored-leg-load.md)、[Word流程与待办](../diagnostics/20261109-双腿负载拟合流程与训练仿真接入.docx)。
 
 2026-11-09新增显式局部负载试验：复旦GPU`evaluate --response-parameters <冻结包>`按`sides`选择右腿或双腿镜像，保留原8000-v2/停车2°、PD/策略时序和轮模型。双腿同初态20例技术19→0、有轮载中断，未采纳为训练/默认物理；左腿是右腿镜像，记忆初力0、本轮2ms不同于原架空.2ms。省略选项、共享XML及H7保持。[施力/镜像检查与限制](../interfaces/20261109-fudan-length-fit-probe.md)。
@@ -22,7 +32,7 @@
 
 2026-11-04按用户确认保留阻尼：当前mjlab训练（含复旦PPO）与本机正式sim2sim的名义气弹簧弹性项已为线性0～150N，`x=max(0,0.010-q_slide)`、`F_elastic=clip(150*x/0.090,0,150)`，总力再叠加原有50N·s/m阻尼并夹至0～150N。复旦任务弹簧力偏置为0；其他任务的既有随机化保留。来源为`ct_mjlab/envs/chuanliantui/gas_spring.py`、实际`HuananhuPdAction`及`sim2sim/mj_sim2sim_huananhu_multimode.py`，无需再次把其改成线性。下文恒力150N叙述属于旧Isaac/串联代理和独立台架对照的历史范围，不能套作当前mjlab训练的模型。实录诊断脚本的无阻尼线性对照也不能称与当前训练动力学完全一致。
 
-复旦GPU sim2sim独立保持动作4ms、传感4ms；训练侧按板端首测近似改为动作2ms、传感2ms。[测量复查与限制](../interfaces/20261103-fudan-measured-training-delays.md)。既有4+4ms九停车复测的起步触地退化见[记录](../interfaces/20261103-fudan-sim2sim-delays.md)。
+2026-11-10用户指定复旦训练/GPU仿真动作延迟均为10ms（五个2ms物理拍），传感保持训练2ms、GPU仿真4ms；控制周期和H7保持。历史实测2+2ms与4+4ms成绩不改写。[当前设置与验证](../interfaces/20261110-fudan-action-delay10ms.md)。
 
 最终验收现统一为GPU、共用运动门槛及报告，见[统一GPU验收](../interfaces/20261102-unified-gpu-acceptance.md)。主线统一入口为`scripts/mjlab.sh accept --task <任务> --recording <GPU记录> --output <新目录>`；起立单列，旧CPU流程仅保留历史含义。
 

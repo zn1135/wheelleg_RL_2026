@@ -253,7 +253,7 @@ def build_model(model_path: Path = MODEL_ASSET):
 class Playback:
     def __init__(self, initial_pose: str = "normal", command=DEFAULT_COMMAND, *, model_path: Path = MODEL_ASSET,
                  wheel_friction_compensation=None, motor_response_time_constant_s: float | None = None,
-                 fitted_leg_load: bool = True):
+                 fitted_leg_load: bool = False):
         self.model = build_model(model_path)
         self.data = mujoco.MjData(self.model)
         self.h7_timing = json.loads(MODEL_ASSET.with_name("h7_timing.json").read_text())

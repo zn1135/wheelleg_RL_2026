@@ -18,6 +18,8 @@ class DisturbanceConfig:
     sensor_delay_ms: tuple[float, float] | None = None
     push_interval_s: float = 7.0
     max_push_vel: float = 2.0
+    external_force_range: tuple[float, float] = (0., 0.)
+    external_torque_range: tuple[float, float] = (0., 0.)
 
     def __post_init__(self):
         for name in ('action_delay', 'sensor_delay', 'pushes'):
@@ -34,10 +36,15 @@ class DisturbanceConfig:
             object.__setattr__(self, name, tuple(value))
         if not math.isfinite(self.push_interval_s) or self.push_interval_s < PHYSICS_DT or (not math.isfinite(self.max_push_vel)) or (self.max_push_vel <= 0):
             raise ValueError('Push interval must be >=2ms and max_push_vel must be positive')
+        for name in ('external_force_range', 'external_torque_range'):
+            value = getattr(self, name)
+            if len(value) != 2 or not all(math.isfinite(x) for x in value) or value[0] > value[1]:
+                raise ValueError(f'{name} requires finite signed MIN MAX')
+            object.__setattr__(self, name, tuple(value))
 
     def record(self):
         result = asdict(self)
-        for name in ('action_delay_ms', 'sensor_delay_ms'):
+        for name in ('action_delay_ms', 'sensor_delay_ms', 'external_force_range', 'external_torque_range'):
             if result[name] is not None:
                 result[name] = list(result[name])
         return dict(version=VERSION, **result)
@@ -59,7 +66,9 @@ def from_task_config(task_cfg=None):
         action_delay_ms=cfg.delay_ms_range,
         sensor_delay_ms=cfg.sensor_delay_ms_range,
         push_interval_s=cfg.push_interval_s,
-        max_push_vel=cfg.max_push_vel_xy
+        max_push_vel=cfg.max_push_vel_xy,
+        external_force_range=getattr(cfg, 'external_force_range', (0., 0.)),
+        external_torque_range=getattr(cfg, 'external_torque_range', (0., 0.))
     )
 
 def from_sim2sim_config(task_cfg=None):
@@ -72,7 +81,9 @@ def from_sim2sim_config(task_cfg=None):
         action_delay_ms=cfg.delay_ms_range,
         sensor_delay_ms=cfg.sensor_delay_ms_range,
         push_interval_s=domain.push_interval_s,
-        max_push_vel=domain.max_push_vel_xy
+        max_push_vel=domain.max_push_vel_xy,
+        external_force_range=getattr(domain, 'external_force_range', (0., 0.)),
+        external_torque_range=getattr(domain, 'external_torque_range', (0., 0.))
     )
 
 class DisturbanceState:
@@ -98,6 +109,8 @@ class DisturbanceState:
         self.push_count = torch.zeros_like(self.ticks)
         self.push_seeds = np.arange(n, dtype=np.int64) + int(seed)
         self.push_interval = math.ceil(cfg.push_interval_s / self.physics_dt - 1e-09)
+        self.episode_wrench = torch.zeros(n, 6, device=device)
+        self.has_episode_wrench = cfg.external_force_range != (0., 0.) or cfg.external_torque_range != (0., 0.)
 
     def reset(self, ids, clean_sensors):
         self.actions[:, ids] = 0.0
@@ -107,6 +120,15 @@ class DisturbanceState:
         if self.cfg.pushes:
             indices = self.ids[ids].cpu().numpy()
             self.push_seeds[indices] += len(self.ids)
+        self.episode_wrench[ids] = 0.
+        for columns, bounds in ((slice(0, 3), self.cfg.external_force_range), (slice(3, 6), self.cfg.external_torque_range)):
+            if bounds != (0., 0.):
+                self.episode_wrench[ids, columns] = self.episode_wrench.new_empty((len(self.ids[ids]), 3)).uniform_(*bounds)
+
+    def wrench(self, quat):
+        # MuJoCo接收世界坐标系、关于质心的力/力矩；每步旋转保持机身方向。
+        return torch.cat((quat_apply(quat, self.episode_wrench[:, :3]),
+                          quat_apply(quat, self.episode_wrench[:, 3:])), -1)
 
     def action(self, value):
         if not self.cfg.action_delay:

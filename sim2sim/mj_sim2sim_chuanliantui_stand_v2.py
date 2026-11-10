@@ -59,7 +59,7 @@ class OnnxPolicy:
 
 
 class StandV2Playback(Playback):
-    def __init__(self, initial_states, sample=0, integration_substeps=4, *, fitted_leg_load=True):
+    def __init__(self, initial_states, sample=0, integration_substeps=4, *, fitted_leg_load=False):
         with np.load(initial_states) as saved:
             self.initial_qpos = saved["qpos"].copy()
             self.initial_qvel = saved["qvel"].copy()

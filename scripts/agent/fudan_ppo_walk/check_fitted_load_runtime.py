@@ -1,8 +1,9 @@
-"""GPU integration evidence for the fitted load; zero policy updates, no behavior verdict."""
+"""GPU evidence for the explicitly enabled fitted load; no policy updates or behavior verdict."""
 import argparse
 import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import torch
@@ -10,6 +11,7 @@ import torch
 from ct_mjlab.envs.chuanliantui.fitted_leg_load import parameters, parameter_record
 from ct_mjlab.envs.chuanliantui.gas_spring import gas_spring_force
 from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, section_dict
 from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config, from_sim2sim_config
 from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import snapshot
 
@@ -52,8 +54,9 @@ def main():
     try:
         for randomized in (False, True):
             label = 'training' if randomized else 'nominal_gpu'
+            task=FudanWalkCfg();task.sim=SimpleNamespace(**section_dict(task.sim));task.sim.fitted_leg_load=True
             wrapper = FudanEnv(20, seed=30001, randomized=randomized,
-                               disturbances=from_task_config() if randomized else from_sim2sim_config())
+                               disturbances=from_task_config() if randomized else from_sim2sim_config(),cfg=task)
             env, action = wrapper.env, wrapper.action
             load = action.leg_load
             try:

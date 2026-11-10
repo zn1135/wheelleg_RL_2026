@@ -21,9 +21,9 @@
 
 ## 复旦 PPO 行走适配
 
-双腿负载已按用户要求设为训练/仿真默认。保留旧物理回放时，evaluate增加`--leg-load-profile legacy`；[参数版本、回退与验证边界](docs/interfaces/20261109-adopted-mirrored-leg-load.md)。本次没有启动新训练。
+双腿负载拟合已按用户要求回退（2026-11-10）：训练/原生MuJoCo默认关闭，GPU默认`--leg-load-profile legacy`。历史候选仅显式`--leg-load-profile fitted`启用；[回退范围与验证](docs/interfaces/20261110-leg-load-rollback.md)。未启动新训练。
 
-sim2sim延迟独立在`FudanWalkCfg.sim2sim`设置，当前动作4ms＋传感4ms；训练`domain_rand`不变。下一次GPU评估生效，旧视频/轨迹不变；[参数与时序](docs/interfaces/20261103-fudan-sim2sim-delays.md)。
+复旦扩大随机化/六轴持续外载已用于新阶段：首次在10009数值失败后，保留全部幅度，只将同阈值倒地等待100→0拍（按失败重置），从10009接原预算剩991轮至11000。2ms积分/PD、10ms策略及NaN停机保持。[当前运行/TensorBoard](artifacts/fudan_ppo_walk/20261110-wide-wrench-resume10009-to11000-02/README.md)、[终止规则](docs/interfaces/20261110-fudan-fallen-episode-termination.md)。
 
 当前选用8000-v2＋停车+2°：`PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_walk.evaluate --output <新GPU目录> --deadline <本次截止Unix秒>`。省略`--checkpoint`读取集中配置并核模型SHA；显式指定检查点则使用原始输入。[选用配方](docs/interfaces/20261103-fudan-selected-pitch2.md)。动态运行仍须本次预算，完整行走回归未完成。
 

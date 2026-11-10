@@ -78,7 +78,7 @@ def main():
                 verify('environment_reads_code_config_'+str(flags),make_env_cfg().actions['pd'].disturbances==cfg)
                 verify('old_metadata_not_reinterpreted_'+str(flags),from_record()==default)
         # 不经策略推理，直接检查真实PD收到的新动作在哪个2ms拍出现。
-        for delay in (0.,2.,4.,6.,8.,10.):
+        for delay in (0.,2.,4.,6.,8.,10.,12.,14.):
             env=control_fixture(DisturbanceConfig(action_delay=True,action_delay_ms=(delay,delay)))
             action=env.action;action.process_actions(torch.full((3,6),.1));observed=[]
             for tick in range(8):
@@ -168,7 +168,8 @@ def main():
         # 实际保存/恢复路径，网络只读写state_dict，绝不前向或优化。
         learner=object.__new__(FudanRunner);learner.device='cpu';learner.log_dir=directory
         learner.env=SimpleNamespace(disturbance_config=cfg,reset_contract=RESET_CONTRACT,
-            num_envs=2,total_steps=49,speed_limit=2.,env=SimpleNamespace(common_step_counter=49))
+            num_envs=2,total_steps=49,speed_limit=2.,env=SimpleNamespace(common_step_counter=49),
+            action=SimpleNamespace(leg_load=None))
         learner.policy=torch.nn.Linear(1,1);encoder=torch.nn.Linear(1,1)
         learner.alg=SimpleNamespace(optimizer=torch.optim.Adam(learner.policy.parameters(),lr=.001),
             extra_optimizer=torch.optim.Adam(encoder.parameters(),lr=.001),learning_rate=.001)

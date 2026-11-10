@@ -1,5 +1,7 @@
 # 接口记录：复旦sim2sim独立动作/传感延迟
 
+2026-11-10后续用户指定仅动作改为10ms，传感保持训练2ms/GPU仿真4ms；下文原设置与结果保留历史含义。[当前设置](20261110-fudan-action-delay10ms.md)。
+
 后续训练侧已依据板端首测改为2+2ms，sim2sim仍为4+4ms；下文训练全关只代表本记录原日期。[最新复查](20261103-fudan-measured-training-delays.md)。
 
 后续实际复测已完成：[零延迟/4+4ms九停车对照](../../artifacts/fudan_ppo_walk/fudan-parking-delay-replay-20261103/README.md)，末段均9/9，但4+4ms高.26后退起步新增触地约591N/26°，高.30一例腿RMS增大5.7倍；不认定全面无退化，待用户完整视频验收。下文“未动态验证”保留其准备阶段历史含义。

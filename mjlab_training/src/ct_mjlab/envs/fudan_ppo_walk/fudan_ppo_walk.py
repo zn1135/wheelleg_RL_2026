@@ -82,10 +82,12 @@ class PhysicalAction(HuananhuPdAction):
         if self.cfg.disturbances.action_delay:
             self._control_actions.copy_(self.disturbances.action(self._raw_actions))
         super().apply_actions()
-        if self.cfg.disturbances.pushes:
-            force = self.disturbances.force(self._env.sim.data.qpos[:, 3:7], self.push_force_scale)
-            self._env.sim.data.xfrc_applied[:, self._base_id, :3] = force
-            self._env.sim.data.xfrc_applied[:, self._base_id, 3:] = 0.0
+        if self.cfg.disturbances.pushes or self.disturbances.has_episode_wrench:
+            quat = self._env.sim.data.qpos[:, 3:7]
+            wrench = self.disturbances.wrench(quat)
+            if self.cfg.disturbances.pushes:
+                wrench[:, :3] += self.disturbances.force(quat, self.push_force_scale)
+            self._env.sim.data.xfrc_applied[:, self._base_id] = wrench
 
     def rebuild_reset_poses(self):
         solver = ResetGeometry()
@@ -117,7 +119,7 @@ class PhysicalAction(HuananhuPdAction):
             self.sample_velocity[ids] = 0.0
         if hasattr(self, 'disturbances'):
             self.disturbances.reset(ids, self.sensor_frame())
-            if self.cfg.disturbances.pushes:
+            if self.cfg.disturbances.pushes or self.disturbances.has_episode_wrench:
                 self._env.sim.data.xfrc_applied[ids, self._base_id] = 0.0
 
 def current_sensors(env):

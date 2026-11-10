@@ -1,5 +1,21 @@
 # 构建与验证
 
+2026-11-11最终提交前复核：默认回退17、六轴外载24、随机化33、倒地处理5、延迟入口31、通用队列125项通过；显式历史拟合对照和39项GPU运行时检查通过，0新优化更新/硬件操作。11000恢复训练及审计完成，尚无行为验收。[汇总](../diagnostics/20261111-fudan-wide-wrench-11000.md)。
+
+2026-11-11提交前检查：`check_formal_leg_load`及`check_fitted_load_runtime`改为显式启用历史拟合，保持当前默认关闭，避免旧检查误依赖已撤销默认。11000恢复训练完成并通过轮数/状态/源码审计；未作行为验收。[完成摘要](../diagnostics/20261111-fudan-wide-wrench-11000.md)。
+
+倒地回合处理：`check_fall_termination --output <新JSON>`5项通过，核同角度阈值、失败而非超时、选择性重置和NaN仍抛错；`diagnose_randomized_nonfinite --checkpoint <PT> --fall-confirmation-ticks 0 --policy-steps 2000 --output <新目录>`真实4096世界20.01秒0优化更新未NaN，非原PPO逐位复现或行为验收。当前采用该结束时机，不采纳CG/细步失败候选。[语义与证据](../interfaces/20261110-fudan-fallen-episode-termination.md)。
+
+回合六轴外载：`check_episode_wrench --output <新目录>`24项通过，含CPU/CUDA、坐标转换、持续/脉冲叠加、case顺序与夹具、实际20环境GPU60次积分和局部复位；0策略前向/更新，不称抗扰行为通过。31/125项既有检查通过。[接口与证据](../interfaces/20261110-fudan-episode-wrench.md)。
+
+进一步扩大随机化：`check_randomization_ranges`读取实际20环境GPU质量/惯量、COM、接触、零位、Actor噪声及合成推扰，共33项通过；`check_sim2sim_delays`31项、`check_disturbances`125项通过。均0积分/更新，非行为验收。[下一次启动配置与证据](../interfaces/20261110-fudan-full-randomization-next.md)。
+
+下一阶段随机化检查：`check_randomization_ranges --output <新目录>`读取实际20环境GPU初始化的PD倍率、3～7拍动作延迟及不变项，12项通过；不推进物理、不替代新阶段预检。`check_sim2sim_delays`当前按训练6～14ms/传感2ms与仿真10/4ms核对，31项通过；通用队列另核12/14ms边界。[设置与证据](../interfaces/20261110-fudan-wider-randomization-next.md)。
+
+2026-11-10动作延迟10ms：`check_sim2sim_delays --output <新JSON>`当前期望训练动作5拍/传感1拍、GPU仿真动作5拍/传感2拍；31项通过。`check_disturbances --output <新JSON>`补齐保存夹具物理元数据后121项CPU/CUDA检查通过；均0物理积分/训练更新，不当作行为验证。[设置与证据](../interfaces/20261110-fudan-action-delay10ms.md)。
+
+2026-11-10默认物理已回退。当前检查：`PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.real2sim.check_leg_load_rollback --output <新目录>`，核20环境名义/训练配置GPU实际摩擦、阻尼、逐步额外施力为零、原气弹簧公式及原生Playback构造；不代表完整行为验收。下文11-09正式默认检查属于当时采用版本。[回退记录](../interfaces/20261110-leg-load-rollback.md)。
+
 非线性气弹簧诊断：`replay_length_response_gpu`的候选JSON可设`spring_curve_compression_m/force_n`和`remove_baseline_right_load`，或显式`curve_with_joint_correction`只换弹性；仅私有模型放宽执行器范围，不改正式参数。`report_length_response_fit`另复算曲线实际施力、去除的关节负载及首帧初载。此次软件通过但响应未改善，不作采纳。[有限搜索、图和限制](../../artifacts/length-response-fit/20261110-nonlinear-axial-result-01/README.md)。
 
 复旦拟合负载GPU运行检查：`scripts.agent.fudan_ppo_walk.check_fitted_load_runtime --output <新目录>`关闭随机化核对名义值，再检查真实训练配置；逐2ms积分拍核对完整JSON保守负载、`qfrc_applied`记忆力、单次施力、原气弹簧、全体/局部复位和其他环境状态。共39项，零策略更新，不代表运动验收。
@@ -8,7 +24,7 @@
 
 GPU视频校验：`scripts.agent.fudan_ppo_walk.check_gpu_videos --index <video-gpu/index.json> --recording <GPU目录> --checkpoint <冻结PT> --acceptance <acceptance.json> --output <新JSON>`核对完整名义矩阵覆盖、逐章轨迹/模型/视频SHA、解码帧数与50fps正常速度；有随机失败则须保留对应视频。只读已有轨迹/解码视频，不新增物理或策略更新，不替代用户观看验收。
 
-双腿正式默认检查：`scripts.agent.real2sim.check_formal_leg_load --output <新JSON>`对照旧实际施力、NumPy/Torch CPU/CUDA、原生作用与复位及20环境训练配置GPU短步；新随机化须围绕拟合基线。局部复位检查及默认/legacy两组20例GPU已保存，默认0/20、legacy20/20，仅采用不代表行为通过。[本轮检查/来源](../../artifacts/length-response-fit/20261109-formal-integration-01/README.md)。
+双腿历史候选显式启用检查：`scripts.agent.real2sim.check_formal_leg_load --output <新JSON>`检查内部明确设置`fitted_leg_load=True`，不依赖或改变当前默认回退；对照旧实际施力、NumPy/Torch CPU/CUDA、原生作用与复位及20环境训练配置GPU短步；新随机化须围绕拟合基线。局部复位检查及默认/legacy两组20例GPU已保存，默认0/20、legacy20/20，仅采用不代表行为通过。[本轮检查/来源](../../artifacts/length-response-fit/20261109-formal-integration-01/README.md)。
 
 8000局部负载接入：`scripts.agent.real2sim.check_length_fit_policy --recording <含baseline与candidate-both的根目录>`离线核同初态、关节/滑杆索引、左侧镜像、实际摩擦/阻尼数组、未改限矩/惯量和逐策略拍状态。运行自身`response-verification.json`另核所有物理步的预滑移状态和施力；本次通过但20例统一技术19→0，不能把接入正确当行为通过。[命令和来源](../../artifacts/length-response-fit/20261109-fudan8000-right-load-01/README.md)。
 

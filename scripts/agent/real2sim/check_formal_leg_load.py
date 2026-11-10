@@ -1,7 +1,8 @@
-"""Verify the adopted load against archived applied forces and native/GPU lifecycles."""
+"""Verify the explicitly enabled archived load and native/GPU lifecycles."""
 import argparse
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import mujoco
 import numpy as np
@@ -44,13 +45,12 @@ def main():
     native_load_error=float(abs(data.qfrc_applied[native.vi]-conservative_load(q[1,0],c,p)).max())
     native.reset();data.qpos[native.sq]+=.05;native.apply()
     reset_force=float(abs(native.force).max())
-    # Actual startup randomization must preserve an active default load and finite forces.
+    # Explicitly opt in: the training default was rolled back to the legacy plant.
     from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
     from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig
-    from ct_mjlab.envs.chuanliantui.huananhu_env_cfg import make_huananhu_env_cfg
-    cfg=make_huananhu_env_cfg(play=False)
-    assert cfg.actions['pd'].fitted_leg_load
-    wrapper=FudanEnv(20,randomized=True,disturbances=DisturbanceConfig())
+    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, section_dict
+    cfg=FudanWalkCfg();cfg.sim=SimpleNamespace(**section_dict(cfg.sim));cfg.sim.fitted_leg_load=True
+    wrapper=FudanEnv(20,randomized=True,disturbances=DisturbanceConfig(),cfg=cfg)
     env=wrapper.env
     try:
         wrapper.reset();action=wrapper.action;assert action.leg_load is not None

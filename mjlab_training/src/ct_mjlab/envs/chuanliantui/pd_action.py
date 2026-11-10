@@ -42,7 +42,7 @@ class ChuanliantuiPdActionCfg(ActionTermCfg):
     spring_force_bias_range: tuple[float, float] = (-50.0, 50.0)
     motor_randomization: bool = False
     standup_pushes: bool = False
-    fitted_leg_load: bool = True
+    fitted_leg_load: bool = False
 
     def build(self, env: ManagerBasedRlEnv) -> "ChuanliantuiPdAction":
         return ChuanliantuiPdAction(self, env)

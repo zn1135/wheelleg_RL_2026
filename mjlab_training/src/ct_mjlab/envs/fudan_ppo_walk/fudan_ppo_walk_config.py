@@ -11,7 +11,7 @@ class FudanWalkCfg:
     class sim2sim:
         # 仅GPU sim2sim生效；上下限相同表示固定延迟，不改训练侧domain_rand。
         randomize_action_delay = True
-        delay_ms_range = [4., 4.]
+        delay_ms_range = [10., 10.]
         randomize_sensor_delay = True
         sensor_delay_ms_range = [4., 4.]
 
@@ -46,40 +46,44 @@ class FudanWalkCfg:
         parking_heights = [.22,.26,.30]  # 停车回合按三个高度均匀抽取。
 
     class domain_rand:
-        kp_range = [.95, 1.05]
-        kd_range = [.95, 1.05]
-        motor_strength_range = [.95, 1.05]
-        nominal_offset_range = [-.03, .03]
-        added_mass_range = [-1., 2.]
-        mass_scale_range = [.9, 1.1]
-        com_range = [-.02, .02]
-        friction_range = [.6, 1.4]
-        restitution_range = [.6, 1.]
+        kp_range = [.85, 1.15]
+        kd_range = [.85, 1.15]
+        motor_strength_range = [.85, 1.15]
+        nominal_offset_range = [-.05, .05]
+        added_mass_range = [-1.5, 3.]
+        mass_scale_range = [.85, 1.15]
+        com_range = [-.03, .03]
+        friction_range = [.4, 1.6]
+        restitution_range = [.4, 1.]
         friction_buckets = 64
-        # 首轮板端时序的2ms量化近似；不包含未知电机内部响应。
+        # 下一阶段围绕10ms扩大范围；每环境初始化抽取，非逐拍抖动。
         randomize_action_delay = True
-        delay_ms_range = [2., 2.]
+        delay_ms_range = [6., 14.]
 
         # 板端接收后数据龄约1.3ms，按物理步长近似为2ms。
         randomize_sensor_delay = True
         sensor_delay_ms_range = [2., 2.]
 
         # 与复旦配置同名：主动推扰开关、间隔和冲量速度尺度。
-        push_robots = False
+        push_robots = True
         push_interval_s = 7.
-        max_push_vel_xy = 2.
+        max_push_vel_xy = .3
+
+        # 机身坐标系各轴每回合重抽，作用于机身质心并持续整回合。
+        external_force_range = [-10., 10.]  # N
+        external_torque_range = [-10., 10.]  # N·m
 
     class env:
         num_envs = 512
         play_num_envs = 20
         episode_length_s = 20.
-        fail_ticks = 100
+        fail_ticks = 0  # 沿用倒地角度判据，倒地即失败重置，避免持续外矩下等待时发散。
         terminal_gravity_z = -.1
         reset_velocity_range = [-.5, .5]
 
     class sim:
         dt = .002
-        fitted_leg_load = True  # User-adopted mirrored local load; False replays the legacy plant.
+        fitted_leg_load = False  # Roll back to the original linear-spring plant.
 
     class control:
         decimation = 5
@@ -101,7 +105,7 @@ class FudanWalkCfg:
         torques = .05
         height_center = .5
         height_scale = 5.
-        noise_scales = [.05]*6 + [0.]*3 + [.02]*4 + [.075]*6 + [0.]*6
+        noise_scales = [.075]*6 + [0.]*3 + [.03]*4 + [.1125]*6 + [0.]*6
 
     class rewards:
         tracking_sigma = .25
