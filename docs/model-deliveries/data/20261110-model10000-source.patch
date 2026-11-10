@@ -1,0 +1,21 @@
+diff --git a/mjlab_training/src/ct_mjlab/envs/chuanliantui/pd_action.py b/mjlab_training/src/ct_mjlab/envs/chuanliantui/pd_action.py
+--- a/mjlab_training/src/ct_mjlab/envs/chuanliantui/pd_action.py
++++ b/mjlab_training/src/ct_mjlab/envs/chuanliantui/pd_action.py
+@@ -45 +45 @@
+-    fitted_leg_load: bool = True
++    fitted_leg_load: bool = False
+diff --git a/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py b/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py
+--- a/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py
++++ b/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py
+@@ -14 +14 @@
+-        delay_ms_range = [4., 4.]
++        delay_ms_range = [10., 10.]
+@@ -59 +59 @@
+-        # 首轮板端时序的2ms量化近似；不包含未知电机内部响应。
++        # 用户指定动作等待固定10ms；不是板端实测或电机内部响应。
+@@ -61 +61 @@
+-        delay_ms_range = [2., 2.]
++        delay_ms_range = [10., 10.]
+@@ -82 +82 @@
+-        fitted_leg_load = True  # User-adopted mirrored local load; False replays the legacy plant.
++        fitted_leg_load = False  # Roll back to the original linear-spring plant.
