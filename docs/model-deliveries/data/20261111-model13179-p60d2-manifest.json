@@ -1,0 +1,907 @@
+{
+  "created_at": "2026-11-11T16:39:06.258599+08:00",
+  "model": {
+    "path": "artifacts/fudan_ppo_walk/models/20261111_model13179_p60d2_roll_pitch.pt",
+    "bytes": 1442121,
+    "sha256": "8ef6f785dab2bbb47bb0145fd0a59844d7051b323e73498cc4ca6450a559b77c",
+    "iterations": 13179,
+    "contract": "fudan-ppo-walk-physical25-history125-critic144-v1",
+    "reset_contract": "fudan-physical-pd-centred-warmup-clean4-noisy1-unclipped-history-v2",
+    "partial_update": false,
+    "identical_to_training_final": true,
+    "posture_reward": {
+      "version": "fudan-roll-pitch-soft-band-v1",
+      "pitch_range_deg": [
+        0.0,
+        5.0
+      ],
+      "pitch_inner_ratio": 0.05,
+      "roll_scale": -100.0,
+      "pitch_scale": -100.0
+    },
+    "reward_names": [
+      "tracking_lin_vel",
+      "tracking_lin_vel_enhance",
+      "tracking_ang_vel",
+      "tracking_ang_vel_enhance",
+      "base_height",
+      "nominal_state",
+      "lin_vel_z",
+      "ang_vel_xy",
+      "roll",
+      "pitch",
+      "dof_vel",
+      "dof_acc",
+      "torques",
+      "action_rate",
+      "action_smooth",
+      "collision",
+      "dof_pos_limits"
+    ]
+  },
+  "source_code": {
+    "repository": "https://github.com/zn1135/wheelleg_RL_2026.git",
+    "branch": "26_wheelleg",
+    "training_base": "6d2ba50c4bf5588df051cb7304d14fefd6dd3992",
+    "worktree_dirty": true,
+    "runtime_python_files": 143,
+    "source_sha256": {
+      "mjlab_training/src/ct_mjlab/reference_contract.py": "b0d0e01aff62eda7fbe57211b76b5a5791c9e555288c4a969e2c60d51962e2b3",
+      "mjlab_training/src/ct_mjlab/cli.py": "35da51c272a6995ae797facbfb40f53162019eace6f5538535b2065fb5207898",
+      "mjlab_training/src/ct_mjlab/validation.py": "67b1c8bd1eddd9e0f20c361fb7e5ce700e05088750c6f237d7dfcbdcf23f0b95",
+      "mjlab_training/src/ct_mjlab/wheel_odometry.py": "d4c8a6a0fb3a1073452cce6c139222ad1247a5313bcb06340a5ee43569cf4e50",
+      "mjlab_training/src/ct_mjlab/wheel_angles.py": "0dae70801893a390b7703070e105dd969f18f940ad75945a99ecb0df7c93071a",
+      "mjlab_training/src/ct_mjlab/bc_preservation.py": "ab0243a15fcf3e41f55ef1e4be9cc650167e00be7a4e99417715656287a2e1c1",
+      "mjlab_training/src/ct_mjlab/bc.py": "d16e475feb0f784b49582598aad4eba67fb73762686b45381b42dc51a17ef17a",
+      "mjlab_training/src/ct_mjlab/__init__.py": "24a01d5d9223340ae8f2a1a6af88f0db69a9cad05355c6367c5c29b45d8b1ae5",
+      "mjlab_training/src/ct_mjlab/utils/source_migration.py": "48d153524dcd31f432116db493c28795a5e8926ee88d37b234124c4fdb773cc1",
+      "mjlab_training/src/ct_mjlab/utils/task_registry.py": "e2ee0a7654ada4cb223eb35d77e4c4dca6e13b08e483606c479dd87c7501ea65",
+      "mjlab_training/src/ct_mjlab/utils/helpers.py": "6618d7e29522ce388973c1e34d1b885bc4386b5d302557cdfbe029b9a9b600a3",
+      "mjlab_training/src/ct_mjlab/utils/__init__.py": "c5e801b7489cd39da57035a5d7a0d2e77b0a4e902133d545076cfa531590837e",
+      "mjlab_training/src/ct_mjlab/teacher/gains.py": "451b1c257b41aeaf4d64386b4689a4e51369eb5a8b9055646f3cc496f42fb48d",
+      "mjlab_training/src/ct_mjlab/teacher/standup.py": "45aaf092db320e778dd5b4aabcaeade3102add681a3e68b925cf77d26b0c70ca",
+      "mjlab_training/src/ct_mjlab/teacher/mechanics.py": "fe88482049a15c71fe5586aa0d34eb8fc6d248ac4948c9991fe450f563514ff0",
+      "mjlab_training/src/ct_mjlab/teacher/reference.py": "33d4b490abe24148d2184e6cabf5d5070b5cecdc7ebc5991b3052b2d6cc96832",
+      "mjlab_training/src/ct_mjlab/teacher/estimators.py": "97c01e8cbaa30a69748404cd3c04a70cde67693aa1b6e3d21237e4149cf44016",
+      "mjlab_training/src/ct_mjlab/teacher/controller.py": "495e7e0b8fe8bf1505d771df0996b95bf408aa8064960b9afe7745eef85302b8",
+      "mjlab_training/src/ct_mjlab/teacher/env.py": "8f13bab0b07eff4e6573f2bef527d69162d197b34b266aa75ec8992e24d6c81e",
+      "mjlab_training/src/ct_mjlab/teacher/__init__.py": "7e3628420d9ad80c1393234806df6278676545abf1b821db8b96907f5b34ec2d",
+      "mjlab_training/src/ct_mjlab/smp/isaac_standup_rewards.py": "6dc2c91f9279baa2dfe260a0fcd96d623bfd519c50aa91281b74e07a9fd5001c",
+      "mjlab_training/src/ct_mjlab/smp/dataset.py": "8d06490b3ee222e2b981078713e0403e7193d0e49f5ba89ace8dffd80202505f",
+      "mjlab_training/src/ct_mjlab/smp/features.py": "822a81a9fc8ea2859e03483a883514990a87e01fe7cd11fe40569a020de636ff",
+      "mjlab_training/src/ct_mjlab/smp/finetune.py": "0786d9fc432cc701290673e5d9702ebf297293c1f3e697fcd7b914754afcc2d8",
+      "mjlab_training/src/ct_mjlab/smp/prior.py": "ddb19e928b97cd3ba604242d1b36c286eb276dea7982f60187d9ebdab98d30c7",
+      "mjlab_training/src/ct_mjlab/smp/dit.py": "2e0341575e35b391af52b4f3975939a9f14ee7aa2c22c040760834ce98a1adef",
+      "mjlab_training/src/ct_mjlab/smp/ppo.py": "1daab26f387013241a6a875a2038e217cda42bb226a2f895d886d8f6c7b7852f",
+      "mjlab_training/src/ct_mjlab/smp/phase_sampling.py": "560136498c7f4fd68217b2d2cacd9376b3cc0ce3b36293b88cee0e45ec427df9",
+      "mjlab_training/src/ct_mjlab/smp/__init__.py": "51ebd637bb1d381796f42413dac95430916b2583402ee932190177f29f0c0b3a",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/__main__.py": "76151db7311fd346c3925ce67c5cc4216d7e8385a22444dfa03b5ce3b73ece7d",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/network.py": "64dd04db1b56f6a86174278246052f96add33e99309b02e7366217be49f31a13",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/policy.py": "464f55011900a48619ae4a2a7d0cb57c469870b1f4810e0e333c7492355bde42",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/disturbances.py": "4a69f94cdce58bcc1ae0bd82465db9a4642618b44eedb7cca576ae7bf1b61151",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/protocol.py": "15694f86141cf56417fb7891e12fb4031bd88675a695638ab5ded71978501ac0",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/storage.py": "f66ef14831019a85c3bb503716f7604cb0076aabc3ff785578e516f061e0dfe1",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/runner.py": "8d46fb0d02a3621acfa4079edc5d2730f9304b0a4e693aa016ef981f3dd015ac",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/export.py": "95287d91e87b461481103b1bb6bc43e3103b0d9b45b50b5bd3288c7ac120295c",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/parking_integral.py": "60f74db65fcd43eb80540ee45a19e734809df4d484173604caa0d363d9232db3",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/source_migration.py": "8d2aaa3b8aac52fb105c45a3a0c21c0890fe3ed50552d99ce8dd282f17f860af",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/selected_policy.py": "b2c123cb2f93fe5514e45b6ebfdfd8ae80f330ed6f41b41c432a1bf3c29734e7",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/measurement.py": "35ffe1d63287851b6be614afd4599252b9a8bdb61c247c7e413c5d05e5264d07",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/config.py": "3b7d79f972efbd68e78d85637e98cfa1d5ef0526bb5b8e03bd974b51b1deefb3",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/commands.py": "1b5444d508761944419794839b0897173d108bf85be0cc54f196980699ac7d32",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/ppo.py": "c419601c86595ec743b717534d1de8cb10846aa9a54e3adc0f08f5c3b4360955",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/env.py": "967c53bdb75f1e493ffe50e88a142dde1268ead0156d8d1801dc3ac96218459e",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/contract.py": "17468f9467b2123e862499e02f0e6d662ec0d98eee75d66114397a2c1d59645a",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/__init__.py": "854fe8c63135243bb1461976407a8a228ada0a9fccb170146a1ee943322a32f8",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/reset_geometry.py": "5e2d31cb7ad8884b6260a141dd024070b7c38aece0f111f2faa6a542674137c7",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/utils.py": "47e5984866fb1cbef47a9a43363c6d9081308b0ef61a2fca56f5aea5ba6e18d8",
+      "mjlab_training/src/ct_mjlab/envs/__init__.py": "f5b66cd9aca417a55bb733b2f395f83a50c0a6e2ec399fd19a2592e3da4dd6e7",
+      "mjlab_training/src/ct_mjlab/rsl_rl/__init__.py": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8",
+      "mjlab_training/src/ct_mjlab/rsl_rl/utils.py": "35c230bb25c6429f06aac4276b96dde88a01c14806775023f4365f60e623678d",
+      "mjlab_training/src/ct_mjlab/scripts/teacher.py": "e317582e3fbaa6680c5bedb77310c8596c7f6a97bd3346841099c9ce399c03ad",
+      "mjlab_training/src/ct_mjlab/scripts/collect.py": "70aa407a1a8719e01cf64396ba6b1d8f0e985ac38b5774bd13c1110c4ecbecab",
+      "mjlab_training/src/ct_mjlab/scripts/train_bc.py": "e2f532c2ad4762cc0787ff12a778dd5533978faf2f7d27c983735dad9cfcb0a5",
+      "mjlab_training/src/ct_mjlab/scripts/export.py": "1f57a0dab4b1657106ec332eea7f6c595bb23f262ec2fee0c5128c16f327a939",
+      "mjlab_training/src/ct_mjlab/scripts/train.py": "09dd7ac777178dd4462167ac31030d27a1918aec417513e677327a54b4715197",
+      "mjlab_training/src/ct_mjlab/scripts/play.py": "5baa7406328b52277e33ac28adcad5b52af0c035ee1f1173d51d4463d00da929",
+      "mjlab_training/src/ct_mjlab/scripts/accept.py": "19198cc9e29a26085270fabfbdfdedfa3fb53ad5dca9f75561caf38bff0da61f",
+      "mjlab_training/src/ct_mjlab/scripts/__init__.py": "4f695356a9589039a8269b131b703cb1f4ae66897cdf885d4ab4bf366bd8130a",
+      "mjlab_training/src/ct_mjlab/scripts/check.py": "ecf7a3c70353a39bc321b80070c57ae434720e4788b315c468a44c9569fde0f6",
+      "mjlab_training/src/ct_mjlab/scripts/eval.py": "7ab7518d5e786415104da80298f2849f6a4dd96c4adb6a72dcff7b94d972e4cf",
+      "mjlab_training/src/ct_mjlab/scripts/train_prior.py": "e3080b599d1dd6889292a3c976bd1be7789f8c43853ffad292d6e7123f15f99e",
+      "mjlab_training/src/ct_mjlab/supermimic/__main__.py": "bc8b04a9e87e8cb925f27620827eb8f7b7575326971796d01039230d7c578b93",
+      "mjlab_training/src/ct_mjlab/supermimic/state.py": "85d6932e59ea419bad278ad8dddb54404280e85dd5cbf36d25e52426c44b89ab",
+      "mjlab_training/src/ct_mjlab/supermimic/learner.py": "0fec0cb41566d93773e2dac91ecc7cf3d47d283eeeb1daf3c8e9970a465db0b9",
+      "mjlab_training/src/ct_mjlab/supermimic/export.py": "2d07f1a61cbaddbea51c1764327bdc34a3579aee8f8a5ad053e69e19a592c267",
+      "mjlab_training/src/ct_mjlab/supermimic/networks.py": "de7d42a8419a2b6332547ad27236f66784952e99da43c4c91785c42e2b871e4d",
+      "mjlab_training/src/ct_mjlab/supermimic/motion_adapter.py": "4fe65abdd38595cf09cb51106ea09abe3c1d5e5d3d20a5999ecdf93311d0db4b",
+      "mjlab_training/src/ct_mjlab/supermimic/kinematics.py": "06f918239d221213ed8e7815ca1f12050bdaaa9c9d1cc514d88c9db184ea42a9",
+      "mjlab_training/src/ct_mjlab/supermimic/buffer.py": "dc1ecb7572db180ea1ba8303b4f9b90de588418ead3aca803937c6e4ac28d752",
+      "mjlab_training/src/ct_mjlab/supermimic/motion.py": "ddd0742adb21dfa4c161bbf9079218ce5cc0281bfecd833f687796dd5216bc2a",
+      "mjlab_training/src/ct_mjlab/supermimic/__init__.py": "f77da4b5fe44fa282ec200acebe1fb02864a004d7fe16640f1e95c6f2f31f672",
+      "mjlab_training/src/ct_mjlab/supermimic/analytic_reward.py": "eaeb060864a7b9637cbf9e287a6651df0560a7d513abfd62b80715e2ee3cf327",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/fitted_leg_load.py": "c04f1e73831654a5fd67463e185c7facdd15aae246c78c76b39fe54aa6a87b06",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/standup_mdp.py": "43a86e00e398f99d9dc5a5a5085e0c167452ecdfc6eb5b56ea4d5e558367a045",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/pd_action.py": "026556dc1e32aa423e877f14d4183ee049b8411f37b6d149224e381411af0849",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_env_cfg.py": "0a26fd64ed4a10498274f55819dc08cfef46559c7a3b80e878e5bfd2e131a76e",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/model.py": "ebd9c037963122ca16d87b6b7d366a3de64e0c36114a2fc8ad06492a2ae90bc6",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/velocity_mdp.py": "992dd2767c1d675805e0616e206b4d1c9de4b66c6164cb83feb2f99b9b12c8dc",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/standup_randomization.py": "0c7af188444d115fab38e554194b130decc4c37ad29a2c46348646ed59dc1d79",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/v14_observations.py": "e65286a13c6d0b9e66633f56f08903d6061ff352168bd252f957ad0ec351288f",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/runner.py": "39e517fd3eb63a5790e56caf717ffe309e01e7d32175731aa3c35a60ffd7884b",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_runner.py": "da8796450f4638bcfd0e8df3e33786ce4d84790082660a8b87551fed70e8b5f4",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_mdp.py": "9f9c1833a93e609ae99d06b3c5feb60bf198374c5497aa31dbefa03d2fad10ed",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_poses.py": "be5ee05224ab52038d19df4c53706f59a55de5582ebf23c2c24f95d9111293fa",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_action.py": "df2734ea0e20b7245b3781fe04a66c6993feef2cbc01331e365f3aca0f1e7712",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_env_cfg.py": "509842e50dab512a4b05fab80b721ef4207ae2caa0767115dd8fb7fb8b012cfb",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_randomization.py": "f8cbc6c37b64f6311e23b537e5bc399cbc1e31cf6f5e66bf6bf03df34018b6de",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_mdp.py": "66e54adfa916e8b2b7bcbccdd64f2c1db3655f890fd639bab17650aec9e883bd",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_rewards.py": "9300624a04a2a3d388a9c0d2a747427f9b0f32f53808d7047f4d658b01002322",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_runner.py": "ef580d18a76d9e6f8f12ca4475ed0878388220116073fb2e651988b6e1674de2",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_observations.py": "6fe807812da76f3f26cbb2727ce6e2152fc97b813d0787166b89f251ec1cc760",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/gas_spring.py": "e5e104066a12e511ea145dbe74b04357541ec03f9e5919063dfd6ae7f16d787a",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/velocity_env_cfg.py": "5a380a7fcc6e93e7eaff3d93a8df09292ea7dcf036930000d67dc00b1aaca5e6",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_observations.py": "cec4d05bd089a5139faade265c2858e2865d23ce54ea28187f20a9a8665e806b",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_terrains.py": "156fefda351ecc24e3fcca3e63112aad80e02bcb66227c48bf0f15ecda936bb3",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/__init__.py": "9da736f8422c6f778ab2a7f5df50f6b232774533bf954e3d4bc0cdf4b37676eb",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_rewards.py": "d2b9d2683fc9cc3e5d18a689bf77b9ed801d6a8152e593d9e4c36186119fcbd8",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/network.py": "5378a73ea1159b5cb0679a6f5f6a49124516ade4abbee1867167c52640cc55a9",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/diagnostics.py": "f4799d760aa5dd24f095d5ed09040db6670d0c7a93a98dd63bdafb8d93ae89d2",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/observations.py": "395f00a7acf5c08efb311b6f68bbba769dc7f890e10f16372715cdd786c191df",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/runner.py": "a10a5e0484fcb9f8fc6c346eb90cb63f20b725df36099714810f81e07804bca3",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/export.py": "5338e203cd50023144073fb787beb3ab05333c765f12381544dd15f04a1c7892",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/mdp.py": "b73518d86b7343f1fd8e38d10ec3ab83dfd7bef3df6568d92ee90ec26f3f8d10",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/env_cfg.py": "58b2659c945f06d582fc969bbfe1bd5229757431599fc368e45c07adf6ba7ed5",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/rewards.py": "4e13d082c64aa582979bdac4a1b81142d5206b748dbc481dce18056c7e13cd27",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/__init__.py": "04b25060168d96dd83b7bd83b8d7255a7cc540507ed90474a4e4aaed998c194c",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/action.py": "8e8925b1f297f13fa6adddab324865c0fc93b466b2f9eca049d4099024c7d3aa",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/observations.py": "89622e84105c847501069b9878cbf889e745a93e9063fcf98912b5cafbc9242f",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/runner.py": "8fe755001dcdf1dc96108a92718e40747d21ec4ba19c36dcdfcc97680aa393eb",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/mdp.py": "af3e5b4bd32cbd482da49fbd81c083f8bc3ac9caef98dc042bbb497c1623d9ec",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/env_cfg.py": "a66487714e6706da1f750c876ad8a334b8b25a07ff065d9dc5b84618c2a14f5e",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/rewards.py": "847a2d2cc67d3bf7ea63b2ddfc77f1f0d3ce0d3d1123242f10d867d61e273652",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/__init__.py": "860626c4d4964558b0ab82f4ff487f1cb7d106999bc94891f0699041a2d1a2f4",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/randomization.py": "0fecf8f3c1df3bd40c64ac38294b6ee0902d08759d4f059e36b29f0333e75c7a",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/action.py": "ea4bb8cdb370b5dc101c6c971aeff38f91833a61fb11a212b241d0fd268a94c8",
+      "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/disturbances.py": "fd95ff12aecd81244f497696c32e9b00e2421018fdee7603d21639a5e1d3e74f",
+      "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk.py": "9ac4e6de86c278638a400e599c8163dee94d287efcc85d7612acd20403cc637b",
+      "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py": "e13dacce0746c9730fd963c1c5e566f97831eb1b310ae88183ca19767d886fcb",
+      "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/posture_reward.py": "cd0e092d6df9255cae9aaf7a036ca96f81108dcbc3567d2787e4d4a80a6b0a49",
+      "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/parking_integral.py": "125dbbe89b31973178971295d7a0ea5e96568036be4fca0dc0e919f5ed2a44d3",
+      "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/commands.py": "cbcc09b7fa7c362d985d63e36d13f74e4d5b550b5b79b59361127662498b8d50",
+      "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/__init__.py": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8",
+      "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/reset_geometry.py": "f9591c7fea0a97bbf7b58edbf1c6b952394597e365435f076642040ef6c34272",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/switch.py": "5a5d2e2b2c71ddb9619c24730986f7938dd42dc05918aac06d31659909986f88",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/network.py": "71757db536c77737a025dd027112f3201305ff1a9208e4ca0b97231266bc28d8",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/observations.py": "42be7b513ad16d49349bb0a6bdbc758158643f4d568f5089cf50a62fe89b2c32",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/runner.py": "6f9b5c9588fb3ff35171072e6af530f4d79fa0559e6901b1c505560ae5e1841f",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/export.py": "7f7cb84765bce470bc41863a60a78b00ee5eace175671f1a70f22f1238b64629",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/mdp.py": "8fcc7f77fa52712d5702808784629367db18179bc37f0947595b55392e2ba955",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/env_cfg.py": "6bf2d36f69483da3f4dca15f6c07346ca6b02fd3b1cbcdd63ec252477b70b601",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/rewards.py": "0128333915b48dd9e808e9e96b864fb034a8ca5beab6e8a40176fa89804a3757",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/__init__.py": "fe9e5414dc62c68e8c392421440f49ed3564cd8f51181fb61a0573a257e2b49d",
+      "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/action.py": "e48641a218bb7599daf2be0d467e42cb4c399a9c28853695c50dfa6b2aa2ab9d",
+      "mjlab_training/src/ct_mjlab/rsl_rl/algorithms/fudan_ppo.py": "e0fe23c26861b133d571fd8761754e74c36ad44b19a9aed028334cdd9e577b07",
+      "mjlab_training/src/ct_mjlab/rsl_rl/algorithms/__init__.py": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8",
+      "mjlab_training/src/ct_mjlab/rsl_rl/modules/actor_critic_sequence.py": "445ca35f937e2ca4ad0a65dcdf5fd9dd414da60c34ff799b3a3b443b5d7701ad",
+      "mjlab_training/src/ct_mjlab/rsl_rl/modules/__init__.py": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8",
+      "mjlab_training/src/ct_mjlab/rsl_rl/runners/fudan_on_policy_runner.py": "0ba08288b3ce6c7558d28b4c5b9a4e0edf4c10d2d4ee6229c42e35ee799be990",
+      "mjlab_training/src/ct_mjlab/rsl_rl/runners/__init__.py": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8",
+      "mjlab_training/src/ct_mjlab/rsl_rl/storage/fudan_rollout_storage.py": "421ad776eac643014ad70a041261a1b9717a9783f8e276cdcaae45b08bc4f99c",
+      "mjlab_training/src/ct_mjlab/rsl_rl/storage/__init__.py": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8",
+      "resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml": "505c9b9bb2b7a20e15cf9d2cd4ca664332db402687e34185d8a57de173dedbe8",
+      "docs/mjlab-fudan-ppo-walk.md": "b589c298d783f2b3734ba9f474b7979290fe51f86a7b7d382409963d960e7e2c",
+      "resources/robots/chuanliantui_new_1/mjlab/fitted_leg_load.json": "e6ef82fa4380fa01341fa2166be56282c5290c82fec2b2a04e5b3107ce49218f"
+    },
+    "source_patch": "docs/model-deliveries/data/20261111-model13179-p60d2-source.patch",
+    "source_patch_sha256": "3243353bfef9d3f6e6e93269f2e010981ac7f7768d87d09b3add3feaa6b27ece",
+    "modified_paths": [
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/policy.py",
+      "mjlab_training/src/ct_mjlab/fudan_ppo_walk/export.py",
+      "mjlab_training/src/ct_mjlab/scripts/train.py",
+      "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk.py",
+      "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py",
+      "mjlab_training/src/ct_mjlab/rsl_rl/runners/fudan_on_policy_runner.py"
+    ],
+    "new_paths": [
+      "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/posture_reward.py"
+    ],
+    "apply_command": "git apply --unidiff-zero docs/model-deliveries/data/20261111-model13179-p60d2-source.patch",
+    "reconstruction": "Base commit plus source patch reconstructs all runtime Python files and two resource assets; documentation hash is historical reference only"
+  },
+  "training": {
+    "start_iteration": 11179,
+    "additional_iterations": 2000,
+    "final_iteration": 13179,
+    "num_envs": 4096,
+    "rollout_steps": 48,
+    "seed": 1,
+    "additional_transitions": 393216000,
+    "final_transitions": 2075201536,
+    "updates_added_each": 40000,
+    "updates_final_each": 263580,
+    "parent_checkpoint": "logs/mjlab/fudan_ppo_walk/20261111_wide_wrench_resume11000_to14000_01/model_final.pt",
+    "parent_sha256": "2f1c1fad1d4e0d398197697a78c3bcba632aa663ea24093157551f82b8016b1a",
+    "source_nominal_pd": [
+      60,
+      2
+    ],
+    "target_nominal_pd": [
+      60,
+      2
+    ],
+    "physical_leg_load": {
+      "profile": "legacy-linear-spring-v1",
+      "sha256": null,
+      "mirrored_left": false,
+      "initial_memory_force_n": 0.0
+    },
+    "disturbances": {
+      "version": "fudan-optional-disturbances-v1",
+      "action_delay": true,
+      "sensor_delay": true,
+      "pushes": true,
+      "action_delay_ms": [
+        6.0,
+        14.0
+      ],
+      "sensor_delay_ms": [
+        2.0,
+        2.0
+      ],
+      "push_interval_s": 7.0,
+      "max_push_vel": 0.3,
+      "external_force_range": [
+        -10.0,
+        10.0
+      ],
+      "external_torque_range": [
+        -10.0,
+        10.0
+      ]
+    },
+    "command_sampling": {
+      "version": "fudan-parking-commands-v1",
+      "standstill_env_ratio": 0.1,
+      "stop_env_ratio": 0.1,
+      "stop_drive_time_s": [
+        3.0,
+        5.0
+      ],
+      "stop_speed_range": [
+        0.25,
+        1.0
+      ],
+      "parking_heights": [
+        0.22,
+        0.26,
+        0.3
+      ]
+    },
+    "process": {
+      "returncode": 0,
+      "start": "2026-11-11T13:57:16.681279+08:00",
+      "end": "2026-11-11T16:30:01.621344+08:00"
+    },
+    "status": {
+      "status": "completed",
+      "training_returncode": 0,
+      "audit_returncode": 0,
+      "error": null,
+      "start": "2026-11-11T13:57:16.681279+08:00",
+      "end": "2026-11-11T16:30:10.210645+08:00",
+      "target_iteration": 13179
+    },
+    "report": {
+      "training_wall_s": 9123.207813501358,
+      "iterations": 13179,
+      "transitions": 2075201536,
+      "primary_updates": 263580,
+      "encoder_updates": 263580,
+      "partial_update": false,
+      "checkpoint": "logs/mjlab/fudan_ppo_walk/20261111_p60d2_resume11179_to13179_01/model_final.pt",
+      "checkpoint_sha256": "8ef6f785dab2bbb47bb0145fd0a59844d7051b323e73498cc4ca6450a559b77c",
+      "num_envs": 4096,
+      "transitions_per_iteration": 196608,
+      "minibatch": 49152,
+      "stopped_by": "iteration_budget",
+      "iteration_budget": 2000,
+      "target_iteration": 13179,
+      "initial_iterations": 11179,
+      "iterations_added": 2000,
+      "transitions_added": 393216000,
+      "primary_updates_added": 40000,
+      "encoder_updates_added": 40000,
+      "reset_contract": "fudan-physical-pd-centred-warmup-clean4-noisy1-unclipped-history-v2",
+      "history_migration": null,
+      "disturbances": {
+        "version": "fudan-optional-disturbances-v1",
+        "action_delay": true,
+        "sensor_delay": true,
+        "pushes": true,
+        "action_delay_ms": [
+          6.0,
+          14.0
+        ],
+        "sensor_delay_ms": [
+          2.0,
+          2.0
+        ],
+        "push_interval_s": 7.0,
+        "max_push_vel": 0.3,
+        "external_force_range": [
+          -10.0,
+          10.0
+        ],
+        "external_torque_range": [
+          -10.0,
+          10.0
+        ]
+      },
+      "command_sampling": {
+        "version": "fudan-parking-commands-v1",
+        "standstill_env_ratio": 0.1,
+        "stop_env_ratio": 0.1,
+        "stop_drive_time_s": [
+          3.0,
+          5.0
+        ],
+        "stop_speed_range": [
+          0.25,
+          1.0
+        ],
+        "parking_heights": [
+          0.22,
+          0.26,
+          0.3
+        ]
+      },
+      "posture_reward": {
+        "version": "fudan-roll-pitch-soft-band-v1",
+        "pitch_range_deg": [
+          0.0,
+          5.0
+        ],
+        "pitch_inner_ratio": 0.05,
+        "roll_scale": -100.0,
+        "pitch_scale": -100.0
+      },
+      "reward_names": [
+        "tracking_lin_vel",
+        "tracking_lin_vel_enhance",
+        "tracking_ang_vel",
+        "tracking_ang_vel_enhance",
+        "base_height",
+        "nominal_state",
+        "lin_vel_z",
+        "ang_vel_xy",
+        "roll",
+        "pitch",
+        "dof_vel",
+        "dof_acc",
+        "torques",
+        "action_rate",
+        "action_smooth",
+        "collision",
+        "dof_pos_limits"
+      ],
+      "resume_from": {
+        "path": "logs/mjlab/fudan_ppo_walk/20261111_wide_wrench_resume11000_to14000_01/model_final.pt",
+        "sha256": "2f1c1fad1d4e0d398197697a78c3bcba632aa663ea24093157551f82b8016b1a",
+        "iterations": 11179
+      },
+      "behavior_accepted": false,
+      "reward_logging": "weighted_clipped_mean_over_48_steps_and_all_environments"
+    },
+    "effective_config": {
+      "env": {
+        "env": {
+          "num_envs": 512,
+          "play_num_envs": 20,
+          "episode_length_s": 20.0,
+          "fail_ticks": 0,
+          "terminal_gravity_z": -0.1,
+          "reset_velocity_range": [
+            -0.5,
+            0.5
+          ]
+        },
+        "sim": {
+          "dt": 0.002,
+          "fitted_leg_load": false
+        },
+        "control": {
+          "decimation": 5,
+          "leg_stiffness": 60.0,
+          "leg_damping": 2.0,
+          "leg_position_scale": 0.5,
+          "wheel_stiffness": 0.1,
+          "wheel_damping": 0.0,
+          "wheel_velocity_scale": 10.0,
+          "max_wheel_velocity": 150.0,
+          "nominal_leg_positions": [
+            -0.6047205544565015,
+            0.6083241726212976,
+            0.6047205544560037,
+            -0.6083241726229305
+          ]
+        },
+        "commands": {
+          "velocity_initial": 2.0,
+          "velocity_max": 2.5,
+          "velocity_increment": 0.1,
+          "yaw_range": [
+            -2.0,
+            2.0
+          ],
+          "height_range": [
+            0.22,
+            0.3
+          ],
+          "resampling_steps": 500,
+          "curriculum_threshold": 0.7,
+          "curriculum_yaw_factor": 0.8,
+          "standstill_env_ratio": 0.1,
+          "stop_env_ratio": 0.1,
+          "stop_drive_time_s": [
+            3.0,
+            5.0
+          ],
+          "stop_speed_range": [
+            0.25,
+            1.0
+          ],
+          "parking_heights": [
+            0.22,
+            0.26,
+            0.3
+          ]
+        },
+        "domain_rand": {
+          "kp_range": [
+            0.85,
+            1.15
+          ],
+          "kd_range": [
+            0.85,
+            1.15
+          ],
+          "motor_strength_range": [
+            0.85,
+            1.15
+          ],
+          "nominal_offset_range": [
+            -0.05,
+            0.05
+          ],
+          "added_mass_range": [
+            -1.5,
+            3.0
+          ],
+          "mass_scale_range": [
+            0.85,
+            1.15
+          ],
+          "com_range": [
+            -0.03,
+            0.03
+          ],
+          "friction_range": [
+            0.4,
+            1.6
+          ],
+          "restitution_range": [
+            0.4,
+            1.0
+          ],
+          "friction_buckets": 64,
+          "randomize_action_delay": true,
+          "delay_ms_range": [
+            6.0,
+            14.0
+          ],
+          "randomize_sensor_delay": true,
+          "sensor_delay_ms_range": [
+            2.0,
+            2.0
+          ],
+          "push_robots": true,
+          "push_interval_s": 7.0,
+          "max_push_vel_xy": 0.3,
+          "external_force_range": [
+            -10.0,
+            10.0
+          ],
+          "external_torque_range": [
+            -10.0,
+            10.0
+          ]
+        },
+        "normalization": {
+          "clip": 100.0,
+          "angular_velocity": 0.25,
+          "command": [
+            2.0,
+            0.25,
+            5.0
+          ],
+          "joint_velocity": 0.05,
+          "acceleration": 0.0025,
+          "torques": 0.05,
+          "height_center": 0.5,
+          "height_scale": 5.0,
+          "noise_scales": [
+            0.075,
+            0.075,
+            0.075,
+            0.075,
+            0.075,
+            0.075,
+            0.0,
+            0.0,
+            0.0,
+            0.03,
+            0.03,
+            0.03,
+            0.03,
+            0.1125,
+            0.1125,
+            0.1125,
+            0.1125,
+            0.1125,
+            0.1125,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "rewards": {
+          "pitch_soft_range_deg": [
+            0.0,
+            5.0
+          ],
+          "pitch_inner_penalty_ratio": 0.05,
+          "tracking_sigma": 0.25,
+          "tracking_enhance_sigma": 2.5,
+          "height_sigma": 0.001,
+          "soft_limit_half_span": 0.485,
+          "scales": {
+            "tracking_lin_vel": 1.0,
+            "tracking_lin_vel_enhance": 1.0,
+            "tracking_ang_vel": 1.0,
+            "tracking_ang_vel_enhance": 1.0,
+            "base_height": 1.0,
+            "nominal_state": -1.0,
+            "lin_vel_z": -1.0,
+            "ang_vel_xy": -0.2,
+            "roll": -100.0,
+            "pitch": -100.0,
+            "dof_vel": -5e-05,
+            "dof_acc": -2.5e-07,
+            "torques": -0.0001,
+            "action_rate": -0.01,
+            "action_smooth": -0.01,
+            "collision": -1.0,
+            "dof_pos_limits": -1.0
+          }
+        }
+      },
+      "ppo": {
+        "num_learning_epochs": 5,
+        "num_mini_batches": 4,
+        "clip_param": 0.2,
+        "gamma": 0.99,
+        "lam": 0.95,
+        "value_loss_coef": 1.0,
+        "entropy_coef": 0.01,
+        "learning_rate": 0.001,
+        "extra_learning_rate": 0.001,
+        "max_grad_norm": 1.0,
+        "use_clipped_value_loss": true,
+        "schedule": "adaptive",
+        "desired_kl": 0.005
+      },
+      "runtime_overrides": {
+        "num_envs": 4096,
+        "seed": 1,
+        "reset_contract": "fudan-physical-pd-centred-warmup-clean4-noisy1-unclipped-history-v2"
+      }
+    },
+    "command": [
+      "scripts/mjlab.sh",
+      "train",
+      "--task",
+      "fudan_ppo_walk",
+      "--num-envs",
+      "4096",
+      "--iterations",
+      "2000",
+      "--resume",
+      "logs/mjlab/fudan_ppo_walk/20261111_wide_wrench_resume11000_to14000_01/model_final.pt",
+      "--preserve-history-v2",
+      "--precheck",
+      "artifacts/fudan_ppo_walk/20261111-p60d2-retrain2000-01/precheck/report.json",
+      "--log-dir",
+      "logs/mjlab/fudan_ppo_walk/20261111_p60d2_resume11179_to13179_01"
+    ],
+    "log_dir": "logs/mjlab/fudan_ppo_walk/20261111_p60d2_resume11179_to13179_01",
+    "posture_change": {
+      "source": {
+        "version": "fudan-orientation-gravity-xy-v1"
+      },
+      "target": {
+        "version": "fudan-roll-pitch-soft-band-v1",
+        "pitch_range_deg": [
+          0.0,
+          5.0
+        ],
+        "pitch_inner_ratio": 0.05,
+        "roll_scale": -100.0,
+        "pitch_scale": -100.0
+      }
+    }
+  },
+  "verification": {
+    "copy_sha_identical": true,
+    "parameters_finite": true,
+    "std_positive": true,
+    "policy_load_cpu_strict": true,
+    "optimizer_step_counts_valid": true,
+    "source_patch_check_passed": true,
+    "resume_audit_passed": true,
+    "restored_network_two_adam_rng": true,
+    "source_files_verified": 143,
+    "reward_terms": 17,
+    "reward_sum_max_error": 8.114895422295376e-09,
+    "precheck": {
+      "passed": true,
+      "kind": "physical-visible-precheck",
+      "num_envs": 20,
+      "reset_contract": "fudan-physical-pd-centred-warmup-clean4-noisy1-unclipped-history-v2",
+      "optimizer_updates": 0,
+      "physics_steps": 3510,
+      "disturbances": {
+        "version": "fudan-optional-disturbances-v1",
+        "action_delay": true,
+        "sensor_delay": true,
+        "pushes": true,
+        "action_delay_ms": [
+          6.0,
+          14.0
+        ],
+        "sensor_delay_ms": [
+          2.0,
+          2.0
+        ],
+        "push_interval_s": 7.0,
+        "max_push_vel": 0.3,
+        "external_force_range": [
+          -10.0,
+          10.0
+        ],
+        "external_torque_range": [
+          -10.0,
+          10.0
+        ]
+      },
+      "command_sampling": {
+        "version": "fudan-parking-commands-v1",
+        "standstill_env_ratio": 0.1,
+        "stop_env_ratio": 0.1,
+        "stop_drive_time_s": [
+          3.0,
+          5.0
+        ],
+        "stop_speed_range": [
+          0.25,
+          1.0
+        ],
+        "parking_heights": [
+          0.22,
+          0.26,
+          0.3
+        ]
+      },
+      "posture_reward": {
+        "version": "fudan-roll-pitch-soft-band-v1",
+        "pitch_range_deg": [
+          0.0,
+          5.0
+        ],
+        "pitch_inner_ratio": 0.05,
+        "roll_scale": -100.0,
+        "pitch_scale": -100.0
+      },
+      "auto_reset": true,
+      "episode_completions": 34,
+      "initial": [
+        {
+          "id": "precheck_0",
+          "height": 0.3390159606933594,
+          "minimum_collision_mesh_height_m": 0.0019999854266643524
+        },
+        {
+          "id": "precheck_1",
+          "height": 0.3434354066848755,
+          "minimum_collision_mesh_height_m": 0.0019999630749225616
+        },
+        {
+          "id": "precheck_2",
+          "height": 0.3429597020149231,
+          "minimum_collision_mesh_height_m": 0.0020000003278255463
+        },
+        {
+          "id": "precheck_3",
+          "height": 0.3462681770324707,
+          "minimum_collision_mesh_height_m": 0.0019999369978904724
+        },
+        {
+          "id": "precheck_4",
+          "height": 0.34305697679519653,
+          "minimum_collision_mesh_height_m": 0.001999989151954651
+        },
+        {
+          "id": "precheck_5",
+          "height": 0.3417213261127472,
+          "minimum_collision_mesh_height_m": 0.001999974250793457
+        },
+        {
+          "id": "precheck_6",
+          "height": 0.3418155610561371,
+          "minimum_collision_mesh_height_m": 0.0019999556243419647
+        },
+        {
+          "id": "precheck_7",
+          "height": 0.3422869145870209,
+          "minimum_collision_mesh_height_m": 0.0019999779760837555
+        },
+        {
+          "id": "precheck_8",
+          "height": 0.33818525075912476,
+          "minimum_collision_mesh_height_m": 0.0019999705255031586
+        },
+        {
+          "id": "precheck_9",
+          "height": 0.3398144841194153,
+          "minimum_collision_mesh_height_m": 0.001999989151954651
+        },
+        {
+          "id": "precheck_10",
+          "height": 0.34482502937316895,
+          "minimum_collision_mesh_height_m": 0.001999981701374054
+        },
+        {
+          "id": "precheck_11",
+          "height": 0.33715641498565674,
+          "minimum_collision_mesh_height_m": 0.0019999705255031586
+        },
+        {
+          "id": "precheck_12",
+          "height": 0.3452449142932892,
+          "minimum_collision_mesh_height_m": 0.0019999854266643524
+        },
+        {
+          "id": "precheck_13",
+          "height": 0.34376364946365356,
+          "minimum_collision_mesh_height_m": 0.001999959349632263
+        },
+        {
+          "id": "precheck_14",
+          "height": 0.34079834818840027,
+          "minimum_collision_mesh_height_m": 0.001999974250793457
+        },
+        {
+          "id": "precheck_15",
+          "height": 0.34238526225090027,
+          "minimum_collision_mesh_height_m": 0.0020000040531158447
+        },
+        {
+          "id": "precheck_16",
+          "height": 0.34332752227783203,
+          "minimum_collision_mesh_height_m": 0.001999974250793457
+        },
+        {
+          "id": "precheck_17",
+          "height": 0.3378415107727051,
+          "minimum_collision_mesh_height_m": 0.0019999928772449493
+        },
+        {
+          "id": "precheck_18",
+          "height": 0.3400270938873291,
+          "minimum_collision_mesh_height_m": 0.0019999518990516663
+        },
+        {
+          "id": "precheck_19",
+          "height": 0.3429063558578491,
+          "minimum_collision_mesh_height_m": 0.0019999928772449493
+        }
+      ],
+      "validation_engine": "gpu",
+      "action_delay_steps": [
+        6,
+        7,
+        5,
+        6,
+        6,
+        7,
+        7,
+        6,
+        5,
+        5,
+        3,
+        7,
+        3,
+        6,
+        6,
+        7,
+        7,
+        7,
+        4,
+        4
+      ],
+      "sensor_delay_steps": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "push_count": [
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      "cuda_peak_memory_bytes": 217088,
+      "scope": "Valid reset and finite zero-action dynamics; auto_reset is recorded explicitly; not behavioral acceptance",
+      "wall_s": 17.773768424987793
+    },
+    "behavior_accepted": false,
+    "independent_gpu_motion_evaluation": false,
+    "onnx_exported": false,
+    "h7_changed": false
+  },
+  "delivery_versions": {
+    "python": "3.12.3",
+    "torch": "2.14.0+cu130",
+    "mujoco": "3.11.0",
+    "mujoco_warp": "3.11.0",
+    "warp": "1.17.0"
+  },
+  "dependency_scope": "Delivery environment versions; complete training dependency lock was not separately captured",
+  "availability": "PT, source delta and configuration/audit metadata included; original logs, parent11179 and detailed recordings remain local"
+}

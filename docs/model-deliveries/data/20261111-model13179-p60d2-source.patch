@@ -1,0 +1,127 @@
+--- a/mjlab_training/src/ct_mjlab/fudan_ppo_walk/policy.py
++++ b/mjlab_training/src/ct_mjlab/fudan_ppo_walk/policy.py
+@@ -4,0 +5 @@
++from ct_mjlab.envs.fudan_ppo_walk import posture_reward
+@@ -12,0 +14 @@
++    posture_reward.from_record(checkpoint.get('posture_reward'))
+--- a/mjlab_training/src/ct_mjlab/fudan_ppo_walk/export.py
++++ b/mjlab_training/src/ct_mjlab/fudan_ppo_walk/export.py
+@@ -9,0 +10 @@
++from ct_mjlab.envs.fudan_ppo_walk import posture_reward
+@@ -47 +48 @@
+-    (output / 'interface.json').write_text(json.dumps(dict(contract=metadata['contract'], reset_contract=metadata.get('reset_contract', LEGACY_RESET_CONTRACT), history_preprocessing=history_metadata(metadata.get('reset_contract', LEGACY_RESET_CONTRACT)), checkpoint_sha256=sha(checkpoint), onnx_sha256=sha(path), cpu_onnx_max_abs_error=error, input=dict(obs=[1, 25], obs_history=[1, 125]), output=dict(actions=[1, 6]), policy_dt_s=0.01, pd_dt_s=0.002, additional_action_delay_s=None if disturbances.action_delay else 0.0, additional_sensor_delay_s=None if disturbances.sensor_delay else 0.0, training_disturbances=disturbances.record(), training_command_sampling=metadata.get('command_sampling', LEGACY_COMMAND_SAMPLING), runtime_disturbances='simulation_only; queues and forces are outside ONNX; measure real hardware timing', h7='not_adapted_pending_owner_confirmation'), indent=2) + '\n')
++    (output / 'interface.json').write_text(json.dumps(dict(contract=metadata['contract'], reset_contract=metadata.get('reset_contract', LEGACY_RESET_CONTRACT), history_preprocessing=history_metadata(metadata.get('reset_contract', LEGACY_RESET_CONTRACT)), checkpoint_sha256=sha(checkpoint), onnx_sha256=sha(path), cpu_onnx_max_abs_error=error, input=dict(obs=[1, 25], obs_history=[1, 125]), output=dict(actions=[1, 6]), policy_dt_s=0.01, pd_dt_s=0.002, additional_action_delay_s=None if disturbances.action_delay else 0.0, additional_sensor_delay_s=None if disturbances.sensor_delay else 0.0, training_disturbances=disturbances.record(), training_command_sampling=metadata.get('command_sampling', LEGACY_COMMAND_SAMPLING), training_posture_reward=posture_reward.from_record(metadata.get('posture_reward')), runtime_disturbances='simulation_only; queues and forces are outside ONNX; measure real hardware timing', h7='not_adapted_pending_owner_confirmation'), indent=2) + '\n')
+--- a/mjlab_training/src/ct_mjlab/scripts/train.py
++++ b/mjlab_training/src/ct_mjlab/scripts/train.py
+@@ -142,0 +143,3 @@
++    from ct_mjlab.envs.fudan_ppo_walk import posture_reward
++    if posture_reward.from_record(proof.get('posture_reward')) != posture_reward.from_task_config(env_cfg):
++        raise ValueError('Physical precheck posture reward differs from the requested training settings')
+--- a/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk.py
++++ b/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk.py
+@@ -18,0 +19 @@
++from . import posture_reward
+@@ -261,0 +263 @@
++        self.posture_reward_profile = posture_reward.from_task_config(self.cfg)
+@@ -449 +451 @@
+-            orientation=self.gravity[:, :2].square().sum(-1),
++            **posture_reward.penalties(self),
+--- a/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py
++++ b/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py
+@@ -110,0 +111,2 @@
++        pitch_soft_range_deg = [0., 5.]  # 仅前倾范围内弱惩罚。
++        pitch_inner_penalty_ratio = .05  # 区间内为原强度的1/20。
+@@ -117 +119 @@
+-            lin_vel_z=-1., ang_vel_xy=-.2, orientation=-100., dof_vel=-5e-5, dof_acc=-2.5e-7,
++            lin_vel_z=-1., ang_vel_xy=-.2, roll=-100., pitch=-100., dof_vel=-5e-5, dof_acc=-2.5e-7,
+--- /dev/null
++++ b/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/posture_reward.py
+@@ -0,0 +1,73 @@
++"""Separate roll/pitch penalties, with a soft forward-pitch interval."""
++import math
++import torch
++from .fudan_ppo_walk_config import FudanWalkCfg
++
++LEGACY = dict(version='fudan-orientation-gravity-xy-v1')
++VERSION = 'fudan-roll-pitch-soft-band-v1'
++
++
++def from_record(record):
++    if record is None or record == LEGACY:
++        return dict(LEGACY)
++    if set(record) != {'version', 'pitch_range_deg', 'pitch_inner_ratio', 'roll_scale', 'pitch_scale'} or record['version'] != VERSION:
++        raise ValueError('Unsupported posture reward profile')
++    band = [float(x) for x in record['pitch_range_deg']]
++    ratio = float(record['pitch_inner_ratio'])
++    scales = [float(record[x]) for x in ('roll_scale', 'pitch_scale')]
++    if len(band) != 2 or not all(math.isfinite(x) for x in [*band, ratio, *scales]) or band[0] > band[1] or not 0 <= ratio <= 1:
++        raise ValueError('Invalid roll/pitch reward parameters')
++    return dict(version=VERSION, pitch_range_deg=band, pitch_inner_ratio=ratio,
++                roll_scale=scales[0], pitch_scale=scales[1])
++
++
++def from_task_config(task_cfg=None):
++    task = FudanWalkCfg() if task_cfg is None else task_cfg
++    cfg = task.rewards
++    if 'orientation' in cfg.scales:
++        if 'roll' in cfg.scales or 'pitch' in cfg.scales:
++            raise ValueError('Cannot combine legacy and split posture penalties')
++        return dict(LEGACY)
++    return from_record(dict(version=VERSION, pitch_range_deg=cfg.pitch_soft_range_deg,
++        pitch_inner_ratio=cfg.pitch_inner_penalty_ratio, roll_scale=cfg.scales['roll'], pitch_scale=cfg.scales['pitch']))
++
++
++def configure(task, record):
++    """Restore checkpoint reward semantics without changing observations or physics."""
++    profile = from_record(record)
++    scales = {}
++    for name, value in task.rewards.scales.items():
++        if name in ('orientation', 'roll', 'pitch'):
++            if any(x in scales for x in ('orientation', 'roll')):
++                continue
++            if profile == LEGACY:
++                scales['orientation'] = -100.
++            else:
++                scales['roll'] = profile['roll_scale']; scales['pitch'] = profile['pitch_scale']
++        else:
++            scales[name] = value
++    task.rewards.scales = scales
++    if profile != LEGACY:
++        task.rewards.pitch_soft_range_deg = list(profile['pitch_range_deg'])
++        task.rewards.pitch_inner_penalty_ratio = profile['pitch_inner_ratio']
++    return profile
++
++
++def penalties(env):
++    profile = getattr(env, 'posture_reward_profile', LEGACY)
++    gravity = env.gravity
++    if profile == LEGACY:
++        return dict(orientation=gravity[:, :2].square().sum(-1))
++    roll = torch.atan2(-gravity[:, 1], -gravity[:, 2])
++    pitch = torch.asin(gravity[:, 0].clamp(-1., 1.))
++    low, high = [math.radians(x) for x in profile['pitch_range_deg']]
++    excess = pitch - pitch.clamp(low, high)
++    ratio = profile['pitch_inner_ratio']
++    # 区间内弱罚真实pitch；越界部分二次增长，边界处不跳变。
++    return dict(roll=roll.square(), pitch=ratio * pitch.square() + (1. - ratio) * excess.square())
++
++
++def reward_names(record):
++    task = FudanWalkCfg()
++    configure(task, record)
++    return list(task.rewards.scales)
+--- a/mjlab_training/src/ct_mjlab/rsl_rl/runners/fudan_on_policy_runner.py
++++ b/mjlab_training/src/ct_mjlab/rsl_rl/runners/fudan_on_policy_runner.py
+@@ -14,0 +15 @@
++from ct_mjlab.envs.fudan_ppo_walk import posture_reward
+@@ -64,0 +66 @@
++        source_posture = posture_reward.from_record(checkpoint.get('posture_reward'))
+@@ -143,0 +146,2 @@
++            source_posture_reward=source_posture,
++            posture_reward=posture_reward.from_record(getattr(self.env, 'posture_reward_profile', None)),
+@@ -172,0 +177,2 @@
++                posture_reward=posture_reward.from_record(getattr(self.env, 'posture_reward_profile', None)),
++                reward_names=list(self.env.cfg.rewards.scales),
+@@ -278,0 +285,2 @@
++            posture_reward=posture_reward.from_record(getattr(self.env, 'posture_reward_profile', None)),
++            reward_names=list(self.env.cfg.rewards.scales),
