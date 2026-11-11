@@ -1,0 +1,11 @@
+--- a/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py
++++ b/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py
+@@ -88,6 +88,6 @@
+     class control:
+         decimation = 5
+-        leg_stiffness = 60.
+-        leg_damping = 2.
++        leg_stiffness = 30.
++        leg_damping = 10.
+         leg_position_scale = .5
+         wheel_stiffness = .1
