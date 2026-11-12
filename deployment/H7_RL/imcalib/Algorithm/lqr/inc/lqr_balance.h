@@ -38,6 +38,18 @@ enum {
     LQR_U_NUM,
 };
 
+/* 轮矩只读分项；各项含当前列开关/AIR/偏航参考约束，均为限幅前N·m。 */
+enum {
+    LQR_WHEEL_POSITION = 0,
+    LQR_WHEEL_VELOCITY,
+    LQR_WHEEL_YAW,
+    LQR_WHEEL_LEG,
+    LQR_WHEEL_LEG_RATE,
+    LQR_WHEEL_PITCH,
+    LQR_WHEEL_PITCH_RATE,
+    LQR_WHEEL_TERM_NUM,
+};
+
 typedef struct {
     float   vel_leg_comp_sign; /* 速度补偿 */
     uint8_t yaw_hold;          /* 偏航角环 */
@@ -83,6 +95,8 @@ typedef struct {
     float air_hip_max; /* 空中虚拟腿摆矩限幅N·m */
     lpf_t lpf_omg_pitch;      /* 俯仰角速度低通 */
     lpf_t lpf_omg_yaw;        /* 偏航角速度低通 */
+    float wheel_term[2][LQR_WHEEL_TERM_NUM]; /* 本拍左右轮位置/速度/偏航/腿角/腿角速/俯仰/俯仰角速贡献N·m，只供VOFA读取 */
+    float wheel_unclamped[2]; /* 含u_eq的限幅前轮矩N·m；与分项均须结合valid/gain_valid及投入状态 */
 } lqr_state_t;
 
 extern lqr_debug_t lqr_debug;

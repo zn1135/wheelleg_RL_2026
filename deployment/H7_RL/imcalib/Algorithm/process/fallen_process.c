@@ -12,47 +12,7 @@
 
 
 fallen_process_ctx_t fallen_process_control;
-fallen_process_param_t fallen_process_param = {
-    /* 普通起立腿长 */
-    .length_rate             = 0.7f,                            /* 腿长 m/s */
-    .extend_len              = 0.28f,                           /* 目标 m */
-    .length_tol              = 0.02f,                           /* 伸/收腿到位容差 m */
-    .length_timeout          = 1.5f,                            /* 伸/收腿超时 s */
 
-    /* 普通起立摆角 */
-    .front_angle             = 1.75f,                           /* 普通前侧，CSV初姿约1.73~1.76 rad */
-    .normal_swing_window     = 1.0f,                            /* 普通身下入口，不绕前/后准备位 rad */
-    .normal_angle_tol        = 0.2f,                            /* 仅普通摆正到位 rad */
-    .rear_angle              = -1.42f,                           /* 后点 rad */
-    .prepare_angle_tol       = 0.1f,                            /* 前/后准备位和倒置前点容差 rad */
-    .angle_rate              = 4.0f,                            /* 后摆与翻身扫腿目标 rad/s */
-    .angle_timeout           = 1.5f,                            /* 后摆/摆正超时 s */
-
-    /* 收腿与站立 */
-    .retract_len             = 0.15f,                           /* 目标 m */
-
-    /* 摆角串级PD */
-    .angle_pos_kp            = 45.0f,                           /* 位置 P */
-    .angle_pos_kd            = 15.0f,                           /* 位置 D */
-    .angle_speed_kp          = 5.0f,                            /* 速度 P */
-    .angle_speed_kd          = 5.0f,                            /* 速度 D */
-    .angle_speed_max         = 8.0f,                           /* 目标 rad/s */
-
-    /* 翻倒恢复 */
-    .recovery_settle_time    = 0.05f,                            /* 缓冲 s */
-    .recovery_len            = 0.28f,                           /* 扫腿长 m */
-    .recovery_front_angle    = 1.45f,                           /* 作者确认的倒置前点 rad */
-    .recovery_pitch_tol      = 0.6f,                            /* 回正窗口 rad */
-    .recovery_stall_time     = 0.3f,                            /* 卡住 s */
-
-    /* 持稳与交接 */
-    .stable_time             = 0.05f,                           /* 持稳 s */
-    .support_time            = 0.4f,                            /* 支撑渐入 s */
-
-    /* 失败重试 */
-    .retry_wait              = 0.3f,                            /* 撤力等待 s */
-    .recovery_retry_max      = 5u,                              /* 重试次数 */
-};
 
 /* 将有限角度按2pi折回[-pi,pi]；边界与本模块连续角累加配套。 */
 static float Fallen_Process_Wrap(float angle)
@@ -83,10 +43,10 @@ static void Fallen_Process_PID_Init(fallen_process_ctx_t *st)
 {
     for (uint8_t i = 0u; i < 2u; i++)
     {
-        PID_struct_init(&st->actuator.length_pid[i], POSITION_PID, machine->lqr.pd.leg_len[i].max_output, 0.0f, machine->lqr.pd.leg_len[i].kp, 0.0f, machine->lqr.pd.leg_len[i].kd, 0.0f, 0.0f);
-        PID_struct_init(&st->actuator.angle_pos_pid[i], POSITION_PID, fallen_process_param.angle_speed_max, 0.0f, fallen_process_param.angle_pos_kp, 0.0f, fallen_process_param.angle_pos_kd, 0.0f, 0.0f);
+        PID_struct_init(&st->actuator.length_pid[i], POSITION_PID, machine->lqr.pd.leg_len[i].max_output, 0.0f, machine->lqr.pd.leg_len[i].kp, 0.0f, machine->lqr.pd.leg_len[i].kd);
+        PID_struct_init(&st->actuator.angle_pos_pid[i], POSITION_PID, fallen_process_param.angle_speed_max, 0.0f, fallen_process_param.angle_pos_kp, 0.0f, fallen_process_param.angle_pos_kd);
         st->actuator.angle_pos_pid[i].angle_wrap = 1u;
-        PID_struct_init(&st->actuator.angle_speed_pid[i], POSITION_PID, machine->hip.dm_trq_clamp, 0.0f, fallen_process_param.angle_speed_kp, 0.0f, fallen_process_param.angle_speed_kd, 0.0f, 0.0f);
+        PID_struct_init(&st->actuator.angle_speed_pid[i], POSITION_PID, machine->hip.dm_trq_clamp, 0.0f, fallen_process_param.angle_speed_kp, 0.0f, fallen_process_param.angle_speed_kd);
     }
 }
 
@@ -138,6 +98,25 @@ static uint8_t Fallen_Process_Input_Valid(const imu_state_t *imu,
             return 0u;
         }
     }
+    return 1u;
+}
+
+/* 接收已完成准备位的动作；目标/历史重建由本模块负责，任务层不伪造FALLEN。 */
+uint8_t Fallen_Process_Begin_Retract(fallen_process_ctx_t *st, const imu_state_t *imu, const leg_state_t *left, const leg_state_t *right)
+{
+    const leg_state_t *leg[2] = {left, right};
+    if (!Fallen_Process_Input_Valid(imu, leg)) { return 0u; }
+    Fallen_Process_Init(st);
+    st->lifecycle.recovery_enabled = 0u;
+    st->normal.planned = 1u;
+    for (uint8_t i = 0u; i < 2u; i++)
+    {
+        st->normal.path[i] = 2u;
+        st->normal.prepare_angle[i] = fallen_process_param.rear_angle;
+        st->actuator.angle_target[i] = Fallen_Process_Wrap(leg[i]->output.virtual_leg_angle);
+        st->actuator.length_target[i] = leg[i]->output.virtual_leg_length;
+    }
+    Fallen_Process_Enter(st, FALLEN_PROCESS_RETRACT);
     return 1u;
 }
 
@@ -200,11 +179,11 @@ static uint8_t Fallen_Process_Ready(fallen_process_ctx_t *st,
         }
         for (uint8_t i = 0u; i < 2u; i++)
         {
-            if (fabsf(st->normal.rear_angle_target[i] - st->normal.rear_position[i]) > fallen_process_param.prepare_angle_tol)
+            if (fabsf(st->normal.rear_angle_target[i] - st->normal.rear_position[i]) > fallen_process_param.angle_tol)
             {
                 ready_block |= (uint16_t)(1u << (4u + i));
             }
-            if (fabsf(st->normal.rear_angle_target[i] - st->actuator.angle_target[i]) > fallen_process_param.prepare_angle_tol)
+            if (fabsf(st->normal.rear_angle_target[i] - st->actuator.angle_target[i]) > fallen_process_param.angle_tol)
             {
                 ready_block |= (uint16_t)(1u << (6u + i));
             }
@@ -217,11 +196,11 @@ static uint8_t Fallen_Process_Ready(fallen_process_ctx_t *st,
         {
             angle_error = Fallen_Process_Wrap(leg[i]->output.virtual_leg_angle - machine->lqr.reference.leg_trim[i]);
             command_error = Fallen_Process_Wrap(st->actuator.angle_target[i] - machine->lqr.reference.leg_trim[i]);
-            if (fabsf(angle_error) > fallen_process_param.normal_angle_tol)
+            if (fabsf(angle_error) > fallen_process_param.angle_tol)
             {
                 ready_block |= (uint16_t)(1u << (4u + i));
             }
-            if (fabsf(command_error) > fallen_process_param.normal_angle_tol)
+            if (fabsf(command_error) > fallen_process_param.angle_tol)
             {
                 ready_block |= (uint16_t)(1u << (6u + i));
             }
@@ -240,7 +219,7 @@ static void Fallen_Process_Prime(pid_t *pid, float measured, float target)
     {
         error = Fallen_Process_Wrap(error);
     }
-    PID_History_Set(pid, measured, target, error);
+    PID_History_Set(pid, error);
 }
 
 /* 检查当前是否在倒置稳定/伸腿/前点对齐/翻身阶段，用来保持翻身路径归属。 */
@@ -351,7 +330,7 @@ static uint8_t Fallen_Process_Recovery_Stage(fallen_process_ctx_t *st, const imu
         ready = Fallen_Process_Preloaded(leg);
         for (uint8_t i = 0u; i < 2u; i++)
         {
-            if (fabsf(st->self_right.front_goal[i] - st->self_right.position[i]) > fallen_process_param.prepare_angle_tol || fabsf(st->self_right.front_goal[i] - st->actuator.angle_target[i]) > fallen_process_param.prepare_angle_tol)
+            if (fabsf(st->self_right.front_goal[i] - st->self_right.position[i]) > fallen_process_param.angle_tol || fabsf(st->self_right.front_goal[i] - st->actuator.angle_target[i]) > fallen_process_param.angle_tol)
             {
                 ready = 0u;
             }
@@ -416,7 +395,7 @@ static uint8_t Fallen_Process_Recovery_Stage(fallen_process_ctx_t *st, const imu
     return FALLEN_PROCESS_ROUTE_PREPARE;
 }
 
-/* 按倒置阶段生成腿长与连续摆角指令，按angle_rate*dt推进前点对齐或翻身扫角。 */
+/* 按倒置阶段生成腿长与连续摆角指令，按recovery_angle_rate*dt推进前点对齐或翻身扫角。 */
 static void Fallen_Process_Recovery_Target(fallen_process_ctx_t *st,
                                      const leg_state_t *const leg[2], float dt)
 {
@@ -438,29 +417,29 @@ static void Fallen_Process_Recovery_Target(fallen_process_ctx_t *st,
         }
         if (st->lifecycle.phase == FALLEN_PROCESS_ALIGN_FRONT)
         {
-            step = fallen_process_param.angle_rate * dt;
+            step = fallen_process_param.recovery_angle_rate * dt;
             st->actuator.angle_target[i] = clampf(st->self_right.front_goal[i], st->actuator.angle_target[i] - step, st->actuator.angle_target[i] + step);
         }
         else if (st->lifecycle.phase == FALLEN_PROCESS_FLIP && st->lifecycle.stable_elapsed == 0.0f)
         {
-            st->actuator.angle_target[i] += fallen_process_param.angle_rate * dt;
+            st->actuator.angle_target[i] += fallen_process_param.recovery_angle_rate * dt;
         }
 
     }
     if (st->lifecycle.phase == FALLEN_PROCESS_FLIP && st->lifecycle.stable_elapsed == 0.0f)
     {
-        st->self_right.sweep += fallen_process_param.angle_rate * dt;
+        st->self_right.sweep += fallen_process_param.recovery_angle_rate * dt;
     }
 
 }
 
-/* 检查普通摆正的实测腿角及指令角是否均处于normal_angle_tol窗口，不额外要求机身平衡。 */
+/* 检查普通摆正的实测腿角及指令角是否均处于angle_tol窗口，不额外要求机身平衡。 */
 static uint8_t Fallen_Process_Normal_Pose_Ready(const fallen_process_ctx_t *st,
                                                 const leg_state_t *const leg[2])
 {
     for (uint8_t i = 0u; i < 2u; i++)
     {
-        if (fabsf(Fallen_Process_Wrap(leg[i]->output.virtual_leg_angle - st->normal.prepare_angle[i])) > fallen_process_param.prepare_angle_tol)
+        if (fabsf(Fallen_Process_Wrap(leg[i]->output.virtual_leg_angle - st->normal.prepare_angle[i])) > fallen_process_param.angle_tol)
         {
             return 0u;
         }
@@ -516,7 +495,7 @@ static void Fallen_Process_Normal_Plan(fallen_process_ctx_t *st, const imu_state
         goal = st->normal.path[i] == 1u ? fallen_process_param.front_angle : fallen_process_param.rear_angle;
         st->normal.prepare_angle[i] = goal;
         /* 已在准备位或长腿足够时保持，不为了准备动作先缩短再伸长。 */
-        if (fabsf(Fallen_Process_Wrap(angle - goal)) > fallen_process_param.prepare_angle_tol &&
+        if (fabsf(Fallen_Process_Wrap(angle - goal)) > fallen_process_param.angle_tol &&
             leg[i]->output.virtual_leg_length < Fallen_Process_Extend_Length() - fallen_process_param.length_tol)
         {
             st->actuator.length_target[i] = Fallen_Process_Extend_Length();
@@ -537,7 +516,7 @@ static void Fallen_Process_Normal_Plan(fallen_process_ctx_t *st, const imu_state
 
 /* 按已锁定普通路径推进准备位、收腿和摆正目标；不在每拍重新选择前后路径。 */
 static void Fallen_Process_Normal_Target(fallen_process_ctx_t *st, const imu_state_t *imu,
-                                          const leg_state_t *const leg[2], float dt)
+                                          const leg_state_t *const leg[2], float angle_rate, float dt)
 {
     float angle;
     float start;
@@ -576,7 +555,7 @@ static void Fallen_Process_Normal_Target(fallen_process_ctx_t *st, const imu_sta
     {
         if (st->lifecycle.phase == FALLEN_PROCESS_REAR)
         {
-            step = fallen_process_param.angle_rate * dt;
+            step = angle_rate * dt;
             st->actuator.angle_target[i] = clampf(st->normal.rear_angle_target[i], st->actuator.angle_target[i] - step, st->actuator.angle_target[i] + step);
         }
         else if (st->lifecycle.phase == FALLEN_PROCESS_RETRACT || st->lifecycle.phase == FALLEN_PROCESS_SWING)
@@ -584,7 +563,13 @@ static void Fallen_Process_Normal_Target(fallen_process_ctx_t *st, const imu_sta
             st->actuator.length_target[i] = fallen_process_param.retract_len;
             if (st->lifecycle.phase == FALLEN_PROCESS_SWING)
             {
-                st->actuator.angle_target[i] = Fallen_Process_Wrap(machine->lqr.reference.leg_trim[i]);
+                /* 首拍从实测角起步，沿原包角误差方向限速；沿用angle_target保存轨迹。 */
+                ramp_t angle_ramp = {
+                    .out = st->actuator.angle_history_ready ? st->actuator.angle_target[i] : Fallen_Process_Wrap(leg[i]->output.virtual_leg_angle),
+                    .rate = angle_rate,
+                };
+                goal = angle_ramp.out + Fallen_Process_Wrap(machine->lqr.reference.leg_trim[i] - angle_ramp.out);
+                st->actuator.angle_target[i] = Fallen_Process_Wrap(Ramp_Update(&angle_ramp, goal, dt));
             }
         }
     }
@@ -746,7 +731,7 @@ static uint8_t Fallen_Process_Stage_Update(fallen_process_ctx_t *st,
 static void Fallen_Process_Target_Update(fallen_process_ctx_t *st,
                                   const imu_state_t *imu,
                                   const leg_state_t *const leg[2],
-                                  float dt)
+                                  float angle_rate, float dt)
 {
     if (Fallen_Process_Recovering(st))
     {
@@ -754,7 +739,7 @@ static void Fallen_Process_Target_Update(fallen_process_ctx_t *st,
     }
     else
     {
-        Fallen_Process_Normal_Target(st, imu, leg, dt);
+        Fallen_Process_Normal_Target(st, imu, leg, angle_rate, dt);
     }
 }
 
@@ -849,7 +834,7 @@ static uint8_t Fallen_Process_Compute_Output(fallen_process_ctx_t *st,
 uint8_t Fallen_Process_Update(fallen_process_ctx_t *st, const imu_state_t *imu,
                        const leg_state_t *left, const leg_state_t *right,
                        const leg_compensation_values_t *values,
-                       uint8_t permit, float dt,
+                       uint8_t permit, float angle_rate, float dt,
                        torque_output_t *torque)
 {
     const leg_state_t *leg[2] = {left, right};
@@ -885,7 +870,7 @@ uint8_t Fallen_Process_Update(fallen_process_ctx_t *st, const imu_state_t *imu,
         return route;
     }
 
-    Fallen_Process_Target_Update(st, imu, leg, dt);
+    Fallen_Process_Target_Update(st, imu, leg, angle_rate, dt);
     if (!Fallen_Process_Compute_Output(st, leg, values, dt, torque))
     {
         Fallen_Process_Fail(st, FALLEN_PROCESS_BAD_INPUT);

@@ -27,7 +27,7 @@ typedef struct {
     float F[2]; /* 含向心项，弹簧/自重补偿及逐电机限幅前的左右轴向请求N */
     float Tp[2]; /* 补偿前左右虚拟腿摆矩N·m */
     torque_output_t cmd; /* 已映射/补偿/限幅的统一力矩结果 */
-    compensation_debug_t compensation; /* 弹簧、自重和饱和诊断快照 */
+    compensation_debug_t compensation; /* 最终四髋限矩标志 */
     uint8_t air_release; /* 本模块上一拍释放状态，用于识别进出释放 */
     roll_height_balance_t roll_height; /* NORMAL唯一轴向控制，不再后备PD */
 } leg_balance_t;

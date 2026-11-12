@@ -263,5 +263,4 @@ void actuationTask_Entry(void const * argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-
 /* USER CODE END Application */
