@@ -1262,11 +1262,6 @@
           <GroupName>imcalib/Algorithm/lqr</GroupName>
           <Files>
             <File>
-              <FileName>lqr_gain_small.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../imcalib/Algorithm/lqr/lqr_gain_small.c</FilePath>
-            </File>
-            <File>
               <FileName>lqr_gain_big.c</FileName>
               <FileType>1</FileType>
               <FilePath>../imcalib/Algorithm/lqr/lqr_gain_big.c</FilePath>

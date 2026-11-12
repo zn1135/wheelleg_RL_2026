@@ -58,7 +58,7 @@ void Output_Capture_CAN(const uint8_t data[8], uint32_t can_id, uint8_t status, 
     record.end_ns = end_ns;
     record.id = can_id;
     record.flags = status;
-    record.machine = (uint8_t)MACHINE_DEFAULT;
+    record.machine = (uint8_t)MACHINE_ID_BIG_WHEELLEG;
     for (uint8_t i = 0u; i < 4u; i++)
     {
         record.current_raw[i] = (int16_t)(((uint16_t)data[2u * i] << 8) | data[2u * i + 1u]);
@@ -66,20 +66,7 @@ void Output_Capture_CAN(const uint8_t data[8], uint32_t can_id, uint8_t status, 
     Output_Capture_Push(&record);
 }
 
-static uint16_t Capture_Crc16(const uint8_t *data, uint16_t count)
-{
-    uint16_t crc = 0xFFFFu;
-    uint16_t byte;
 
-    /* 与逐位CCITT-FALSE等价的逐字节展开，避免大批次每字节循环8次。 */
-    for (uint16_t i = 0u; i < count; i++)
-    {
-        byte = (uint16_t)((crc >> 8) ^ data[i]);
-        byte ^= byte >> 4;
-        crc = (uint16_t)((crc << 8) ^ (byte << 12) ^ (byte << 5) ^ byte);
-    }
-    return crc;
-}
 
 /* H7OUT001 + 40字节头 + count*88字节记录 + CRC16；本地USB独立发送，不含ROS镜像前缀。 */
 uint16_t Output_Capture_Packet(uint8_t *out)
@@ -118,7 +105,7 @@ uint16_t Output_Capture_Packet(uint8_t *out)
         memcpy(out + OUTPUT_CAPTURE_HEADER_BYTES + i * OUTPUT_CAPTURE_RECORD_BYTES, &records[(prepared_read + i) % OUTPUT_CAPTURE_CAPACITY], OUTPUT_CAPTURE_RECORD_BYTES);
     }
     size = (uint16_t)(OUTPUT_CAPTURE_HEADER_BYTES + prepared_count * OUTPUT_CAPTURE_RECORD_BYTES);
-    crc = Capture_Crc16(out, size);
+    crc = Latency_Crc16(out, size);
     memcpy(out + size, &crc, sizeof(crc));
     return (uint16_t)(size + sizeof(crc));
 }

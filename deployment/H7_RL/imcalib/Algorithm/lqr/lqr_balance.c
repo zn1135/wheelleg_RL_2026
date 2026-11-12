@@ -15,6 +15,20 @@
 #define LQR_K_RECALC_THRESH 0.0005f
 
 /*
+ * 世界系腿角平衡点偏移：CKP用LQR_OFF_WBR按腿长给目标，不是固定0。
+ * 本机5001实测静止中点随腿长移动，固定0会把腿角调偏。
+ */
+static void LQR_Offset_Eval(const float len[2], float off[3])
+{
+    float lL = clampf(len[0], 0.15f, 0.31f);
+    float lR = clampf(len[1], 0.15f, 0.31f);
+    /* 5001静止中点：0.155m≈-0.027、0.219m≈+0.005(左)；0.148m≈-0.028、0.215m≈+0.014(右)。 */
+    off[0] = 0.500f * lL - 0.1045f;
+    off[1] = 0.627f * lR - 0.1208f;
+    off[2] = 0.0f;
+}
+
+/*
  * IMU 轴索引 — 台架第一步必须确认
  * 手法: 手把机头缓慢抬起/压下, 看 pitch 与角速度哪个分量响应最大、符号是否符合
  * 下列索引属于现有安装映射；发现疑点先由作者台架确认，不依据注释直接改轴或符号。
@@ -78,13 +92,8 @@ static float LQR_Accel_Forward(const imu_state_t *imu)
     r12 = 2.0f * (q2 * q3 - q0 * q1);
 
     /* 世界系水平分量 (重力只在 z, 水平不用减) */
-#if MACHINE_DEFAULT == MACHINE_ID_BIG_WHEELLEG
     wx = r00 * imu->acc_g[0] - r01 * imu->acc_g[1] - r02 * imu->acc_g[2];
     wy = r10 * imu->acc_g[0] - r11 * imu->acc_g[1] - r12 * imu->acc_g[2];
-#else
-    wx = r00 * imu->acc_g[0] + r01 * imu->acc_g[1] + r02 * imu->acc_g[2];
-    wy = r10 * imu->acc_g[0] + r11 * imu->acc_g[1] + r12 * imu->acc_g[2];
-#endif
     /* 车头方向 = 机体 x 轴在水平面的投影 */
     norm = sqrtf(r00 * r00 + r10 * r10);
     if (norm < 1.0e-3f)
@@ -107,6 +116,7 @@ uint8_t LQR_Enable_Latch(lqr_state_t *st, const rc_command_t *cmd)
     /* 只清位移积分; 滤波器每拍都在跑, 已是热态, 不复位 */
     st->pos = 0.0f;
     st->pos_armed = 0u;
+    st->target[LQR_X_S] = 0.0f;
     st->x[LQR_X_S] = 0.0f;
     return 1u;
 }
@@ -117,12 +127,15 @@ uint8_t LQR_Enable_Latch(lqr_state_t *st, const rc_command_t *cmd)
  */
 uint8_t LQR_Target_Update(lqr_state_t *st, const rc_command_t *cmd)
 {
+    float off[3];
+
     if (!cmd->online)
     {
         return 0u;
     }
-
-    st->target[LQR_X_S]     = machine->lqr.position_hold.pos_target;
+    LQR_Offset_Eval(st->len, off);
+    /* 位置参考仅在停车积分已锁定后生效；当前指令优先，行进立即归零。 */
+    st->target[LQR_X_S] = cmd->velocity_target == 0.0f && st->pos_armed && !st->air_control ? machine->lqr.position_hold.pos_target : 0.0f;
     st->velocity_target            = cmd->velocity_target;
     st->target[LQR_X_DS]    = cmd->velocity_target;
     /* 转向保持朝向 */
@@ -132,11 +145,11 @@ uint8_t LQR_Target_Update(lqr_state_t *st, const rc_command_t *cmd)
     }
     st->target[LQR_X_PHI]   = st->yaw_target;
     st->target[LQR_X_DPHI]  = cmd->yaw_rate_target;
-    st->target[LQR_X_THL]   = machine->lqr.reference.leg_trim[0];
+    st->target[LQR_X_THL]   = machine->lqr.reference.leg_trim[0] + (st->air_control ? 0.0f : off[0]);
     st->target[LQR_X_DTHL]  = 0.0f;
-    st->target[LQR_X_THR]   = machine->lqr.reference.leg_trim[1];
+    st->target[LQR_X_THR]   = machine->lqr.reference.leg_trim[1] + (st->air_control ? 0.0f : off[1]);
     st->target[LQR_X_DTHR]  = 0.0f;
-    st->target[LQR_X_THB]   = machine->lqr.reference.pitch_trim;
+    st->target[LQR_X_THB]   = machine->lqr.reference.pitch_trim + (st->air_control ? 0.0f : off[2]);
     st->target[LQR_X_DTHB]  = 0.0f;
 
     st->leg_length_target[0] = clampf(cmd->leg_length_target, machine->leg.leg_len_min, machine->leg.leg_len_max);
@@ -267,9 +280,12 @@ void LQR_Control_Update(lqr_state_t *st, uint8_t guard_permit)
     float term;
     float hip_limit;
     float reference_scale = 1.0f;
+    uint8_t wheel_group;
 
     st->gain_valid = 0u;
     memset(st->u, 0, sizeof(st->u));
+    memset(st->wheel_term, 0, sizeof(st->wheel_term));
+    memset(st->wheel_unclamped, 0, sizeof(st->wheel_unclamped));
     if (!st->valid)
     {
         return;
@@ -300,7 +316,7 @@ void LQR_Control_Update(lqr_state_t *st, uint8_t guard_permit)
         const motion_guard_input_t input = {
             .length = {st->len[0], st->len[1]},
             .length_target = fmaxf(st->leg_length_target[0], st->leg_length_target[1]),
-            .velocity = st->ds_kf, .velocity_request = st->velocity_target,
+            .velocity = st->ds_kf,
             .yaw_rate = st->x[LQR_X_DPHI],
             .yaw_request = lqr_debug.yaw_rate_hold ? st->target[LQR_X_DPHI] + LQR_Gain_Info()->x_eq[LQR_X_DPHI] : 0.0f,
             .heading_error = lqr_debug.yaw_hold ? Angle_Wrap_Pi(st->target[LQR_X_PHI] + LQR_Gain_Info()->x_eq[LQR_X_PHI] - st->x[LQR_X_PHI]) : 0.0f,
@@ -342,6 +358,12 @@ void LQR_Control_Update(lqr_state_t *st, uint8_t guard_permit)
                 term = st->K[i][j] * ((j == LQR_X_DPHI ? reference_scale : 1.0f) * (st->target[j] + LQR_Gain_Info()->x_eq[j]) - st->x[j]);
             }
             sum += term;
+            /* 只记录已算出的本拍反馈项，不参与sum或最终输出计算。 */
+            if (i == LQR_U_WL || i == LQR_U_WR)
+            {
+                wheel_group = j <= LQR_X_DS ? j : (j <= LQR_X_DPHI ? LQR_WHEEL_YAW : (j <= LQR_X_DTHR ? ((j == LQR_X_THL || j == LQR_X_THR) ? LQR_WHEEL_LEG : LQR_WHEEL_LEG_RATE) : (j == LQR_X_THB ? LQR_WHEEL_PITCH : LQR_WHEEL_PITCH_RATE)));
+                st->wheel_term[i][wheel_group] += term;
+            }
         }
         if (!isfinite(sum))
         {
@@ -350,6 +372,7 @@ void LQR_Control_Update(lqr_state_t *st, uint8_t guard_permit)
         }
         if (i == LQR_U_WL || i == LQR_U_WR)
         {
+            st->wheel_unclamped[i] = sum;
             st->u[i] = clampf(sum, -lqr_debug.trq_max_wheel, lqr_debug.trq_max_wheel);
         }
         else

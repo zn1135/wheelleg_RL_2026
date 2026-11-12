@@ -5,13 +5,9 @@
 
 #include "feedback_snapshot.h"
 #include "robot_state.h"
-#include "mono_ns.h"
 
-static feedback_meta_t imu_meta;
-static feedback_meta_t motor_meta;
-/* 在一个临界区复制最新IMU、电机、左右腿、遥控和高度，返回1。
- * captured_ns是复制时刻；各设备采样异步，published_ns是软件发布时间。 */
-uint8_t Robot_Feedback_Read(robot_feedback_t *out)
+/* 在一个临界区复制最新IMU、电机、左右腿、遥控和高度。 */
+void Robot_Feedback_Read(robot_feedback_t *out)
 {
     taskENTER_CRITICAL();
     out->imu = imu_state;
@@ -21,20 +17,14 @@ uint8_t Robot_Feedback_Read(robot_feedback_t *out)
     out->rc = rc_command;
     out->height = robot_state.height;
     out->height_valid = robot_state.height_valid;
-    out->imu_meta = imu_meta;
-    out->motor_meta = motor_meta;
-    out->captured_ns = Mono_Ns_Get();
     taskEXIT_CRITICAL();
-    return 1u;
 }
 
-/* 原子替换IMU共享状态并记录发布时间ns；seen表示已有发布，不保证姿态有效。 */
+/* 在临界区整体发布IMU共享状态。 */
 void Robot_Feedback_Publish_Imu(const imu_state_t *next)
 {
     taskENTER_CRITICAL();
     imu_state = *next;
-    imu_meta.published_ns = Mono_Ns_Get();
-    imu_meta.seen = 1u;
     taskEXIT_CRITICAL();
 }
 
@@ -52,8 +42,6 @@ void Robot_Feedback_Publish_Motor(const motor_state_t *next,
     leg_r = *right;
     robot_state.height = height;
     robot_state.height_valid = height_valid;
-    motor_meta.published_ns = Mono_Ns_Get();
-    motor_meta.seen = 1u;
     taskEXIT_CRITICAL();
 }
 
