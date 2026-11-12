@@ -83,11 +83,16 @@ class FudanWalkCfg:
 
     class sim:
         dt = .002
+        wheel_model = 'mechanical'  # 单位力矩驱动＋关节惯量/阻尼/摩擦；旧曲线须显式选legacy_curve。
         fitted_leg_load = False  # Roll back to the original linear-spring plant.
+        wheel_motor_gain = 1.  # 机械模式固定1；只有legacy_curve可使用旧输出倍率。
+        wheel_motor_delay_ms = 0.
+        wheel_motor_time_constant_ms = 0.
+        wheel_motor_torque_limit_nm = None  # 额外轮轴输出上限；None沿用原模型。
 
     class control:
         decimation = 5
-        leg_stiffness = 60.
+        leg_stiffness = 30.
         leg_damping = 2.
         leg_position_scale = .5
         wheel_stiffness = .1
@@ -108,13 +113,15 @@ class FudanWalkCfg:
         noise_scales = [.075]*6 + [0.]*3 + [.03]*4 + [.1125]*6 + [0.]*6
 
     class rewards:
+        pitch_soft_range_deg = [0., 5.]  # 仅前倾范围内弱惩罚。
+        pitch_inner_penalty_ratio = .05  # 区间内为原强度的1/20。
         tracking_sigma = .25
         tracking_enhance_sigma = 2.5
         height_sigma = .001
         soft_limit_half_span = .485
         scales = dict(tracking_lin_vel=1., tracking_lin_vel_enhance=1.,
             tracking_ang_vel=1., tracking_ang_vel_enhance=1., base_height=1., nominal_state=-1.,
-            lin_vel_z=-1., ang_vel_xy=-.2, orientation=-100., dof_vel=-5e-5, dof_acc=-2.5e-7,
+            lin_vel_z=-1., ang_vel_xy=-.2, roll=-100., pitch=-100., dof_vel=-5e-5, dof_acc=-2.5e-7,
             torques=-.0001, action_rate=-.01, action_smooth=-.01, collision=-1., dof_pos_limits=-1.)
 
     def __init__(self):

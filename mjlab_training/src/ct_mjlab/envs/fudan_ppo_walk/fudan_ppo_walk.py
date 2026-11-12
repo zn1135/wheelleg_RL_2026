@@ -16,6 +16,9 @@ from ct_mjlab.fudan_ppo_walk.contract import MOTORS, LEGS, RESET_CONTRACT, RESET
 from .fudan_ppo_walk_config import FudanWalkCfg, policy_dt, episode_steps
 from .disturbances import DisturbanceConfig, DisturbanceState, SENSOR_SLOTS, from_task_config
 from . import commands as command_sampling
+from . import posture_reward
+from .wheel_motor import WheelMotorResponse
+from . import wheel_physics
 
 @dataclass(kw_only=True)
 class PhysicalActionCfg(HuananhuPdActionCfg):
@@ -63,6 +66,7 @@ class PhysicalAction(HuananhuPdAction):
         self.disturbances.reset(slice(None), self.sensor_frame())
         self._base_id = int(env.sim.mj_model.body('robot/base_link').id)
         self.push_force_scale = torch.zeros(self.num_envs, device=self.device)
+        self.wheel_motor = WheelMotorResponse(self,task.sim)
 
     def sensor_frame(self):
         q = self._env.sim.data.qpos
@@ -82,6 +86,11 @@ class PhysicalAction(HuananhuPdAction):
         if self.cfg.disturbances.action_delay:
             self._control_actions.copy_(self.disturbances.action(self._raw_actions))
         super().apply_actions()
+        if self.wheel_motor.enabled:
+            wheels=self._wheel_action_ids
+            ctrl=self.wheel_motor.apply(self._motor_response_torque[:,wheels],
+                self._env.sim.data.qvel[:,self._motor_v_adr[wheels]])
+            self._entity.set_joint_effort_target(ctrl,joint_ids=self._physical_joint_ids[wheels])
         if self.cfg.disturbances.pushes or self.disturbances.has_episode_wrench:
             quat = self._env.sim.data.qpos[:, 3:7]
             wrench = self.disturbances.wrench(quat)
@@ -112,6 +121,7 @@ class PhysicalAction(HuananhuPdAction):
         ChuanliantuiPdAction.reset(self, env_ids)
         ids = slice(None) if env_ids is None else env_ids
         self._motor_response_torque[ids] = 0.0
+        if hasattr(self,'wheel_motor'):self.wheel_motor.reset(ids)
         self.action_delay_steps[ids] = 0
         self.wheel_action_delay_steps[ids] = 0
         if hasattr(self, 'last_sample_q'):
@@ -195,6 +205,12 @@ def randomize(env, env_ids):
 def make_env_cfg(*, play=False, disturbances=None, task_cfg=None):
     task = FudanWalkCfg() if task_cfg is None else task_cfg
     cfg = make_huananhu_env_cfg(play=True)
+    wheel_physics.record(task.sim.wheel_model)
+    if task.sim.wheel_model=='mechanical':
+        if (task.sim.wheel_motor_gain!=1. or task.sim.wheel_motor_delay_ms!=0. or
+                task.sim.wheel_motor_time_constant_ms!=0. or task.sim.wheel_motor_torque_limit_nm is not None):
+            raise ValueError('Mechanical wheels require unit output gain and no extra wheel response; use legacy_curve for historical replay')
+        cfg.scene.entities['robot'].spec_fn=wheel_physics.mechanical_spec
     cfg.scene.num_envs = task.env.play_num_envs if play else task.env.num_envs
     cfg.sim.mujoco.timestep = task.sim.dt
     cfg.decimation = task.control.decimation
@@ -259,6 +275,8 @@ class FudanEnv:
         if reset_contract not in (RESET_CONTRACT, RESET_V2_CONTRACT):
             raise ValueError('Unsupported PD-centred reset/history contract')
         self.cfg = FudanWalkCfg() if cfg is None else cfg
+        self.posture_reward_profile = posture_reward.from_task_config(self.cfg)
+        self.wheel_physics_profile = wheel_physics.record(self.cfg.sim.wheel_model)
         self.dt = policy_dt(self.cfg)
         self.max_episode_length = episode_steps(self.cfg)
         self.reset_contract = reset_contract
@@ -446,7 +464,7 @@ class FudanEnv:
             nominal_state=(theta[:, 0] - theta[:, 1]).square(),
             lin_vel_z=self.linear[:, 2].square(),
             ang_vel_xy=self.angular[:, :2].square().sum(-1),
-            orientation=self.gravity[:, :2].square().sum(-1),
+            **posture_reward.penalties(self),
             dof_vel=self.velocity[:, LEGS].square().sum(-1),
             dof_acc=self.acceleration.square().sum(-1),
             torques=self.action.torques.square().sum(-1),

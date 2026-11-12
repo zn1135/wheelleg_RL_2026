@@ -21,6 +21,9 @@ def fixture(n=4,reset_contract=RESET_V2_CONTRACT):
     env=object.__new__(FudanEnv)
     from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, policy_dt, episode_steps
     env.cfg=FudanWalkCfg()
+    # 历史检查夹具继续使用原16项奖励；新奖励检查再显式启用拆分配方。
+    from ct_mjlab.envs.fudan_ppo_walk import posture_reward
+    env.posture_reward_profile=posture_reward.configure(env.cfg,None)
     env.dt=policy_dt(env.cfg)
     env.max_episode_length=episode_steps(env.cfg)
     env.reset_contract=reset_contract

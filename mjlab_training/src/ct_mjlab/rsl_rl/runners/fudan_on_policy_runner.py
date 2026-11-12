@@ -12,6 +12,7 @@ from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 from ct_mjlab.rsl_rl.algorithms.fudan_ppo import PPO
 from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig, from_record
 from ct_mjlab.envs.fudan_ppo_walk.commands import LEGACY_COMMAND_SAMPLING
+from ct_mjlab.envs.fudan_ppo_walk import posture_reward
 
 class BudgetStop(Exception):
     pass
@@ -62,6 +63,7 @@ class FudanRunner:
     def load(self, path, *, migrate_history_v2=False, allow_disturbance_change=False):
         validate_network_contract(self.train_cfg)
         checkpoint = torch.load(path, map_location=self.device, weights_only=False)
+        source_posture = posture_reward.from_record(checkpoint.get('posture_reward'))
         source_disturbances = from_record(checkpoint.get('disturbances'))
         target_disturbances = getattr(self.env, 'disturbance_config', DisturbanceConfig())
         if source_disturbances != target_disturbances and (not allow_disturbance_change):
@@ -141,6 +143,8 @@ class FudanRunner:
             disturbances=target_disturbances.record(),
             source_command_sampling=checkpoint.get('command_sampling', LEGACY_COMMAND_SAMPLING),
             command_sampling=getattr(self.env, 'command_sampling', LEGACY_COMMAND_SAMPLING),
+            source_posture_reward=source_posture,
+            posture_reward=posture_reward.from_record(getattr(self.env, 'posture_reward_profile', None)),
             restoration='Learning state and RNG restored; physics/history/episode state restarts'
         )
         (self.log_dir / 'restore_report.json').write_text(json.dumps(restored, indent=2) + '\n')
@@ -153,6 +157,7 @@ class FudanRunner:
             dict(
                 contract=CONTRACT,
                 physical_leg_load=self.env.action.leg_load.record if self.env.action.leg_load is not None else parameter_record(False),
+                physical_wheel_model=self.env.wheel_physics_profile,
                 reset_contract=getattr(self.env, 'reset_contract', RESET_CONTRACT),
                 reference=REFERENCE,
                 model_state_dict=self.policy.state_dict(),
@@ -170,6 +175,8 @@ class FudanRunner:
                 history_migration=getattr(self, 'history_migration', None),
                 disturbances=getattr(self.env, 'disturbance_config', DisturbanceConfig()).record(),
                 command_sampling=getattr(self.env, 'command_sampling', LEGACY_COMMAND_SAMPLING),
+                posture_reward=posture_reward.from_record(getattr(self.env, 'posture_reward_profile', None)),
+                reward_names=list(self.env.cfg.rewards.scales),
                 num_envs=self.env.num_envs,
                 policy_steps=self.env.total_steps,
                 torch_rng=torch.get_rng_state(),
@@ -276,6 +283,8 @@ class FudanRunner:
             history_migration=getattr(self, 'history_migration', None),
             disturbances=getattr(self.env, 'disturbance_config', DisturbanceConfig()).record(),
             command_sampling=getattr(self.env, 'command_sampling', LEGACY_COMMAND_SAMPLING),
+            posture_reward=posture_reward.from_record(getattr(self.env, 'posture_reward_profile', None)),
+            reward_names=list(self.env.cfg.rewards.scales),
             resume_from=self.resume_from,
             behavior_accepted=False,
             reward_logging=f'weighted_clipped_mean_over_{self.num_steps_per_env}_steps_and_all_environments'
@@ -292,5 +301,7 @@ def snapshot(output):
     parameters=root/'resources/robots/chuanliantui_new_1/mjlab/fitted_leg_load.json'
     target=output/'source/resources/robots/chuanliantui_new_1/mjlab/fitted_leg_load.json'
     target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(parameters,target);paths.append(parameters)
+    wheel_parameters=root/'resources/robots/chuanliantui_new_1/mjlab/wheel_mechanical.json'
+    shutil.copy2(wheel_parameters,target.with_name('wheel_mechanical.json'));paths.append(wheel_parameters)
     hashes = {str(p.relative_to(root)): sha(p) for p in paths}
     (output / 'source_sha256.json').write_text(json.dumps(hashes, indent=2) + '\n')

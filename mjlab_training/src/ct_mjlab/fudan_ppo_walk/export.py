@@ -7,6 +7,7 @@ from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import sha
 from .contract import CONTRACT, RESET_CONTRACT, RESET_V2_CONTRACT, LEGACY_RESET_CONTRACT
 from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record
 from ct_mjlab.envs.fudan_ppo_walk.commands import LEGACY_COMMAND_SAMPLING
+from ct_mjlab.envs.fudan_ppo_walk import posture_reward
 
 def history_metadata(reset_contract):
     if reset_contract not in (RESET_CONTRACT, RESET_V2_CONTRACT, LEGACY_RESET_CONTRACT):
@@ -44,4 +45,4 @@ def export(checkpoint, output):
     error = float(np.abs(actual - expected).max())
     if error > 1e-05:
         raise RuntimeError(f'ONNX mismatch: {error}')
-    (output / 'interface.json').write_text(json.dumps(dict(contract=metadata['contract'], reset_contract=metadata.get('reset_contract', LEGACY_RESET_CONTRACT), history_preprocessing=history_metadata(metadata.get('reset_contract', LEGACY_RESET_CONTRACT)), checkpoint_sha256=sha(checkpoint), onnx_sha256=sha(path), cpu_onnx_max_abs_error=error, input=dict(obs=[1, 25], obs_history=[1, 125]), output=dict(actions=[1, 6]), policy_dt_s=0.01, pd_dt_s=0.002, additional_action_delay_s=None if disturbances.action_delay else 0.0, additional_sensor_delay_s=None if disturbances.sensor_delay else 0.0, training_disturbances=disturbances.record(), training_command_sampling=metadata.get('command_sampling', LEGACY_COMMAND_SAMPLING), runtime_disturbances='simulation_only; queues and forces are outside ONNX; measure real hardware timing', h7='not_adapted_pending_owner_confirmation'), indent=2) + '\n')
+    (output / 'interface.json').write_text(json.dumps(dict(contract=metadata['contract'], reset_contract=metadata.get('reset_contract', LEGACY_RESET_CONTRACT), history_preprocessing=history_metadata(metadata.get('reset_contract', LEGACY_RESET_CONTRACT)), checkpoint_sha256=sha(checkpoint), onnx_sha256=sha(path), cpu_onnx_max_abs_error=error, input=dict(obs=[1, 25], obs_history=[1, 125]), output=dict(actions=[1, 6]), policy_dt_s=0.01, pd_dt_s=0.002, additional_action_delay_s=None if disturbances.action_delay else 0.0, additional_sensor_delay_s=None if disturbances.sensor_delay else 0.0, training_disturbances=disturbances.record(), training_command_sampling=metadata.get('command_sampling', LEGACY_COMMAND_SAMPLING), training_posture_reward=posture_reward.from_record(metadata.get('posture_reward')), runtime_disturbances='simulation_only; queues and forces are outside ONNX; measure real hardware timing', h7='not_adapted_pending_owner_confirmation'), indent=2) + '\n')

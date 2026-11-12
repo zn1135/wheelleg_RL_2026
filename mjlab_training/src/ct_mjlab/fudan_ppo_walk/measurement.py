@@ -143,13 +143,23 @@ def configure_samples(wrapper, samples, out):
     mapping = dict(reset_contract=wrapper.reset_contract, disturbances=disturbances.record(), motor_q=action._motor_q_adr.cpu().tolist(), motor_v=action._motor_v_adr.cpu().tolist(), motor_ids=[model.actuator('robot/' + n + '_motor').id for n in MOTORS], spring_ids=action._spring_ids.cpu().tolist(), spring_q=action._spring_q_adr.cpu().tolist(), spring_v=action._spring_v_adr.cpu().tolist(), base=base, wheels=[model.body('robot/' + n).id for n in ('lfwheel', 'rfwheel')], wheel_response=action._wheel_response.cpu().tolist(), reference=action.reference_positions[0].cpu().tolist())
     mapping['episode_wrench_frame'] = 'body_at_base_com'
     (out / 'mapping.json').write_text(json.dumps(mapping, indent=2) + '\n')
+    # 将实际惯量写入夹具，防止新旧物理被误判为同条件对照。
+    armature = env.sim.model.dof_armature.cpu().numpy()
+    action.wheel_motor.reset(slice(None))
+    wheel_motor={k:v.cpu().numpy() for k,v in action.wheel_motor.fixture().items()}
+    mechanical={}
+    if action.wheel_motor.mechanical:
+        # 将机械参数和单位增益写入初态，避免把新旧轮端物理当成同一条件。
+        for name in ('dof_damping','dof_frictionloss','actuator_gainprm'):
+            value=getattr(env.sim.model,name).cpu().numpy()
+            mechanical[name]=np.broadcast_to(value,(len(samples),*value.shape[1:]))
     for i, sample in enumerate(samples):
         pose = qpos[i].copy()
         pose[:2] = 0.0
         disturbance_initial = {}
         if hasattr(action, 'disturbances'):
             disturbance_initial = dict(action_delay_steps=int(state.action_steps[i]), sensor_delay_steps=int(state.sensor_steps[i]), push_seed=int(state.push_seeds[i]), push_force_scale=float(action.push_force_scale[i]), episode_wrench_body=state.episode_wrench[i].cpu().numpy())
-        np.savez_compressed(out / (sample['id'] + '_initial.npz'), qpos=pose, qvel=qvel[i], nominal=action.nominal_positions[i].cpu().numpy(), kp=kp[i], kd=kd[i], strength=strength[i], **disturbance_initial, **{k: v[i] for k, v in snapshots.items()})
+        np.savez_compressed(out / (sample['id'] + '_initial.npz'), qpos=pose, qvel=qvel[i], nominal=action.nominal_positions[i].cpu().numpy(), kp=kp[i], kd=kd[i], strength=strength[i], dof_armature=armature[i % len(armature)], **disturbance_initial, **{k:v[i] for k,v in wheel_motor.items()}, **{k:v[i] for k,v in mechanical.items()}, **{k: v[i] for k, v in snapshots.items()})
     return (obs, critic)
 
 def update_evaluation_commands(wrapper, commands, obs):

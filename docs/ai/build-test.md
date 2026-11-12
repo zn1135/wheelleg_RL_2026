@@ -1,5 +1,25 @@
 # 构建与验证
 
+复旦机械轮候选：`check_mechanical_wheels --output <新目录>`验证单位增益、无速度曲线/0.45、实际GPU力矩、仅轮物理改变、复位及20环境500积分拍有限性；旧`check_wheel_motor_response`显式legacy_curve核历史路径。`real2sim.replay_mechanical_wheels --profile mechanical/legacy_curve`固定17679对应PD录30秒零指令；`diagnose_parking_posture --wheel-model mechanical --wheel-motor-gain 1`走正式新模型，统一accept评分。`report_mechanical_replacement`核共用初态与有意不同的轮物理，不能把物理不同当作同cohort策略比较。`check_mechanical_wheel_pulses`只作历史单转子CPU诊断，实际整机验收仍GPU。[结果/限制](../../artifacts/real2sim/wheel-mechanical-replacement-20261112-01/README.md)。
+
+训练中阶段检查：`scripts.agent.fudan_ppo_walk.inspect_output_gain_checkpoint --checkpoint <已完整保存的PT> --output <新目录>`冻结并核对checkpoint轮数/双优化器/有限权重、当前运行源码与训练快照，在原训练继续时采集新21例GPU，复用14679固定基线，以统一入口及逐数组初态配对核摆腿/停车/30秒偏航，0诊断更新。不能把阶段PT当作3000轮最终结果；原样本失效仍记退化。[16549阶段结果](../../artifacts/fudan_ppo_walk/20261112-output045-resume14679-3000-01/interim-16549-01/RESULTS.md)。
+
+同奖励3000轮续训：`scripts.agent.fudan_ppo_walk.resume_output_gain_14679 prepare/run --output <新目录>`逐项核对父14679有效配置及144运行Python，实际PD/惯量/gain预检，固定新增3000轮；结束后审计并自动调用`evaluate_output_gain_17679`，沿用前后各21例GPU配对并额外保存零指令30秒偏航/末5秒位移。不改奖励，不以训练完成等同稳定。[本次预算与命令](../../artifacts/fudan_ppo_walk/20261112-output045-resume14679-3000-01/README.md)。
+
+限矩后gain0.45候选续训：`scripts.agent.fudan_ppo_walk.resume_output_gain_14179 prepare/run --output <本次目录>`固定14179+500轮，恢复/实际PD/armature/输出增益及预算审计；已有目录不可重复运行。`evaluate_output_gain_14679 --experiment <本次目录>`在训练审计通过后执行两模型各18停车+3零指令GPU对照、统一评分、初态配对及视频，0评估更新。`diagnose_parking_posture`显式支持`--wheel-p`和`--wheel-motor-gain`，历史默认0.1/1保持。当前结果摆腿下降但自转增加，不能只按小摆幅通过。[命令和验证范围](../../artifacts/fudan_ppo_walk/20261112-output045-resume14179-500-01/RESULTS.md)。
+
+轮端响应分离：`scripts.agent.fudan_ppo_walk.check_wheel_motor_response --output <新目录>`17项实际GPU写回/饱和区别/队列/一阶响应/局部复位检查通过，0积分/前向/更新；另48条独立GPU停车轨迹完整有限，500Hz公式核验误差≤4.77e-7、scene实际ctrl误差0。旧check_wheel_gain读取ctrl早于scene提交，其旧ctrl一致证据不足，已由新检查重新验证。诊断不等于实机标定或行为通过。[范围](../interfaces/20261112-fudan-wheel-motor-response.md)。
+
+轮端45%检查：`scripts.agent.fudan_ppo_walk.check_wheel_gain --output <新目录>`在20GPU环境×35正反/饱和组合比较新轮P.045与旧P.1/强度.45的实际PD、夹限及执行器控制，核腿矩不变和局部复位，0积分/前向/更新；再用实际训练20环境预检。非单测或行为验收。[采用范围](../interfaces/20261111-fudan-wheel045-training.md)。
+
+两倍腿惯量默认接入：`scripts.agent.shared.check_leg_armature_default --before-xml <封存旧XML> --output <新目录>`检查仅四字段变化、原生/训练编译和20环境GPU真实值、新夹具惯量及500次有限积分；0前向/更新，不是运动验收。历史参数探针`armature_x2`固定相对0.015795，防重复翻倍。11700新默认18例完整，无外力3/9、外扰0/9，仍非行为通过。[约定与证据](../interfaces/20261111-default-leg-armature-x2.md)。
+
+P60/D2恢复：`check_randomization_ranges --output <新目录>`增加标称／随机化后的实际PD与配置逐值匹配，两项合并原检查共35项GPU启动检查通过，P约51～69／D约1.70～2.30；0积分／前向／更新。新训练复位预检另行通过3510积分／34次回合结束，二者不能代替行为验收。[本次记录](../../artifacts/fudan_ppo_walk/20261111-p60d2-retrain2000-01/README.md)。
+
+训练实际复位预检：`precheck --viewer viser --history-version v2 --training-resets --deadline <截止秒> --output <新目录>`显式按倒地／超时复位，报告记录auto_reset及回合结束次数；省略开关仍为历史不复位模式。非有限检查在复位前执行，不能靠重置吞掉NaN。14000→15000本次20环境3510积分／38次回合结束有限，原不复位版本第16环境NaN保留，不能称该失败已物理根治。[记录](../../artifacts/fudan_ppo_walk/20261111-roll-pitch-resume14000-to15000-01/README.md)。
+
+姿态分项专项：`PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_walk.check_posture_reward --checkpoint <旧PT> --output <新JSON>`34项通过，覆盖CPU/CUDA前倾0～+5°弱罚、后倾完整强度、越界连续、真实奖励17项/输入不变、学习状态保存恢复和CLI预检；旧8000选用方案27项及14000只读审计复核通过。均0物理步/网络前向/优化更新，未验证学习效果。历史源码全量门禁仍有既有漂移，不能称全量检查通过。[语义与结果](../interfaces/20261111-fudan-roll-pitch-soft-band.md)。
+
 2026-11-11最终提交前复核：默认回退17、六轴外载24、随机化33、倒地处理5、延迟入口31、通用队列125项通过；显式历史拟合对照和39项GPU运行时检查通过，0新优化更新/硬件操作。11000恢复训练及审计完成，尚无行为验收。[汇总](../diagnostics/20261111-fudan-wide-wrench-11000.md)。
 
 2026-11-11提交前检查：`check_formal_leg_load`及`check_fitted_load_runtime`改为显式启用历史拟合，保持当前默认关闭，避免旧检查误依赖已撤销默认。11000恢复训练完成并通过轮数/状态/源码审计；未作行为验收。[完成摘要](../diagnostics/20261111-fudan-wide-wrench-11000.md)。

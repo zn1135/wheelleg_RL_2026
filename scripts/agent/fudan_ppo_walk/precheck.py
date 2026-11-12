@@ -12,6 +12,7 @@ from ct_mjlab.fudan_ppo_walk.measurement import configure_samples,gpu_row,arrays
 from ct_mjlab.fudan_ppo_walk.protocol import samples
 from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config
 from ct_mjlab.envs.fudan_ppo_walk.commands import command_config
+from ct_mjlab.envs.fudan_ppo_walk import posture_reward
 
 
 def initial_geometry(env,items):
@@ -37,11 +38,15 @@ def main():
     p.add_argument('--deadline',type=float,required=True);p.add_argument('--viewer',choices=['viser'],required=True)
     p.add_argument('--port',type=int,default=8768)
     p.add_argument('--history-version',choices=('v2','v3'),default='v3')
+    p.add_argument('--training-resets',action='store_true',help='Use the actual training reset-on-done path')
     a=p.parse_args();disturbances=from_task_config();a.output.mkdir(parents=True,exist_ok=False)
     reset_contract=RESET_V2_CONTRACT if a.history_version=='v2' else RESET_CONTRACT
     started=time.time();env=None;server=None;report=dict(passed=False,kind='physical-visible-precheck',num_envs=20,reset_contract=reset_contract,optimizer_updates=0,physics_steps=0)
     report['disturbances']=disturbances.record()
     report['command_sampling']=command_config()
+    report['posture_reward']=posture_reward.from_task_config()
+    report['auto_reset']=a.training_resets
+    report['episode_completions']=0
     try:
         if time.time()>=a.deadline:raise TimeoutError('Precheck quota reached before initialization')
         env=FudanEnv(20,seed=30001,randomized=True,reset_contract=reset_contract,disturbances=disturbances)
@@ -70,7 +75,9 @@ def main():
         for step in range(steps):
             if time.time()>=a.deadline:raise TimeoutError('Precheck quota reached')
             tick=time.time()
-            env.step(torch.zeros(20,6,device=env.device),auto_reset=False,resample=False)
+            # 训练预检按真实倒地/超时复位；非有限状态检查仍在复位前执行。
+            result=env.step(torch.zeros(20,6,device=env.device),auto_reset=a.training_resets,resample=False)
+            report['episode_completions']+=int(result[3].sum().item())
             rows.extend(torch.stack(env.action.substep_rows).cpu().numpy());poses.append(env.env.sim.data.qpos.cpu().numpy().copy())
             report['physics_steps']+=5
             if step%3==0:scene.update(env.env.sim.data)
@@ -83,7 +90,7 @@ def main():
             action_delay_steps=env.action.disturbances.action_steps.cpu().tolist(),
             sensor_delay_steps=env.action.disturbances.sensor_steps.cpu().tolist(),
             push_count=env.action.disturbances.push_count.cpu().tolist(),
-            cuda_peak_memory_bytes=torch.cuda.max_memory_allocated(),scope='Valid reset and finite zero-action dynamics, not behavioral acceptance')
+            cuda_peak_memory_bytes=torch.cuda.max_memory_allocated(),scope='Valid reset and finite zero-action dynamics; auto_reset is recorded explicitly; not behavioral acceptance')
     except BaseException as exc:
         report['error']=repr(exc)
         if env is not None:

@@ -9,6 +9,7 @@ import torch
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
 from .check_resume import equal
+from ct_mjlab.envs.fudan_ppo_walk import posture_reward
 
 
 def main():
@@ -54,6 +55,11 @@ def main():
     assert not final['partial_update'] and not report['partial_update']
     assert report['checkpoint_sha256'] == sha(run/'model_final.pt')
     restore=json.loads((run/'restore_report.json').read_text())
+    posture=posture_reward.from_record(initial.get('posture_reward'))
+    assert posture == posture_reward.from_record(final.get('posture_reward'))
+    assert posture == posture_reward.from_record(report.get('posture_reward'))
+    assert posture == posture_reward.from_record(restore.get('posture_reward'))
+    assert posture_reward.from_record(parent.get('posture_reward')) == posture_reward.from_record(restore.get('source_posture_reward'))
     if 'expected_reset_contract' in budget:
         target_reset=budget['expected_reset_contract']
         assert initial['reset_contract']==final['reset_contract']==report['reset_contract']==target_reset
@@ -68,7 +74,9 @@ def main():
     assert any(not torch.equal(value,initial['model_state_dict'][key]) for key,value in final['model_state_dict'].items())
     events = EventAccumulator(str(run),size_guidance={'scalars':0}).Reload()
     tags = sorted(tag for tag in events.Tags()['scalars'] if tag.startswith('Rewards/'))
-    assert len(tags) == 16
+    expected_names=final.get('reward_names',posture_reward.reward_names(posture))
+    assert tags == sorted('Rewards/'+name for name in expected_names)
+    assert initial.get('reward_names',expected_names) == report.get('reward_names',expected_names) == expected_names
     series = {tag:events.Scalars(tag) for tag in tags}
     expected = list(range(start+1,target+1))
     for values in series.values():
@@ -101,6 +109,7 @@ def main():
         reward_tags=tags,logged_steps=[start+1,target],maximum_reward_sum_error=maximum_sum_error,
         model_sha256=sha(run/'model_final.pt'),checkpoints=checkpoints,training=report,
         source_files_verified=verified_source,restore=restore,
+        posture_reward=posture,
         behavior_accepted=False,cpu_launch_resolved=False)
     args.output.write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps({key:value for key,value in result.items() if key not in ('checkpoints','training')},indent=2))

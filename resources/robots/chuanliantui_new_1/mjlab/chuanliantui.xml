@@ -47,7 +47,7 @@
       <geom class="collision" mesh="base_link" />
       <body name="lf0" pos="-0.0114000000001256 0.176932975540448 0.0235200000001889">
         <!-- 电机 q=0：主腿杆的 XZ 投影朝 -X；ref 保持 CAD 装配姿态。 -->
-        <joint name="lf0" armature="0.015795" type="hinge" axis="0 1 0" ref="-0.6647205544565016" range="-100.6647205544565 99.3352794455435" />
+        <joint name="lf0" armature="0.03159" type="hinge" axis="0 1 0" ref="-0.6647205544565016" range="-100.6647205544565 99.3352794455435" />
         <inertial pos="-0.059929412590832 -0.00497568108631433 -0.053540218687971" mass="0.843183721447544" fullinertia="0.000862027161716 0.0020484271685 0.00130234764167 3.20465693682e-06 -0.000779607816635 2.10942806215e-06" />
         <geom class="visual" mesh="rf0" material="metal" />
         <geom class="collision" mesh="rf0" />
@@ -87,7 +87,7 @@
       </body>
       <body name="rf0" pos="-0.0114000000001232 -0.178572975540517 0.0235199999997">
         <!-- 电机 q=0：主腿杆的 XZ 投影朝 -X；ref 保持 CAD 装配姿态。 -->
-        <joint name="rf0" armature="0.015795" type="hinge" axis="0 -1 0" ref="0.6647205544560038" range="-99.335279445544 100.664720554456" />
+        <joint name="rf0" armature="0.03159" type="hinge" axis="0 -1 0" ref="0.6647205544560038" range="-99.335279445544 100.664720554456" />
         <inertial pos="-0.0599303446620469 0.00497568108572646 -0.0535401395509289" mass="0.843183721447544" fullinertia="0.000862027161496 0.0020484271685 0.00130234764189 -3.20295947234e-06 -0.000779607817918 -2.10957219358e-06" />
         <geom class="visual" mesh="lf0" material="metal" />
         <geom class="collision" mesh="lf0" />
@@ -126,7 +126,7 @@
       <body name="lf00" pos="-0.0114000000001251 0.18795499999997 0.0235200000002041">
         <!-- 后输入轴连续旋转，避免 CAD 导出中的 ±pi 限位卡住整条闭链。 -->
         <!-- 电机 q=0：短摇臂的 XZ 投影朝 +X。 -->
-        <joint name="lf00" armature="0.015795" type="hinge" axis="0 1 0" ref="0.6675945815461097" limited="false" />
+        <joint name="lf00" armature="0.03159" type="hinge" axis="0 1 0" ref="0.6675945815461097" limited="false" />
         <inertial pos="0.0287300930886477 0.00217309925781833 -0.0226492653085871" mass="0.108755464967073" fullinertia="9.09875569319e-05 0.000222724145523 0.000133403996798 -6.95628429076e-08 8.83433748701e-05 5.48396164445e-08" />
         <geom class="visual" mesh="rf00" material="metal" />
         <geom class="collision" mesh="rf00" />
@@ -153,7 +153,7 @@
       </body>
       <body name="rf00" pos="-0.0114000000001247 -0.189595000000041 0.023519999999691">
         <!-- 电机 q=0：短摇臂的 XZ 投影朝 +X。 -->
-        <joint name="rf00" armature="0.015795" type="hinge" axis="0 -1 0" ref="-0.6675945815468479" limited="false" />
+        <joint name="rf00" armature="0.03159" type="hinge" axis="0 -1 0" ref="-0.6675945815468479" limited="false" />
         <inertial pos="0.0287300930886472 -0.00217309925803372 -0.0226492653085664" mass="0.108755464967074" fullinertia="9.09875569319e-05 0.000222724145523 0.000133403996798 6.95628437602e-08 8.83433748701e-05 -5.48396173066e-08" />
         <geom class="visual" mesh="lf00" material="metal" />
         <geom class="collision" mesh="lf00" />

@@ -140,6 +140,9 @@ def train_fudan(args):
         raise ValueError('Physical precheck disturbance settings differ from the requested training settings')
     if proof.get('command_sampling', LEGACY_COMMAND_SAMPLING) != command_config(env_cfg):
         raise ValueError('Physical precheck command sampling differs from the requested training settings')
+    from ct_mjlab.envs.fudan_ppo_walk import posture_reward
+    if posture_reward.from_record(proof.get('posture_reward')) != posture_reward.from_task_config(env_cfg):
+        raise ValueError('Physical precheck posture reward differs from the requested training settings')
     if args.migrate_history_v2 and args.resume is None:
         raise ValueError('--migrate-history-v2 requires --resume')
     if args.num_envs % train_cfg.algorithm.num_mini_batches:

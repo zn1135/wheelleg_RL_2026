@@ -74,6 +74,7 @@ class HuananhuPdAction(ChuanliantuiPdAction):
         self._wheel_response = torch.as_tensor(
             wheel_response_parameters(env.sim.mj_model),
             dtype=self._torques.dtype, device=self.device)
+        self._wheel_speed_shaping = bool((self._wheel_response[:,2]!=0).any())
         self._wheel_action_delay_steps = torch.zeros_like(self.action_delay_steps)
         self._delay_choices = torch.tensor(
             ([int(math.floor(cfg.action_delay_s / env.physics_dt + .5))]
@@ -142,8 +143,9 @@ class HuananhuPdAction(ChuanliantuiPdAction):
         # Preserve nominal PD/limits and diagnostics; only the simulated motor
         # response changes. XML gain G is not multiplied here a second time.
         inputs = self._motor_response_torque.clone()
-        inputs[:, wheels] = wheel_response_input(
-            self._motor_response_torque[:, wheels], qd[:, wheels], self._wheel_response)
+        if self._wheel_speed_shaping:
+            inputs[:, wheels] = wheel_response_input(
+                self._motor_response_torque[:, wheels], qd[:, wheels], self._wheel_response)
         self._entity.set_joint_effort_target(inputs, joint_ids=self._physical_joint_ids)
 
         compression = (SPRING_INITIAL_COMPRESSION

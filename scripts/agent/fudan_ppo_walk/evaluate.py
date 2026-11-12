@@ -45,8 +45,10 @@ def gpu(args):
     from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
     from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
     from ct_mjlab.envs.chuanliantui.fitted_leg_load import parameter_record
+    from ct_mjlab.envs.fudan_ppo_walk import posture_reward
     from types import SimpleNamespace
     policy,metadata=load_policy(args.checkpoint,'cuda:0')
+    posture=posture_reward.from_record(metadata.get('posture_reward'))
     disturbances=from_sim2sim_config()
     if metadata.get('reset_contract') not in (RESET_CONTRACT,RESET_V2_CONTRACT):
         raise ValueError('This GPU evaluator requires PD-centred reset v2/v3; use the preserved trial source for legacy models')
@@ -54,7 +56,10 @@ def gpu(args):
     start=time.time();args.output.mkdir(parents=True,exist_ok=False)
     protocol=protocol_record(items,args.diagnostic)
     protocol.update(validation_engine='gpu',validation_backend='mujoco_warp_gpu',
-        disturbances=disturbances.record(),training_disturbances=from_record(metadata.get('disturbances')).record())
+        disturbances=disturbances.record(),training_disturbances=from_record(metadata.get('disturbances')).record(),
+        posture_reward=posture)
+    from ct_mjlab.envs.fudan_ppo_walk.wheel_physics import record as wheel_record
+    protocol['physical_wheel_model']=wheel_record(FudanWalkCfg.sim.wheel_model)
     fitted = getattr(args,'leg_load_profile','legacy')=='fitted' and getattr(args,'response_parameters',None) is None
     protocol['physical_leg_load']=parameter_record(fitted)
     if getattr(args,'response_parameters',None) is not None:
@@ -71,6 +76,7 @@ def gpu(args):
         if time.time()>=args.deadline:break
         batch=items[offset:offset+args.batch_size]
         task=FudanWalkCfg();task.sim=SimpleNamespace(**section_dict(task.sim));task.sim.fitted_leg_load=fitted
+        posture_reward.configure(task,posture)
         env=FudanEnv(len(batch),seed=50001+offset,randomized=True,reset_contract=metadata['reset_contract'],disturbances=disturbances,cfg=task)
         obs,_=configure_samples(env,batch,fixture)
         response=None

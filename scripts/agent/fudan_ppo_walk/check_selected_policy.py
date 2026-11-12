@@ -27,7 +27,7 @@ def main():
         record=selected.selection_record()
         verify('selected8000_hash_pitch2_no_integral',record['parking_pitch_deg']==2 and not record['integral_enabled'] and '7000_to8000' in record['checkpoint'])
         rewards=selected.FudanWalkCfg().rewards
-        verify('original16_rewards_restored',len(rewards.scales)==16 and 'parking_velocity' not in rewards.scales and not hasattr(rewards,'parking_sigma'))
+        verify('split_roll_pitch_rewards_without_parking_velocity',len(rewards.scales)==17 and 'roll' in rewards.scales and 'pitch' in rewards.scales and 'orientation' not in rewards.scales and 'parking_velocity' not in rewards.scales)
         items=samples()[::21];torch.manual_seed(39)
         obs=torch.randn(len(items),25);history=torch.randn(len(items),125)
         before_obs=obs.clone();before_history=history.clone()

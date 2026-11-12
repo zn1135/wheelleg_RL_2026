@@ -1,0 +1,20 @@
+{
+  "version": "fudan-mechanical-wheel-v1",
+  "wheel_order": [
+    "lfwheel",
+    "rfwheel"
+  ],
+  "armature": [
+    0.01208955519400076,
+    0.011335059898366036
+  ],
+  "damping": [
+    0.0010064290846355998,
+    0.0054036282378839996
+  ],
+  "frictionloss": [
+    0.3251873792128,
+    0.1852005485525
+  ],
+  "source": "Bounded GPU comparison against17679 legacy_curve/gain0.45; equivalent mechanical candidate, not measured hardware parameters"
+}

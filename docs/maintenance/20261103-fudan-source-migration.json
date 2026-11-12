@@ -255,8 +255,9 @@
       "new_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/policy.py",
       "before_snapshot": "artifacts/fudan_ppo_walk/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/policy.py",
       "old_sha256": "ff9148bc21e072a7d3b8d7a10e14602e644f8b714cac2e171b63ae92a4635a73",
-      "new_sha256": "d2ef6c212241c7c67546663d68e850c40f6ece568905f65990cac57069d18424",
-      "change": "known_structural_config_or_dependency_change"
+      "new_sha256": "464f55011900a48619ae4a2a7d0cb57c469870b1f4810e0e333c7492355bde42",
+      "change": "known_structural_config_or_dependency_change",
+      "migration_new_sha256": "d2ef6c212241c7c67546663d68e850c40f6ece568905f65990cac57069d18424"
     },
     {
       "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/disturbances.py",
@@ -289,17 +290,19 @@
       "new_path": "mjlab_training/src/ct_mjlab/rsl_rl/runners/fudan_on_policy_runner.py",
       "before_snapshot": "artifacts/fudan_ppo_walk/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/runner.py",
       "old_sha256": "401e4e319ddd032fb0e07a00cbb3129c3b3d06ce513f4f37f42f7b06869fb154",
-      "new_sha256": "9d22933b2772394cb3705f86598a000c65fd828db7ed1f7f5c67ce9d8012ac38",
+      "new_sha256": "0ba08288b3ce6c7558d28b4c5b9a4e0edf4c10d2d4ee6229c42e35ee799be990",
       "change": "moved_to_single_implementation",
-      "compatibility_sha256": "8d46fb0d02a3621acfa4079edc5d2730f9304b0a4e693aa016ef981f3dd015ac"
+      "compatibility_sha256": "8d46fb0d02a3621acfa4079edc5d2730f9304b0a4e693aa016ef981f3dd015ac",
+      "migration_new_sha256": "9d22933b2772394cb3705f86598a000c65fd828db7ed1f7f5c67ce9d8012ac38"
     },
     {
       "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/export.py",
       "new_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/export.py",
       "before_snapshot": "artifacts/fudan_ppo_walk/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/export.py",
       "old_sha256": "0b82366b8a8b490c550e6d2725a9b96edfaa5f6079a1e433efbe92722fde77bc",
-      "new_sha256": "d10fc04e58616522131c29bbb9aff268118cca758b52e9e329a0ac59b90eb9c1",
-      "change": "known_structural_config_or_dependency_change"
+      "new_sha256": "95287d91e87b461481103b1bb6bc43e3103b0d9b45b50b5bd3288c7ac120295c",
+      "change": "known_structural_config_or_dependency_change",
+      "migration_new_sha256": "d10fc04e58616522131c29bbb9aff268118cca758b52e9e329a0ac59b90eb9c1"
     },
     {
       "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/parking_integral.py",
@@ -323,9 +326,10 @@
       "new_path": "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py",
       "before_snapshot": "artifacts/fudan_ppo_walk/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/config.py",
       "old_sha256": "486a54e0568f08607db6ba93cb0a4a2419be9c816b076bad489ce704f972b594",
-      "new_sha256": "9d0580839232d4957c12f06be3bf21e834b37fe0ac435f18a2102605ddba98ff",
+      "new_sha256": "84ee030e3d7188275078d0b4520ab98230d547a8dd6ce8a97537e22c99e80a18",
       "change": "moved_to_single_implementation",
-      "compatibility_sha256": "3b7d79f972efbd68e78d85637e98cfa1d5ef0526bb5b8e03bd974b51b1deefb3"
+      "compatibility_sha256": "3b7d79f972efbd68e78d85637e98cfa1d5ef0526bb5b8e03bd974b51b1deefb3",
+      "migration_new_sha256": "9d0580839232d4957c12f06be3bf21e834b37fe0ac435f18a2102605ddba98ff"
     },
     {
       "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/commands.py",
@@ -350,9 +354,10 @@
       "new_path": "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk.py",
       "before_snapshot": "artifacts/fudan_ppo_walk/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/env.py",
       "old_sha256": "dbb945e061584f0e2cb79767d09d827f2d161d19133ecb5fe6d4945811caeb21",
-      "new_sha256": "dfdee1538c6dbaaf5ed66178f5935453099005804f66ee4b4fdb7ed47ea75966",
+      "new_sha256": "9ac4e6de86c278638a400e599c8163dee94d287efcc85d7612acd20403cc637b",
       "change": "moved_to_single_implementation",
-      "compatibility_sha256": "967c53bdb75f1e493ffe50e88a142dde1268ead0156d8d1801dc3ac96218459e"
+      "compatibility_sha256": "967c53bdb75f1e493ffe50e88a142dde1268ead0156d8d1801dc3ac96218459e",
+      "migration_new_sha256": "dfdee1538c6dbaaf5ed66178f5935453099005804f66ee4b4fdb7ed47ea75966"
     },
     {
       "old_path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/contract.py",
@@ -433,8 +438,9 @@
       "new_path": "mjlab_training/src/ct_mjlab/scripts/train.py",
       "before_snapshot": "artifacts/fudan_ppo_walk/fudan-structure-alignment-20261103/before/mjlab_training/src/ct_mjlab/scripts/train.py",
       "old_sha256": "ccbd872a3d0ae7634076a4ac27288698317b93bff846befce293df2c2891608d",
-      "new_sha256": "fcf68411eec16101358ad4269bab42648c3800c33bd877533567477c75c11897",
-      "change": "known_structural_config_or_dependency_change"
+      "new_sha256": "09dd7ac777178dd4462167ac31030d27a1918aec417513e677327a54b4715197",
+      "change": "known_structural_config_or_dependency_change",
+      "migration_new_sha256": "fcf68411eec16101358ad4269bab42648c3800c33bd877533567477c75c11897"
     },
     {
       "old_path": "mjlab_training/src/ct_mjlab/scripts/play.py",
@@ -1113,8 +1119,9 @@
       "new_path": "scripts/agent/fudan_ppo_walk/precheck.py",
       "before_snapshot": "artifacts/fudan_ppo_walk/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/precheck.py",
       "old_sha256": "dc08d6b8dd7b5af7ca2b12322d0c2812231623088cbb1f93779c37bb312a1d7c",
-      "new_sha256": "cd09360e6b4e3d3226d4f92d6ad39ceb19b9b0199719d941c85697851f2b69ae",
-      "change": "known_structural_config_or_dependency_change"
+      "new_sha256": "3ba5ef98409f6bc10a8cf0bc0277d203bb7c77a6ca30f472cad49874b948160d",
+      "change": "known_structural_config_or_dependency_change",
+      "migration_new_sha256": "cd09360e6b4e3d3226d4f92d6ad39ceb19b9b0199719d941c85697851f2b69ae"
     },
     {
       "old_path": "scripts/agent/fudan_ppo_walk/report_replay_rewards.py",
@@ -1249,24 +1256,27 @@
       "new_path": "scripts/agent/fudan_ppo_walk/audit_resume_run.py",
       "before_snapshot": "artifacts/fudan_ppo_walk/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/audit_resume_run.py",
       "old_sha256": "750a7ee97498612e4eb3c27b15bda3620db9a3d39e9153085c0c90301f4f1858",
-      "new_sha256": "750a7ee97498612e4eb3c27b15bda3620db9a3d39e9153085c0c90301f4f1858",
-      "change": "unchanged"
+      "new_sha256": "9522a0e0153ecfd8c8fc21f98e33e52cefbeed209524ccd8c48b34ed5c31c3d1",
+      "change": "unchanged",
+      "migration_new_sha256": "750a7ee97498612e4eb3c27b15bda3620db9a3d39e9153085c0c90301f4f1858"
     },
     {
       "old_path": "scripts/agent/fudan_ppo_walk/reset_v2_fixture.py",
       "new_path": "scripts/agent/fudan_ppo_walk/reset_v2_fixture.py",
       "before_snapshot": "artifacts/fudan_ppo_walk/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/reset_v2_fixture.py",
       "old_sha256": "49f885ee1b5967bf2182f12dfa36fe4bbf639a54b777a297e465aea42de81263",
-      "new_sha256": "e647649d33ac1b60b9d7c19fa1b904d95ffb8efc8b4993be8a92514e4d165f86",
-      "change": "known_structural_config_or_dependency_change"
+      "new_sha256": "10590064322fc14440841472bbef0ef32b297d348e4901872fc9f4879feb5b6a",
+      "change": "known_structural_config_or_dependency_change",
+      "migration_new_sha256": "e647649d33ac1b60b9d7c19fa1b904d95ffb8efc8b4993be8a92514e4d165f86"
     },
     {
       "old_path": "scripts/agent/fudan_ppo_walk/evaluate.py",
       "new_path": "scripts/agent/fudan_ppo_walk/evaluate.py",
       "before_snapshot": "artifacts/fudan_ppo_walk/fudan-structure-alignment-20261103/before/scripts/agent/fudan_ppo_walk/evaluate.py",
       "old_sha256": "a4ae9d8d69aed011f3dda85a29880ae3c14b946f40cb4e8bc507126896954729",
-      "new_sha256": "cb057872544b1bc94949db6f447c4dd2cf8161c6ae2d794df32ef469b944c555",
-      "change": "known_structural_config_or_dependency_change"
+      "new_sha256": "de7564e4e29901328102693cc5f49aedfa7a1b3c78a87ba72703efd72e368d81",
+      "change": "known_structural_config_or_dependency_change",
+      "migration_new_sha256": "cb057872544b1bc94949db6f447c4dd2cf8161c6ae2d794df32ef469b944c555"
     },
     {
       "old_path": "scripts/agent/fudan_ppo_walk/review_video_flags.py",
@@ -1513,6 +1523,18 @@
     {
       "path": "scripts/agent/fudan_ppo_walk/check_structure_tools.py",
       "sha256": "cf1c6a4e21af0295fc37d7760cef019ff21b3ba667f802dcd8e4ae47f682b407"
+    },
+    {
+      "path": "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/posture_reward.py",
+      "sha256": "cd0e092d6df9255cae9aaf7a036ca96f81108dcbc3567d2787e4d4a80a6b0a49"
+    },
+    {
+      "path": "scripts/agent/fudan_ppo_walk/check_posture_reward.py",
+      "sha256": "1638f59f73a508997b8f1a564735fa83908a4f840179c1382bb339e07a5b4697"
+    },
+    {
+      "path": "scripts/agent/fudan_ppo_walk/check_randomization_ranges.py",
+      "sha256": "2703f2d69c13a69c21c49ec39d165268473ea8885fce62aa70eca2bdbb0b0f98"
     }
   ],
   "preexisting_changes": [
@@ -1554,5 +1576,143 @@
   ],
   "algorithm_validation": "scripts.agent.fudan_ppo_walk.check_structure_alignment",
   "historical_snapshots_modified": false,
-  "unknown_hashes_rejected": true
+  "unknown_hashes_rejected": true,
+  "subsequent_changes": [
+    {
+      "date": "2026-11-11",
+      "scope": "User-confirmed split roll/pitch; forward pitch0to5deg ratio1over20; fixed2deg target withdrawn; retain P30/D10 and old PT semantics",
+      "baseline_head": "5262093254836b7e7f0196dd85c533c1cac504c5",
+      "files": [
+        {
+          "path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/policy.py",
+          "previous_expected_sha256": "d2ef6c212241c7c67546663d68e850c40f6ece568905f65990cac57069d18424",
+          "baseline_head_sha256": "d2ef6c212241c7c67546663d68e850c40f6ece568905f65990cac57069d18424",
+          "sha256": "464f55011900a48619ae4a2a7d0cb57c469870b1f4810e0e333c7492355bde42"
+        },
+        {
+          "path": "mjlab_training/src/ct_mjlab/rsl_rl/runners/fudan_on_policy_runner.py",
+          "previous_expected_sha256": "9d22933b2772394cb3705f86598a000c65fd828db7ed1f7f5c67ce9d8012ac38",
+          "baseline_head_sha256": "536708ce0bdf2e266fcc09b1c55892d637aa486539460df0a8d90098e2469ae2",
+          "sha256": "0ba08288b3ce6c7558d28b4c5b9a4e0edf4c10d2d4ee6229c42e35ee799be990"
+        },
+        {
+          "path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/export.py",
+          "previous_expected_sha256": "d10fc04e58616522131c29bbb9aff268118cca758b52e9e329a0ac59b90eb9c1",
+          "baseline_head_sha256": "d10fc04e58616522131c29bbb9aff268118cca758b52e9e329a0ac59b90eb9c1",
+          "sha256": "95287d91e87b461481103b1bb6bc43e3103b0d9b45b50b5bd3288c7ac120295c"
+        },
+        {
+          "path": "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py",
+          "previous_expected_sha256": "9d0580839232d4957c12f06be3bf21e834b37fe0ac435f18a2102605ddba98ff",
+          "baseline_head_sha256": "26ae9db1aef98e88046352d2be8d8deffa6ce41832ab0c8f3e0d4b1cb571f218",
+          "sha256": "2d1a3f739637cd8f159fbb93b2d4893fb4d27ac469db28e4e21c579e315ad6cf"
+        },
+        {
+          "path": "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk.py",
+          "previous_expected_sha256": "dfdee1538c6dbaaf5ed66178f5935453099005804f66ee4b4fdb7ed47ea75966",
+          "baseline_head_sha256": "3be92898ae4997346570ad2b1cab08530f3a6f4d948530e526a347abdcab2e86",
+          "sha256": "9ac4e6de86c278638a400e599c8163dee94d287efcc85d7612acd20403cc637b"
+        },
+        {
+          "path": "mjlab_training/src/ct_mjlab/scripts/train.py",
+          "previous_expected_sha256": "fcf68411eec16101358ad4269bab42648c3800c33bd877533567477c75c11897",
+          "baseline_head_sha256": "fcf68411eec16101358ad4269bab42648c3800c33bd877533567477c75c11897",
+          "sha256": "09dd7ac777178dd4462167ac31030d27a1918aec417513e677327a54b4715197"
+        },
+        {
+          "path": "scripts/agent/fudan_ppo_walk/precheck.py",
+          "previous_expected_sha256": "cd09360e6b4e3d3226d4f92d6ad39ceb19b9b0199719d941c85697851f2b69ae",
+          "baseline_head_sha256": "cd09360e6b4e3d3226d4f92d6ad39ceb19b9b0199719d941c85697851f2b69ae",
+          "sha256": "ba1c004039af7a83dc4b006d170bb4d0240355f8a47cf096457e0446deccb73d"
+        },
+        {
+          "path": "scripts/agent/fudan_ppo_walk/audit_resume_run.py",
+          "previous_expected_sha256": "750a7ee97498612e4eb3c27b15bda3620db9a3d39e9153085c0c90301f4f1858",
+          "baseline_head_sha256": "750a7ee97498612e4eb3c27b15bda3620db9a3d39e9153085c0c90301f4f1858",
+          "sha256": "9522a0e0153ecfd8c8fc21f98e33e52cefbeed209524ccd8c48b34ed5c31c3d1"
+        },
+        {
+          "path": "scripts/agent/fudan_ppo_walk/reset_v2_fixture.py",
+          "previous_expected_sha256": "e647649d33ac1b60b9d7c19fa1b904d95ffb8efc8b4993be8a92514e4d165f86",
+          "baseline_head_sha256": "e647649d33ac1b60b9d7c19fa1b904d95ffb8efc8b4993be8a92514e4d165f86",
+          "sha256": "10590064322fc14440841472bbef0ef32b297d348e4901872fc9f4879feb5b6a"
+        },
+        {
+          "path": "scripts/agent/fudan_ppo_walk/evaluate.py",
+          "previous_expected_sha256": "cb057872544b1bc94949db6f447c4dd2cf8161c6ae2d794df32ef469b944c555",
+          "baseline_head_sha256": "0715ccdf1693827eea081aa9a3cf556dd1f92cabb04ad227669ac6b7a63fe125",
+          "sha256": "de7564e4e29901328102693cc5f49aedfa7a1b3c78a87ba72703efd72e368d81"
+        }
+      ],
+      "new_files": [
+        {
+          "path": "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/posture_reward.py",
+          "sha256": "cd0e092d6df9255cae9aaf7a036ca96f81108dcbc3567d2787e4d4a80a6b0a49"
+        },
+        {
+          "path": "scripts/agent/fudan_ppo_walk/check_posture_reward.py",
+          "sha256": "1638f59f73a508997b8f1a564735fa83908a4f840179c1382bb339e07a5b4697"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-11",
+      "scope": "Authorized14000to15000 launch: explicit precheck training resets, preserve legacy nonreset default and NaN-before-reset failure",
+      "files": [
+        {
+          "path": "scripts/agent/fudan_ppo_walk/precheck.py",
+          "previous_expected_sha256": "ba1c004039af7a83dc4b006d170bb4d0240355f8a47cf096457e0446deccb73d",
+          "sha256": "3ba5ef98409f6bc10a8cf0bc0277d203bb7c77a6ca30f472cad49874b948160d"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-11",
+      "scope": "User requested restore nominal leg PD60/2, retain split posture rewards; actual GPU gain checks",
+      "files": [
+        {
+          "path": "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py",
+          "previous_expected_sha256": "2d1a3f739637cd8f159fbb93b2d4893fb4d27ac469db28e4e21c579e315ad6cf",
+          "sha256": "e13dacce0746c9730fd963c1c5e566f97831eb1b310ae88183ca19767d886fcb"
+        },
+        {
+          "path": "scripts/agent/fudan_ppo_walk/check_randomization_ranges.py",
+          "sha256": "2703f2d69c13a69c21c49ec39d165268473ea8885fce62aa70eca2bdbb0b0f98",
+          "new_record": true
+        }
+      ]
+    },
+    {
+      "date": "2026-11-11",
+      "scope": "User requests nominal leg PD30/2 and restart at11179, retain split rewards; round budget pending",
+      "files": [
+        {
+          "path": "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py",
+          "previous_expected_sha256": "e13dacce0746c9730fd963c1c5e566f97831eb1b310ae88183ca19767d886fcb",
+          "sha256": "84ee030e3d7188275078d0b4520ab98230d547a8dd6ce8a97537e22c99e80a18"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-11",
+      "scope": "User-adopted four-leg x2 armature; record actual inertia in new evaluation fixtures. Prior unregistered source drift remains rejected.",
+      "files": [
+        {
+          "path": "mjlab_training/src/ct_mjlab/fudan_ppo_walk/measurement.py",
+          "before_actual_sha256": "35ffe1d63287851b6be614afd4599252b9a8bdb61c247c7e413c5d05e5264d07",
+          "sha256": "d77654528dbb179243075b2d5230e7263f29d81830b17680389761a2d72bed3d",
+          "before_snapshot": "artifacts/shared_validation/leg-armature-x2-default-20261111-01/before/mjlab_training/src/ct_mjlab/fudan_ppo_walk/measurement.py",
+          "existing_migration_gate_updated": false
+        }
+      ],
+      "assets": [
+        {
+          "path": "resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml",
+          "before_sha256": "505c9b9bb2b7a20e15cf9d2cd4ca664332db402687e34185d8a57de173dedbe8",
+          "snapshot": "artifacts/shared_validation/leg-armature-x2-default-20261111-01/before/resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml",
+          "after_sha256": "ed817cf8b0d41bc3625021c97deef33549f0c8aef7ec4e98a49d6d6a9ac2bb11"
+        }
+      ]
+    }
+  ]
 }

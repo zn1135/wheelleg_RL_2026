@@ -35,6 +35,16 @@ def main():
         try:
             action = wrapper.action
             verify('legacy_physics', action.leg_load is None)
+            legs=action._leg_action_ids;control=wrapper.cfg.control
+            verify('nominal_leg_pd_matches_config',
+                action._base_position_gains[legs].eq(control.leg_stiffness).all()
+                and action._base_velocity_gains[legs].eq(control.leg_damping).all())
+            verify('randomized_leg_pd_matches_config',
+                torch.equal(action.position_gains[:,legs],control.leg_stiffness*action.kp_scale[:,legs])
+                and torch.equal(action.velocity_gains[:,legs],control.leg_damping*action.kd_scale[:,legs]))
+            values['nominal_leg_pd']=[control.leg_stiffness,control.leg_damping]
+            values['actual_leg_p_minmax']=[float(action.position_gains[:,legs].min()),float(action.position_gains[:,legs].max())]
+            values['actual_leg_d_minmax']=[float(action.velocity_gains[:,legs].min()),float(action.velocity_gains[:,legs].max())]
             for name in ('kp_scale', 'kd_scale', 'motor_strength'):
                 value = getattr(action, name)
                 verify(name + '_within_85to115_percent', value.ge(.85).all() and value.le(1.15).all())
