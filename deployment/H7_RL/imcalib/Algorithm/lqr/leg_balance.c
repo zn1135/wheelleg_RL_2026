@@ -16,9 +16,9 @@ void Leg_Balance_Init(leg_balance_t *lb)
 
     for (uint8_t i = 0u; i < 2u; i++)
     {
-        PID_struct_init(&lb->leg_len[i], POSITION_PID, machine->lqr.pd.leg_len[i].max_output, 0.0f, machine->lqr.pd.leg_len[i].kp, 0.0f, machine->lqr.pd.leg_len[i].kd * MACHINE_LQR_DT, 0.0f, 0.0f);
+        PID_struct_init(&lb->leg_len[i], POSITION_PID, machine->lqr.pd.leg_len[i].max_output, 0.0f, machine->lqr.pd.leg_len[i].kp, 0.0f, machine->lqr.pd.leg_len[i].kd * MACHINE_LQR_DT);
     }
-    PID_struct_init(&lb->roll, POSITION_PID, machine->lqr.pd.roll.max_output, 0.0f, machine->lqr.pd.roll.kp, 0.0f, machine->lqr.pd.roll.kd * MACHINE_LQR_DT, 0.0f, 0.0f);
+    PID_struct_init(&lb->roll, POSITION_PID, machine->lqr.pd.roll.max_output, 0.0f, machine->lqr.pd.roll.kp, 0.0f, machine->lqr.pd.roll.kd * MACHINE_LQR_DT);
     Roll_Height_Reset(&lb->roll_height);
 }
 
@@ -36,13 +36,10 @@ void Leg_Balance_Reset(leg_balance_t *lb)
     for (uint8_t i = 0u; i < 3u; i++)
     {
         memset(pid[i]->err, 0, sizeof(pid[i]->err));
-        memset(pid[i]->target, 0, sizeof(pid[i]->target));
-        memset(pid[i]->measured, 0, sizeof(pid[i]->measured));
         pid[i]->pout = 0.0f;
         pid[i]->iout = 0.0f;
         pid[i]->dout = 0.0f;
         pid[i]->position_mode_output = 0.0f;
-        pid[i]->last_position_mode_output = 0.0f;
         pid[i]->vel_err = 0.0f;
     }
     memset(lb->F, 0, sizeof(lb->F));
@@ -60,15 +57,12 @@ void Leg_Balance_Reset(leg_balance_t *lb)
 /* P响应位置误差，D直接使用实际速度；不积分、不差分给定或误差。 */
 static void Leg_PD_Update(pid_t *pd, float measured, float target, float velocity)
 {
-    pd->measured[NOW] = measured;
-    pd->target[NOW] = target;
     pd->err[NOW] = target - measured;
     pd->vel_err = -velocity;
     pd->pout = pd->p * pd->err[NOW];
     pd->dout = pd->d * pd->vel_err;
     pd->position_mode_output = pd->pout + pd->dout;
     abs_limit(&pd->position_mode_output, pd->MaxOutput);
-    pd->last_position_mode_output = pd->position_mode_output;
 }
 
 /*
@@ -148,8 +142,8 @@ uint8_t Leg_Balance_Compute(leg_balance_t *lb, const lqr_state_t *st,
                             uint8_t normal_mode,
                             float dt, torque_output_t *torque)
 {
-    float Tp[2];
     float F[2];
+    float Tp[2];
     float wheel[2];
     float length[2];
     float target[2];
