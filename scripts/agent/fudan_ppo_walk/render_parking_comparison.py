@@ -36,6 +36,8 @@ def main():
                 sample=next(s for s in protocol['samples'] if s['id']==sid);cases.append(sample['case'])
                 path=folder/'traces'/(sid+'.npz')
                 with np.load(path) as saved:traces.append({k:saved[k].copy() for k in saved.files})
+                w,x,y,z=traces[-1]['qpos'][:,3:7].T
+                traces[-1]['yaw_unwrapped']=np.unwrap(np.arctan2(2*(w*z+x*y),1-2*(y*y+z*z)))
                 sources.append(dict(checkpoint=run['checkpoint'],model_sha256=run['sha256'],trajectory=str(path),trajectory_sha256=hashlib.sha256(path.read_bytes()).hexdigest()))
             assert cases[0]==cases[1] and len(traces[0]['qpos'])==len(traces[1]['qpos'])
             output=args.output/(sid+'.mp4');duration=cases[0]['duration']
@@ -57,10 +59,13 @@ def main():
                         for segment in cases[0]['segments']:
                             if i*.01>=segment['start']:command=segment['command']
                         speed=np.linalg.norm(trace['linear_world'][tick,:2]);pitch=trace['roll_pitch_deg'][tick,1]
-                        draw.rectangle((0,0,480,85),fill='#18212b')
+                        draw.rectangle((0,0,480,110),fill='#18212b')
                         draw.text((10,4),f'{run.get("display_label",Path(run["checkpoint"]).stem)} P{run["leg_p"]:g}/D{run["leg_d"]:g}',font=titlefont,fill='white')
                         draw.text((10,32),f't={i*.01:.2f}s cmd vx={command[0]:g} h={command[2]:.2f}',font=font,fill='white')
                         draw.text((10,57),f'speed={speed:.3f}m/s pitch={pitch:+.2f}deg',font=font,fill='white')
+                        drift=np.linalg.norm(trace['qpos'][i,:2]-trace['qpos'][0,:2])
+                        yaw=np.rad2deg(trace['yaw_unwrapped'][i]-trace['yaw_unwrapped'][0])
+                        draw.text((10,82),f'XY from start={drift:.3f}m yaw change={yaw:+.1f}deg',font=font,fill='white')
                         canvas.paste(panel,(col*480,48))
                     writer.append_data(np.asarray(canvas))
             output.with_suffix('.json').write_text(json.dumps(dict(fps=50,duration_s=duration,playback_speed=1,columns=sources,

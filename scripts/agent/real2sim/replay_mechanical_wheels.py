@@ -19,6 +19,7 @@ from scripts.agent.real2sim.probe_video_leg_parameters import items,report
 def main():
     p=argparse.ArgumentParser(__doc__);p.add_argument('--checkpoint',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True);p.add_argument('--profile',choices=('mechanical','legacy_curve'),required=True)
+    p.add_argument('--wheel-p',type=float,choices=(.045,.1),default=.045)
     a=p.parse_args();a.output.mkdir(parents=True,exist_ok=False);torch.set_num_threads(1)
     gain=1. if a.profile=='mechanical' else .45
     selected=items(profiles=[dict(name=a.profile,armature_scale=2.,wheel_motor_gain=gain)])
@@ -48,11 +49,11 @@ def main():
         return obs
     request=SimpleNamespace(checkpoint=a.checkpoint,output=a.output/'no_external',deadline=time.time()+300,diagnostic=True,
         diagnostic_height=None,batch_size=3,selection=None,leg_load_profile='legacy',response_parameters=None)
-    with patch.object(FudanWalkCfg.control,'leg_stiffness',60.),patch.object(FudanWalkCfg.control,'leg_damping',2.),patch.object(FudanWalkCfg.control,'wheel_stiffness',.045),patch.object(FudanWalkCfg.sim,'wheel_model',a.profile),patch.object(FudanWalkCfg.sim,'wheel_motor_gain',gain),patch.object(evaluate,'evaluation_items',return_value=selected),patch.object(evaluate,'from_sim2sim_config',return_value=clean),patch.object(evaluate,'configure_samples',configure):evaluate.gpu(request)
+    with patch.object(FudanWalkCfg.control,'leg_stiffness',60.),patch.object(FudanWalkCfg.control,'leg_damping',2.),patch.object(FudanWalkCfg.control,'wheel_stiffness',a.wheel_p),patch.object(FudanWalkCfg.sim,'wheel_model',a.profile),patch.object(FudanWalkCfg.sim,'wheel_motor_gain',gain),patch.object(evaluate,'evaluation_items',return_value=selected),patch.object(evaluate,'from_sim2sim_config',return_value=clean),patch.object(evaluate,'configure_samples',configure):evaluate.gpu(request)
     error=max(f() for f in checks);assert error<1e-5
     (a.output/'run.json').write_text(json.dumps(dict(checkpoint=str(a.checkpoint.resolve()),sha256=hashlib.sha256(a.checkpoint.read_bytes()).hexdigest(),
-        leg_p=60.,leg_d=2.,wheel_p=.045,wheel_motor_gain=gain,wheel_model=a.profile,
-        display_label='17679 / '+a.profile,actual_ctrl_max_error=error,policy_updates=0),indent=2)+'\n')
+        leg_p=60.,leg_d=2.,wheel_p=a.wheel_p,wheel_motor_gain=gain,wheel_model=a.profile,
+        display_label=a.checkpoint.stem+' / '+a.profile,actual_ctrl_max_error=error,policy_updates=0),indent=2)+'\n')
     report(a.output/'no_external')
 
 

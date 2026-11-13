@@ -1,0 +1,2096 @@
+{
+  "package": "model3000-mechanical-from-scratch",
+  "branch": "26_wheelleg",
+  "remote": "https://github.com/zn1135/wheelleg_RL_2026.git",
+  "runtime_source_base": "9a7e43c77be71db08c75e20a12ab8a6ba573c032",
+  "runtime_source_files_verified_at_base": 149,
+  "runtime_source_sha256": {
+    "mjlab_training/src/ct_mjlab/reference_contract.py": "b0d0e01aff62eda7fbe57211b76b5a5791c9e555288c4a969e2c60d51962e2b3",
+    "mjlab_training/src/ct_mjlab/cli.py": "35da51c272a6995ae797facbfb40f53162019eace6f5538535b2065fb5207898",
+    "mjlab_training/src/ct_mjlab/validation.py": "67b1c8bd1eddd9e0f20c361fb7e5ce700e05088750c6f237d7dfcbdcf23f0b95",
+    "mjlab_training/src/ct_mjlab/wheel_odometry.py": "d4c8a6a0fb3a1073452cce6c139222ad1247a5313bcb06340a5ee43569cf4e50",
+    "mjlab_training/src/ct_mjlab/wheel_angles.py": "0dae70801893a390b7703070e105dd969f18f940ad75945a99ecb0df7c93071a",
+    "mjlab_training/src/ct_mjlab/bc_preservation.py": "ab0243a15fcf3e41f55ef1e4be9cc650167e00be7a4e99417715656287a2e1c1",
+    "mjlab_training/src/ct_mjlab/bc.py": "d16e475feb0f784b49582598aad4eba67fb73762686b45381b42dc51a17ef17a",
+    "mjlab_training/src/ct_mjlab/__init__.py": "24a01d5d9223340ae8f2a1a6af88f0db69a9cad05355c6367c5c29b45d8b1ae5",
+    "mjlab_training/src/ct_mjlab/utils/source_migration.py": "48d153524dcd31f432116db493c28795a5e8926ee88d37b234124c4fdb773cc1",
+    "mjlab_training/src/ct_mjlab/utils/task_registry.py": "e2ee0a7654ada4cb223eb35d77e4c4dca6e13b08e483606c479dd87c7501ea65",
+    "mjlab_training/src/ct_mjlab/utils/helpers.py": "6618d7e29522ce388973c1e34d1b885bc4386b5d302557cdfbe029b9a9b600a3",
+    "mjlab_training/src/ct_mjlab/utils/__init__.py": "c5e801b7489cd39da57035a5d7a0d2e77b0a4e902133d545076cfa531590837e",
+    "mjlab_training/src/ct_mjlab/teacher/gains.py": "451b1c257b41aeaf4d64386b4689a4e51369eb5a8b9055646f3cc496f42fb48d",
+    "mjlab_training/src/ct_mjlab/teacher/standup.py": "45aaf092db320e778dd5b4aabcaeade3102add681a3e68b925cf77d26b0c70ca",
+    "mjlab_training/src/ct_mjlab/teacher/mechanics.py": "fe88482049a15c71fe5586aa0d34eb8fc6d248ac4948c9991fe450f563514ff0",
+    "mjlab_training/src/ct_mjlab/teacher/reference.py": "33d4b490abe24148d2184e6cabf5d5070b5cecdc7ebc5991b3052b2d6cc96832",
+    "mjlab_training/src/ct_mjlab/teacher/estimators.py": "97c01e8cbaa30a69748404cd3c04a70cde67693aa1b6e3d21237e4149cf44016",
+    "mjlab_training/src/ct_mjlab/teacher/controller.py": "495e7e0b8fe8bf1505d771df0996b95bf408aa8064960b9afe7745eef85302b8",
+    "mjlab_training/src/ct_mjlab/teacher/env.py": "8f13bab0b07eff4e6573f2bef527d69162d197b34b266aa75ec8992e24d6c81e",
+    "mjlab_training/src/ct_mjlab/teacher/__init__.py": "7e3628420d9ad80c1393234806df6278676545abf1b821db8b96907f5b34ec2d",
+    "mjlab_training/src/ct_mjlab/smp/isaac_standup_rewards.py": "6dc2c91f9279baa2dfe260a0fcd96d623bfd519c50aa91281b74e07a9fd5001c",
+    "mjlab_training/src/ct_mjlab/smp/dataset.py": "8d06490b3ee222e2b981078713e0403e7193d0e49f5ba89ace8dffd80202505f",
+    "mjlab_training/src/ct_mjlab/smp/features.py": "822a81a9fc8ea2859e03483a883514990a87e01fe7cd11fe40569a020de636ff",
+    "mjlab_training/src/ct_mjlab/smp/finetune.py": "0786d9fc432cc701290673e5d9702ebf297293c1f3e697fcd7b914754afcc2d8",
+    "mjlab_training/src/ct_mjlab/smp/prior.py": "ddb19e928b97cd3ba604242d1b36c286eb276dea7982f60187d9ebdab98d30c7",
+    "mjlab_training/src/ct_mjlab/smp/dit.py": "2e0341575e35b391af52b4f3975939a9f14ee7aa2c22c040760834ce98a1adef",
+    "mjlab_training/src/ct_mjlab/smp/ppo.py": "1daab26f387013241a6a875a2038e217cda42bb226a2f895d886d8f6c7b7852f",
+    "mjlab_training/src/ct_mjlab/smp/phase_sampling.py": "560136498c7f4fd68217b2d2cacd9376b3cc0ce3b36293b88cee0e45ec427df9",
+    "mjlab_training/src/ct_mjlab/smp/__init__.py": "51ebd637bb1d381796f42413dac95430916b2583402ee932190177f29f0c0b3a",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/__main__.py": "76151db7311fd346c3925ce67c5cc4216d7e8385a22444dfa03b5ce3b73ece7d",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/network.py": "64dd04db1b56f6a86174278246052f96add33e99309b02e7366217be49f31a13",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/policy.py": "464f55011900a48619ae4a2a7d0cb57c469870b1f4810e0e333c7492355bde42",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/disturbances.py": "4a69f94cdce58bcc1ae0bd82465db9a4642618b44eedb7cca576ae7bf1b61151",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/protocol.py": "15694f86141cf56417fb7891e12fb4031bd88675a695638ab5ded71978501ac0",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/storage.py": "f66ef14831019a85c3bb503716f7604cb0076aabc3ff785578e516f061e0dfe1",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/runner.py": "8d46fb0d02a3621acfa4079edc5d2730f9304b0a4e693aa016ef981f3dd015ac",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/export.py": "95287d91e87b461481103b1bb6bc43e3103b0d9b45b50b5bd3288c7ac120295c",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/parking_integral.py": "60f74db65fcd43eb80540ee45a19e734809df4d484173604caa0d363d9232db3",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/source_migration.py": "8d2aaa3b8aac52fb105c45a3a0c21c0890fe3ed50552d99ce8dd282f17f860af",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/selected_policy.py": "b2c123cb2f93fe5514e45b6ebfdfd8ae80f330ed6f41b41c432a1bf3c29734e7",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/measurement.py": "29ce384520e4a210f8905782efbb00601fac85e82b110f4cb093fa9e6143d3b3",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/config.py": "3b7d79f972efbd68e78d85637e98cfa1d5ef0526bb5b8e03bd974b51b1deefb3",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/commands.py": "1b5444d508761944419794839b0897173d108bf85be0cc54f196980699ac7d32",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/ppo.py": "c419601c86595ec743b717534d1de8cb10846aa9a54e3adc0f08f5c3b4360955",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/env.py": "967c53bdb75f1e493ffe50e88a142dde1268ead0156d8d1801dc3ac96218459e",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/contract.py": "17468f9467b2123e862499e02f0e6d662ec0d98eee75d66114397a2c1d59645a",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/__init__.py": "854fe8c63135243bb1461976407a8a228ada0a9fccb170146a1ee943322a32f8",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/reset_geometry.py": "5e2d31cb7ad8884b6260a141dd024070b7c38aece0f111f2faa6a542674137c7",
+    "mjlab_training/src/ct_mjlab/fudan_ppo_walk/utils.py": "47e5984866fb1cbef47a9a43363c6d9081308b0ef61a2fca56f5aea5ba6e18d8",
+    "mjlab_training/src/ct_mjlab/envs/__init__.py": "f5b66cd9aca417a55bb733b2f395f83a50c0a6e2ec399fd19a2592e3da4dd6e7",
+    "mjlab_training/src/ct_mjlab/rsl_rl/__init__.py": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8",
+    "mjlab_training/src/ct_mjlab/rsl_rl/utils.py": "35c230bb25c6429f06aac4276b96dde88a01c14806775023f4365f60e623678d",
+    "mjlab_training/src/ct_mjlab/scripts/teacher.py": "e317582e3fbaa6680c5bedb77310c8596c7f6a97bd3346841099c9ce399c03ad",
+    "mjlab_training/src/ct_mjlab/scripts/collect.py": "70aa407a1a8719e01cf64396ba6b1d8f0e985ac38b5774bd13c1110c4ecbecab",
+    "mjlab_training/src/ct_mjlab/scripts/train_bc.py": "e2f532c2ad4762cc0787ff12a778dd5533978faf2f7d27c983735dad9cfcb0a5",
+    "mjlab_training/src/ct_mjlab/scripts/export.py": "1f57a0dab4b1657106ec332eea7f6c595bb23f262ec2fee0c5128c16f327a939",
+    "mjlab_training/src/ct_mjlab/scripts/train.py": "09dd7ac777178dd4462167ac31030d27a1918aec417513e677327a54b4715197",
+    "mjlab_training/src/ct_mjlab/scripts/play.py": "5baa7406328b52277e33ac28adcad5b52af0c035ee1f1173d51d4463d00da929",
+    "mjlab_training/src/ct_mjlab/scripts/accept.py": "19198cc9e29a26085270fabfbdfdedfa3fb53ad5dca9f75561caf38bff0da61f",
+    "mjlab_training/src/ct_mjlab/scripts/__init__.py": "4f695356a9589039a8269b131b703cb1f4ae66897cdf885d4ab4bf366bd8130a",
+    "mjlab_training/src/ct_mjlab/scripts/check.py": "ecf7a3c70353a39bc321b80070c57ae434720e4788b315c468a44c9569fde0f6",
+    "mjlab_training/src/ct_mjlab/scripts/eval.py": "7ab7518d5e786415104da80298f2849f6a4dd96c4adb6a72dcff7b94d972e4cf",
+    "mjlab_training/src/ct_mjlab/scripts/train_prior.py": "e3080b599d1dd6889292a3c976bd1be7789f8c43853ffad292d6e7123f15f99e",
+    "mjlab_training/src/ct_mjlab/supermimic/__main__.py": "bc8b04a9e87e8cb925f27620827eb8f7b7575326971796d01039230d7c578b93",
+    "mjlab_training/src/ct_mjlab/supermimic/state.py": "85d6932e59ea419bad278ad8dddb54404280e85dd5cbf36d25e52426c44b89ab",
+    "mjlab_training/src/ct_mjlab/supermimic/learner.py": "0fec0cb41566d93773e2dac91ecc7cf3d47d283eeeb1daf3c8e9970a465db0b9",
+    "mjlab_training/src/ct_mjlab/supermimic/export.py": "2d07f1a61cbaddbea51c1764327bdc34a3579aee8f8a5ad053e69e19a592c267",
+    "mjlab_training/src/ct_mjlab/supermimic/networks.py": "de7d42a8419a2b6332547ad27236f66784952e99da43c4c91785c42e2b871e4d",
+    "mjlab_training/src/ct_mjlab/supermimic/motion_adapter.py": "4fe65abdd38595cf09cb51106ea09abe3c1d5e5d3d20a5999ecdf93311d0db4b",
+    "mjlab_training/src/ct_mjlab/supermimic/kinematics.py": "06f918239d221213ed8e7815ca1f12050bdaaa9c9d1cc514d88c9db184ea42a9",
+    "mjlab_training/src/ct_mjlab/supermimic/buffer.py": "dc1ecb7572db180ea1ba8303b4f9b90de588418ead3aca803937c6e4ac28d752",
+    "mjlab_training/src/ct_mjlab/supermimic/motion.py": "ddd0742adb21dfa4c161bbf9079218ce5cc0281bfecd833f687796dd5216bc2a",
+    "mjlab_training/src/ct_mjlab/supermimic/__init__.py": "f77da4b5fe44fa282ec200acebe1fb02864a004d7fe16640f1e95c6f2f31f672",
+    "mjlab_training/src/ct_mjlab/supermimic/analytic_reward.py": "eaeb060864a7b9637cbf9e287a6651df0560a7d513abfd62b80715e2ee3cf327",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/fitted_leg_load.py": "c04f1e73831654a5fd67463e185c7facdd15aae246c78c76b39fe54aa6a87b06",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/standup_mdp.py": "43a86e00e398f99d9dc5a5a5085e0c167452ecdfc6eb5b56ea4d5e558367a045",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/pd_action.py": "026556dc1e32aa423e877f14d4183ee049b8411f37b6d149224e381411af0849",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_env_cfg.py": "0a26fd64ed4a10498274f55819dc08cfef46559c7a3b80e878e5bfd2e131a76e",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/model.py": "ebd9c037963122ca16d87b6b7d366a3de64e0c36114a2fc8ad06492a2ae90bc6",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/velocity_mdp.py": "992dd2767c1d675805e0616e206b4d1c9de4b66c6164cb83feb2f99b9b12c8dc",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/standup_randomization.py": "0c7af188444d115fab38e554194b130decc4c37ad29a2c46348646ed59dc1d79",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/v14_observations.py": "e65286a13c6d0b9e66633f56f08903d6061ff352168bd252f957ad0ec351288f",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/runner.py": "39e517fd3eb63a5790e56caf717ffe309e01e7d32175731aa3c35a60ffd7884b",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_runner.py": "da8796450f4638bcfd0e8df3e33786ce4d84790082660a8b87551fed70e8b5f4",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_mdp.py": "9f9c1833a93e609ae99d06b3c5feb60bf198374c5497aa31dbefa03d2fad10ed",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_poses.py": "be5ee05224ab52038d19df4c53706f59a55de5582ebf23c2c24f95d9111293fa",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_action.py": "dcfe623695c314c4d4c90f047626604a187e014cf2a7c70d50233a0e05faf848",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_env_cfg.py": "509842e50dab512a4b05fab80b721ef4207ae2caa0767115dd8fb7fb8b012cfb",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_randomization.py": "f8cbc6c37b64f6311e23b537e5bc399cbc1e31cf6f5e66bf6bf03df34018b6de",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_mdp.py": "66e54adfa916e8b2b7bcbccdd64f2c1db3655f890fd639bab17650aec9e883bd",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_rewards.py": "9300624a04a2a3d388a9c0d2a747427f9b0f32f53808d7047f4d658b01002322",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_runner.py": "ef580d18a76d9e6f8f12ca4475ed0878388220116073fb2e651988b6e1674de2",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_observations.py": "6fe807812da76f3f26cbb2727ce6e2152fc97b813d0787166b89f251ec1cc760",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/gas_spring.py": "e5e104066a12e511ea145dbe74b04357541ec03f9e5919063dfd6ae7f16d787a",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/velocity_env_cfg.py": "5a380a7fcc6e93e7eaff3d93a8df09292ea7dcf036930000d67dc00b1aaca5e6",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_observations.py": "cec4d05bd089a5139faade265c2858e2865d23ce54ea28187f20a9a8665e806b",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/multimode_terrains.py": "156fefda351ecc24e3fcca3e63112aad80e02bcb66227c48bf0f15ecda936bb3",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/__init__.py": "9da736f8422c6f778ab2a7f5df50f6b232774533bf954e3d4bc0cdf4b37676eb",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_rewards.py": "d2b9d2683fc9cc3e5d18a689bf77b9ed801d6a8152e593d9e4c36186119fcbd8",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/network.py": "5378a73ea1159b5cb0679a6f5f6a49124516ade4abbee1867167c52640cc55a9",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/diagnostics.py": "f4799d760aa5dd24f095d5ed09040db6670d0c7a93a98dd63bdafb8d93ae89d2",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/observations.py": "395f00a7acf5c08efb311b6f68bbba769dc7f890e10f16372715cdd786c191df",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/runner.py": "a10a5e0484fcb9f8fc6c346eb90cb63f20b725df36099714810f81e07804bca3",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/export.py": "5338e203cd50023144073fb787beb3ab05333c765f12381544dd15f04a1c7892",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/mdp.py": "b73518d86b7343f1fd8e38d10ec3ab83dfd7bef3df6568d92ee90ec26f3f8d10",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/env_cfg.py": "58b2659c945f06d582fc969bbfe1bd5229757431599fc368e45c07adf6ba7ed5",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/rewards.py": "4e13d082c64aa582979bdac4a1b81142d5206b748dbc481dce18056c7e13cd27",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/__init__.py": "04b25060168d96dd83b7bd83b8d7255a7cc540507ed90474a4e4aaed998c194c",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/action.py": "8e8925b1f297f13fa6adddab324865c0fc93b466b2f9eca049d4099024c7d3aa",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/observations.py": "89622e84105c847501069b9878cbf889e745a93e9063fcf98912b5cafbc9242f",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/runner.py": "8fe755001dcdf1dc96108a92718e40747d21ec4ba19c36dcdfcc97680aa393eb",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/mdp.py": "af3e5b4bd32cbd482da49fbd81c083f8bc3ac9caef98dc042bbb497c1623d9ec",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/env_cfg.py": "a66487714e6706da1f750c876ad8a334b8b25a07ff065d9dc5b84618c2a14f5e",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/rewards.py": "847a2d2cc67d3bf7ea63b2ddfc77f1f0d3ce0d3d1123242f10d867d61e273652",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/__init__.py": "860626c4d4964558b0ab82f4ff487f1cb7d106999bc94891f0699041a2d1a2f4",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/randomization.py": "0fecf8f3c1df3bd40c64ac38294b6ee0902d08759d4f059e36b29f0333e75c7a",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_stand/action.py": "ea4bb8cdb370b5dc101c6c971aeff38f91833a61fb11a212b241d0fd268a94c8",
+    "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/disturbances.py": "fd95ff12aecd81244f497696c32e9b00e2421018fdee7603d21639a5e1d3e74f",
+    "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/wheel_motor.py": "8a2c42c8156bc3479a30ba1d7f3e4e1d5e6ca042c760493f8530c721581d2b58",
+    "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk.py": "f38299712bdff95072d993ba2bdb01f8ff601e107953750f7606fefec266e9a2",
+    "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py": "302118dc5ae7c0b0148da7098732488a7b96042919c7801560b77b188b2783bf",
+    "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/posture_reward.py": "cd0e092d6df9255cae9aaf7a036ca96f81108dcbc3567d2787e4d4a80a6b0a49",
+    "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/parking_integral.py": "125dbbe89b31973178971295d7a0ea5e96568036be4fca0dc0e919f5ed2a44d3",
+    "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/commands.py": "cbcc09b7fa7c362d985d63e36d13f74e4d5b550b5b79b59361127662498b8d50",
+    "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/wheel_physics.py": "1d323692c79cc2361fa636ec4684d226c6e692c721e2c1640bb06dad82b73eea",
+    "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/__init__.py": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8",
+    "mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/reset_geometry.py": "f9591c7fea0a97bbf7b58edbf1c6b952394597e365435f076642040ef6c34272",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/switch.py": "5a5d2e2b2c71ddb9619c24730986f7938dd42dc05918aac06d31659909986f88",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/network.py": "71757db536c77737a025dd027112f3201305ff1a9208e4ca0b97231266bc28d8",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/observations.py": "42be7b513ad16d49349bb0a6bdbc758158643f4d568f5089cf50a62fe89b2c32",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/runner.py": "6f9b5c9588fb3ff35171072e6af530f4d79fa0559e6901b1c505560ae5e1841f",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/export.py": "7f7cb84765bce470bc41863a60a78b00ee5eace175671f1a70f22f1238b64629",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/mdp.py": "8fcc7f77fa52712d5702808784629367db18179bc37f0947595b55392e2ba955",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/env_cfg.py": "6bf2d36f69483da3f4dca15f6c07346ca6b02fd3b1cbcdd63ec252477b70b601",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/rewards.py": "0128333915b48dd9e808e9e96b864fb034a8ca5beab6e8a40176fa89804a3757",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/__init__.py": "fe9e5414dc62c68e8c392421440f49ed3564cd8f51181fb61a0573a257e2b49d",
+    "mjlab_training/src/ct_mjlab/envs/chuanliantui_split/action.py": "e48641a218bb7599daf2be0d467e42cb4c399a9c28853695c50dfa6b2aa2ab9d",
+    "mjlab_training/src/ct_mjlab/rsl_rl/algorithms/fudan_ppo.py": "e0fe23c26861b133d571fd8761754e74c36ad44b19a9aed028334cdd9e577b07",
+    "mjlab_training/src/ct_mjlab/rsl_rl/algorithms/__init__.py": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8",
+    "mjlab_training/src/ct_mjlab/rsl_rl/modules/actor_critic_sequence.py": "445ca35f937e2ca4ad0a65dcdf5fd9dd414da60c34ff799b3a3b443b5d7701ad",
+    "mjlab_training/src/ct_mjlab/rsl_rl/modules/__init__.py": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8",
+    "mjlab_training/src/ct_mjlab/rsl_rl/runners/fudan_on_policy_runner.py": "327429f19383882d9e464db237443e2ab057e0c749e774040cfc35806905984f",
+    "mjlab_training/src/ct_mjlab/rsl_rl/runners/__init__.py": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8",
+    "mjlab_training/src/ct_mjlab/rsl_rl/storage/fudan_rollout_storage.py": "421ad776eac643014ad70a041261a1b9717a9783f8e276cdcaae45b08bc4f99c",
+    "mjlab_training/src/ct_mjlab/rsl_rl/storage/__init__.py": "c9ed662cdb90b4405257d8e0e396b9766de2518b7157bdc9cbca878fb034f0e8",
+    "resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml": "ed817cf8b0d41bc3625021c97deef33549f0c8aef7ec4e98a49d6d6a9ac2bb11",
+    "docs/mjlab-fudan-ppo-walk.md": "5a3dacc9601acea1998db58253d4918abbbe9160a7885bfaf58b09a6007dbb95",
+    "resources/robots/chuanliantui_new_1/mjlab/fitted_leg_load.json": "e6ef82fa4380fa01341fa2166be56282c5290c82fec2b2a04e5b3107ce49218f",
+    "resources/robots/chuanliantui_new_1/mjlab/wheel_mechanical.json": "e0dff9534577e83869ca3eba9a899d8b932530bbf1cdfdeb2a08ef42449011ae"
+  },
+  "model": {
+    "path": "artifacts/fudan_ppo_walk/models/20261113_model3000_p60d2_armature2_wheelP01_mechanical.pt",
+    "sha256": "9d4d3123d42451e8942581b7cc943bc35fa8e35f7947b5c5747abeb89de215ee",
+    "bytes": 1442057,
+    "iterations": 3000,
+    "from_scratch": true,
+    "reset_contract": "fudan-physical-pd-centred-warmup-noisy5-clipped-history-v3",
+    "contract": "fudan-ppo-walk-physical25-history125-critic144-v1",
+    "physical_wheel_model": {
+      "version": "fudan-mechanical-wheel-v1",
+      "parameter_sha256": "e0dff9534577e83869ca3eba9a899d8b932530bbf1cdfdeb2a08ef42449011ae",
+      "wheel_order": [
+        "lfwheel",
+        "rfwheel"
+      ],
+      "armature": [
+        0.01208955519400076,
+        0.011335059898366036
+      ],
+      "damping": [
+        0.0010064290846355998,
+        0.0054036282378839996
+      ],
+      "frictionloss": [
+        0.3251873792128,
+        0.1852005485525
+      ],
+      "actuator_gain": 1.0,
+      "speed_shaping": false,
+      "extra_output_gain": 1.0
+    }
+  },
+  "helper_sha256": {
+    "scripts/agent/fudan_ppo_walk/train_mechanical_3000.py": "bf828db3fdb69ee2317a9a43b6d33182464e8cd68afab0024a106f27fb899862",
+    "scripts/agent/fudan_ppo_walk/evaluate_mechanical_scratch3000.py": "350fcae0b9d34047dff37ef4a29731868a58a7494b74e87ef118fe2331c0fbdf",
+    "scripts/agent/fudan_ppo_walk/render_parking_comparison.py": "0aa0b6fb4f1ae23db13c04dff8693b056ab0dc9d00ce09675ae02023083ebb38",
+    "scripts/agent/real2sim/replay_mechanical_wheels.py": "762666329b98760428d1dbe9e555006bf623e1d7ce527226bb289c79370f986b"
+  },
+  "versions_at_packaging": {
+    "torch": "2.14.0",
+    "mujoco": "3.11.0",
+    "mujoco-warp": "3.11.0",
+    "warp-lang": "1.17.0",
+    "mjlab": "1.6.0",
+    "tensorboard": "2.21.0",
+    "python": "3.12.3",
+    "cuda_build": "13.0"
+  },
+  "records": {
+    "training_budget": {
+      "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/budget.json",
+      "sha256": "f59319c8b3f81cb54d358d1396543c5cb331be17312fab784c21ed928954c8c8",
+      "record": {
+        "authorization": "User explicitly requested from-scratch3000 iterations, wheel P restored0.1, TensorBoard open",
+        "resume_checkpoint": null,
+        "start_iteration": 0,
+        "target_iteration": 3000,
+        "iteration_budget": 3000,
+        "additional_iterations": 3000,
+        "num_envs": 4096,
+        "rollout_steps": 48,
+        "seed": 1,
+        "log_dir": "logs/mjlab/fudan_ppo_walk/20261113_p60d2_wheelP01_mechanical_scratch3000_01",
+        "history_version": "v3",
+        "disturbances": {
+          "version": "fudan-optional-disturbances-v1",
+          "action_delay": true,
+          "sensor_delay": true,
+          "pushes": true,
+          "action_delay_ms": [
+            6.0,
+            14.0
+          ],
+          "sensor_delay_ms": [
+            2.0,
+            2.0
+          ],
+          "push_interval_s": 7.0,
+          "max_push_vel": 0.3,
+          "external_force_range": [
+            -10.0,
+            10.0
+          ],
+          "external_torque_range": [
+            -10.0,
+            10.0
+          ]
+        },
+        "command_sampling": {
+          "version": "fudan-parking-commands-v1",
+          "standstill_env_ratio": 0.1,
+          "stop_env_ratio": 0.1,
+          "stop_drive_time_s": [
+            3.0,
+            5.0
+          ],
+          "stop_speed_range": [
+            0.25,
+            1.0
+          ],
+          "parking_heights": [
+            0.22,
+            0.26,
+            0.3
+          ]
+        },
+        "posture_reward": {
+          "version": "fudan-roll-pitch-soft-band-v1",
+          "pitch_range_deg": [
+            0.0,
+            5.0
+          ],
+          "pitch_inner_ratio": 0.05,
+          "roll_scale": -100.0,
+          "pitch_scale": -100.0
+        },
+        "actual_config": {
+          "commands": {
+            "velocity_initial": 2.0,
+            "velocity_max": 2.5,
+            "velocity_increment": 0.1,
+            "yaw_range": [
+              -2.0,
+              2.0
+            ],
+            "height_range": [
+              0.22,
+              0.3
+            ],
+            "resampling_steps": 500,
+            "curriculum_threshold": 0.7,
+            "curriculum_yaw_factor": 0.8,
+            "standstill_env_ratio": 0.1,
+            "stop_env_ratio": 0.1,
+            "stop_drive_time_s": [
+              3.0,
+              5.0
+            ],
+            "stop_speed_range": [
+              0.25,
+              1.0
+            ],
+            "parking_heights": [
+              0.22,
+              0.26,
+              0.3
+            ]
+          },
+          "domain_rand": {
+            "kp_range": [
+              0.85,
+              1.15
+            ],
+            "kd_range": [
+              0.85,
+              1.15
+            ],
+            "motor_strength_range": [
+              0.85,
+              1.15
+            ],
+            "nominal_offset_range": [
+              -0.05,
+              0.05
+            ],
+            "added_mass_range": [
+              -1.5,
+              3.0
+            ],
+            "mass_scale_range": [
+              0.85,
+              1.15
+            ],
+            "com_range": [
+              -0.03,
+              0.03
+            ],
+            "friction_range": [
+              0.4,
+              1.6
+            ],
+            "restitution_range": [
+              0.4,
+              1.0
+            ],
+            "friction_buckets": 64,
+            "randomize_action_delay": true,
+            "delay_ms_range": [
+              6.0,
+              14.0
+            ],
+            "randomize_sensor_delay": true,
+            "sensor_delay_ms_range": [
+              2.0,
+              2.0
+            ],
+            "push_robots": true,
+            "push_interval_s": 7.0,
+            "max_push_vel_xy": 0.3,
+            "external_force_range": [
+              -10.0,
+              10.0
+            ],
+            "external_torque_range": [
+              -10.0,
+              10.0
+            ]
+          },
+          "env": {
+            "num_envs": 512,
+            "play_num_envs": 20,
+            "episode_length_s": 20.0,
+            "fail_ticks": 0,
+            "terminal_gravity_z": -0.1,
+            "reset_velocity_range": [
+              -0.5,
+              0.5
+            ]
+          },
+          "sim": {
+            "dt": 0.002,
+            "wheel_model": "mechanical",
+            "fitted_leg_load": false,
+            "wheel_motor_gain": 1.0,
+            "wheel_motor_delay_ms": 0.0,
+            "wheel_motor_time_constant_ms": 0.0,
+            "wheel_motor_torque_limit_nm": null
+          },
+          "control": {
+            "decimation": 5,
+            "leg_stiffness": 60.0,
+            "leg_damping": 2.0,
+            "leg_position_scale": 0.5,
+            "wheel_stiffness": 0.1,
+            "wheel_damping": 0.0,
+            "wheel_velocity_scale": 10.0,
+            "max_wheel_velocity": 150.0,
+            "nominal_leg_positions": [
+              -0.6047205544565015,
+              0.6083241726212976,
+              0.6047205544560037,
+              -0.6083241726229305
+            ]
+          },
+          "normalization": {
+            "clip": 100.0,
+            "angular_velocity": 0.25,
+            "command": [
+              2.0,
+              0.25,
+              5.0
+            ],
+            "joint_velocity": 0.05,
+            "acceleration": 0.0025,
+            "torques": 0.05,
+            "height_center": 0.5,
+            "height_scale": 5.0,
+            "noise_scales": [
+              0.075,
+              0.075,
+              0.075,
+              0.075,
+              0.075,
+              0.075,
+              0.0,
+              0.0,
+              0.0,
+              0.03,
+              0.03,
+              0.03,
+              0.03,
+              0.1125,
+              0.1125,
+              0.1125,
+              0.1125,
+              0.1125,
+              0.1125,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "rewards": {
+            "pitch_soft_range_deg": [
+              0.0,
+              5.0
+            ],
+            "pitch_inner_penalty_ratio": 0.05,
+            "tracking_sigma": 0.25,
+            "tracking_enhance_sigma": 2.5,
+            "height_sigma": 0.001,
+            "soft_limit_half_span": 0.485,
+            "scales": {
+              "tracking_lin_vel": 1.0,
+              "tracking_lin_vel_enhance": 1.0,
+              "tracking_ang_vel": 1.0,
+              "tracking_ang_vel_enhance": 1.0,
+              "base_height": 1.0,
+              "nominal_state": -1.0,
+              "lin_vel_z": -1.0,
+              "ang_vel_xy": -0.2,
+              "roll": -100.0,
+              "pitch": -100.0,
+              "dof_vel": -5e-05,
+              "dof_acc": -2.5e-07,
+              "torques": -0.0001,
+              "action_rate": -0.01,
+              "action_smooth": -0.01,
+              "collision": -1.0,
+              "dof_pos_limits": -1.0
+            }
+          }
+        },
+        "physical_wheel_model": {
+          "version": "fudan-mechanical-wheel-v1",
+          "parameter_sha256": "e0dff9534577e83869ca3eba9a899d8b932530bbf1cdfdeb2a08ef42449011ae",
+          "wheel_order": [
+            "lfwheel",
+            "rfwheel"
+          ],
+          "armature": [
+            0.01208955519400076,
+            0.011335059898366036
+          ],
+          "damping": [
+            0.0010064290846355998,
+            0.0054036282378839996
+          ],
+          "frictionloss": [
+            0.3251873792128,
+            0.1852005485525
+          ],
+          "actuator_gain": 1.0,
+          "speed_shaping": false,
+          "extra_output_gain": 1.0
+        },
+        "xml_sha256": "ed817cf8b0d41bc3625021c97deef33549f0c8aef7ec4e98a49d6d6a9ac2bb11",
+        "initialization": "random_from_scratch_seed_1",
+        "created_unix": 1794506026.3627014
+      }
+    },
+    "effective_training_config": {
+      "path": "logs/mjlab/fudan_ppo_walk/20261113_p60d2_wheelP01_mechanical_scratch3000_01/effective-training-config.json",
+      "sha256": "2439f1ee74880915e94075e142e5a904681e19f592d7f6d89bc46165b3035f0f",
+      "record": {
+        "commands": {
+          "velocity_initial": 2.0,
+          "velocity_max": 2.5,
+          "velocity_increment": 0.1,
+          "yaw_range": [
+            -2.0,
+            2.0
+          ],
+          "height_range": [
+            0.22,
+            0.3
+          ],
+          "resampling_steps": 500,
+          "curriculum_threshold": 0.7,
+          "curriculum_yaw_factor": 0.8,
+          "standstill_env_ratio": 0.1,
+          "stop_env_ratio": 0.1,
+          "stop_drive_time_s": [
+            3.0,
+            5.0
+          ],
+          "stop_speed_range": [
+            0.25,
+            1.0
+          ],
+          "parking_heights": [
+            0.22,
+            0.26,
+            0.3
+          ]
+        },
+        "domain_rand": {
+          "kp_range": [
+            0.85,
+            1.15
+          ],
+          "kd_range": [
+            0.85,
+            1.15
+          ],
+          "motor_strength_range": [
+            0.85,
+            1.15
+          ],
+          "nominal_offset_range": [
+            -0.05,
+            0.05
+          ],
+          "added_mass_range": [
+            -1.5,
+            3.0
+          ],
+          "mass_scale_range": [
+            0.85,
+            1.15
+          ],
+          "com_range": [
+            -0.03,
+            0.03
+          ],
+          "friction_range": [
+            0.4,
+            1.6
+          ],
+          "restitution_range": [
+            0.4,
+            1.0
+          ],
+          "friction_buckets": 64,
+          "randomize_action_delay": true,
+          "delay_ms_range": [
+            6.0,
+            14.0
+          ],
+          "randomize_sensor_delay": true,
+          "sensor_delay_ms_range": [
+            2.0,
+            2.0
+          ],
+          "push_robots": true,
+          "push_interval_s": 7.0,
+          "max_push_vel_xy": 0.3,
+          "external_force_range": [
+            -10.0,
+            10.0
+          ],
+          "external_torque_range": [
+            -10.0,
+            10.0
+          ]
+        },
+        "env": {
+          "num_envs": 512,
+          "play_num_envs": 20,
+          "episode_length_s": 20.0,
+          "fail_ticks": 0,
+          "terminal_gravity_z": -0.1,
+          "reset_velocity_range": [
+            -0.5,
+            0.5
+          ]
+        },
+        "sim": {
+          "dt": 0.002,
+          "wheel_model": "mechanical",
+          "fitted_leg_load": false,
+          "wheel_motor_gain": 1.0,
+          "wheel_motor_delay_ms": 0.0,
+          "wheel_motor_time_constant_ms": 0.0,
+          "wheel_motor_torque_limit_nm": null
+        },
+        "control": {
+          "decimation": 5,
+          "leg_stiffness": 60.0,
+          "leg_damping": 2.0,
+          "leg_position_scale": 0.5,
+          "wheel_stiffness": 0.1,
+          "wheel_damping": 0.0,
+          "wheel_velocity_scale": 10.0,
+          "max_wheel_velocity": 150.0,
+          "nominal_leg_positions": [
+            -0.6047205544565015,
+            0.6083241726212976,
+            0.6047205544560037,
+            -0.6083241726229305
+          ]
+        },
+        "normalization": {
+          "clip": 100.0,
+          "angular_velocity": 0.25,
+          "command": [
+            2.0,
+            0.25,
+            5.0
+          ],
+          "joint_velocity": 0.05,
+          "acceleration": 0.0025,
+          "torques": 0.05,
+          "height_center": 0.5,
+          "height_scale": 5.0,
+          "noise_scales": [
+            0.075,
+            0.075,
+            0.075,
+            0.075,
+            0.075,
+            0.075,
+            0.0,
+            0.0,
+            0.0,
+            0.03,
+            0.03,
+            0.03,
+            0.03,
+            0.1125,
+            0.1125,
+            0.1125,
+            0.1125,
+            0.1125,
+            0.1125,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "rewards": {
+          "pitch_soft_range_deg": [
+            0.0,
+            5.0
+          ],
+          "pitch_inner_penalty_ratio": 0.05,
+          "tracking_sigma": 0.25,
+          "tracking_enhance_sigma": 2.5,
+          "height_sigma": 0.001,
+          "soft_limit_half_span": 0.485,
+          "scales": {
+            "tracking_lin_vel": 1.0,
+            "tracking_lin_vel_enhance": 1.0,
+            "tracking_ang_vel": 1.0,
+            "tracking_ang_vel_enhance": 1.0,
+            "base_height": 1.0,
+            "nominal_state": -1.0,
+            "lin_vel_z": -1.0,
+            "ang_vel_xy": -0.2,
+            "roll": -100.0,
+            "pitch": -100.0,
+            "dof_vel": -5e-05,
+            "dof_acc": -2.5e-07,
+            "torques": -0.0001,
+            "action_rate": -0.01,
+            "action_smooth": -0.01,
+            "collision": -1.0,
+            "dof_pos_limits": -1.0
+          }
+        }
+      }
+    },
+    "actual_training_control": {
+      "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/train-actual-control.json",
+      "sha256": "f45e9b1e781723a1f30432ea82ef5871b74fbda9546c51a844cfc3c05b2da41a",
+      "record": {
+        "num_envs": 4096,
+        "leg_p": 60.0,
+        "leg_d": 2.0,
+        "wheel_p": 0.1,
+        "wheel_d": 0.0,
+        "leg_armature_unique": [
+          0.03158999979496002
+        ],
+        "physical_wheel_model": {
+          "version": "fudan-mechanical-wheel-v1",
+          "parameter_sha256": "e0dff9534577e83869ca3eba9a899d8b932530bbf1cdfdeb2a08ef42449011ae",
+          "wheel_order": [
+            "lfwheel",
+            "rfwheel"
+          ],
+          "armature": [
+            0.01208955519400076,
+            0.011335059898366036
+          ],
+          "damping": [
+            0.0010064290846355998,
+            0.0054036282378839996
+          ],
+          "frictionloss": [
+            0.3251873792128,
+            0.1852005485525
+          ],
+          "actuator_gain": 1.0,
+          "speed_shaping": false,
+          "extra_output_gain": 1.0
+        },
+        "speed_curve": false,
+        "extra_output_layer": false,
+        "disturbances": {
+          "version": "fudan-optional-disturbances-v1",
+          "action_delay": true,
+          "sensor_delay": true,
+          "pushes": true,
+          "action_delay_ms": [
+            6.0,
+            14.0
+          ],
+          "sensor_delay_ms": [
+            2.0,
+            2.0
+          ],
+          "push_interval_s": 7.0,
+          "max_push_vel": 0.3,
+          "external_force_range": [
+            -10.0,
+            10.0
+          ],
+          "external_torque_range": [
+            -10.0,
+            10.0
+          ]
+        }
+      }
+    },
+    "precheck": {
+      "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/precheck/report.json",
+      "sha256": "b016446f08fb40fe7dda7ccb4e76119a0026343daa67970ec1f36335b31d796b",
+      "record": {
+        "passed": true,
+        "kind": "physical-visible-precheck",
+        "num_envs": 20,
+        "reset_contract": "fudan-physical-pd-centred-warmup-noisy5-clipped-history-v3",
+        "optimizer_updates": 0,
+        "physics_steps": 3510,
+        "disturbances": {
+          "version": "fudan-optional-disturbances-v1",
+          "action_delay": true,
+          "sensor_delay": true,
+          "pushes": true,
+          "action_delay_ms": [
+            6.0,
+            14.0
+          ],
+          "sensor_delay_ms": [
+            2.0,
+            2.0
+          ],
+          "push_interval_s": 7.0,
+          "max_push_vel": 0.3,
+          "external_force_range": [
+            -10.0,
+            10.0
+          ],
+          "external_torque_range": [
+            -10.0,
+            10.0
+          ]
+        },
+        "command_sampling": {
+          "version": "fudan-parking-commands-v1",
+          "standstill_env_ratio": 0.1,
+          "stop_env_ratio": 0.1,
+          "stop_drive_time_s": [
+            3.0,
+            5.0
+          ],
+          "stop_speed_range": [
+            0.25,
+            1.0
+          ],
+          "parking_heights": [
+            0.22,
+            0.26,
+            0.3
+          ]
+        },
+        "posture_reward": {
+          "version": "fudan-roll-pitch-soft-band-v1",
+          "pitch_range_deg": [
+            0.0,
+            5.0
+          ],
+          "pitch_inner_ratio": 0.05,
+          "roll_scale": -100.0,
+          "pitch_scale": -100.0
+        },
+        "auto_reset": true,
+        "episode_completions": 48,
+        "initial": [
+          {
+            "id": "precheck_0",
+            "height": 0.3390159606933594,
+            "minimum_collision_mesh_height_m": 0.0019999854266643524
+          },
+          {
+            "id": "precheck_1",
+            "height": 0.3434354066848755,
+            "minimum_collision_mesh_height_m": 0.0019999630749225616
+          },
+          {
+            "id": "precheck_2",
+            "height": 0.3429597020149231,
+            "minimum_collision_mesh_height_m": 0.0020000003278255463
+          },
+          {
+            "id": "precheck_3",
+            "height": 0.3462681770324707,
+            "minimum_collision_mesh_height_m": 0.0019999369978904724
+          },
+          {
+            "id": "precheck_4",
+            "height": 0.34305697679519653,
+            "minimum_collision_mesh_height_m": 0.001999989151954651
+          },
+          {
+            "id": "precheck_5",
+            "height": 0.3417213261127472,
+            "minimum_collision_mesh_height_m": 0.001999974250793457
+          },
+          {
+            "id": "precheck_6",
+            "height": 0.3418155610561371,
+            "minimum_collision_mesh_height_m": 0.0019999556243419647
+          },
+          {
+            "id": "precheck_7",
+            "height": 0.3422869145870209,
+            "minimum_collision_mesh_height_m": 0.0019999779760837555
+          },
+          {
+            "id": "precheck_8",
+            "height": 0.33818525075912476,
+            "minimum_collision_mesh_height_m": 0.0019999705255031586
+          },
+          {
+            "id": "precheck_9",
+            "height": 0.3398144841194153,
+            "minimum_collision_mesh_height_m": 0.001999989151954651
+          },
+          {
+            "id": "precheck_10",
+            "height": 0.34482502937316895,
+            "minimum_collision_mesh_height_m": 0.001999981701374054
+          },
+          {
+            "id": "precheck_11",
+            "height": 0.33715641498565674,
+            "minimum_collision_mesh_height_m": 0.0019999705255031586
+          },
+          {
+            "id": "precheck_12",
+            "height": 0.3452449142932892,
+            "minimum_collision_mesh_height_m": 0.0019999854266643524
+          },
+          {
+            "id": "precheck_13",
+            "height": 0.34376364946365356,
+            "minimum_collision_mesh_height_m": 0.001999959349632263
+          },
+          {
+            "id": "precheck_14",
+            "height": 0.34079834818840027,
+            "minimum_collision_mesh_height_m": 0.001999974250793457
+          },
+          {
+            "id": "precheck_15",
+            "height": 0.34238526225090027,
+            "minimum_collision_mesh_height_m": 0.0020000040531158447
+          },
+          {
+            "id": "precheck_16",
+            "height": 0.34332752227783203,
+            "minimum_collision_mesh_height_m": 0.001999974250793457
+          },
+          {
+            "id": "precheck_17",
+            "height": 0.3378415107727051,
+            "minimum_collision_mesh_height_m": 0.0019999928772449493
+          },
+          {
+            "id": "precheck_18",
+            "height": 0.3400270938873291,
+            "minimum_collision_mesh_height_m": 0.0019999518990516663
+          },
+          {
+            "id": "precheck_19",
+            "height": 0.3429063558578491,
+            "minimum_collision_mesh_height_m": 0.0019999928772449493
+          }
+        ],
+        "validation_engine": "gpu",
+        "action_delay_steps": [
+          6,
+          7,
+          5,
+          6,
+          6,
+          7,
+          7,
+          6,
+          5,
+          5,
+          3,
+          7,
+          3,
+          6,
+          6,
+          7,
+          7,
+          7,
+          4,
+          4
+        ],
+        "sensor_delay_steps": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "push_count": [
+          1,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          1,
+          0,
+          1
+        ],
+        "cuda_peak_memory_bytes": 221696,
+        "scope": "Valid reset and finite zero-action dynamics; auto_reset is recorded explicitly; not behavioral acceptance",
+        "wall_s": 16.981859922409058
+      }
+    },
+    "startup_check": {
+      "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/startup-check.json",
+      "sha256": "4a033c253933aa501cd876314769e259bacb2cf1cf8687b8e338ba24d93e6ec0",
+      "record": {
+        "passed": true,
+        "from_scratch": true,
+        "initial_iteration": 0,
+        "initial_optimizer_states_empty": true,
+        "reset_contract": "fudan-physical-pd-centred-warmup-noisy5-clipped-history-v3",
+        "latest_logged_iteration": 11,
+        "last_reward": -0.02308550477027893,
+        "num_envs": 4096,
+        "leg_pd": [
+          60,
+          2
+        ],
+        "wheel_pd": [
+          0.1,
+          0
+        ],
+        "wheel_model": {
+          "version": "fudan-mechanical-wheel-v1",
+          "parameter_sha256": "e0dff9534577e83869ca3eba9a899d8b932530bbf1cdfdeb2a08ef42449011ae",
+          "wheel_order": [
+            "lfwheel",
+            "rfwheel"
+          ],
+          "armature": [
+            0.01208955519400076,
+            0.011335059898366036
+          ],
+          "damping": [
+            0.0010064290846355998,
+            0.0054036282378839996
+          ],
+          "frictionloss": [
+            0.3251873792128,
+            0.1852005485525
+          ],
+          "actuator_gain": 1.0,
+          "speed_shaping": false,
+          "extra_output_gain": 1.0
+        }
+      }
+    },
+    "training_audit": {
+      "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/training-audit.json",
+      "sha256": "d642cfbd2fe8065b83cc85ef8fe3cde71def45b21fed507c45b7d3370dbe5cd7",
+      "record": {
+        "passed": true,
+        "iterations": 3000,
+        "from_scratch": true,
+        "transitions": 589824000,
+        "updates_each": 60000,
+        "checkpoint_sha256": "9d4d3123d42451e8942581b7cc943bc35fa8e35f7947b5c5747abeb89de215ee",
+        "behavior_accepted": false
+      }
+    },
+    "training_report": {
+      "path": "logs/mjlab/fudan_ppo_walk/20261113_p60d2_wheelP01_mechanical_scratch3000_01/training_report.json",
+      "sha256": "c2e73b68d7472079649c8b0cc0ddf39232625d17ffbeed01fd993a08bd432cd0",
+      "record": {
+        "training_wall_s": 25928.205266714096,
+        "iterations": 3000,
+        "transitions": 589824000,
+        "primary_updates": 60000,
+        "encoder_updates": 60000,
+        "partial_update": false,
+        "checkpoint": "logs/mjlab/fudan_ppo_walk/20261113_p60d2_wheelP01_mechanical_scratch3000_01/model_final.pt",
+        "checkpoint_sha256": "9d4d3123d42451e8942581b7cc943bc35fa8e35f7947b5c5747abeb89de215ee",
+        "num_envs": 4096,
+        "transitions_per_iteration": 196608,
+        "minibatch": 49152,
+        "stopped_by": "iteration_budget",
+        "iteration_budget": 3000,
+        "target_iteration": 3000,
+        "initial_iterations": 0,
+        "iterations_added": 3000,
+        "transitions_added": 589824000,
+        "primary_updates_added": 60000,
+        "encoder_updates_added": 60000,
+        "reset_contract": "fudan-physical-pd-centred-warmup-noisy5-clipped-history-v3",
+        "history_migration": null,
+        "disturbances": {
+          "version": "fudan-optional-disturbances-v1",
+          "action_delay": true,
+          "sensor_delay": true,
+          "pushes": true,
+          "action_delay_ms": [
+            6.0,
+            14.0
+          ],
+          "sensor_delay_ms": [
+            2.0,
+            2.0
+          ],
+          "push_interval_s": 7.0,
+          "max_push_vel": 0.3,
+          "external_force_range": [
+            -10.0,
+            10.0
+          ],
+          "external_torque_range": [
+            -10.0,
+            10.0
+          ]
+        },
+        "command_sampling": {
+          "version": "fudan-parking-commands-v1",
+          "standstill_env_ratio": 0.1,
+          "stop_env_ratio": 0.1,
+          "stop_drive_time_s": [
+            3.0,
+            5.0
+          ],
+          "stop_speed_range": [
+            0.25,
+            1.0
+          ],
+          "parking_heights": [
+            0.22,
+            0.26,
+            0.3
+          ]
+        },
+        "posture_reward": {
+          "version": "fudan-roll-pitch-soft-band-v1",
+          "pitch_range_deg": [
+            0.0,
+            5.0
+          ],
+          "pitch_inner_ratio": 0.05,
+          "roll_scale": -100.0,
+          "pitch_scale": -100.0
+        },
+        "reward_names": [
+          "tracking_lin_vel",
+          "tracking_lin_vel_enhance",
+          "tracking_ang_vel",
+          "tracking_ang_vel_enhance",
+          "base_height",
+          "nominal_state",
+          "lin_vel_z",
+          "ang_vel_xy",
+          "roll",
+          "pitch",
+          "dof_vel",
+          "dof_acc",
+          "torques",
+          "action_rate",
+          "action_smooth",
+          "collision",
+          "dof_pos_limits"
+        ],
+        "resume_from": null,
+        "behavior_accepted": false,
+        "reward_logging": "weighted_clipped_mean_over_48_steps_and_all_environments"
+      }
+    },
+    "evaluation_conditions": {
+      "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/evaluation-01/conditions.json",
+      "sha256": "3f0db3e8c1e9db60078ffc67c3a7588a20e11c0356e53d38263ffc5ba71db723",
+      "record": {
+        "models": {
+          "previous17679": {
+            "path": "artifacts/fudan_ppo_walk/models/20261112_model17679_p60d2_armature2_wheelP045_output045.pt",
+            "sha256": "5b22740659e44bbb1ca1173e9289b75f5848059d0972d4257b79be3c0d217f2b",
+            "iterations": 17679,
+            "reset_contract": "fudan-physical-pd-centred-warmup-clean4-noisy1-unclipped-history-v2",
+            "trained_wheel_model": "legacy curve +0.45, source recipe recorded separately"
+          },
+          "fresh3000": {
+            "path": "logs/mjlab/fudan_ppo_walk/20261113_p60d2_wheelP01_mechanical_scratch3000_01/model_final.pt",
+            "sha256": "9d4d3123d42451e8942581b7cc943bc35fa8e35f7947b5c5747abeb89de215ee",
+            "iterations": 3000,
+            "reset_contract": "fudan-physical-pd-centred-warmup-noisy5-clipped-history-v3",
+            "trained_wheel_model": {
+              "version": "fudan-mechanical-wheel-v1",
+              "parameter_sha256": "e0dff9534577e83869ca3eba9a899d8b932530bbf1cdfdeb2a08ef42449011ae",
+              "wheel_order": [
+                "lfwheel",
+                "rfwheel"
+              ],
+              "armature": [
+                0.01208955519400076,
+                0.011335059898366036
+              ],
+              "damping": [
+                0.0010064290846355998,
+                0.0054036282378839996
+              ],
+              "frictionloss": [
+                0.3251873792128,
+                0.1852005485525
+              ],
+              "actuator_gain": 1.0,
+              "speed_shaping": false,
+              "extra_output_gain": 1.0
+            }
+          }
+        },
+        "evaluation_pd": {
+          "leg": [
+            60,
+            2
+          ],
+          "wheel": [
+            0.1,
+            0
+          ]
+        },
+        "evaluation_wheel_model": "mechanical",
+        "sim2sim_action_sensor_delay_ms": [
+          10,
+          4
+        ],
+        "physical_steps_s": 0.002,
+        "policy_dt_s": 0.01,
+        "zero_duration_s": 30,
+        "parking_duration_s": 15,
+        "scope": "model comparison at common evaluation mechanics; source training recipes and history differ; not an isolated iteration-count experiment"
+      }
+    },
+    "gpu_comparison": {
+      "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/evaluation-01/comparison.json",
+      "sha256": "df4db9ef4fe7648a305705a4b3786e0187df4221dbdaaf52d1e51fd09c163215",
+      "record": {
+        "rows": [
+          {
+            "model": "previous17679",
+            "group": "no_external",
+            "sample_id": "parking_0",
+            "case": "zero_0_0_0.22",
+            "height": 0.22,
+            "leg_last1s_pp_deg": 1.5328359603881836,
+            "pitch_last5s_pp_deg": 1.1307414770126343,
+            "pitch_last5s_abs_peak_deg": 2.1908469200134277,
+            "speed_last5s_peak_m_s": 0.06187295913696289,
+            "yaw_total_deg": -6.890108108520508,
+            "horizontal_displacement_m": 0.11047614365816116
+          },
+          {
+            "model": "previous17679",
+            "group": "no_external",
+            "sample_id": "parking_1",
+            "case": "stop_-1_0.22",
+            "height": 0.22,
+            "leg_last1s_pp_deg": 1.5073823928833008,
+            "pitch_last5s_pp_deg": 0.9138481616973877,
+            "pitch_last5s_abs_peak_deg": 2.1091554164886475,
+            "speed_last5s_peak_m_s": 0.04657171666622162,
+            "yaw_total_deg": -10.73619556427002,
+            "horizontal_displacement_m": 6.9131574630737305
+          },
+          {
+            "model": "previous17679",
+            "group": "no_external",
+            "sample_id": "parking_2",
+            "case": "stop_1_0.22",
+            "height": 0.22,
+            "leg_last1s_pp_deg": 1.23626708984375,
+            "pitch_last5s_pp_deg": 0.9682080745697021,
+            "pitch_last5s_abs_peak_deg": 2.2029755115509033,
+            "speed_last5s_peak_m_s": 0.03345015272498131,
+            "yaw_total_deg": -4.167504787445068,
+            "horizontal_displacement_m": 6.779232025146484
+          },
+          {
+            "model": "previous17679",
+            "group": "no_external",
+            "sample_id": "parking_3",
+            "case": "zero_0_0_0.26",
+            "height": 0.26,
+            "leg_last1s_pp_deg": 0.5726661682128906,
+            "pitch_last5s_pp_deg": 2.212632656097412,
+            "pitch_last5s_abs_peak_deg": 2.6864566802978516,
+            "speed_last5s_peak_m_s": 0.10356191545724869,
+            "yaw_total_deg": -1.6187798976898193,
+            "horizontal_displacement_m": 0.6602312922477722
+          },
+          {
+            "model": "previous17679",
+            "group": "no_external",
+            "sample_id": "parking_4",
+            "case": "stop_-1_0.26",
+            "height": 0.26,
+            "leg_last1s_pp_deg": 0.39832305908203125,
+            "pitch_last5s_pp_deg": 0.6197233200073242,
+            "pitch_last5s_abs_peak_deg": 1.8588905334472656,
+            "speed_last5s_peak_m_s": 0.025165779516100883,
+            "yaw_total_deg": 8.856212615966797,
+            "horizontal_displacement_m": 6.830101013183594
+          },
+          {
+            "model": "previous17679",
+            "group": "no_external",
+            "sample_id": "parking_5",
+            "case": "stop_1_0.26",
+            "height": 0.26,
+            "leg_last1s_pp_deg": 0.4908332824707031,
+            "pitch_last5s_pp_deg": 0.6761305332183838,
+            "pitch_last5s_abs_peak_deg": 1.9190399646759033,
+            "speed_last5s_peak_m_s": 0.01909017749130726,
+            "yaw_total_deg": 12.339768409729004,
+            "horizontal_displacement_m": 6.780338287353516
+          },
+          {
+            "model": "previous17679",
+            "group": "no_external",
+            "sample_id": "parking_6",
+            "case": "zero_0_0_0.3",
+            "height": 0.3,
+            "leg_last1s_pp_deg": 0.6938972473144531,
+            "pitch_last5s_pp_deg": 0.49097222089767456,
+            "pitch_last5s_abs_peak_deg": 1.3215936422348022,
+            "speed_last5s_peak_m_s": 0.015745192766189575,
+            "yaw_total_deg": 14.895980834960938,
+            "horizontal_displacement_m": 0.044471584260463715
+          },
+          {
+            "model": "previous17679",
+            "group": "no_external",
+            "sample_id": "parking_7",
+            "case": "stop_-1_0.3",
+            "height": 0.3,
+            "leg_last1s_pp_deg": 0.5405998229980469,
+            "pitch_last5s_pp_deg": 0.3826392889022827,
+            "pitch_last5s_abs_peak_deg": 1.217942237854004,
+            "speed_last5s_peak_m_s": 0.019065063446760178,
+            "yaw_total_deg": 24.78443145751953,
+            "horizontal_displacement_m": 6.865188121795654
+          },
+          {
+            "model": "previous17679",
+            "group": "no_external",
+            "sample_id": "parking_8",
+            "case": "stop_1_0.3",
+            "height": 0.3,
+            "leg_last1s_pp_deg": 0.7649154663085938,
+            "pitch_last5s_pp_deg": 0.5782458186149597,
+            "pitch_last5s_abs_peak_deg": 1.3931505680084229,
+            "speed_last5s_peak_m_s": 0.014355803839862347,
+            "yaw_total_deg": 27.191701889038086,
+            "horizontal_displacement_m": 6.701837539672852
+          },
+          {
+            "model": "fresh3000",
+            "group": "no_external",
+            "sample_id": "parking_0",
+            "case": "zero_0_0_0.22",
+            "height": 0.22,
+            "leg_last1s_pp_deg": 0.558751106262207,
+            "pitch_last5s_pp_deg": 1.4399926662445068,
+            "pitch_last5s_abs_peak_deg": 1.8368514776229858,
+            "speed_last5s_peak_m_s": 0.06237378343939781,
+            "yaw_total_deg": -6.70952033996582,
+            "horizontal_displacement_m": 0.2961226999759674
+          },
+          {
+            "model": "fresh3000",
+            "group": "no_external",
+            "sample_id": "parking_1",
+            "case": "stop_-1_0.22",
+            "height": 0.22,
+            "leg_last1s_pp_deg": 0.48929500579833984,
+            "pitch_last5s_pp_deg": 1.2920002937316895,
+            "pitch_last5s_abs_peak_deg": 1.7709003686904907,
+            "speed_last5s_peak_m_s": 0.060277923941612244,
+            "yaw_total_deg": -16.673625946044922,
+            "horizontal_displacement_m": 7.664939880371094
+          },
+          {
+            "model": "fresh3000",
+            "group": "no_external",
+            "sample_id": "parking_2",
+            "case": "stop_1_0.22",
+            "height": 0.22,
+            "leg_last1s_pp_deg": 0.822972297668457,
+            "pitch_last5s_pp_deg": 1.3695504665374756,
+            "pitch_last5s_abs_peak_deg": 1.8943870067596436,
+            "speed_last5s_peak_m_s": 0.05540402606129646,
+            "yaw_total_deg": -10.902806282043457,
+            "horizontal_displacement_m": 6.026916980743408
+          },
+          {
+            "model": "fresh3000",
+            "group": "no_external",
+            "sample_id": "parking_3",
+            "case": "zero_0_0_0.26",
+            "height": 0.26,
+            "leg_last1s_pp_deg": 0.5627040863037109,
+            "pitch_last5s_pp_deg": 2.684917449951172,
+            "pitch_last5s_abs_peak_deg": 2.8449525833129883,
+            "speed_last5s_peak_m_s": 0.13090713322162628,
+            "yaw_total_deg": -4.9993486404418945,
+            "horizontal_displacement_m": 0.4540688693523407
+          },
+          {
+            "model": "fresh3000",
+            "group": "no_external",
+            "sample_id": "parking_4",
+            "case": "stop_-1_0.26",
+            "height": 0.26,
+            "leg_last1s_pp_deg": 0.06110382080078125,
+            "pitch_last5s_pp_deg": 1.245373249053955,
+            "pitch_last5s_abs_peak_deg": 2.217747688293457,
+            "speed_last5s_peak_m_s": 0.061725955456495285,
+            "yaw_total_deg": -9.148329734802246,
+            "horizontal_displacement_m": 7.612695693969727
+          },
+          {
+            "model": "fresh3000",
+            "group": "no_external",
+            "sample_id": "parking_5",
+            "case": "stop_1_0.26",
+            "height": 0.26,
+            "leg_last1s_pp_deg": 0.0822916030883789,
+            "pitch_last5s_pp_deg": 1.3712637424468994,
+            "pitch_last5s_abs_peak_deg": 2.3591127395629883,
+            "speed_last5s_peak_m_s": 0.060547586530447006,
+            "yaw_total_deg": -7.047199249267578,
+            "horizontal_displacement_m": 6.335126876831055
+          },
+          {
+            "model": "fresh3000",
+            "group": "no_external",
+            "sample_id": "parking_6",
+            "case": "zero_0_0_0.3",
+            "height": 0.3,
+            "leg_last1s_pp_deg": 0.05938720703125,
+            "pitch_last5s_pp_deg": 0.08068394660949707,
+            "pitch_last5s_abs_peak_deg": 1.7370914220809937,
+            "speed_last5s_peak_m_s": 0.033217694610357285,
+            "yaw_total_deg": -22.482017517089844,
+            "horizontal_displacement_m": 0.19207215309143066
+          },
+          {
+            "model": "fresh3000",
+            "group": "no_external",
+            "sample_id": "parking_7",
+            "case": "stop_-1_0.3",
+            "height": 0.3,
+            "leg_last1s_pp_deg": 0.09110260009765625,
+            "pitch_last5s_pp_deg": 0.4127354621887207,
+            "pitch_last5s_abs_peak_deg": 2.015859365463257,
+            "speed_last5s_peak_m_s": 0.03580997511744499,
+            "yaw_total_deg": -41.673336029052734,
+            "horizontal_displacement_m": 7.416261196136475
+          },
+          {
+            "model": "fresh3000",
+            "group": "no_external",
+            "sample_id": "parking_8",
+            "case": "stop_1_0.3",
+            "height": 0.3,
+            "leg_last1s_pp_deg": 0.14995193481445312,
+            "pitch_last5s_pp_deg": 0.27167749404907227,
+            "pitch_last5s_abs_peak_deg": 1.8758012056350708,
+            "speed_last5s_peak_m_s": 0.03448309004306793,
+            "yaw_total_deg": -32.01797103881836,
+            "horizontal_displacement_m": 6.540917873382568
+          },
+          {
+            "model": "previous17679",
+            "group": "configured_external",
+            "sample_id": "parking_0",
+            "case": "zero_0_0_0.22",
+            "height": 0.22,
+            "leg_last1s_pp_deg": 0.6924362182617188,
+            "pitch_last5s_pp_deg": 0.6319526433944702,
+            "pitch_last5s_abs_peak_deg": 1.7771772146224976,
+            "speed_last5s_peak_m_s": 0.08239120244979858,
+            "yaw_total_deg": -30.93791389465332,
+            "horizontal_displacement_m": 0.15101587772369385
+          },
+          {
+            "model": "previous17679",
+            "group": "configured_external",
+            "sample_id": "parking_1",
+            "case": "stop_-1_0.22",
+            "height": 0.22,
+            "leg_last1s_pp_deg": 7.080410003662109,
+            "pitch_last5s_pp_deg": 1.3444857597351074,
+            "pitch_last5s_abs_peak_deg": 1.9261810779571533,
+            "speed_last5s_peak_m_s": 0.2583368420600891,
+            "yaw_total_deg": 11.32077693939209,
+            "horizontal_displacement_m": 6.207476615905762
+          },
+          {
+            "model": "previous17679",
+            "group": "configured_external",
+            "sample_id": "parking_2",
+            "case": "stop_1_0.22",
+            "height": 0.22,
+            "leg_last1s_pp_deg": 9.974762916564941,
+            "pitch_last5s_pp_deg": 1.727230191230774,
+            "pitch_last5s_abs_peak_deg": 2.66686749458313,
+            "speed_last5s_peak_m_s": 0.12870916724205017,
+            "yaw_total_deg": -74.12195587158203,
+            "horizontal_displacement_m": 7.4245686531066895
+          },
+          {
+            "model": "previous17679",
+            "group": "configured_external",
+            "sample_id": "parking_3",
+            "case": "zero_0_0_0.26",
+            "height": 0.26,
+            "leg_last1s_pp_deg": 0.08274459838867188,
+            "pitch_last5s_pp_deg": 0.8055529594421387,
+            "pitch_last5s_abs_peak_deg": 2.1876423358917236,
+            "speed_last5s_peak_m_s": 0.04389525577425957,
+            "yaw_total_deg": -19.92046546936035,
+            "horizontal_displacement_m": 0.3707512617111206
+          },
+          {
+            "model": "previous17679",
+            "group": "configured_external",
+            "sample_id": "parking_4",
+            "case": "stop_-1_0.26",
+            "height": 0.26,
+            "leg_last1s_pp_deg": 9.247438430786133,
+            "pitch_last5s_pp_deg": 1.813647985458374,
+            "pitch_last5s_abs_peak_deg": 3.6035897731781006,
+            "speed_last5s_peak_m_s": 0.2463659942150116,
+            "yaw_total_deg": 199.578369140625,
+            "horizontal_displacement_m": 6.034244537353516
+          },
+          {
+            "model": "previous17679",
+            "group": "configured_external",
+            "sample_id": "parking_5",
+            "case": "stop_1_0.26",
+            "height": 0.26,
+            "leg_last1s_pp_deg": 4.505619049072266,
+            "pitch_last5s_pp_deg": 0.9862688779830933,
+            "pitch_last5s_abs_peak_deg": 1.9015387296676636,
+            "speed_last5s_peak_m_s": 0.13347987830638885,
+            "yaw_total_deg": -82.997802734375,
+            "horizontal_displacement_m": 6.217637062072754
+          },
+          {
+            "model": "previous17679",
+            "group": "configured_external",
+            "sample_id": "parking_6",
+            "case": "zero_0_0_0.3",
+            "height": 0.3,
+            "leg_last1s_pp_deg": 0.0986480712890625,
+            "pitch_last5s_pp_deg": 0.5708436965942383,
+            "pitch_last5s_abs_peak_deg": 2.5343117713928223,
+            "speed_last5s_peak_m_s": 0.05610102415084839,
+            "yaw_total_deg": 46.320037841796875,
+            "horizontal_displacement_m": 0.4417736232280731
+          },
+          {
+            "model": "previous17679",
+            "group": "configured_external",
+            "sample_id": "parking_7",
+            "case": "stop_-1_0.3",
+            "height": 0.3,
+            "leg_last1s_pp_deg": 35.917823791503906,
+            "pitch_last5s_pp_deg": 6.362400054931641,
+            "pitch_last5s_abs_peak_deg": 6.858758449554443,
+            "speed_last5s_peak_m_s": 0.36005792021751404,
+            "yaw_total_deg": 529.5441284179688,
+            "horizontal_displacement_m": 0.3259845972061157
+          },
+          {
+            "model": "previous17679",
+            "group": "configured_external",
+            "sample_id": "parking_8",
+            "case": "stop_1_0.3",
+            "height": 0.3,
+            "leg_last1s_pp_deg": 5.328624725341797,
+            "pitch_last5s_pp_deg": 1.3935028314590454,
+            "pitch_last5s_abs_peak_deg": 3.118964672088623,
+            "speed_last5s_peak_m_s": 0.20416252315044403,
+            "yaw_total_deg": 46.963260650634766,
+            "horizontal_displacement_m": 6.8459672927856445
+          },
+          {
+            "model": "fresh3000",
+            "group": "configured_external",
+            "sample_id": "parking_0",
+            "case": "zero_0_0_0.22",
+            "height": 0.22,
+            "leg_last1s_pp_deg": 0.1337299346923828,
+            "pitch_last5s_pp_deg": 1.5705540180206299,
+            "pitch_last5s_abs_peak_deg": 1.0522099733352661,
+            "speed_last5s_peak_m_s": 0.0818907767534256,
+            "yaw_total_deg": 35.20900344848633,
+            "horizontal_displacement_m": 0.14259707927703857
+          },
+          {
+            "model": "fresh3000",
+            "group": "configured_external",
+            "sample_id": "parking_1",
+            "case": "stop_-1_0.22",
+            "height": 0.22,
+            "leg_last1s_pp_deg": 6.621330261230469,
+            "pitch_last5s_pp_deg": 140.73117065429688,
+            "pitch_last5s_abs_peak_deg": 88.16004943847656,
+            "speed_last5s_peak_m_s": 2.8396499156951904,
+            "yaw_total_deg": 8599.416015625,
+            "horizontal_displacement_m": 7.976405620574951
+          },
+          {
+            "model": "fresh3000",
+            "group": "configured_external",
+            "sample_id": "parking_2",
+            "case": "stop_1_0.22",
+            "height": 0.22,
+            "leg_last1s_pp_deg": 11.612791061401367,
+            "pitch_last5s_pp_deg": 3.0789239406585693,
+            "pitch_last5s_abs_peak_deg": 3.049447536468506,
+            "speed_last5s_peak_m_s": 0.12868629395961761,
+            "yaw_total_deg": 6.817776679992676,
+            "horizontal_displacement_m": 7.256308078765869
+          },
+          {
+            "model": "fresh3000",
+            "group": "configured_external",
+            "sample_id": "parking_3",
+            "case": "zero_0_0_0.26",
+            "height": 0.26,
+            "leg_last1s_pp_deg": 226.3409881591797,
+            "pitch_last5s_pp_deg": 178.0390625,
+            "pitch_last5s_abs_peak_deg": 89.1486587524414,
+            "speed_last5s_peak_m_s": 2.8752338886260986,
+            "yaw_total_deg": -3861.10205078125,
+            "horizontal_displacement_m": 5.825851917266846
+          },
+          {
+            "model": "fresh3000",
+            "group": "configured_external",
+            "sample_id": "parking_4",
+            "case": "stop_-1_0.26",
+            "height": 0.26,
+            "leg_last1s_pp_deg": 9.786287307739258,
+            "pitch_last5s_pp_deg": 2.699183940887451,
+            "pitch_last5s_abs_peak_deg": 3.4710710048675537,
+            "speed_last5s_peak_m_s": 0.2647765874862671,
+            "yaw_total_deg": 14.207810401916504,
+            "horizontal_displacement_m": 8.058595657348633
+          },
+          {
+            "model": "fresh3000",
+            "group": "configured_external",
+            "sample_id": "parking_5",
+            "case": "stop_1_0.26",
+            "height": 0.26,
+            "leg_last1s_pp_deg": 290.0950012207031,
+            "pitch_last5s_pp_deg": 173.19834899902344,
+            "pitch_last5s_abs_peak_deg": 88.09504699707031,
+            "speed_last5s_peak_m_s": 2.924262285232544,
+            "yaw_total_deg": -3679.79541015625,
+            "horizontal_displacement_m": 6.816229343414307
+          },
+          {
+            "model": "fresh3000",
+            "group": "configured_external",
+            "sample_id": "parking_6",
+            "case": "zero_0_0_0.3",
+            "height": 0.3,
+            "leg_last1s_pp_deg": 0.13384246826171875,
+            "pitch_last5s_pp_deg": 2.0612449645996094,
+            "pitch_last5s_abs_peak_deg": 3.7661001682281494,
+            "speed_last5s_peak_m_s": 0.1192120760679245,
+            "yaw_total_deg": 25.713289260864258,
+            "horizontal_displacement_m": 0.6887747645378113
+          },
+          {
+            "model": "fresh3000",
+            "group": "configured_external",
+            "sample_id": "parking_7",
+            "case": "stop_-1_0.3",
+            "height": 0.3,
+            "leg_last1s_pp_deg": 351.1671142578125,
+            "pitch_last5s_pp_deg": 162.61199951171875,
+            "pitch_last5s_abs_peak_deg": 85.6576919555664,
+            "speed_last5s_peak_m_s": 3.861546039581299,
+            "yaw_total_deg": -15550.0224609375,
+            "horizontal_displacement_m": 3.672288417816162
+          },
+          {
+            "model": "fresh3000",
+            "group": "configured_external",
+            "sample_id": "parking_8",
+            "case": "stop_1_0.3",
+            "height": 0.3,
+            "leg_last1s_pp_deg": 257.1787109375,
+            "pitch_last5s_pp_deg": 178.89279174804688,
+            "pitch_last5s_abs_peak_deg": 89.7420654296875,
+            "speed_last5s_peak_m_s": 2.252326488494873,
+            "yaw_total_deg": 2318.142578125,
+            "horizontal_displacement_m": 7.82950496673584
+          },
+          {
+            "model": "previous17679",
+            "group": "zero",
+            "sample_id": "hold_h22",
+            "case": "zero_hold_0.22",
+            "height": 0.22,
+            "leg_last1s_pp_deg": 1.3475780487060547,
+            "pitch_last5s_pp_deg": 0.5076361894607544,
+            "pitch_last5s_abs_peak_deg": 1.9482223987579346,
+            "speed_last5s_peak_m_s": 0.017153361812233925,
+            "yaw_total_deg": -24.6560001373291,
+            "horizontal_displacement_m": 0.07884310930967331
+          },
+          {
+            "model": "previous17679",
+            "group": "zero",
+            "sample_id": "hold_h26",
+            "case": "zero_hold_0.26",
+            "height": 0.26,
+            "leg_last1s_pp_deg": 0.7347602844238281,
+            "pitch_last5s_pp_deg": 0.4676781892776489,
+            "pitch_last5s_abs_peak_deg": 1.7193522453308105,
+            "speed_last5s_peak_m_s": 0.013887578621506691,
+            "yaw_total_deg": 18.682329177856445,
+            "horizontal_displacement_m": 0.18449877202510834
+          },
+          {
+            "model": "previous17679",
+            "group": "zero",
+            "sample_id": "hold_h30",
+            "case": "zero_hold_0.3",
+            "height": 0.3,
+            "leg_last1s_pp_deg": 0.7724227905273438,
+            "pitch_last5s_pp_deg": 0.1888425350189209,
+            "pitch_last5s_abs_peak_deg": 1.0172442197799683,
+            "speed_last5s_peak_m_s": 0.014286485500633717,
+            "yaw_total_deg": 67.47378540039062,
+            "horizontal_displacement_m": 0.22537977993488312
+          },
+          {
+            "model": "fresh3000",
+            "group": "zero",
+            "sample_id": "hold_h22",
+            "case": "zero_hold_0.22",
+            "height": 0.22,
+            "leg_last1s_pp_deg": 0.1283721923828125,
+            "pitch_last5s_pp_deg": 0.1941872239112854,
+            "pitch_last5s_abs_peak_deg": 0.7220745086669922,
+            "speed_last5s_peak_m_s": 0.03407299146056175,
+            "yaw_total_deg": -31.518192291259766,
+            "horizontal_displacement_m": 0.6654621362686157
+          },
+          {
+            "model": "fresh3000",
+            "group": "zero",
+            "sample_id": "hold_h26",
+            "case": "zero_hold_0.26",
+            "height": 0.26,
+            "leg_last1s_pp_deg": 0.48774147033691406,
+            "pitch_last5s_pp_deg": 0.12090837955474854,
+            "pitch_last5s_abs_peak_deg": 1.137268304824829,
+            "speed_last5s_peak_m_s": 0.03941503167152405,
+            "yaw_total_deg": -34.00430679321289,
+            "horizontal_displacement_m": 0.9841104745864868
+          },
+          {
+            "model": "fresh3000",
+            "group": "zero",
+            "sample_id": "hold_h30",
+            "case": "zero_hold_0.3",
+            "height": 0.3,
+            "leg_last1s_pp_deg": 0.0542449951171875,
+            "pitch_last5s_pp_deg": 0.0919046401977539,
+            "pitch_last5s_abs_peak_deg": 1.6964476108551025,
+            "speed_last5s_peak_m_s": 0.033452633768320084,
+            "yaw_total_deg": -113.0282211303711,
+            "horizontal_displacement_m": 0.7488396167755127
+          }
+        ],
+        "scores": [
+          {
+            "model": "previous17679",
+            "group": "no_external",
+            "passed": 7,
+            "total": 9,
+            "passing_ids": [
+              "parking_1",
+              "parking_2",
+              "parking_4",
+              "parking_5",
+              "parking_6",
+              "parking_7",
+              "parking_8"
+            ]
+          },
+          {
+            "model": "fresh3000",
+            "group": "no_external",
+            "passed": 3,
+            "total": 9,
+            "passing_ids": [
+              "parking_6",
+              "parking_7",
+              "parking_8"
+            ]
+          },
+          {
+            "model": "previous17679",
+            "group": "configured_external",
+            "passed": 0,
+            "total": 9,
+            "passing_ids": []
+          },
+          {
+            "model": "fresh3000",
+            "group": "configured_external",
+            "passed": 0,
+            "total": 9,
+            "passing_ids": []
+          },
+          {
+            "model": "previous17679",
+            "group": "zero",
+            "passed": 3,
+            "total": 3,
+            "passing_ids": [
+              "hold_h22",
+              "hold_h26",
+              "hold_h30"
+            ]
+          },
+          {
+            "model": "fresh3000",
+            "group": "zero",
+            "passed": 1,
+            "total": 3,
+            "passing_ids": [
+              "hold_h30"
+            ]
+          }
+        ],
+        "pairs": [
+          {
+            "group": "no_external",
+            "id": "parking_0",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "no_external",
+            "id": "parking_1",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "no_external",
+            "id": "parking_2",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "no_external",
+            "id": "parking_3",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "no_external",
+            "id": "parking_4",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "no_external",
+            "id": "parking_5",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "no_external",
+            "id": "parking_6",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "no_external",
+            "id": "parking_7",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "no_external",
+            "id": "parking_8",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "configured_external",
+            "id": "parking_0",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "configured_external",
+            "id": "parking_1",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "configured_external",
+            "id": "parking_2",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "configured_external",
+            "id": "parking_3",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "configured_external",
+            "id": "parking_4",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "configured_external",
+            "id": "parking_5",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "configured_external",
+            "id": "parking_6",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "configured_external",
+            "id": "parking_7",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "configured_external",
+            "id": "parking_8",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "zero",
+            "id": "hold_h22",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "zero",
+            "id": "hold_h26",
+            "initial_arrays_identical": true
+          },
+          {
+            "group": "zero",
+            "id": "hold_h30",
+            "initial_arrays_identical": true
+          }
+        ],
+        "scope": "21 paired diagnostic conditions, same mechanical wheels and P60/D2/wheelP0.1; model-native history v2 versus v3; not full987 or real robot",
+        "training_updates": 0,
+        "behavior_accepted": false
+      }
+    },
+    "videos": {
+      "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/evaluation-01/video-check.json",
+      "sha256": "69ba874e85fe7aa3da0257238c8f0f62c1d0ea7fa01abc4fd4ca62c8b0889aa6",
+      "record": {
+        "passed": true,
+        "videos": [
+          {
+            "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/evaluation-01/zero-videos/hold_h22.mp4",
+            "frames": 1500,
+            "fps": 50.0,
+            "duration_s": 30.0,
+            "passed": true
+          },
+          {
+            "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/evaluation-01/zero-videos/hold_h26.mp4",
+            "frames": 1500,
+            "fps": 50.0,
+            "duration_s": 30.0,
+            "passed": true
+          },
+          {
+            "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/evaluation-01/zero-videos/hold_h30.mp4",
+            "frames": 1500,
+            "fps": 50.0,
+            "duration_s": 30.0,
+            "passed": true
+          },
+          {
+            "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/evaluation-01/parking-videos/parking_2.mp4",
+            "frames": 750,
+            "fps": 50.0,
+            "duration_s": 15.0,
+            "passed": true
+          },
+          {
+            "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/evaluation-01/parking-videos/parking_5.mp4",
+            "frames": 750,
+            "fps": 50.0,
+            "duration_s": 15.0,
+            "passed": true
+          },
+          {
+            "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/evaluation-01/parking-videos/parking_8.mp4",
+            "frames": 750,
+            "fps": 50.0,
+            "duration_s": 15.0,
+            "passed": true
+          },
+          {
+            "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/evaluation-01/external-failure-video/parking_1.mp4",
+            "frames": 750,
+            "fps": 50.0,
+            "duration_s": 15.0,
+            "passed": true
+          }
+        ],
+        "scope": "Full decode, frame counts, FPS and SHA; visual spot-check separate"
+      }
+    },
+    "reward_summary": {
+      "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/reward-curves-01/summary.json",
+      "sha256": "ea2d929c6f23a257edc1262953dbd82dd27e78d54b6bf398c12267e12c0a00f9",
+      "record": {
+        "iterations": 3000,
+        "first100_mean": -0.016911242390051484,
+        "last100_mean": 0.019443959835916756,
+        "last500_mean": 0.01923391607776284,
+        "last_value": 0.01953817531466484,
+        "segments500": [
+          -0.005054333665641024,
+          0.014254185929894447,
+          0.019270911179482937,
+          0.019760691888630392,
+          0.019328776620328426,
+          0.01923391607776284
+        ]
+      }
+    },
+    "parking_regression": {
+      "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/evaluation-01/fresh3000/no_external-paired-acceptance/acceptance.json",
+      "sha256": "8eb2bbe172c0caecdb0b85583a6d96099add4ca6e0f53213e05f23587c1ab98b",
+      "record": {
+        "standard": "wheelleg-unified-gpu-acceptance-v1",
+        "task": "fudan_ppo_walk",
+        "validation_backend": "mujoco_warp_gpu",
+        "technical_passed": 3,
+        "total": 9,
+        "cohort_sha256": "9e2e8d0a020dc9423d7985bb52b235b8cfe987cf62d552ce99e4022c259f809d",
+        "comparison": {
+          "regressed": [
+            "parking_1",
+            "parking_2",
+            "parking_4",
+            "parking_5"
+          ],
+          "retained": [
+            "parking_6",
+            "parking_7",
+            "parking_8"
+          ],
+          "gained": [],
+          "regression_rejected": true
+        }
+      }
+    },
+    "zero_regression": {
+      "path": "artifacts/fudan_ppo_walk/20261113-mechanical-scratch3000-01/evaluation-01/fresh3000-zero/no_external-paired-acceptance/acceptance.json",
+      "sha256": "11c658f326829f436e83aab60b897fc5108b6472ee5c6daf1597cebb30021d2b",
+      "record": {
+        "standard": "wheelleg-unified-gpu-acceptance-v1",
+        "task": "fudan_ppo_walk",
+        "validation_backend": "mujoco_warp_gpu",
+        "technical_passed": 1,
+        "total": 3,
+        "cohort_sha256": "079aa8016d117b0246a9e7e9a76e3729cf1a0be4da49e24fdd0078c19bc03a24",
+        "comparison": {
+          "regressed": [
+            "hold_h22",
+            "hold_h26"
+          ],
+          "retained": [
+            "hold_h30"
+          ],
+          "gained": [],
+          "regression_rejected": true
+        }
+      }
+    }
+  },
+  "limits": {
+    "experimental_candidate": true,
+    "regression_rejected": true,
+    "full_gpu_behavior_accepted": false,
+    "real_robot_tested": false,
+    "onnx_exported": false,
+    "h7_review": "pending",
+    "history_v3_requires_matching_preprocessing": true,
+    "raw_logs_traces_videos_local_only": true
+  },
+  "reproduction": "Checkout runtime_source_base and apply this seven-file model delivery commit. Entry points use the original registered task. Use fresh output/log directories for reruns; no new training is authorized by this package."
+}
