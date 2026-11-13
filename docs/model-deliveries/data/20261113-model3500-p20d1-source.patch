@@ -1,0 +1,836 @@
+diff --git a/docs/mjlab-fudan-ppo-walk.md b/docs/mjlab-fudan-ppo-walk.md
+--- a/docs/mjlab-fudan-ppo-walk.md
++++ b/docs/mjlab-fudan-ppo-walk.md
+@@ -1,4 +1,10 @@
+ # 复旦 PPO 行走配方适配规格（fudan-ppo-walk-physical-v1）
++
++2026-11-13用户进一步同意加宽高度奖励：当前height_sigma=0.01（原0.001），高度权重5/上限0.05保持；新模型按height_reward字段保存/恢复，旧模型仍按原参数。17项合成检查通过，训练仍停止，无新行为结论。[最新准备](../artifacts/fudan_ppo_walk/20261113-height-reward-x5-sigma001-01/README.md)。
++
++2026-11-13用户停止无外力训练后，仅提高下一次高度奖励：base_height权重5，高度上限随权重0.05，指数分母0.001保持；其他项仍各自±0.01。新PT/预检/回放记录height_reward，旧缺字段按1/.001恢复，无新训练预算。[定义/检查](interfaces/20261113-fudan-height-reward-x5.md)。
++
++2026-11-13当前训练关闭所有外加扰动：`domain_rand.push_robots=False`、`external_force_range=[0,0]`、`external_torque_range=[0,0]`；参数随机化/延迟/噪声及reward保持。用户确认从零1500轮，实际腿60/2、轮0.1/D0、机械轮、history v3。新GPU默认configured_external组同样无外扰，历史成绩仍按各自快照解释。[本次预算及命令](../artifacts/fudan_ppo_walk/20261113-mechanical-noexternal-scratch1500-01/README.md)。
+ 
+ ## 当前轮端机械候选（2026-11-12）
+ 
+diff --git a/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk.py b/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk.py
+--- a/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk.py
++++ b/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk.py
+@@ -208,8 +208,8 @@
+     wheel_physics.record(task.sim.wheel_model)
+     if task.sim.wheel_model=='mechanical':
+         if (task.sim.wheel_motor_gain!=1. or task.sim.wheel_motor_delay_ms!=0. or
+-                task.sim.wheel_motor_time_constant_ms!=0. or task.sim.wheel_motor_torque_limit_nm is not None):
+-            raise ValueError('Mechanical wheels require unit output gain and no extra wheel response; use legacy_curve for historical replay')
++                task.sim.wheel_motor_torque_limit_nm is not None):
++            raise ValueError('Mechanical wheels require unit output gain, no pure wheel delay and no extra torque cap')
+         cfg.scene.entities['robot'].spec_fn=wheel_physics.mechanical_spec
+     cfg.scene.num_envs = task.env.play_num_envs if play else task.env.num_envs
+     cfg.sim.mujoco.timestep = task.sim.dt
+@@ -473,7 +473,9 @@
+             collision=torch.zeros_like(error),
+             dof_pos_limits=limit
+         )
+-        terms = {k: (v * self.cfg.rewards.scales[k] * self.dt).clamp(-self.dt, self.dt) for k, v in raw.items()}
++        # 高度项的上限随权重增加，其余奖励仍保持原来的±dt限幅。
++        terms = {k: (v * self.cfg.rewards.scales[k] * self.dt).clamp(
++            -self.dt, self.dt * self.cfg.rewards.scales[k] if k=='base_height' else self.dt) for k, v in raw.items()}
+         self.sums[:, 0] += terms['tracking_lin_vel']
+         self.sums[:, 1] += terms['tracking_ang_vel']
+         return (torch.stack(list(terms.values())).sum(0), terms)
+diff --git a/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py b/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py
+--- a/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py
++++ b/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py
+@@ -65,13 +65,13 @@
+         sensor_delay_ms_range = [2., 2.]
+ 
+         # 与复旦配置同名：主动推扰开关、间隔和冲量速度尺度。
+-        push_robots = True
++        push_robots = False
+         push_interval_s = 7.
+         max_push_vel_xy = .3
+ 
+         # 机身坐标系各轴每回合重抽，作用于机身质心并持续整回合。
+-        external_force_range = [-10., 10.]  # N
+-        external_torque_range = [-10., 10.]  # N·m
++        external_force_range = [0., 0.]  # N
++        external_torque_range = [0., 0.]  # N·m
+ 
+     class env:
+         num_envs = 512
+@@ -88,6 +88,7 @@
+         wheel_motor_gain = 1.  # 机械模式固定1；只有legacy_curve可使用旧输出倍率。
+         wheel_motor_delay_ms = 0.
+         wheel_motor_time_constant_ms = 0.
++        wheel_motor_time_constant_range_ms = None  # 可选回合随机范围；双轮共用，复位时重抽。
+         wheel_motor_torque_limit_nm = None  # 额外轮轴输出上限；None沿用原模型。
+ 
+     class control:
+@@ -117,10 +118,10 @@
+         pitch_inner_penalty_ratio = .05  # 区间内为原强度的1/20。
+         tracking_sigma = .25
+         tracking_enhance_sigma = 2.5
+-        height_sigma = .001
++        height_sigma = .01  # 扩大高度奖励作用范围，低位抬升也能产生明显收益。
+         soft_limit_half_span = .485
+         scales = dict(tracking_lin_vel=1., tracking_lin_vel_enhance=1.,
+-            tracking_ang_vel=1., tracking_ang_vel_enhance=1., base_height=1., nominal_state=-1.,
++            tracking_ang_vel=1., tracking_ang_vel_enhance=1., base_height=5., nominal_state=-1.,
+             lin_vel_z=-1., ang_vel_xy=-.2, roll=-100., pitch=-100., dof_vel=-5e-5, dof_acc=-2.5e-7,
+             torques=-.0001, action_rate=-.01, action_smooth=-.01, collision=-1., dof_pos_limits=-1.)
+ 
+diff --git a/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/height_reward.py b/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/height_reward.py
+new file mode 100644
+--- /dev/null
++++ b/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/height_reward.py
+@@ -0,0 +1,28 @@
++"""Height reward parameters, including original semantics for older checkpoints."""
++import math
++from .fudan_ppo_walk_config import FudanWalkCfg
++
++VERSION='fudan-height-exp-scaled-v1'
++LEGACY=dict(version=VERSION,scale=1.,sigma=.001)
++
++
++def from_record(record=None):
++    values=dict(LEGACY if record is None else record)
++    if set(values)!={'version','scale','sigma'} or values['version']!=VERSION:
++        raise ValueError('Unsupported height reward profile')
++    scale,sigma=float(values['scale']),float(values['sigma'])
++    if not math.isfinite(scale) or scale<0 or not math.isfinite(sigma) or sigma<=0:
++        raise ValueError('Invalid height reward parameters')
++    return dict(version=VERSION,scale=scale,sigma=sigma)
++
++
++def from_task_config(task_cfg=None):
++    cfg=(FudanWalkCfg() if task_cfg is None else task_cfg).rewards
++    return from_record(dict(version=VERSION,scale=cfg.scales['base_height'],sigma=cfg.height_sigma))
++
++
++def configure(task,record=None):
++    values=from_record(record)
++    task.rewards.scales['base_height']=values['scale']
++    task.rewards.height_sigma=values['sigma']
++    return values
+diff --git a/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/wheel_motor.py b/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/wheel_motor.py
+--- a/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/wheel_motor.py
++++ b/mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/wheel_motor.py
+@@ -1,7 +1,26 @@
+ """Fudan-only wheel response after PD limits; controller gains and XML gain remain separate."""
+ import torch
++import math
+ 
+ from ct_mjlab.envs.chuanliantui.huananhu_action import wheel_response_input
++
++
++def response_record(cfg=None):
++    from .fudan_ppo_walk_config import FudanWalkCfg
++    sim=(cfg or FudanWalkCfg()).sim
++    return dict(version='fudan-wheel-response-v1',gain=sim.wheel_motor_gain,
++        delay_ms=sim.wheel_motor_delay_ms,time_constant_ms=sim.wheel_motor_time_constant_ms,
++        time_constant_range_ms=sim.wheel_motor_time_constant_range_ms,
++        torque_limit_nm=sim.wheel_motor_torque_limit_nm)
++
++
++def configure_response(cfg,record):
++    # 旧模型没有此字段，必须恢复无附加响应，不能继承当前训练设置。
++    record=record or dict(version='fudan-wheel-response-v1',gain=1.,delay_ms=0.,
++        time_constant_ms=0.,time_constant_range_ms=None,torque_limit_nm=None)
++    if record['version']!='fudan-wheel-response-v1':raise ValueError('Unknown wheel response version')
++    for key in ('gain','delay_ms','time_constant_ms','time_constant_range_ms','torque_limit_nm'):
++        setattr(cfg.sim,'wheel_motor_'+key,record[key])
+ 
+ 
+ class WheelMotorResponse:
+@@ -10,18 +29,24 @@
+         self.mechanical=sim_cfg.wheel_model=='mechanical'
+         self.worlds=torch.arange(self.n,device=action.device)
+         self.configure(sim_cfg.wheel_motor_gain,sim_cfg.wheel_motor_delay_ms,
+-            sim_cfg.wheel_motor_time_constant_ms,sim_cfg.wheel_motor_torque_limit_nm)
++            sim_cfg.wheel_motor_time_constant_ms,sim_cfg.wheel_motor_torque_limit_nm,
++            sim_cfg.wheel_motor_time_constant_range_ms)
+ 
+-    def configure(self,gain=1.,delay_ms=0.,time_constant_ms=0.,torque_limit_nm=None):
++    def configure(self,gain=1.,delay_ms=0.,time_constant_ms=0.,torque_limit_nm=None,time_constant_range_ms=None):
+         a=self.action
+         def column(value):return torch.as_tensor(value,device=a.device,dtype=a._torques.dtype).expand(self.n).clone()
+         self.gain=column(gain);delay=column(delay_ms);self.tau_s=column(time_constant_ms)*.001
+-        if self.mechanical and ((self.gain!=1).any() or (delay!=0).any() or (self.tau_s!=0).any() or torque_limit_nm is not None):
+-            raise ValueError('Mechanical wheel plant cannot add output scaling, delay, lag or extra torque caps')
++        if self.mechanical and ((self.gain!=1).any() or (delay!=0).any() or torque_limit_nm is not None):
++            raise ValueError('Mechanical wheel plant cannot add output scaling, pure delay or extra torque caps')
+         if not all(torch.isfinite(x).all() and (x>=0).all() for x in (self.gain,delay,self.tau_s)):
+             raise ValueError('Wheel gain/delay/time constant must be finite and nonnegative')
+         self.delay_steps=torch.round(delay/(1000*self.dt)).long()
+         self.alpha=-torch.expm1(-self.dt/self.tau_s.clamp(min=1e-12))
++        self.tau_range_ms=time_constant_range_ms
++        if self.tau_range_ms is not None:
++            if (len(self.tau_range_ms)!=2 or not all(math.isfinite(v) for v in self.tau_range_ms)
++                    or not 0<=self.tau_range_ms[0]<=self.tau_range_ms[1] or (self.tau_s!=0).any()):
++                raise ValueError('Use an ordered nonnegative tau range with fixed tau set to zero')
+         self.limit=torch.full((self.n,2),float('inf'),device=a.device)
+         if torque_limit_nm is not None:
+             self.limit.copy_(torch.as_tensor(torque_limit_nm,device=a.device).expand(self.n,2))
+@@ -29,9 +54,10 @@
+                 raise ValueError('Wheel output torque limit must be positive shaft Nm or +inf/None for bypass')
+         self.history=torch.zeros((int(self.delay_steps.max())+1,self.n,2),device=a.device)
+         self.state=torch.zeros((self.n,2),device=a.device);self.head=0
+-        self.enabled=bool((self.gain!=1).any() or (self.delay_steps!=0).any() or (self.tau_s!=0).any() or torch.isfinite(self.limit).any())
++        self.enabled=bool((self.gain!=1).any() or (self.delay_steps!=0).any() or (self.tau_s!=0).any() or torch.isfinite(self.limit).any() or (self.tau_range_ms is not None and self.tau_range_ms[1]>0))
+         self.last_limited=torch.zeros_like(self.state);self.last_delayed=torch.zeros_like(self.state)
+         self.last_ctrl=torch.zeros_like(self.state);self.last_shaft_torque=torch.zeros_like(self.state)
++        self.reset(slice(None))
+ 
+     def apply(self,limited,velocity):
+         self.last_limited.copy_(limited)
+@@ -54,6 +80,10 @@
+         return ctrl
+ 
+     def reset(self,ids):
++        if self.tau_range_ms is not None:
++            # 一个机器人双轮共用时间常数；只重抽本次复位的环境。
++            self.tau_s[ids]=torch.empty_like(self.tau_s[ids]).uniform_(*self.tau_range_ms)*.001
++            self.alpha[ids]=-torch.expm1(-self.dt/self.tau_s[ids].clamp(min=1e-12))
+         self.history[:,ids]=0.;self.state[ids]=0.
+         for field in (self.last_limited,self.last_delayed,self.last_ctrl,self.last_shaft_torque):field[ids]=0.
+ 
+diff --git a/mjlab_training/src/ct_mjlab/rsl_rl/runners/fudan_on_policy_runner.py b/mjlab_training/src/ct_mjlab/rsl_rl/runners/fudan_on_policy_runner.py
+--- a/mjlab_training/src/ct_mjlab/rsl_rl/runners/fudan_on_policy_runner.py
++++ b/mjlab_training/src/ct_mjlab/rsl_rl/runners/fudan_on_policy_runner.py
+@@ -12,7 +12,8 @@
+ from ct_mjlab.rsl_rl.algorithms.fudan_ppo import PPO
+ from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig, from_record
+ from ct_mjlab.envs.fudan_ppo_walk.commands import LEGACY_COMMAND_SAMPLING
+-from ct_mjlab.envs.fudan_ppo_walk import posture_reward
++from ct_mjlab.envs.fudan_ppo_walk import posture_reward, height_reward
++from ct_mjlab.envs.fudan_ppo_walk.wheel_motor import response_record
+ 
+ class BudgetStop(Exception):
+     pass
+@@ -145,6 +146,10 @@
+             command_sampling=getattr(self.env, 'command_sampling', LEGACY_COMMAND_SAMPLING),
+             source_posture_reward=source_posture,
+             posture_reward=posture_reward.from_record(getattr(self.env, 'posture_reward_profile', None)),
++            source_height_reward=height_reward.from_record(checkpoint.get('height_reward')),
++            height_reward=height_reward.from_task_config(self.env.cfg),
++            source_wheel_response=checkpoint.get('wheel_response'),
++            wheel_response=response_record(self.env.cfg),
+             restoration='Learning state and RNG restored; physics/history/episode state restarts'
+         )
+         (self.log_dir / 'restore_report.json').write_text(json.dumps(restored, indent=2) + '\n')
+@@ -158,6 +163,8 @@
+                 contract=CONTRACT,
+                 physical_leg_load=self.env.action.leg_load.record if self.env.action.leg_load is not None else parameter_record(False),
+                 physical_wheel_model=self.env.wheel_physics_profile,
++                wheel_response=response_record(self.env.cfg),
++                control=section_dict(self.env.cfg.control),
+                 reset_contract=getattr(self.env, 'reset_contract', RESET_CONTRACT),
+                 reference=REFERENCE,
+                 model_state_dict=self.policy.state_dict(),
+@@ -176,6 +183,7 @@
+                 disturbances=getattr(self.env, 'disturbance_config', DisturbanceConfig()).record(),
+                 command_sampling=getattr(self.env, 'command_sampling', LEGACY_COMMAND_SAMPLING),
+                 posture_reward=posture_reward.from_record(getattr(self.env, 'posture_reward_profile', None)),
++                height_reward=height_reward.from_task_config(self.env.cfg),
+                 reward_names=list(self.env.cfg.rewards.scales),
+                 num_envs=self.env.num_envs,
+                 policy_steps=self.env.total_steps,
+@@ -284,7 +292,10 @@
+             disturbances=getattr(self.env, 'disturbance_config', DisturbanceConfig()).record(),
+             command_sampling=getattr(self.env, 'command_sampling', LEGACY_COMMAND_SAMPLING),
+             posture_reward=posture_reward.from_record(getattr(self.env, 'posture_reward_profile', None)),
++            height_reward=height_reward.from_task_config(self.env.cfg),
+             reward_names=list(self.env.cfg.rewards.scales),
++            wheel_response=response_record(self.env.cfg),
++            control=section_dict(self.env.cfg.control),
+             resume_from=self.resume_from,
+             behavior_accepted=False,
+             reward_logging=f'weighted_clipped_mean_over_{self.num_steps_per_env}_steps_and_all_environments'
+diff --git a/mjlab_training/src/ct_mjlab/scripts/train.py b/mjlab_training/src/ct_mjlab/scripts/train.py
+--- a/mjlab_training/src/ct_mjlab/scripts/train.py
++++ b/mjlab_training/src/ct_mjlab/scripts/train.py
+@@ -143,6 +143,14 @@
+     from ct_mjlab.envs.fudan_ppo_walk import posture_reward
+     if posture_reward.from_record(proof.get('posture_reward')) != posture_reward.from_task_config(env_cfg):
+         raise ValueError('Physical precheck posture reward differs from the requested training settings')
++    from ct_mjlab.envs.fudan_ppo_walk import height_reward
++    if height_reward.from_record(proof.get('height_reward')) != height_reward.from_task_config(env_cfg):
++        raise ValueError('Physical precheck height reward differs from the requested training settings')
++    from ct_mjlab.envs.fudan_ppo_walk.wheel_motor import response_record,configure_response
++    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
++    checked=FudanWalkCfg();configure_response(checked,proof.get('wheel_response'))
++    if response_record(checked)!=response_record(env_cfg):
++        raise ValueError('Physical precheck wheel response differs from the requested training settings')
+     if args.migrate_history_v2 and args.resume is None:
+         raise ValueError('--migrate-history-v2 requires --resume')
+     if args.num_envs % train_cfg.algorithm.num_mini_batches:
+diff --git a/scripts/agent/fudan_ppo_walk/evaluate.py b/scripts/agent/fudan_ppo_walk/evaluate.py
+--- a/scripts/agent/fudan_ppo_walk/evaluate.py
++++ b/scripts/agent/fudan_ppo_walk/evaluate.py
+@@ -45,10 +45,12 @@
+     from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+     from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
+     from ct_mjlab.envs.chuanliantui.fitted_leg_load import parameter_record
+-    from ct_mjlab.envs.fudan_ppo_walk import posture_reward
++    from ct_mjlab.envs.fudan_ppo_walk import posture_reward, height_reward
++    from ct_mjlab.envs.fudan_ppo_walk.wheel_motor import configure_response,response_record
+     from types import SimpleNamespace
+     policy,metadata=load_policy(args.checkpoint,'cuda:0')
+     posture=posture_reward.from_record(metadata.get('posture_reward'))
++    height=height_reward.from_record(metadata.get('height_reward'))
+     disturbances=from_sim2sim_config()
+     if metadata.get('reset_contract') not in (RESET_CONTRACT,RESET_V2_CONTRACT):
+         raise ValueError('This GPU evaluator requires PD-centred reset v2/v3; use the preserved trial source for legacy models')
+@@ -57,9 +59,12 @@
+     protocol=protocol_record(items,args.diagnostic)
+     protocol.update(validation_engine='gpu',validation_backend='mujoco_warp_gpu',
+         disturbances=disturbances.record(),training_disturbances=from_record(metadata.get('disturbances')).record(),
+-        posture_reward=posture)
++        posture_reward=posture,height_reward=height)
+     from ct_mjlab.envs.fudan_ppo_walk.wheel_physics import record as wheel_record
+     protocol['physical_wheel_model']=wheel_record(FudanWalkCfg.sim.wheel_model)
++    response_cfg=FudanWalkCfg();configure_response(response_cfg,metadata.get('wheel_response'))
++    protocol['wheel_response']=response_record(response_cfg)
++    protocol['control']=metadata.get('control',section_dict(FudanWalkCfg().control))
+     fitted = getattr(args,'leg_load_profile','legacy')=='fitted' and getattr(args,'response_parameters',None) is None
+     protocol['physical_leg_load']=parameter_record(fitted)
+     if getattr(args,'response_parameters',None) is not None:
+@@ -77,6 +82,9 @@
+         batch=items[offset:offset+args.batch_size]
+         task=FudanWalkCfg();task.sim=SimpleNamespace(**section_dict(task.sim));task.sim.fitted_leg_load=fitted
+         posture_reward.configure(task,posture)
++        height_reward.configure(task,height)
++        configure_response(task,metadata.get('wheel_response'))
++        if 'control' in metadata:task.control=SimpleNamespace(**metadata['control'])
+         env=FudanEnv(len(batch),seed=50001+offset,randomized=True,reset_contract=metadata['reset_contract'],disturbances=disturbances,cfg=task)
+         obs,_=configure_samples(env,batch,fixture)
+         response=None
+diff --git a/scripts/agent/fudan_ppo_walk/precheck.py b/scripts/agent/fudan_ppo_walk/precheck.py
+--- a/scripts/agent/fudan_ppo_walk/precheck.py
++++ b/scripts/agent/fudan_ppo_walk/precheck.py
+@@ -12,7 +12,8 @@
+ from ct_mjlab.fudan_ppo_walk.protocol import samples
+ from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config
+ from ct_mjlab.envs.fudan_ppo_walk.commands import command_config
+-from ct_mjlab.envs.fudan_ppo_walk import posture_reward
++from ct_mjlab.envs.fudan_ppo_walk import posture_reward, height_reward
++from ct_mjlab.envs.fudan_ppo_walk.wheel_motor import response_record
+ 
+ 
+ def initial_geometry(env,items):
+@@ -45,6 +46,8 @@
+     report['disturbances']=disturbances.record()
+     report['command_sampling']=command_config()
+     report['posture_reward']=posture_reward.from_task_config()
++    report['height_reward']=height_reward.from_task_config()
++    report['wheel_response']=response_record()
+     report['auto_reset']=a.training_resets
+     report['episode_completions']=0
+     try:
+diff --git a/scripts/agent/fudan_ppo_walk/replay_reference_pd_500.py b/scripts/agent/fudan_ppo_walk/replay_reference_pd_500.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/agent/fudan_ppo_walk/replay_reference_pd_500.py
+@@ -0,0 +1,126 @@
++"""Paired GPU replay of source3000/P60D2 and continuation3500/P20D1."""
++import argparse
++from copy import deepcopy
++from dataclasses import replace
++import json
++from pathlib import Path
++import shutil
++import time
++from types import SimpleNamespace
++from unittest.mock import patch
++
++import numpy as np
++import torch
++from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
++from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_sim2sim_config
++from scripts.agent.fudan_ppo_walk import evaluate
++from scripts.agent.fudan_ppo_walk.diagnose_parking_posture import parking_items
++from scripts.agent.real2sim.replay_usb_pd_targets import sha,write
++
++ROOT=Path(__file__).resolve().parents[3]
++OLD=ROOT/'artifacts/fudan_ppo_walk/models/20261113_model3000_p60d2_armature2_wheelP01_mechanical.pt'
++NEW=ROOT/'logs/mjlab/fudan_ppo_walk/20261113_p20d1_wheelP01_mechanical_resume3000_to3500_01/model_final.pt'
++
++
++def items(*_):
++    result=deepcopy(parking_items())
++    for row in result:
++        if row['case']['category']=='zero':row['case']['duration']=30.;row['case']['segments'][0]['duration']=30.
++    return result
++
++
++def run(out):
++    out.mkdir(parents=True,exist_ok=False);torch.set_num_threads(1)
++    conditions=replace(from_sim2sim_config(),pushes=False,external_force_range=(0.,0.),external_torque_range=(0.,0.))
++    plan=dict(models=[dict(name='model3000_P60D2',checkpoint=str(OLD),sha256=sha(OLD),p=60.,d=2.),
++                      dict(name='model3500_P20D1',checkpoint=str(NEW),sha256=sha(NEW),p=20.,d=1.)],
++        samples=items(),disturbances=conditions.record(),physics_dt_s=.002,policy_dt_s=.01,training_updates=0,
++        scope='Nine nominal zero/forward-stop/backward-stop cases; same initial fixtures, no external force; not full987 or real-robot acceptance')
++    write(out/'plan.json',plan);shutil.copy2(__file__,out/'source.py')
++    original=evaluate.configure_samples
++    for entry in plan['models']:
++        def configured(env,samples,folder):
++            value=original(env,samples,folder);a=env.action
++            assert (a.cfg.leg_stiffness,a.cfg.leg_damping,a.cfg.wheel_stiffness)==(entry['p'],entry['d'],.1)
++            assert not a.wheel_motor.enabled and not a._wheel_speed_shaping and a.motor_strength.eq(1).all()
++            write(Path(folder)/'actual-control.json',dict(leg_p=a.cfg.leg_stiffness,leg_d=a.cfg.leg_damping,wheel_p=a.cfg.wheel_stiffness,
++                wheel_response_enabled=a.wheel_motor.enabled,mechanical=env.wheel_physics_profile))
++            return value
++        args=SimpleNamespace(checkpoint=Path(entry['checkpoint']),output=out/entry['name'],deadline=time.time()+300,
++            diagnostic=True,diagnostic_height=None,batch_size=9,selection=None,leg_load_profile='legacy',response_parameters=None)
++        with patch.object(evaluate,'evaluation_items',items),patch.object(evaluate,'from_sim2sim_config',return_value=conditions),patch.object(evaluate,'configure_samples',configured),patch.object(FudanWalkCfg.control,'leg_stiffness',entry['p']),patch.object(FudanWalkCfg.control,'leg_damping',entry['d']),patch.object(FudanWalkCfg.control,'wheel_stiffness',.1):
++            evaluate.gpu(args)
++    report(out)
++
++
++def report(out):
++    plan=json.loads((out/'plan.json').read_text());rows=[];pairs=[]
++    for entry in plan['models']:
++        folder=out/entry['name'];mapping=json.loads((folder/'fixtures/mapping.json').read_text());legs=np.asarray(mapping['motor_q'])[[0,1,3,4]]
++        for sample in plan['samples']:
++            end=sample['case']['duration'];height=sample['case']['segments'][0]['command'][2]
++            with np.load(folder/'traces'/(sample['id']+'.npz')) as tr:
++                assert abs(tr['time'][-1]-end)<1e-6 and np.isfinite(tr['qpos']).all()
++                last=(tr['time']>=end-5)&(tr['time']<end);one=(tr['qpos_time']>=end-1)&(tr['qpos_time']<end)
++                rows.append(dict(model=entry['name'],sample_id=sample['id'],case=sample['case']['category'],height_command_m=height,
++                    height_last5_mean_m=float(tr['position'][last,2].mean()),pitch_last5_peak_deg=float(abs(tr['roll_pitch_deg'][last,1]).max()),
++                    speed_last5_peak_m_s=float(np.linalg.norm(tr['linear_world'][last,:2],axis=1).max()),
++                    body_contact_last5_mean_N=float(tr['base_contact'][last].mean()),wheel_support_last5_mean_N=tr['wheel_support'][last].mean(0).tolist(),
++                    wheel_loaded_last5_fraction=float(np.mean(np.all(tr['wheel_support'][last]>.1*tr['weight'][last,None],axis=1))),
++                    leg_last1_max_pp_deg=float(np.ptp(np.rad2deg(tr['qpos'][one][:,legs]),axis=0).max())))
++    for sample in plan['samples']:
++        path='fixtures/'+sample['id']+'_initial.npz'
++        with np.load(out/plan['models'][0]['name']/path) as left,np.load(out/plan['models'][1]['name']/path) as right:
++            equal=all(np.array_equal(left[k],right[k]) for k in left.files)
++            assert equal,sample['id'];pairs.append(dict(sample_id=sample['id'],all_fixture_fields_equal=equal))
++    write(out/'summary.json',dict(rows=rows,paired_initial_states=pairs,training_updates=0,behavior_accepted=False))
++    print(json.dumps(rows,indent=2))
++
++
++def render(out):
++    import mujoco
++    import imageio.v2 as imageio
++    from PIL import Image,ImageDraw,ImageFont
++    from mjlab.viewer.model_sync import disable_model_sameframe_shortcuts
++    plan=json.loads((out/'plan.json').read_text());video=out/'video';video.mkdir(exist_ok=False)
++    font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',18);videos=[]
++    for category in ('zero','stop_forward','stop_backward'):
++        sample=next(s for s in plan['samples'] if s['case']['category']==category and s['case']['segments'][0]['command'][2]==.26)
++        end=sample['case']['duration'];sides=[]
++        for entry in plan['models']:
++            folder=out/entry['name'];model=mujoco.MjModel.from_binary_path(str(folder/'fixtures/model.mjb'));disable_model_sameframe_shortcuts(model)
++            model.vis.global_.offwidth=640;model.vis.global_.offheight=480;data=mujoco.MjData(model);camera=mujoco.MjvCamera();camera.distance=1.5;camera.elevation=-12.;camera.azimuth=90.
++            option=mujoco.MjvOption();option.geomgroup[:]=[1,1,1,0,0,0]
++            with np.load(folder/'traces'/(sample['id']+'.npz')) as f:tr={k:f[k].copy() for k in f.files}
++            mapping=json.loads((folder/'fixtures/mapping.json').read_text());legs=np.asarray(mapping['motor_q'])[[0,1,3,4]]
++            sides.append((entry,model,data,camera,option,tr,legs,mujoco.Renderer(model,width=640,height=480)))
++        target=video/(category+'.mp4');frames=0
++        try:
++            with imageio.get_writer(target,fps=50,codec='libx264',quality=8) as writer:
++                for k in range(0,round(end*100),2):
++                    t=k*.01;tick=k*5;command=evaluate.command(sample['case'],t);canvas=Image.new('RGB',(1280,544),'#18212b');draw=ImageDraw.Draw(canvas)
++                    draw.text((12,8),f'1x NORMAL | {category} | t={t:.2f}s | cmd vx/yaw/h={command} | no external force',font=font,fill='white')
++                    draw.text((12,34),'Left: source3000 P60/D2 | Right: continuation3500 P20/D1 | wheel P0.1; original mechanical parameters',font=font,fill='#ffcd72')
++                    for col,(entry,model,data,cam,option,tr,legs,renderer) in enumerate(sides):
++                        data.qpos[:]=tr['qpos'][k];mujoco.mj_forward(model,data);cam.lookat[:]=[data.qpos[0],data.qpos[1],.20]
++                        renderer.update_scene(data,camera=cam,scene_option=option);panel=Image.fromarray(renderer.render().copy());d=ImageDraw.Draw(panel);d.rectangle((0,0,640,112),fill='#18212b')
++                        pp=np.ptp(np.rad2deg(tr['qpos'][max(0,k-100):k+1][:,legs]),axis=0).max();speed=np.linalg.norm(tr['linear_world'][tick,:2]);support=tr['wheel_support'][tick]
++                        lines=[entry['name'],f'Actual h={tr["position"][tick,2]:.3f}m | pitch={tr["roll_pitch_deg"][tick,1]:+.1f}deg | speed={speed:.3f}m/s',
++                            f'Wheel L/R={support[0]:.1f}/{support[1]:.1f}N | Body={tr["base_contact"][tick]:.1f}N',f'Leg last1s p-p={pp:.2f}deg | XY following camera']
++                        for row,text in enumerate(lines):d.text((10,7+25*row),text,font=font,fill='white')
++                        canvas.paste(panel,(col*640,64))
++                    frame=np.asarray(canvas);writer.append_data(frame);frames+=1
++                    if k==round((end-1)*100):imageio.imwrite(video/(category+'.png'),frame)
++        finally:
++            for side in sides:side[-1].close()
++        reader=imageio.get_reader(target);meta=reader.get_meta_data();decoded=sum(1 for _ in reader);reader.close();assert decoded==frames==round(end*50) and meta['fps']==50
++        videos.append(dict(file=target.name,frames=frames,fps=50,duration_s=end,sha256=sha(target),full_decode_passed=True))
++    write(video/'index.json',dict(videos=videos,new_physics_steps=0,policy_forwards=0))
++
++
++def main():
++    p=argparse.ArgumentParser(__doc__);p.add_argument('mode',choices=('run','report','render'));p.add_argument('--output',type=Path,required=True);a=p.parse_args()
++    {'run':run,'report':report,'render':render}[a.mode](a.output.resolve())
++
++
++if __name__=='__main__':main()
+diff --git a/scripts/agent/fudan_ppo_walk/train_reference_pd_500.py b/scripts/agent/fudan_ppo_walk/train_reference_pd_500.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/agent/fudan_ppo_walk/train_reference_pd_500.py
+@@ -0,0 +1,140 @@
++"""Authorized model3000 continuation: only nominal leg PD changes60/2 to20/1."""
++import argparse
++from contextlib import ExitStack
++import hashlib
++import json
++from pathlib import Path
++import shutil
++import sys
++import time
++from unittest.mock import patch
++
++from scripts.agent.fudan_ppo_walk.run_torque_ablation import run_command
++
++ROOT=Path(__file__).resolve().parents[3]
++PYTHON=ROOT/'mjlab_training/.venv/bin/python'
++MODEL=ROOT/'artifacts/fudan_ppo_walk/models/20261113_model3000_p60d2_armature2_wheelP01_mechanical.pt'
++SOURCE_RUN=ROOT/'logs/mjlab/fudan_ppo_walk/20261113_p60d2_wheelP01_mechanical_scratch3000_01'
++LOG=ROOT/'logs/mjlab/fudan_ppo_walk/20261113_p20d1_wheelP01_mechanical_resume3000_to3500_01'
++REFERENCE=ROOT/'artifacts/fudan_ppo_walk/fudan-ppo-walk-20261101/reference/plane/wheel_legged_gym/envs/wheel_legged/wheel_legged_config.py'
++XML=ROOT/'resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml'
++MODULE='scripts.agent.fudan_ppo_walk.train_reference_pd_500'
++
++
++def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
++def write(path,value):Path(path).write_text(json.dumps(value,indent=2)+'\n')
++
++
++def prepare(out):
++    import torch
++    checkpoint=torch.load(MODEL,map_location='cpu',weights_only=False)
++    assert checkpoint['iterations']==3000 and not checkpoint['partial_update']
++    assert sha(MODEL)=='9d4d3123d42451e8942581b7cc943bc35fa8e35f7947b5c5747abeb89de215ee'
++    assert not LOG.exists()
++    hashes=json.loads((SOURCE_RUN/'source_sha256.json').read_text())
++    assert sha(XML)==hashes[str(XML.relative_to(ROOT))]
++    baseline=json.loads((SOURCE_RUN/'effective-training-config.json').read_text())
++    assert baseline['control']['leg_stiffness']==60. and baseline['control']['leg_damping']==2.
++    cfg=json.loads(json.dumps(baseline));cfg['control']['leg_stiffness']=20.;cfg['control']['leg_damping']=1.
++    cfg['sim']['wheel_motor_time_constant_range_ms']=None
++    out.mkdir(parents=True,exist_ok=False)
++    budget=dict(authorization='User requested Fudan reference joint PD and500 additional iterations; source3000 from preceding task context',
++        checkpoint=str(MODEL),checkpoint_sha256=sha(MODEL),xml_sha256=sha(XML),start_iteration=3000,target_iteration=3500,additional_iterations=500,num_envs=4096,
++        log_dir=str(LOG),source_config_sha256=sha(SOURCE_RUN/'effective-training-config.json'),reference_config_sha256=sha(REFERENCE),
++        only_active_config_changes={'control.leg_stiffness':[60.,20.],'control.leg_damping':[2.,1.]},
++        passive_new_schema_field='sim.wheel_motor_time_constant_range_ms=None (disabled)',actual_config=cfg,
++        height_reward='Inherited scale1/sigma0.001',external_loads='Inherited source3000 pushes and episode +/-10N / +/-10Nm, not current scratch1500 defaults',
++        reset_contract=checkpoint['reset_contract'],created_unix=time.time())
++    write(out/'budget.json',budget);shutil.copy2(__file__,out/'launcher.py');shutil.copy2(REFERENCE,out/'reference-control.py')
++    shutil.copy2(SOURCE_RUN/'effective-training-config.json',out/'source-effective-config.json')
++    write(out/'status.json',dict(status='prepared',training_started=False))
++
++
++def worker(out,stage):
++    import torch
++    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
++    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
++    from ct_mjlab.envs.fudan_ppo_walk import height_reward,wheel_physics
++    from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config,from_record
++    budget=json.loads((out/'budget.json').read_text());torch.set_num_threads(1);assert sha(MODEL)==budget['checkpoint_sha256']
++    assert sha(XML)==budget['xml_sha256']
++    source=torch.load(MODEL,map_location='cpu',weights_only=False)
++    original_init=FudanEnv.__init__
++    def checked_init(env,*args,**kwargs):
++        original_init(env,*args,**kwargs);a=env.action;sim=env.env.sim
++        assert (a.cfg.leg_stiffness,a.cfg.leg_damping,a.cfg.wheel_stiffness,a.cfg.wheel_damping)==(20.,1.,.1,0.)
++        assert not a.wheel_motor.enabled and not a._wheel_speed_shaping and a.wheel_motor.gain.eq(1).all()
++        assert env.wheel_physics_profile==source['physical_wheel_model']==wheel_physics.record('mechanical')
++        assert height_reward.from_task_config(env.cfg)==height_reward.from_record(source.get('height_reward'))
++        assert env.disturbance_config==from_record(source['disturbances'])
++        leg_armature=sim.model.dof_armature[:,a._motor_v_adr[[0,1,3,4]]]
++        assert torch.allclose(leg_armature,torch.full_like(leg_armature,.03159),atol=1e-8,rtol=0)
++        assert a.kp_scale.min()>=.85 and a.kp_scale.max()<=1.15 and a.kd_scale.min()>=.85 and a.kd_scale.max()<=1.15
++        write(out/(stage+'-actual-control.json'),dict(num_envs=env.num_envs,control=section_dict(env.cfg.control),
++            kp_scale_minmax=[float(a.kp_scale.min()),float(a.kp_scale.max())],kd_scale_minmax=[float(a.kd_scale.min()),float(a.kd_scale.max())],
++            wheel_response_enabled=a.wheel_motor.enabled,physical_wheel_model=env.wheel_physics_profile,height_reward=height_reward.from_task_config(env.cfg),
++            disturbances=env.disturbance_config.record(),leg_armature_unique=torch.unique(leg_armature).cpu().tolist()))
++    with ExitStack() as stack:
++        # 仅本次进程沿用源配方；不把其他实验的奖励/外力开关混入本次PD对照。
++        for section,values in budget['actual_config'].items():
++            for key,value in values.items():stack.enter_context(patch.object(getattr(FudanWalkCfg,section),key,value,create=True))
++        stack.enter_context(patch.object(FudanEnv,'__init__',checked_init))
++        actual=json.loads(json.dumps({name:section_dict(getattr(FudanWalkCfg(),name)) for name in budget['actual_config']}))
++        assert actual==budget['actual_config']
++        write(out/(stage+'-effective-config.json'),actual)
++        if stage=='precheck':
++            from scripts.agent.fudan_ppo_walk import precheck
++            with patch.object(sys,'argv',['precheck','--output',str(out/'precheck'),'--deadline',str(time.time()+180),
++                '--viewer','viser','--port','8798','--history-version','v3','--training-resets']):precheck.main()
++        else:
++            from ct_mjlab.scripts import train
++            from ct_mjlab.rsl_rl.runners import fudan_on_policy_runner as runner
++            original_snapshot=runner.snapshot
++            def snapshot(path):
++                original_snapshot(path);path=Path(path)
++                shutil.copy2(__file__,path/'continuation-launcher.py');shutil.copy2(out/'budget.json',path/'authorized-budget.json')
++                write(path/'effective-training-config.json',actual)
++                shutil.copy2(XML,path/'source/resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml')
++            with patch.object(runner,'snapshot',snapshot):
++                train.main(['--task','fudan_ppo_walk','--num-envs','4096','--iterations','500','--seed','1',
++                    '--resume',str(MODEL),'--precheck',str(out/'precheck/report.json'),'--log-dir',str(LOG)])
++
++
++def audit(out):
++    import torch
++    from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
++    source=torch.load(MODEL,map_location='cpu',weights_only=False);initial=torch.load(LOG/'model_initial.pt',map_location='cpu',weights_only=False);final=torch.load(LOG/'model_final.pt',map_location='cpu',weights_only=False)
++    report=json.loads((LOG/'training_report.json').read_text())
++    assert initial['iterations']==3000 and final['iterations']==3500 and not final['partial_update']
++    assert report['iterations_added']==report['iteration_budget']==500 and report['stopped_by']=='iteration_budget'
++    assert final['transitions']-source['transitions']==500*4096*48
++    assert final['primary_updates']-source['primary_updates']==final['encoder_updates']-source['encoder_updates']==10000
++    assert initial['resume_from']['sha256']==sha(MODEL)
++    for key in source['model_state_dict']:assert torch.equal(initial['model_state_dict'][key],source['model_state_dict'][key])
++    for checkpoint in (initial,final):
++        assert checkpoint['control']['leg_stiffness']==20. and checkpoint['control']['leg_damping']==1. and checkpoint['control']['wheel_stiffness']==.1
++        assert checkpoint['wheel_response']['time_constant_ms']==0 and checkpoint['wheel_response']['time_constant_range_ms'] is None
++    events=EventAccumulator(str(LOG),size_guidance={'scalars':0});events.Reload()
++    for tag in events.Tags()['scalars']:
++        if tag.startswith('Rewards/'):
++            assert [v.step for v in events.Scalars(tag)]==list(range(3001,3501)),tag
++    write(out/'completion-audit.json',dict(passed=True,initial_iteration=3000,final_iteration=3500,iterations_added=500,
++        checkpoint=str(LOG/'model_final.pt'),checkpoint_sha256=sha(LOG/'model_final.pt'),behavior_accepted=False))
++
++
++def run(out):
++    try:
++        for stage in ('precheck','train'):run_command(out,stage,[str(PYTHON),'-u','-m',MODULE,stage,'--output',str(out)])
++        audit(out);write(out/'status.json',dict(status='training_complete',final_iteration=3500,iterations_added=500,finished_unix=time.time(),behavior_accepted=False))
++    except BaseException as exc:
++        write(out/'status.json',dict(status='failed',error=repr(exc),finished_unix=time.time(),automatic_retry=False));raise
++
++
++def main():
++    p=argparse.ArgumentParser(__doc__);p.add_argument('mode',choices=('prepare','run','precheck','train'));p.add_argument('--output',type=Path,required=True);a=p.parse_args();out=a.output.resolve()
++    if a.mode=='prepare':prepare(out)
++    elif a.mode=='run':run(out)
++    else:worker(out,a.mode)
++
++
++if __name__=='__main__':main()
+diff --git a/scripts/agent/real2sim/replay_usb_pd_targets.py b/scripts/agent/real2sim/replay_usb_pd_targets.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/agent/real2sim/replay_usb_pd_targets.py
+@@ -0,0 +1,227 @@
++"""Replay logged PD targets in MuJoCo Warp; measured motion is a kinematic reference."""
++import argparse
++import csv
++import hashlib
++import json
++from pathlib import Path
++import time
++
++import mujoco
++import numpy as np
++from scipy.optimize import least_squares
++from scipy.spatial.transform import Rotation
++import torch
++
++from ct_mjlab.envs.chuanliantui.model import ACTUATED_JOINTS,_SIDES,closed_chain_residual
++from ct_mjlab.envs.fudan_ppo_walk.reset_geometry import ResetGeometry,mesh_vertices
++
++ORDER=('lf','lr','lw','rf','rr','rw')
++
++
++def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
++def write(path,value):Path(path).write_text(json.dumps(value,indent=2)+'\n')
++
++
++class PoseSolver:
++    def __init__(self):
++        source=ResetGeometry();self.model=source.model;self.data=source.data;self.qaddr=source.qaddr
++        self.collision=source.collision
++        self.data.qpos[:]=self.model.qpos0
++        for name,value in source.baseline.items():self.data.qpos[self.qaddr[name]]=value
++        self.data.qpos[:7]=[0,0,0,1,0,0,0]
++
++    def solve(self,motors):
++        model,data=self.model,self.data
++        data.qpos[:7]=[0,0,0,1,0,0,0]
++        for name,value in zip(ACTUATED_JOINTS,motors):data.qpos[self.qaddr[name]]=value
++        for side,hip,knee,passive,pairs,_ in _SIDES:
++            names=(knee,*passive[1:]);ids=[self.qaddr[n] for n in names]
++            bounds=[model.joint(n).range if model.joint(n).limited else [model.qpos0[self.qaddr[n]]-np.pi,model.qpos0[self.qaddr[n]]+np.pi] for n in names]
++            lower,upper=np.asarray(bounds).T;sites=[(model.site(a).id,model.site(b).id) for a,b in pairs]
++            def residual(values):
++                data.qpos[ids]=values;mujoco.mj_kinematics(model,data)
++                return np.concatenate([data.site_xpos[a]-data.site_xpos[b] for a,b in sites])
++            result=least_squares(residual,np.clip(data.qpos[ids],lower+1e-10,upper-1e-10),bounds=(lower,upper),
++                xtol=1e-10,ftol=1e-10,gtol=1e-10,max_nfev=150)
++            residual(result.x)
++        mujoco.mj_kinematics(model,data)
++        for side,parent in (('left','lf0'),('right','rf0')):
++            delta=data.body(parent).xmat.reshape(3,3).T@(data.site(side+'_gas_spring_lower').xpos-data.site(side+'_gas_spring_upper').xpos)
++            quaternion=model.body(side+'_spring1').quat;angle=2*np.arctan2(quaternion[2],quaternion[0])
++            data.qpos[self.qaddr[side+'_spring1_joint']]=np.arctan2(delta[0],delta[2])-angle
++            data.qpos[self.qaddr[side+'_spring2_joint']]=np.hypot(delta[0],delta[2])-model.body(side+'_spring2').pos[2]
++        mujoco.mj_kinematics(model,data)
++        error=closed_chain_residual(model,data)
++        return data.qpos.copy(),error
++
++    def ground(self,q,quat):
++        self.data.qpos[:]=q;self.data.qpos[:7]=[0,0,0,*quat];mujoco.mj_kinematics(self.model,self.data)
++        bottom=min(float(mesh_vertices(self.model,self.data,i)[:,2].min()) for i in self.collision)
++        q=self.data.qpos.copy();q[2]=-bottom+.002
++        return q
++
++
++def prepare(experiment,out):
++    out.mkdir(parents=True,exist_ok=False)
++    with (experiment/'rl_valid.csv').open() as f:
++        reader=csv.reader(f);names=next(reader);values=np.asarray(list(reader),dtype=float)
++    d={n:values[:,i] for i,n in enumerate(names)};n=len(values)
++    assert np.all(np.diff(d['sequence'])==1) and np.all(np.diff(d['h7_us'])>0)
++    times=(d['h7_us']-d['h7_us'][0])/1e6;dt=.002;grid=np.arange(n)*dt
++    current=np.stack([d['current_'+m] for m in ORDER],axis=1)
++    target=np.stack([d['target_'+m] for m in ORDER],axis=1)
++    velocity=np.stack([d['velocity_rad_s_'+m] for m in ORDER],axis=1)
++    torque=np.stack([d['pd_model_nm_'+m] for m in ORDER],axis=1)
++    gravity=np.stack([d[f'obs_{i}'] for i in (3,4,5)],axis=1)
++    gravity/=np.linalg.norm(gravity,axis=1,keepdims=True)
++    roll=np.arctan2(-gravity[:,1],-gravity[:,2]);pitch=np.arcsin(gravity[:,0].clip(-1,1))
++    angular=np.stack([d[f'obs_{i}']*4 for i in (0,1,2)],axis=1)
++    yaw_rate=(np.sin(roll)*angular[:,1]+np.cos(roll)*angular[:,2])/np.cos(pitch)
++    yaw=np.r_[0,np.cumsum(.5*(yaw_rate[:-1]+yaw_rate[1:])*np.diff(times))]
++    quats=Rotation.from_euler('xyz',np.c_[roll,pitch,yaw]).as_quat()[:,[3,0,1,2]]
++    wheel_angle=np.vstack((np.zeros(2),np.cumsum(.5*(velocity[:-1][:,[2,5]]+velocity[1:][:,[2,5]])*np.diff(times)[:,None],axis=0)))
++    solver=PoseSolver();motor0=current[0].copy();motor0[[2,5]]=0
++    q0,error0=solver.solve(motor0);epsilon=1e-4;qnext,_=solver.solve(motor0+epsilon*velocity[0])
++    v0=np.zeros(solver.model.nv);mujoco.mj_differentiatePos(solver.model,v0,epsilon,q0,qnext)
++    q0=solver.ground(q0,quats[0]);v0[:3]=0;v0[3:6]=angular[0]
++    for i,name in enumerate(ACTUATED_JOINTS):v0[solver.model.joint(name).dofadr[0]]=velocity[0,i]
++    indices=np.arange(0,n-1,10);poses=[];errors=[]
++    for k,i in enumerate(indices):
++        motors=current[i].copy();motors[[2,5]]=wheel_angle[i]
++        q,error=solver.solve(motors);q=solver.ground(q,quats[i]);poses.append(q);errors.append(error)
++        if k%200==0:print(json.dumps(dict(stage='kinematic_reference',frame=k,total=len(indices))),flush=True)
++    np.savez_compressed(out/'inputs.npz',time_s=grid,source_time_s=times,current=current,target=target,velocity=velocity,
++        recorded_torque=torque,initial_qpos=q0,initial_qvel=v0,reference_qpos=np.asarray(poses),reference_indices=indices,
++        reference_loop_error_m=np.asarray(errors),commands=np.c_[d['obs_6']/2,d['obs_7']/.25,d['obs_8']/5])
++    report=dict(source_csv=str((experiment/'rl_valid.csv').resolve()),source_sha256=sha(experiment/'rl_valid.csv'),rows=n,
++        duration_s=float(grid[-1]),maximum_timestamp_grid_error_us=float(abs(times-grid).max()*1e6),
++        maximum_reference_loop_error_m=float(max(errors)),initial_loop_error_m=float(error0),
++        initial_height_geometry_estimate_m=float(q0[2]),joint_names=solver.qaddr,
++        assumptions=['Initial root XY/yaw set0 and linear velocity0; roll/pitch use published policy gravity, which may contain a bias',
++            'Initial height inferred from model collision geometry and2mm clearance, not recorded height',
++            'Reference root XY fixed; reference Z fitted to ground for display; yaw/wheel angles integrated and not absolute measurements',
++            'Passive joints inferred from current model geometry; closure residual reported; no measured body contacts/friction/mass corrections'],
++        source_to_control='One continuous recorded PD row per2ms; no additional action/sensor delay',optimizer_updates=0)
++    write(out/'inputs-report.json',report)
++
++
++def run(out):
++    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
++    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
++    from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig
++    from ct_mjlab.envs.fudan_ppo_walk import height_reward
++    torch.set_num_threads(1)
++    with np.load(out/'inputs.npz') as f:a={k:f[k].copy() for k in f.files}
++    cfg=FudanWalkCfg();cfg.control.leg_stiffness=60.;cfg.control.leg_damping=2.;cfg.control.wheel_stiffness=.1
++    height_reward.configure(cfg,None)
++    wrapper=FudanEnv(1,seed=30001,randomized=False,disturbances=DisturbanceConfig(),cfg=cfg)
++    env=wrapper.env;sim=env.sim;action=wrapper.action;device=wrapper.device
++    try:
++        assert not action._wheel_speed_shaping and not action.wheel_motor.enabled
++        assert action.kp_scale.eq(1).all() and action.kd_scale.eq(1).all() and action.motor_strength.eq(1).all()
++        assert sim.mj_model.opt.timestep==.002
++        q=torch.as_tensor(a['initial_qpos'],device=device,dtype=torch.float32)
++        v=torch.as_tensor(a['initial_qvel'],device=device,dtype=torch.float32)
++        assert sim.data.qpos.shape[1]==len(q) and sim.data.qvel.shape[1]==len(v)
++        sim.data.qpos[0]=q;sim.data.qvel[0]=v;sim.data.ctrl.zero_();sim.forward();env.scene.update(dt=0.)
++        targets=torch.as_tensor(a['target'],device=device,dtype=torch.float32)
++        raw=targets.clone();legs=[0,1,3,4];wheels=[2,5]
++        raw[:,legs]=(targets[:,legs]-action.nominal_positions[0,legs])/action.cfg.leg_position_scale
++        raw[:,wheels]=targets[:,wheels]/action.cfg.wheel_velocity_scale
++        motor_ids=[sim.mj_model.actuator('robot/'+name+'_motor').id for name in ACTUATED_JOINTS]
++        for name,index in zip(ACTUATED_JOINTS,action._motor_q_adr.cpu().tolist()):
++            assert sim.mj_model.joint('robot/'+name).qposadr[0]==index
++        mujoco.mj_saveModel(sim.mj_model,str(out/'model.mjb'))
++        rows=[sim.data.qpos[0].cpu().numpy().copy()];velocities=[sim.data.qvel[0,action._motor_v_adr].cpu().numpy().copy()]
++        controls=[];max_error=torch.zeros((),device=device);started=time.time();failure=None
++        for i in range(len(targets)-1):
++            action.process_actions(raw[i:i+1]);action.apply_actions();env.scene.write_data_to_sim()
++            actual=sim.data.ctrl[0,motor_ids]
++            qnow=sim.data.qpos[0,action._motor_q_adr];vnow=sim.data.qvel[0,action._motor_v_adr]
++            expected=torch.empty_like(actual);expected[legs]=(60*(targets[i,legs]-qnow[legs])-2*vnow[legs]).clamp(-40,40)
++            expected[wheels]=(.1*(targets[i,wheels]-vnow[wheels])).clamp(-3.9,3.9)
++            max_error=torch.maximum(max_error,abs(actual-expected).max());controls.append(actual.cpu().numpy().copy())
++            sim.step();env.scene.update(dt=.002)
++            state=sim.data.qpos[0].cpu().numpy().copy();rows.append(state)
++            velocities.append(sim.data.qvel[0,action._motor_v_adr].cpu().numpy().copy())
++            if not np.isfinite(state).all():failure=dict(step=i,error='nonfinite');break
++            if i%1000==0:print(json.dumps(dict(stage='GPU_PD_targets',step=i,total=len(targets)-1)),flush=True)
++        rows=np.asarray(rows);velocities=np.asarray(velocities);controls=np.asarray(controls)
++        np.savez_compressed(out/'gpu-replay.npz',qpos=rows,motor_velocity=velocities,torque=controls,time_s=a['time_s'][:len(rows)])
++        error=float(max_error);assert error<1e-4,error
++        columns=action._motor_q_adr.cpu().numpy();difference=rows[:,columns[legs]]-a['current'][:len(rows),legs]
++        report=dict(complete=failure is None and len(rows)==len(targets),failure=failure,backend='mujoco_warp_gpu',
++            explicit_physics_steps=len(rows)-1,wall_s=time.time()-started,dt_s=.002,PD_target_formula_max_error_nm=error,
++            first_torque_vs_recorded_max_error_nm=float(abs(controls[0]-a['recorded_torque'][0]).max()),
++            leg_RMSE_deg=np.rad2deg(np.sqrt(np.mean(difference**2,axis=0))).tolist(),
++            motor_qpos_indices=columns.tolist(),wheel_physics=wrapper.wheel_physics_profile,
++            model_sha256=sha(out/'model.mjb'),inputs_sha256=sha(out/'inputs.npz'),optimizer_updates=0,policy_forwards=0,
++            scope='Open-loop replay of logged targets; simulated state feeds PD; global initial state/contact assumptions prevent full real-robot fidelity claims')
++        write(out/'gpu-report.json',report)
++        print(json.dumps(report,indent=2),flush=True)
++    finally:wrapper.close()
++
++
++def render(out,follow_heading=False):
++    import imageio.v2 as imageio
++    from PIL import Image,ImageDraw,ImageFont
++    from mjlab.viewer.model_sync import disable_model_sameframe_shortcuts
++    with np.load(out/'inputs.npz') as f:a={k:f[k].copy() for k in f.files}
++    with np.load(out/'gpu-replay.npz') as f:simulated=f['qpos'].copy()
++    report=json.loads((out/'gpu-report.json').read_text());assert report['complete']
++    model=mujoco.MjModel.from_binary_path(str(out/'model.mjb'));disable_model_sameframe_shortcuts(model)
++    model.vis.global_.offwidth=640;model.vis.global_.offheight=480;data=mujoco.MjData(model)
++    camera=mujoco.MjvCamera();camera.distance=1.5;camera.elevation=-16.;camera.azimuth=90.
++    option=mujoco.MjvOption();option.geomgroup[:]=[1,1,1,0,0,0]
++    font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',18)
++    qids=np.asarray(report['motor_qpos_indices']);legs=[0,1,3,4]
++    output=out/('recorded-targets-vs-measured-side.mp4' if follow_heading else 'recorded-targets-vs-measured.mp4');count=0
++    with mujoco.Renderer(model,width=640,height=480) as renderer,imageio.get_writer(output,fps=50,codec='libx264',quality=8) as writer:
++        for k,i in enumerate(a['reference_indices']):
++            if i>=len(simulated):break
++            canvas=Image.new('RGB',(1280,528),'#18212b');draw=ImageDraw.Draw(canvas)
++            cmd=a['commands'][i];draw.text((12,8),f'1x NORMAL | t={i*.002:.2f}s | logged cmd vx={cmd[0]:+.2f}, yaw={cmd[1]:+.2f}, h={cmd[2]:.2f}',font=font,fill='white')
++            for column,(q,title) in enumerate(((a['reference_qpos'][k],'MEASURED JOINTS / kinematic reference'),(simulated[i],'MuJoCo GPU / logged PD targets'))):
++                data.qpos[:]=q;mujoco.mj_forward(model,data);camera.lookat[:]=[q[0],q[1],.22]
++                if follow_heading:
++                    w,x,y,z=q[3:7]
++                    camera.azimuth=90+np.rad2deg(np.arctan2(2*(w*z+x*y),1-2*(y*y+z*z)))
++                renderer.update_scene(data,camera=camera,scene_option=option);panel=Image.fromarray(renderer.render().copy());text=ImageDraw.Draw(panel)
++                text.rectangle((0,0,640,92),fill='#18212b');text.text((10,5),title,font=font,fill='white')
++                if column==0:
++                    text.text((10,32),'XY fixed / Z auto-ground / heading integrated',font=font,fill='#ffca75')
++                    text.text((10,58),'Only joint angles are direct measured positions',font=font,fill='#ffca75')
++                else:
++                    error=np.rad2deg(np.sqrt(np.mean((q[qids[legs]]-a['current'][i,legs])**2)))
++                    plant='log-fit candidate' if 'physical_candidate' in report else 'current mechanical plant'
++                    text.text((10,32),f'leg P60/D2 / wheel P0.1 / {plant}',font=font,fill='white')
++                    text.text((10,58),f'sim h={q[2]:.3f}m / instantaneous leg RMS={error:.1f}deg',font=font,fill='white')
++                canvas.paste(panel,(column*640,48))
++            frame=np.asarray(canvas);writer.append_data(frame);count+=1
++            if k in (0,250,750):imageio.imwrite(out/f'{"side-" if follow_heading else ""}frame-{k:04d}.png',frame)
++    write(out/('side-video.json' if follow_heading else 'video.json'),dict(path=str(output),fps=50,frames=count,duration_s=count/50,sha256=sha(output),
++        physics_steps=0,policy_forwards=0,source_gpu_report_sha256=sha(out/'gpu-report.json'),camera_follows_heading=follow_heading))
++    if follow_heading:return
++    import matplotlib
++    matplotlib.use('Agg')
++    import matplotlib.pyplot as plt
++    fig,axes=plt.subplots(4,1,figsize=(12,9),sharex=True)
++    for ax,j,name in zip(axes,legs,('lf','lr','rf','rr')):
++        ax.plot(a['time_s'],np.rad2deg(a['target'][:,j]),label='Recorded target',lw=.8)
++        ax.plot(a['time_s'],np.rad2deg(a['current'][:,j]),label='Measured',lw=.9)
++        ax.plot(a['time_s'][:len(simulated)],np.rad2deg(simulated[:,qids[j]]),label='GPU simulated',lw=.8)
++        ax.set_ylabel(name+' (deg)');ax.grid(alpha=.2);ax.legend(ncol=3)
++    axes[0].set_title('Logged PD target replay / initial body state and contacts estimated')
++    axes[-1].set_xlabel('Time (s)');fig.tight_layout();fig.savefig(out/'leg-comparison.png',dpi=140);plt.close(fig)
++
++
++def main():
++    p=argparse.ArgumentParser(__doc__);p.add_argument('mode',choices=('prepare','run','render'))
++    p.add_argument('--follow-heading',action='store_true',help='Keep both panels in body-relative side view for joint comparison')
++    p.add_argument('--experiment',type=Path);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
++    if a.mode=='prepare':prepare(a.experiment.resolve(),a.output.resolve())
++    elif a.mode=='run':run(a.output.resolve())
++    else:render(a.output.resolve(),a.follow_heading)
++
++
++if __name__=='__main__':main()
