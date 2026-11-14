@@ -119,6 +119,7 @@ static void Robot_Fault_Update(void)
     uint32_t fault;
 
     fault = FAULT_NONE;
+    if (ctrl_strategy == CTRL_STRATEGY_RL && Jetson_Uart_Blocked()) { fault |= FAULT_ACTION; }
     if (!imu_state.online || !imu_state.pitch_world_valid)
     {
         fault |= FAULT_IMU;
@@ -135,8 +136,8 @@ static void Robot_Fault_Update(void)
     {
         fault |= FAULT_MOTOR;
     }
-    /* 模型就绪且已有动作后才判停更；等待首帧由下面的持续不可用保护处理。 */
-    if (ctrl_strategy == CTRL_STRATEGY_RL && rl_control.policy.ready && action_state.updated && HAL_GetTick() - action_state.last_ok_tick >= machine->rl.action_timeout_ms)
+    /* 动作停更独立于推理/连接ready，不能被掉线清ready绕过。 */
+    if (ctrl_strategy == CTRL_STRATEGY_RL && action_state.updated && HAL_GetTick() - action_state.last_ok_tick >= machine->rl.action_timeout_ms)
     {
         fault |= FAULT_ACTION;
     }
@@ -222,7 +223,7 @@ void comm_task_body(void)
     motor_state_t motor_state_temp;
     leg_state_t leg_l_temp,leg_r_temp;
 
-    Jetson_Uart_Process(); /* 仅解析串口连通性探测，不发布控制动作。 */
+    Jetson_Uart_Process(); /* 校验外部动作、会话和期限；最终许可仍归执行层。 */
     motor_state_temp = motor_state;
     leg_l_temp = leg_l;
     leg_r_temp = leg_r;

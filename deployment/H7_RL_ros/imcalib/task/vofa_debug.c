@@ -84,7 +84,7 @@ void Vofa_Debug_Send(void)
     uint8_t online_mask;
     uint8_t valid_mask = 0u;
 
-    if ((uint32_t)(now_ms - last_send_ms) < 10u && (uint32_t)(now_ms - last_uart_send_ms) < 10u)
+    if ((uint32_t)(now_ms - last_send_ms) < 10u && (MACHINE_VOFA_PORT == 10u || (uint32_t)(now_ms - last_uart_send_ms) < 10u))
     {
         return;
     }
@@ -94,7 +94,7 @@ void Vofa_Debug_Send(void)
     output = mirror_output_snapshot;
     (void)Robot_Feedback_Read(&feedback);
     taskEXIT_CRITICAL();
-    if ((uint32_t)(now_ms - last_uart_send_ms) >= 10u)
+    if (MACHINE_VOFA_PORT != 10u && (uint32_t)(now_ms - last_uart_send_ms) >= 10u)
     {
         float joints[8];
         for (uint8_t i = 0u; i < DM_MOTOR_NUM; i++)

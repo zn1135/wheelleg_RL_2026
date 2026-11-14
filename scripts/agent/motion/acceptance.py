@@ -46,7 +46,11 @@ def compare_baseline(result,baseline):
 def canonical_sample(sample,trace):
     """Keep v2 integrity/contact/height gates; replace motion scoring with the shared standard."""
     from scripts.agent.fudan_ppo_walk.score_v2 import score as score_v2,DT,tick
-    previous=score_v2(sample,trace)
+    times=np.asarray(trace['time']) if 'time' in trace else np.empty(0)
+    dt=float(times[1]-times[0]) if len(times)>1 else DT
+    if not np.isclose(dt,.001,rtol=0,atol=1e-10) and not np.isclose(dt,DT,rtol=0,atol=1e-10):
+        return dict(sample_id=sample['id'],passed=False,complete=False,failure_reasons=['unsupported_sample_period'])
+    previous=score_v2(sample,trace,dt=dt)
     row=copy.deepcopy(previous);row['protocol']=STANDARD;row['legacy_v2_diagnostic']=previous
     row['motion_phases']=[]
     if not previous.get('complete') or not previous.get('finite'):
@@ -55,7 +59,7 @@ def canonical_sample(sample,trace):
     t=np.asarray(trace['time']);n=len(t);valid=np.ones(n,dtype=bool)
     complete=not previous.get('terminated') and not previous.get('numerical_failure')
     def phase(name,lo,hi,command,parking):
-        chosen=np.zeros(n,dtype=bool);chosen[tick(lo):tick(hi)]=True
+        chosen=np.zeros(n,dtype=bool);chosen[tick(lo,dt):tick(hi,dt)]=True
         result=phase_verdict(vx=trace['linear_body'][:,0],yaw=trace['angular_body'][:,2],
             horizontal_speed=np.linalg.norm(trace['linear_world'][:,:2],axis=1),
             pitch_deg=trace['roll_pitch_deg'][:,1],vx_target=command[0],yaw_target=command[1],

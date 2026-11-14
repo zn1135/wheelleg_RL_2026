@@ -15,14 +15,14 @@ def band(values,target,mae,limit):
     return dict(mae=mean,within_band=fraction,passed=bool(errors.size and mean<=mae and fraction>=.95))
 
 
-def score(sample,trace):
-    case=sample['case'];duration=case['duration'];expected=round(duration/DT)+1
+def score(sample,trace,dt=DT):
+    case=sample['case'];duration=case['duration'];expected=round(duration/dt)+1
     required=('time','position','linear_body','linear_world','angular_body','roll_pitch_deg',
               'wheel_support','base_contact','weight','terminated','numerical_failure')
     missing=[k for k in required if k not in trace]
     if missing:return dict(sample_id=sample['id'],passed=False,complete=False,missing=missing)
     t=np.asarray(trace['time']);count=len(t)
-    complete=(count==expected and np.allclose(t,np.arange(expected)*DT,rtol=0.,atol=1e-7))
+    complete=(count==expected and np.allclose(t,np.arange(expected)*dt,rtol=0.,atol=1e-7))
     finite=all(np.isfinite(trace[k]).all() for k in required)
     result=dict(sample_id=sample['id'],passed=False,complete=bool(complete),finite=bool(finite),
         observed_samples=count,expected_samples=expected,segments=[])
@@ -50,15 +50,15 @@ def score(sample,trace):
         joint_pass &= row['passed'];result['segments'].append(row)
     if is_stop:
         start=7.;speed=np.linalg.norm(trace['linear_world'][:,:2],axis=1)
-        stop_tick=round(start/DT);hold=round(1./DT);deadline=round((start+3.)/DT)
+        stop_tick=round(start/dt);hold=round(1./dt);deadline=round((start+3.)/dt)
         low=speed<=.1
         completed=None
         for end in range(stop_tick+hold,deadline+1):
             if low[end-hold:end].all():completed=end;break
-        stop=dict(settle_completed_s=None if completed is None else completed*DT-start,passed=False)
+        stop=dict(settle_completed_s=None if completed is None else completed*dt-start,passed=False)
         if completed is not None:
-            tail=slice(completed,completed+round(5./DT));anchor=trace['position'][completed,:2]
-            stop.update(observation_window=[completed*DT,completed*DT+5.],
+            tail=slice(completed,completed+round(5./dt));anchor=trace['position'][completed,:2]
+            stop.update(observation_window=[completed*dt,completed*dt+5.],
                 maximum_speed=float(speed[tail].max()),
                 maximum_abs_yaw_rate=float(np.abs(trace['angular_body'][tail,2]).max()),
                 maximum_drift_m=float(np.linalg.norm(trace['position'][tail,:2]-anchor,axis=-1).max()),

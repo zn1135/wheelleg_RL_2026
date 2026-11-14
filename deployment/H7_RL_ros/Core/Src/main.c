@@ -203,7 +203,7 @@ int main(void)
   MX_USART10_UART_Init(); /* Jetson串口10硬件先就绪，再启动协议RX DMA。 */
 #endif
   FDCAN_Config();
-  Jetson_Uart_Init(); /* UART RX DMA; probe only. */
+  Jetson_Uart_Init(); /* UART10 RX DMA; Jetson RL protocol, no motor enable here. */
   Mono_Ns_Init();   /* 单调 ns 时钟 */
 #if MACHINE_VOFA_PORT != 9u && MACHINE_VOFA_PORT != 7u && MACHINE_VOFA_PORT != 8u
   DR16_Init();

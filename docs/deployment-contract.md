@@ -1,5 +1,14 @@
 # 训练与部署接口约定
 
+2026-11-13原机械轮3000→3500的P20/D1续训对照已启动：仅本次进程四实体腿PD改变，轮P0.1、原模型接口/物理/其余配方保持；新PT附带`control`，标准GPU评估按该字段恢复实际PD，旧PT缺字段仍按原配置入口处理。预检/恢复通过不代表行为通过，无H7修改或新模型部署。[接口记录](interfaces/20261113-fudan-reference-leg-pd20d1.md)。
+
+2026-11-13复旦下一次训练高度奖励×5准备：新PT/训练与恢复报告/预检/GPU协议新增height_reward，旧PT缺字段按原scale1/sigma0.001回放；Actor25/历史125/动作6及PD/时序/物理不变，没有新权重/ONNX/H7修改。当前训练已按用户要求停止，H7负责人核对待确认。[接口与检查](interfaces/20261113-fudan-height-reward-x5.md)。
+
+## 2026-11-13 Jetson/H7_ros推理迁移候选
+
+按用户确认，仅H7_RL_ros接入UART10 JRL2外部动作，Jetson C++/TensorRT运行17679和25/125观测历史、记录日志；H7_RL只读。保留ROS物理标定、500Hz PD与直立接管保护，轮增益对齐0.045；UART10停VOFA，USB采集保持。软件及Jetson原机数值通过，Jetson已独立部署并通过虚拟串口联调，未烧录/实际串口联机/动力验收，H7负责人待确认。[接口](interfaces/20261113-jetson-h7ros-rl.md)、[模型交付](model-deliveries/20261113-jetson-17679.md)。
+
+
 ## 2026-11-12复旦机械轮物理候选
 
 训练/MuJoCo Warp GPU采用单位轮力矩驱动＋轮关节惯量/阻尼/摩擦，替代原速度出力曲线及额外0.45；Actor25/历史125/动作6及PD/时序不变，新训练快照/PT记录physical_wheel_model。历史曲线通过legacy_curve复现，旧权重没有因此重训。此变更不要求板端额外缩放力矩，H7实现/烧录未改、负责人核对待确认；当前只有仿真候选验证，未交付新模型/ONNX。详见[机械轮接口](interfaces/20261112-fudan-mechanical-wheels.md)。

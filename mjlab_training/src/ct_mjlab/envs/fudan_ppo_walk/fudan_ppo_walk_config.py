@@ -65,13 +65,13 @@ class FudanWalkCfg:
         sensor_delay_ms_range = [2., 2.]
 
         # 与复旦配置同名：主动推扰开关、间隔和冲量速度尺度。
-        push_robots = True
+        push_robots = False
         push_interval_s = 7.
         max_push_vel_xy = .3
 
         # 机身坐标系各轴每回合重抽，作用于机身质心并持续整回合。
-        external_force_range = [-10., 10.]  # N
-        external_torque_range = [-10., 10.]  # N·m
+        external_force_range = [0., 0.]  # N
+        external_torque_range = [0., 0.]  # N·m
 
     class env:
         num_envs = 512
@@ -88,10 +88,12 @@ class FudanWalkCfg:
         wheel_motor_gain = 1.  # 机械模式固定1；只有legacy_curve可使用旧输出倍率。
         wheel_motor_delay_ms = 0.
         wheel_motor_time_constant_ms = 0.
+        wheel_motor_time_constant_range_ms = None  # 可选回合随机范围；双轮共用，复位时重抽。
         wheel_motor_torque_limit_nm = None  # 额外轮轴输出上限；None沿用原模型。
 
     class control:
         decimation = 5
+        pd_decimation = 1  # 默认逐物理步PD；独立低频实验通过启动器覆盖。
         leg_stiffness = 30.
         leg_damping = 2.
         leg_position_scale = .5
@@ -117,10 +119,10 @@ class FudanWalkCfg:
         pitch_inner_penalty_ratio = .05  # 区间内为原强度的1/20。
         tracking_sigma = .25
         tracking_enhance_sigma = 2.5
-        height_sigma = .001
+        height_sigma = .01  # 扩大高度奖励作用范围，低位抬升也能产生明显收益。
         soft_limit_half_span = .485
         scales = dict(tracking_lin_vel=1., tracking_lin_vel_enhance=1.,
-            tracking_ang_vel=1., tracking_ang_vel_enhance=1., base_height=1., nominal_state=-1.,
+            tracking_ang_vel=1., tracking_ang_vel_enhance=1., base_height=5., nominal_state=-1.,
             lin_vel_z=-1., ang_vel_xy=-.2, roll=-100., pitch=-100., dof_vel=-5e-5, dof_acc=-2.5e-7,
             torques=-.0001, action_rate=-.01, action_smooth=-.01, collision=-1., dof_pos_limits=-1.)
 
@@ -185,6 +187,12 @@ class FudanWalkCfgPPO:
 
 def section_dict(section):
     return {name: value for name, value in vars(section).items() if not name.startswith('_')}
+
+
+def timing_record(cfg):
+    return dict(physics_dt=cfg.sim.dt,
+                pd_dt=cfg.sim.dt * getattr(cfg.control, 'pd_decimation', 1),
+                policy_dt=policy_dt(cfg))
 
 
 def policy_dt(cfg=None):

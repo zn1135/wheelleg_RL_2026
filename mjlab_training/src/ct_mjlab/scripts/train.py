@@ -143,6 +143,17 @@ def train_fudan(args):
     from ct_mjlab.envs.fudan_ppo_walk import posture_reward
     if posture_reward.from_record(proof.get('posture_reward')) != posture_reward.from_task_config(env_cfg):
         raise ValueError('Physical precheck posture reward differs from the requested training settings')
+    from ct_mjlab.envs.fudan_ppo_walk import height_reward
+    if height_reward.from_record(proof.get('height_reward')) != height_reward.from_task_config(env_cfg):
+        raise ValueError('Physical precheck height reward differs from the requested training settings')
+    from ct_mjlab.envs.fudan_ppo_walk.wheel_motor import response_record,configure_response
+    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, timing_record
+    legacy_timing=dict(physics_dt=.002,pd_dt=.002,policy_dt=.01)
+    if proof.get('control_timing',legacy_timing)!=timing_record(env_cfg):
+        raise ValueError('Physical precheck PD/physics/policy timing differs from training')
+    checked=FudanWalkCfg();configure_response(checked,proof.get('wheel_response'))
+    if response_record(checked)!=response_record(env_cfg):
+        raise ValueError('Physical precheck wheel response differs from the requested training settings')
     if args.migrate_history_v2 and args.resume is None:
         raise ValueError('--migrate-history-v2 requires --resume')
     if args.num_envs % train_cfg.algorithm.num_mini_batches:

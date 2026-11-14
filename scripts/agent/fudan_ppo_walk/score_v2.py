@@ -44,55 +44,56 @@ def acceptance_manifest():
     return result
 
 
-def tick(seconds):
-    value = round(seconds / DT)
-    if abs(seconds - value * DT) > 1e-8:
-        raise ValueError(f'Time boundary is not a 2ms tick: {seconds}')
+def tick(seconds, dt=DT):
+    value = round(seconds / dt)
+    if abs(seconds - value * dt) > 1e-8:
+        raise ValueError(f'Time boundary does not match {dt}s sampling: {seconds}')
     return value
 
 
-def runs(mask, start_tick=0):
+def runs(mask, start_tick=0, dt=DT):
     mask = np.asarray(mask, dtype=bool)
     edges = np.diff(np.r_[False, mask, False].astype(np.int8))
     begins = np.flatnonzero(edges == 1)
     ends = np.flatnonzero(edges == -1)
     return [dict(start_tick=int(lo + start_tick), end_tick=int(hi + start_tick),
-        ticks=int(hi - lo), duration_ms=int(hi - lo) * 2) for lo, hi in zip(begins, ends)]
+        ticks=int(hi - lo), duration_ms=round(int(hi - lo) * dt * 1000)) for lo, hi in zip(begins, ends)]
 
 
-def run_summary(mask, start_tick=0):
-    intervals = runs(mask, start_tick)
+def run_summary(mask, start_tick=0, dt=DT):
+    intervals = runs(mask, start_tick, dt)
     return dict(total_ticks=int(np.count_nonzero(mask)),
         maximum_run_ticks=max((r['ticks'] for r in intervals), default=0), intervals=intervals)
 
 
-def moving_mean(values):
+def moving_mean(values, mean_ticks=MEAN_TICKS):
     # 仅保留完整的10点窗口，不在段边缘补零或混入响应段。
-    return np.lib.stride_tricks.sliding_window_view(values, MEAN_TICKS, axis=0).mean(axis=-1, dtype=np.float64)
+    return np.lib.stride_tricks.sliding_window_view(values, mean_ticks, axis=0).mean(axis=-1, dtype=np.float64)
 
 
-def load_window(trace, lo, hi, name):
+def load_window(trace, lo, hi, name, dt=DT):
+    mean_ticks = tick(.02, dt)
     support = trace['wheel_support'][lo:hi]
     weight = trace['weight'][lo:hi]
     result = dict(name=name, start_tick=lo, end_tick=hi, passed=False)
-    if hi - lo < MEAN_TICKS:
+    if hi - lo < mean_ticks:
         result['missing'] = 'No complete20ms window'
         return result
-    averaged = moving_mean(support)
-    average_weight = moving_mean(weight)
+    averaged = moving_mean(support, mean_ticks)
+    average_weight = moving_mean(weight, mean_ticks)
     conditions = dict(each_wheel=(averaged >= np.maximum(.1 * average_weight, 5.)[:, None]).all(axis=1),
         total_min=averaged.sum(axis=1) >= .8 * average_weight,
         total_max=averaged.sum(axis=1) <= 1.2 * average_weight)
     valid = np.logical_and.reduce(list(conditions.values()))
-    bad = run_summary(~valid, lo)
+    bad = run_summary(~valid, lo, dt)
     # 原始两轮同时失载仍单独否决，不能被平均值掩盖。
-    low = run_summary((support < 1.).all(axis=1), lo)
+    low = run_summary((support < 1.).all(axis=1), lo, dt)
     raw_valid = ((support >= np.maximum(.1 * weight, 5.)[:, None]).all(axis=1)
         & (support.sum(axis=1) >= .8 * weight) & (support.sum(axis=1) <= 1.2 * weight))
     valid_count = int(valid.sum())
     fraction_ok = 20 * valid_count >= 19 * len(valid)
-    continuity_ok = bad['maximum_run_ticks'] < LOAD_BAD_TICKS
-    low_ok = low['maximum_run_ticks'] < LOW_SUPPORT_TICKS
+    continuity_ok = bad['maximum_run_ticks'] < tick(.1, dt)
+    low_ok = low['maximum_run_ticks'] < tick(.02, dt)
     ratio = support.sum(axis=1) / weight
     result.update(valid_windows=len(valid), joint_valid_windows=valid_count,
         joint_valid_fraction=valid_count / len(valid), fraction_passed=fraction_ok,
@@ -103,13 +104,15 @@ def load_window(trace, lo, hi, name):
         mean20_total_weight_ratio_max=float((averaged.sum(axis=1) / average_weight).max()),
         raw_diagnostics=dict(wheel_min_N=support.min(axis=0).tolist(), wheel_max_N=support.max(axis=0).tolist(),
             total_weight_ratio_min=float(ratio.min()), total_weight_ratio_max=float(ratio.max()),
-            load_bad_runs=run_summary(~raw_valid, lo)),
+            load_bad_runs=run_summary(~raw_valid, lo, dt)),
         passed=bool(fraction_ok and continuity_ok and low_ok))
     return result
 
 
-def score(sample, trace):
-    expected = tick(sample['case']['duration']) + 1
+def score(sample, trace, dt=DT):
+    mean_ticks = tick(.02, dt)
+    startup_ticks = tick(2., dt)
+    expected = tick(sample['case']['duration'], dt) + 1
     result = dict(protocol=PROTOCOL, sample_id=sample['id'], passed=False, complete=False,
         numerical_failure=False, failure_reasons=[], final_acceptance='pending_user_video_review')
     missing = [k for k in SHAPES if k not in trace]
@@ -130,7 +133,7 @@ def score(sample, trace):
         result.update(invalid_shapes=invalid_shapes, expected_samples=expected,
             failure_reasons=['incomplete_or_invalid_shape']+(['numerical_failure'] if result['numerical_failure'] else []))
         return result
-    canonical_time = np.arange(expected) * DT
+    canonical_time = np.arange(expected) * dt
     if not np.allclose(arrays['time'], canonical_time, rtol=0., atol=1e-7):
         result['failure_reasons'] = ['invalid_time_grid']
         return result
@@ -138,9 +141,9 @@ def score(sample, trace):
         result['failure_reasons'] = ['invalid_weight_or_flags']
         return result
     result.update(complete=True, observed_samples=expected, expected_samples=expected)
-    legacy = score_v1(sample, arrays)
+    legacy = score_v1(sample, arrays, dt=dt)
     # 沿用v1跟踪/停车公式，以规范tick时间选择同一测量段；不继承v1的联合否决。
-    tracking = legacy if np.array_equal(arrays['time'], canonical_time) else score_v1(sample, dict(arrays, time=canonical_time))
+    tracking = legacy if np.array_equal(arrays['time'], canonical_time) else score_v1(sample, dict(arrays, time=canonical_time), dt=dt)
     result.update(segments=tracking['segments'], v1_diagnostic=legacy,
         numerical_failure=legacy['numerical_failure'], terminated=legacy['terminated'])
     if 'stop' in tracking:
@@ -155,38 +158,38 @@ def score(sample, trace):
     if 'stop' in tracking and not tracking['stop']['passed']:reasons.append('stop')
 
     end = expected - 1
-    startup_end = min(STARTUP_TICKS, end)
+    startup_end = min(startup_ticks, end)
     body = arrays['base_contact']
-    startup = run_summary(body[:startup_end] > 10.)
-    startup['passed'] = (startup['maximum_run_ticks'] <= STARTUP_CONTACT_RUN_TICKS
-        and startup['total_ticks'] <= STARTUP_CONTACT_TOTAL_TICKS)
-    if startup['maximum_run_ticks'] > STARTUP_CONTACT_RUN_TICKS:reasons.append('startup_contact_run')
-    if startup['total_ticks'] > STARTUP_CONTACT_TOTAL_TICKS:reasons.append('startup_contact_total')
-    if end - STARTUP_TICKS < MEAN_TICKS:
+    startup = run_summary(body[:startup_end] > 10., dt=dt)
+    startup['passed'] = (startup['maximum_run_ticks'] <= tick(.02, dt)
+        and startup['total_ticks'] <= tick(.05, dt))
+    if startup['maximum_run_ticks'] > tick(.02, dt):reasons.append('startup_contact_run')
+    if startup['total_ticks'] > tick(.05, dt):reasons.append('startup_contact_total')
+    if end - startup_ticks < mean_ticks:
         post = dict(passed=False, missing='No complete post-startup20ms window')
     else:
-        averaged_body = moving_mean(body[STARTUP_TICKS:end])
-        post = dict(start_tick=STARTUP_TICKS, end_tick=end, valid_windows=len(averaged_body),
+        averaged_body = moving_mean(body[startup_ticks:end], mean_ticks)
+        post = dict(start_tick=startup_ticks, end_tick=end, valid_windows=len(averaged_body),
             maximum_mean_N=float(averaged_body.max()), passed=bool((averaged_body <= 1.).all()),
-            bad_window_runs=run_summary(averaged_body > 1., STARTUP_TICKS))
+            bad_window_runs=run_summary(averaged_body > 1., startup_ticks, dt))
     if not post['passed']:reasons.append('post_startup_body_mean')
     peak = int(body.argmax())
     result['body_contact'] = dict(startup_over10N=startup, post_startup_mean20=post,
         raw_peak_N=float(body[peak]), raw_peak_tick=peak,
-        raw_over10N=run_summary(body[:end] > 10.))
+        raw_over10N=run_summary(body[:end] > 10., dt=dt))
 
-    windows = [dict(name=f'tracking_segment_{i}', lo=tick(row['window'][0]), hi=tick(row['window'][1]))
+    windows = [dict(name=f'tracking_segment_{i}', lo=tick(row['window'][0], dt), hi=tick(row['window'][1], dt))
         for i,row in enumerate(tracking['segments'])]
     if 'stop' in tracking and 'observation_window' in tracking['stop']:
         lo,hi = tracking['stop']['observation_window']
-        windows.append(dict(name='stop_observation', lo=tick(lo), hi=tick(hi)))
-    result['load_windows'] = [load_window(arrays, w['lo'], w['hi'], w['name']) for w in windows]
+        windows.append(dict(name='stop_observation', lo=tick(lo, dt), hi=tick(hi, dt)))
+    result['load_windows'] = [load_window(arrays, w['lo'], w['hi'], w['name'], dt) for w in windows]
     for row in result['load_windows']:
         if not row['passed']:reasons.append('load_' + row['name'])
-    last = slice(end - tick(1.), end)
+    last = slice(end - tick(1., dt), end)
     tilt = float(angles[last].max())
     angular = float(np.linalg.norm(arrays['angular_body'][last,:2], axis=1).max())
-    result['final_second_attitude'] = dict(start_tick=end-tick(1.), end_tick=end,
+    result['final_second_attitude'] = dict(start_tick=end-tick(1., dt), end_tick=end,
         tilt_max_deg=tilt, angular_xy_max_rad_s=angular, passed=tilt <= 35. and angular <= .5)
     if not result['final_second_attitude']['passed']:reasons.append('final_second_attitude')
     result['passed'] = not reasons

@@ -45,6 +45,7 @@ class HuananhuPdActionCfg(ChuanliantuiPdActionCfg):
     action_delay_choices_s: tuple[float, ...] = (.005, .010)
     action_delay_s: float | None = None  # Fixed measured delay overrides episode randomization.
     motor_response_time_constant_s: float = 0.  # Unmeasured first-order response; zero bypasses it.
+    pd_decimation: int = 1  # 两次PD更新之间保持已限幅力矩，弹簧仍逐物理步更新。
     ground_start_hold_s: float = .2
     parameter_reset_interval_steps: int = 720
 
@@ -60,6 +61,9 @@ class HuananhuPdAction(ChuanliantuiPdAction):
         super().__init__(replace(cfg, motor_randomization=False,
                                  standup_pushes=False, standup_landing_gate=False), env)
         self.cfg = cfg
+        if not isinstance(cfg.pd_decimation, int) or cfg.pd_decimation < 1:
+            raise ValueError("PD decimation must be a positive integer")
+        self._pd_tick = 0
         low, high = cfg.nominal_leg_offset_range
         if low != 0. or high != 0.:
             # Sample once per environment/joint; PD and observations share this reference.
@@ -116,21 +120,23 @@ class HuananhuPdAction(ChuanliantuiPdAction):
         q = self._env.sim.data.qpos[:, self._motor_q_adr]
         qd = self._env.sim.data.qvel[:, self._motor_v_adr]
         legs, wheels = self._leg_action_ids, self._wheel_action_ids
-        reference = self._reference_pos[:, legs]
-        target = torch.clamp(
-            self._nominal_pos[:, legs] + self.cfg.leg_position_scale * leg_delayed[:, legs],
-            reference - 3.14, reference + 3.14)
-        self._torques[:, legs] = (
-            self.cfg.leg_stiffness * self.kp_scale[:, legs] * (target - q[:, legs])
-            - self.cfg.leg_damping * self.kd_scale[:, legs] * qd[:, legs])
-        target_velocity = torch.clamp(
-            self.cfg.wheel_velocity_scale * wheel_delayed[:, wheels],
-            -self.cfg.max_wheel_velocity, self.cfg.max_wheel_velocity)
-        self._torques[:, wheels] = self.kd_scale[:, wheels] * (
-            self.cfg.wheel_stiffness * (target_velocity - qd[:, wheels])
-            - self.cfg.wheel_damping * qd[:, wheels])
-        self._torques.mul_(self.motor_strength)
-        self._torques.copy_(torch.clamp(self._torques, -self._effort_limits, self._effort_limits))
+        if self._pd_tick == 0:
+            reference = self._reference_pos[:, legs]
+            target = torch.clamp(
+                self._nominal_pos[:, legs] + self.cfg.leg_position_scale * leg_delayed[:, legs],
+                reference - 3.14, reference + 3.14)
+            self._torques[:, legs] = (
+                self.cfg.leg_stiffness * self.kp_scale[:, legs] * (target - q[:, legs])
+                - self.cfg.leg_damping * self.kd_scale[:, legs] * qd[:, legs])
+            target_velocity = torch.clamp(
+                self.cfg.wheel_velocity_scale * wheel_delayed[:, wheels],
+                -self.cfg.max_wheel_velocity, self.cfg.max_wheel_velocity)
+            self._torques[:, wheels] = self.kd_scale[:, wheels] * (
+                self.cfg.wheel_stiffness * (target_velocity - qd[:, wheels])
+                - self.cfg.wheel_damping * qd[:, wheels])
+            self._torques.mul_(self.motor_strength)
+            self._torques.copy_(torch.clamp(self._torques, -self._effort_limits, self._effort_limits))
+        self._pd_tick = (self._pd_tick + 1) % self.cfg.pd_decimation
         hold = self._ground_hold()
         self._torques[hold] = 0.
         # Candidate drive response after PD/limits, separate from the action FIFO.

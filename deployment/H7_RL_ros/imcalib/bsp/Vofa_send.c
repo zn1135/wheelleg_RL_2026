@@ -16,6 +16,10 @@ static const uint8_t tail[4] = {0x00, 0x00, 0x80, 0x7F};
 /* UART只发四关节位置/反馈力矩；DMA完成前保留上一帧，不占用USB缓冲或采集队列。 */
 uint8_t Vofa_Uart_Send(const float *data)
 {
+#if MACHINE_VOFA_PORT == 10u
+    (void)data;
+    return 0u; /* UART10由Jetson协议独占，禁止混入JustFloat。 */
+#else
     static uint8_t buf[8u * sizeof(float) + 4u] __attribute__((aligned(DMA_CACHE_LINE_SIZE)));
 
     if (VOFA_UART->gState != HAL_UART_STATE_READY)
@@ -26,6 +30,7 @@ uint8_t Vofa_Uart_Send(const float *data)
     memcpy(buf + 8u * sizeof(float), tail, sizeof(tail));
     Dma_Cache_Clean_Tx(buf, sizeof(buf));
     return HAL_UART_Transmit_DMA(VOFA_UART, buf, sizeof(buf)) == HAL_OK;
+#endif
 }
 
 /* 校验输入 → 检查USB已枚举且空闲 → 打包 → 提交；失败/忙不等待。 */

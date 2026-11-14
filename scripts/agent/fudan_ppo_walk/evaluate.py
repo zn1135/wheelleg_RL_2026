@@ -45,10 +45,12 @@ def gpu(args):
     from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
     from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
     from ct_mjlab.envs.chuanliantui.fitted_leg_load import parameter_record
-    from ct_mjlab.envs.fudan_ppo_walk import posture_reward
+    from ct_mjlab.envs.fudan_ppo_walk import posture_reward, height_reward
+    from ct_mjlab.envs.fudan_ppo_walk.wheel_motor import configure_response,response_record
     from types import SimpleNamespace
     policy,metadata=load_policy(args.checkpoint,'cuda:0')
     posture=posture_reward.from_record(metadata.get('posture_reward'))
+    height=height_reward.from_record(metadata.get('height_reward'))
     disturbances=from_sim2sim_config()
     if metadata.get('reset_contract') not in (RESET_CONTRACT,RESET_V2_CONTRACT):
         raise ValueError('This GPU evaluator requires PD-centred reset v2/v3; use the preserved trial source for legacy models')
@@ -57,9 +59,13 @@ def gpu(args):
     protocol=protocol_record(items,args.diagnostic)
     protocol.update(validation_engine='gpu',validation_backend='mujoco_warp_gpu',
         disturbances=disturbances.record(),training_disturbances=from_record(metadata.get('disturbances')).record(),
-        posture_reward=posture)
+        posture_reward=posture,height_reward=height)
     from ct_mjlab.envs.fudan_ppo_walk.wheel_physics import record as wheel_record
     protocol['physical_wheel_model']=wheel_record(FudanWalkCfg.sim.wheel_model)
+    response_cfg=FudanWalkCfg();configure_response(response_cfg,metadata.get('wheel_response'))
+    protocol['wheel_response']=response_record(response_cfg)
+    protocol['control']=metadata.get('control',section_dict(FudanWalkCfg().control))
+    protocol['control_timing']=metadata.get('control_timing',dict(physics_dt=.002,pd_dt=.002,policy_dt=.01))
     fitted = getattr(args,'leg_load_profile','legacy')=='fitted' and getattr(args,'response_parameters',None) is None
     protocol['physical_leg_load']=parameter_record(fitted)
     if getattr(args,'response_parameters',None) is not None:
@@ -77,6 +83,10 @@ def gpu(args):
         batch=items[offset:offset+args.batch_size]
         task=FudanWalkCfg();task.sim=SimpleNamespace(**section_dict(task.sim));task.sim.fitted_leg_load=fitted
         posture_reward.configure(task,posture)
+        height_reward.configure(task,height)
+        configure_response(task,metadata.get('wheel_response'))
+        if 'control' in metadata:task.control=SimpleNamespace(**metadata['control'])
+        task.sim.dt=protocol['control_timing']['physics_dt']
         env=FudanEnv(len(batch),seed=50001+offset,randomized=True,reset_contract=metadata['reset_contract'],disturbances=disturbances,cfg=task)
         obs,_=configure_samples(env,batch,fixture)
         response=None
@@ -103,15 +113,15 @@ def gpu(args):
                     references.append(reference_angles(step*.01,starts,target).cpu().numpy() if starts is not None else np.zeros(len(batch)))
                     rows.extend(torch.stack(env.action.substep_rows).cpu().numpy())
                     poses.append(env.env.sim.data.qpos.cpu().numpy().copy())
-                    term.extend([(env.fail_ticks>100).cpu().numpy().copy()]*5)
+                    term.extend([(env.fail_ticks>100).cpu().numpy().copy()]*task.control.decimation)
                     if step%100==0:print(json.dumps(dict(engine='mjlab',batch_start=offset,step=step,total=max_steps)),flush=True)
         finally:
             rows=np.asarray(rows);poses=np.asarray(poses);term=np.asarray(term)
             origins=env.env.scene.env_origins.cpu().numpy()
             for i,sample in enumerate(batch):
-                end=min(len(rows),round(sample['case']['duration']/.002)+1)
+                end=min(len(rows),round(sample['case']['duration']/task.sim.dt)+1)
                 q=poses[:min(len(poses),round(sample['case']['duration']/.01)+1),i].copy();q[:,:3]-=origins[i]
-                trace=arrays(rows[:end,i],q,terminated=term[:end,i])
+                trace=arrays(rows[:end,i],q,terminated=term[:end,i],physics_dt=task.sim.dt,policy_dt=env.dt)
                 count=min(len(motor_velocities),round(sample['case']['duration']/.01))
                 trace.update(policy_time=np.arange(count)*.01,motor_qvel_rad_s=np.asarray(motor_velocities).reshape(-1,len(batch),6)[:count,i],
                     pitch_reference_rad=np.asarray(references).reshape(-1,len(batch))[:count,i])

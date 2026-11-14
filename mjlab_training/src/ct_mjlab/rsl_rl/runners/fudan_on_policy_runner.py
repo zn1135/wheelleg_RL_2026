@@ -7,12 +7,13 @@ import time
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from ct_mjlab.fudan_ppo_walk.contract import CONTRACT, REFERENCE, PPO_CONFIG, make_network, RESET_CONTRACT, RESET_V2_CONTRACT, WEIGHTS, validate_network_contract
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfgPPO, section_dict
+from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfgPPO, section_dict, timing_record
 from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 from ct_mjlab.rsl_rl.algorithms.fudan_ppo import PPO
 from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig, from_record
 from ct_mjlab.envs.fudan_ppo_walk.commands import LEGACY_COMMAND_SAMPLING
-from ct_mjlab.envs.fudan_ppo_walk import posture_reward
+from ct_mjlab.envs.fudan_ppo_walk import posture_reward, height_reward
+from ct_mjlab.envs.fudan_ppo_walk.wheel_motor import response_record
 
 class BudgetStop(Exception):
     pass
@@ -145,6 +146,10 @@ class FudanRunner:
             command_sampling=getattr(self.env, 'command_sampling', LEGACY_COMMAND_SAMPLING),
             source_posture_reward=source_posture,
             posture_reward=posture_reward.from_record(getattr(self.env, 'posture_reward_profile', None)),
+            source_height_reward=height_reward.from_record(checkpoint.get('height_reward')),
+            height_reward=height_reward.from_task_config(self.env.cfg),
+            source_wheel_response=checkpoint.get('wheel_response'),
+            wheel_response=response_record(self.env.cfg),
             restoration='Learning state and RNG restored; physics/history/episode state restarts'
         )
         (self.log_dir / 'restore_report.json').write_text(json.dumps(restored, indent=2) + '\n')
@@ -158,6 +163,9 @@ class FudanRunner:
                 contract=CONTRACT,
                 physical_leg_load=self.env.action.leg_load.record if self.env.action.leg_load is not None else parameter_record(False),
                 physical_wheel_model=self.env.wheel_physics_profile,
+                wheel_response=response_record(self.env.cfg),
+                control=section_dict(self.env.cfg.control),
+                control_timing=timing_record(self.env.cfg),
                 reset_contract=getattr(self.env, 'reset_contract', RESET_CONTRACT),
                 reference=REFERENCE,
                 model_state_dict=self.policy.state_dict(),
@@ -176,6 +184,7 @@ class FudanRunner:
                 disturbances=getattr(self.env, 'disturbance_config', DisturbanceConfig()).record(),
                 command_sampling=getattr(self.env, 'command_sampling', LEGACY_COMMAND_SAMPLING),
                 posture_reward=posture_reward.from_record(getattr(self.env, 'posture_reward_profile', None)),
+                height_reward=height_reward.from_task_config(self.env.cfg),
                 reward_names=list(self.env.cfg.rewards.scales),
                 num_envs=self.env.num_envs,
                 policy_steps=self.env.total_steps,
@@ -284,7 +293,11 @@ class FudanRunner:
             disturbances=getattr(self.env, 'disturbance_config', DisturbanceConfig()).record(),
             command_sampling=getattr(self.env, 'command_sampling', LEGACY_COMMAND_SAMPLING),
             posture_reward=posture_reward.from_record(getattr(self.env, 'posture_reward_profile', None)),
+            height_reward=height_reward.from_task_config(self.env.cfg),
             reward_names=list(self.env.cfg.rewards.scales),
+            wheel_response=response_record(self.env.cfg),
+            control=section_dict(self.env.cfg.control),
+            control_timing=timing_record(self.env.cfg),
             resume_from=self.resume_from,
             behavior_accepted=False,
             reward_logging=f'weighted_clipped_mean_over_{self.num_steps_per_env}_steps_and_all_environments'

@@ -1,5 +1,16 @@
 # 复旦 PPO 行走配方适配规格（fudan-ppo-walk-physical-v1）
 
+2026-11-14新实验仅进程内减半随机化/观测噪声并恢复最早3000完整17奖励（高度1/.001），用户明确保留腿20/1与PD200Hz；动作固定10ms/传感2ms、外载全关，从零3000，未加入接触奖励或改变共享默认。[接口与配方](interfaces/20261114-fudan-pd200-half-random.md)。
+
+2026-11-13用户授权PD200Hz/腿20与1/双延迟10～20ms/关闭外力，从零训练3000；仅启动器进程覆盖，物理1ms、PD5ms、策略10ms；保留当前高度scale5/sigma0.01与机械轮。20环境GPU时序/零外载预检通过，运行与行为结论分别核实。[配方与接口](interfaces/20261113-fudan-pd200-scratch3000.md)。
+
+
+2026-11-13用户进一步同意加宽高度奖励：当前height_sigma=0.01（原0.001），高度权重5/上限0.05保持；新模型按height_reward字段保存/恢复，旧模型仍按原参数。17项合成检查通过，训练仍停止，无新行为结论。[最新准备](../artifacts/fudan_ppo_walk/20261113-height-reward-x5-sigma001-01/README.md)。
+
+2026-11-13用户停止无外力训练后，仅提高下一次高度奖励：base_height权重5，高度上限随权重0.05，指数分母0.001保持；其他项仍各自±0.01。新PT/预检/回放记录height_reward，旧缺字段按1/.001恢复，无新训练预算。[定义/检查](interfaces/20261113-fudan-height-reward-x5.md)。
+
+2026-11-13当前训练关闭所有外加扰动：`domain_rand.push_robots=False`、`external_force_range=[0,0]`、`external_torque_range=[0,0]`；参数随机化/延迟/噪声及reward保持。用户确认从零1500轮，实际腿60/2、轮0.1/D0、机械轮、history v3。新GPU默认configured_external组同样无外扰，历史成绩仍按各自快照解释。[本次预算及命令](../artifacts/fudan_ppo_walk/20261113-mechanical-noexternal-scratch1500-01/README.md)。
+
 ## 当前轮端机械候选（2026-11-12）
 
 按用户要求，复旦默认sim.wheel_model现为mechanical：移除实际执行路径中的轮速出力曲线及额外0.45，改用单位增益和wheel_mechanical.json中的轮关节附加惯量/阻尼/摩擦。PD/reward/随机化未改，旧曲线须显式legacy_curve；17679行为验证仍用腿60/2、轮P0.045。本次无新训练，站立现象接近但历史悬空轮速拟合更差，保持候选边界。[参数、回放与验证](interfaces/20261112-fudan-mechanical-wheels.md)。

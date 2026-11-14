@@ -24,11 +24,11 @@ def gpu_row(env):
     weight = mass.sum(-1).expand(env.num_envs) * 9.81
     return torch.cat((q[:, :3] - env.scene.env_origins, linear, v[:, :3], v[:, 3:6], angles, support, base[:, None], weight[:, None]), -1)
 
-def arrays(rows, qpos, terminated=None, numerical=None):
+def arrays(rows, qpos, terminated=None, numerical=None, physics_dt=.002, policy_dt=.01):
     rows = np.asarray(rows)
     n = len(rows)
     result = {key: rows[:, slot] for key, slot in COLUMNS.items()}
-    result.update(time=np.arange(n) * 0.002, qpos=np.asarray(qpos), qpos_time=np.arange(len(qpos)) * 0.01, terminated=np.zeros(n, dtype=bool) if terminated is None else terminated, numerical_failure=np.zeros(n, dtype=bool) if numerical is None else numerical)
+    result.update(time=np.arange(n) * physics_dt, qpos=np.asarray(qpos), qpos_time=np.arange(len(qpos)) * policy_dt, terminated=np.zeros(n, dtype=bool) if terminated is None else terminated, numerical_failure=np.zeros(n, dtype=bool) if numerical is None else numerical)
     return result
 
 def configure_samples(wrapper, samples, out):
@@ -126,7 +126,7 @@ def configure_samples(wrapper, samples, out):
             rng = np.random.default_rng([sample['seed'], case_hash, 20261102])
             for enabled, bounds, target in ((disturbances.action_delay, disturbances.action_delay_ms, state.action_steps), (disturbances.sensor_delay, disturbances.sensor_delay_ms, state.sensor_steps)):
                 if enabled:
-                    target[i] = int(np.rint(rng.uniform(*bounds) / 2.0))
+                    target[i] = int(np.rint(rng.uniform(*bounds) / (1000 * env.physics_dt)))
             state.push_seeds[i] = int(rng.integers(0, 2 ** 31)) if disturbances.pushes else 0
             for columns, bounds in ((slice(0, 3), disturbances.external_force_range), (slice(3, 6), disturbances.external_torque_range)):
                 if bounds != (0., 0.):

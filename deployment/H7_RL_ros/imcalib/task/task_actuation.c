@@ -21,6 +21,7 @@
 #include "output_capture.h"
 #include "dr16.h"
 #include "joint_capture.h"
+#include "jetson_uart.h"
 #include <math.h>
 #include <string.h>
 
@@ -985,6 +986,7 @@ void output_task_body(void)
                         memcpy(diagnostic.pos, rl_control.torque_state.pos, sizeof(diagnostic.pos));
                         memcpy(diagnostic.vel, rl_control.torque_state.vel, sizeof(diagnostic.vel));
                         diagnostic.flags |= 0x01u;
+                        Jetson_Uart_Pd(diagnostic.policy_sequence, pd_timing.reset_count);
                         pd_timing.flags = 1u;
                     }
                     pd_timing.end_ns = Mono_Ns_Get();

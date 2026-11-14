@@ -1,5 +1,27 @@
 # 构建与验证
 
+扩大延迟续训：`resume_pd200_delay_from1000 prepare --action-delay-ms 10 20 --sensor-delay-ms 10 20 --output <新目录>`冻结源1000有效配置，仅改两个延迟范围，`run`按2000新增轮到总3000。使用新范围20环境真实参数预检，保存初始检查点时逐张量核模型/双Adam/RNG与源相同，4096实际范围再次核对；旧中断final不作恢复源。[本次记录](../../artifacts/fudan_ppo_walk/20261114-pd200-delay-resume1000-3000-01/README.md)。
+
+阶段效果查看：`inspect_pd200_training run/report/render --checkpoint <已完整保存的model_N.pt> --experiment <原训练协调目录> --output <新目录>`支持训练中冻结阶段；核轮数/转移/双Adam与源一致，按PT自带动作/传感延迟回放，奖励曲线截到该阶段，不误称3000完成。GPU与原训练可并行，原配方和预算不改。[半幅1000阶段结果](../../artifacts/fudan_ppo_walk/20261114-pd200-half-random-height1-scratch3000-01/interim-1000-01/RESULTS.md)。
+
+该入口也支持续训阶段PT：核`resume_from`与原恢复审计/源SHA一致，reward步数从源轮数+1开始；第2000轮已实际跑通run/统一accept/report/render，47标称全过但仍摆腿，三视频全量解码。渲染位移标签为`XY from start`，含停车前行驶，不能视为停车漂移。[扩大延迟2000阶段结果](../../artifacts/fudan_ppo_walk/20261114-pd200-delay-resume1000-3000-01/interim-2000-01/RESULTS.md)。
+
+PD200半幅从零3000：`train_pd200_half_random_3000 prepare/run --output <本次新目录>`恢复最早3000的17奖励（高度1/.001）、保留20/1和200Hz，按用户确认的半幅范围/噪声及固定10/2ms队列、零外载运行。预检新增`--training-parameters`保留真实训练启动随机参数，不由旧固定验收夹具覆盖；与`--training-resets`组合检查实际复位，参数/初态另存。20环境时序/零外载及4096实际范围与零初始化通过；到3000停止审计，不代表行为通过。[本次记录](../../artifacts/fudan_ppo_walk/20261114-pd200-half-random-height1-scratch3000-01/README.md)。
+
+1ms评分适配：`check_sample_period_scoring --output <新JSON>`11项核对1/2ms完整记录、19/20ms双轮失载、20/21ms启动接触、奇数毫秒速度峰值及坏时间网格；原`check_scoring_v2`71项保持通过，0积分/0学习。统一accept按记录实际采样周期计算，持续时间门槛不变；不能把1ms原记录降采样后漏掉短时失败。[PD200效果检查](../../artifacts/fudan_ppo_walk/20261113-pd200-p20d1-delay10to20-scratch3000-01/effect-20261114-01/RESULTS.md)。
+
+PD200从零3000：`scripts.agent.fudan_ppo_walk.train_pd200_scratch3000 prepare/run --output <本次新目录>`按本次授权设置腿20/1、双延迟10～20ms、零外力；1ms积分/5ms PD/10ms策略。`check_pd_decimation --output <新JSON>`核默认路径与原控制逐值一致、保持节奏及弹簧更新；20环境实际GPU预检核2000积分/400PD/1600保持和零外载。新时序预检、模型、报告及评估时间轴一致，训练达到3000即停并审计。[本次记录](../../artifacts/fudan_ppo_walk/20261113-pd200-p20d1-delay10to20-scratch3000-01/README.md)。
+
+PD日志目标回放：`scripts.agent.real2sim.replay_usb_pd_targets prepare/run/render --output <新目录>`；prepare静态解闭链/初态假设，run以500Hz日志目标走MuJoCo Warp GPU原PD/弹簧/机械轮，逐步核实际ctrl公式，render从保存状态生成目标/实测/仿真视频与曲线。缺机身位置/速度/接触时必须标估算，不作为完整实机轨迹或物理参数验收。[命令和结果](../../artifacts/real2sim/model3000-usb-pd500-20261113-01/mujoco-target-replay-01/README.md)。
+
+新高度奖励从零1500：`scripts.agent.fudan_ppo_walk.train_mechanical_height_wide_1500 prepare/run --output <本次新目录>`仅在用户本次预算内执行；准备阶段核对与旧无外力配置仅高度权重/指数分母不同，预检与4096实际控制再次核scale5/sigma0.01、零外载及机械轮参数，达到1500即停。结束审计读取预算对应的全部奖励步数，并核对初始/最终/训练报告的height_reward一致。[预算和命令](../../artifacts/fudan_ppo_walk/20261113-mechanical-heightwide-scratch1500-01/README.md)。
+
+高度奖励作用范围加宽后，`scripts.agent.fudan_ppo_walk.check_height_reward --output <新JSON>`当前17项：默认scale5/sigma0.01、实际奖励公式、峰值0.05、其他16项/输入保持、窄范围兼容和同权重旧sigma预检拒绝；0物理/前向/更新。[检查及限制](../../artifacts/fudan_ppo_walk/20261113-height-reward-x5-sigma001-01/README.md)。
+
+高度奖励×5：`scripts.agent.fudan_ppo_walk.check_height_reward --output <新JSON>`执行实际reward聚合/输入/保存/CLI的13项合成检查，0积分/前向/更新；权重5须得到高度峰值0.05，其他16项精确不变，旧高度预检拒绝，新预检放行，旧PT缺元数据按1/.001。[记录](../interfaces/20261113-fudan-height-reward-x5.md)。
+
+关闭外力从零1500：`scripts.agent.fudan_ppo_walk.train_mechanical_no_external_1500 prepare/run --output <本次新目录>`仅在用户本次授权预算内运行；先核对与上一轮配方仅3个外力字段不同，20环境预检直接观察真实GPU积分前外力/力矩最大值0和推扰触发关闭，再以4096环境训练0→1500即停。训练完成自动审计零初始化、30000次双Adam、1500个奖励日志点及源快照；不代表行为通过。[配置/预算/命令](../../artifacts/fudan_ppo_walk/20261113-mechanical-noexternal-scratch1500-01/README.md)。
+
 复旦机械轮候选：`check_mechanical_wheels --output <新目录>`验证单位增益、无速度曲线/0.45、实际GPU力矩、仅轮物理改变、复位及20环境500积分拍有限性；旧`check_wheel_motor_response`显式legacy_curve核历史路径。`real2sim.replay_mechanical_wheels --profile mechanical/legacy_curve`固定17679对应PD录30秒零指令；`diagnose_parking_posture --wheel-model mechanical --wheel-motor-gain 1`走正式新模型，统一accept评分。`report_mechanical_replacement`核共用初态与有意不同的轮物理，不能把物理不同当作同cohort策略比较。`check_mechanical_wheel_pulses`只作历史单转子CPU诊断，实际整机验收仍GPU。[结果/限制](../../artifacts/real2sim/wheel-mechanical-replacement-20261112-01/README.md)。
 
 训练中阶段检查：`scripts.agent.fudan_ppo_walk.inspect_output_gain_checkpoint --checkpoint <已完整保存的PT> --output <新目录>`冻结并核对checkpoint轮数/双优化器/有限权重、当前运行源码与训练快照，在原训练继续时采集新21例GPU，复用14679固定基线，以统一入口及逐数组初态配对核摆腿/停车/30秒偏航，0诊断更新。不能把阶段PT当作3000轮最终结果；原样本失效仍记退化。[16549阶段结果](../../artifacts/fudan_ppo_walk/20261112-output045-resume14679-3000-01/interim-16549-01/RESULTS.md)。

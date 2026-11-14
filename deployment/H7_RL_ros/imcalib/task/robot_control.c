@@ -11,6 +11,7 @@
 #include "machine_config.h"
 #include "standup.h"
 #include "air_detection.h"
+#include "jetson_uart.h"
 
 #include <string.h>
 
@@ -64,6 +65,7 @@ void Action_State_Clear(void)
     __disable_irq();
     memset(action_state.a, 0, sizeof(action_state.a));
     action_state.reset_count++;
+    Jetson_Uart_Action_Clear(action_state.reset_count);
     action_state.last_ok_tick = 0u;
     action_state.updated = 0u;
     action_state.rl_ready = 0u;

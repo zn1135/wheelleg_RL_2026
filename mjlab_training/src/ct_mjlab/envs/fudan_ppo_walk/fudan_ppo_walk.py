@@ -81,7 +81,7 @@ class PhysicalAction(HuananhuPdAction):
             -1
         )
 
-    # 500Hz内环沿用原PD与执行器，只在配置开启时应用独立延迟/推扰。
+    # PD按配置保持力矩，延迟队列和被动弹簧仍逐物理步推进。
     def apply_actions(self):
         if self.cfg.disturbances.action_delay:
             self._control_actions.copy_(self.disturbances.action(self._raw_actions))
@@ -208,8 +208,8 @@ def make_env_cfg(*, play=False, disturbances=None, task_cfg=None):
     wheel_physics.record(task.sim.wheel_model)
     if task.sim.wheel_model=='mechanical':
         if (task.sim.wheel_motor_gain!=1. or task.sim.wheel_motor_delay_ms!=0. or
-                task.sim.wheel_motor_time_constant_ms!=0. or task.sim.wheel_motor_torque_limit_nm is not None):
-            raise ValueError('Mechanical wheels require unit output gain and no extra wheel response; use legacy_curve for historical replay')
+                task.sim.wheel_motor_torque_limit_nm is not None):
+            raise ValueError('Mechanical wheels require unit output gain, no pure wheel delay and no extra torque cap')
         cfg.scene.entities['robot'].spec_fn=wheel_physics.mechanical_spec
     cfg.scene.num_envs = task.env.play_num_envs if play else task.env.num_envs
     cfg.sim.mujoco.timestep = task.sim.dt
@@ -235,6 +235,7 @@ def make_env_cfg(*, play=False, disturbances=None, task_cfg=None):
         max_wheel_velocity=task.control.max_wheel_velocity,
         wheel_stiffness=task.control.wheel_stiffness,
         wheel_damping=task.control.wheel_damping,
+        pd_decimation=getattr(task.control, 'pd_decimation', 1),
         motor_randomization=False,
         randomize_delays=False,
         action_delay_s=0.0,
@@ -473,7 +474,9 @@ class FudanEnv:
             collision=torch.zeros_like(error),
             dof_pos_limits=limit
         )
-        terms = {k: (v * self.cfg.rewards.scales[k] * self.dt).clamp(-self.dt, self.dt) for k, v in raw.items()}
+        # 高度项的上限随权重增加，其余奖励仍保持原来的±dt限幅。
+        terms = {k: (v * self.cfg.rewards.scales[k] * self.dt).clamp(
+            -self.dt, self.dt * self.cfg.rewards.scales[k] if k=='base_height' else self.dt) for k, v in raw.items()}
         self.sums[:, 0] += terms['tracking_lin_vel']
         self.sums[:, 1] += terms['tracking_ang_vel']
         return (torch.stack(list(terms.values())).sum(0), terms)
