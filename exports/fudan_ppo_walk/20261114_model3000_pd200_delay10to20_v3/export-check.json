@@ -1,0 +1,15 @@
+{
+  "samples": 256,
+  "seed": 3000,
+  "max_abs_error": 9.5367431640625e-06,
+  "tolerance": 0.0001,
+  "checkpoint": "artifacts/fudan_ppo_walk/models/20261114_model3000_pd200_p20d1_half_random_delay10to20.pt",
+  "checkpoint_sha256": "dfb221c09648d278d5c5e5c7b78e4d729b7a7a5a56458762b7313dc50831c4f8",
+  "onnx_sha256": "212b7e9829d97efe36046fb59ac8022bcd0ed6ac7af1e508641ce571f32d75d1",
+  "onnx_md5": "a77fe3b228a92ef98074cae30ed7107e",
+  "source_commit": "0e19e5568d3cdab20db1b5d34ae2631145fff6f3",
+  "torch": "2.15.0+cpu",
+  "onnx": "1.23.2",
+  "export_environment": "Windows project venv, simulator imports isolated",
+  "interface_correction": "PD period from checkpoint control_timing"
+}

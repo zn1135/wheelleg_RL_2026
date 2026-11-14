@@ -1,0 +1,20 @@
+{
+  "samples": 256,
+  "seed": 3500,
+  "max_abs_error": 7.987022399902344e-06,
+  "tolerance": 0.0001,
+  "checkpoint": "artifacts/fudan_ppo_walk/models/20261113_model3500_p20d1_armature2_wheelP01_mechanical.pt",
+  "checkpoint_sha256": "0da0af2ad0f731be5dfe58d13d15ea785fbd9bf0bcf8c8a1a4ff38515a0a9114",
+  "onnx_sha256": "87f3fd5223de40b82c5d5a1f378b753339cdec720bdf2c4eb3d182810afbf78e",
+  "onnx_md5": "96660bbf2f6afcbcca516c965ebaeb06",
+  "source_commit": "8b70970ae31284b1634b7ab0e975e5cd40745794",
+  "torch": "2.15.0+cpu",
+  "onnx": "1.23.2",
+  "training_leg_pd": [
+    20,
+    1
+  ],
+  "training_wheel_p": 0.1,
+  "history_version": "v3",
+  "export_environment": "Windows project venv, simulator imports isolated"
+}

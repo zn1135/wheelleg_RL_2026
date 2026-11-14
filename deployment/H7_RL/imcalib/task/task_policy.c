@@ -8,6 +8,7 @@
 #include "output_capture.h"
 #include "mono_ns.h"
 #include "rl_observation.h"
+#include "jetson_usb.h"
 #include "rl_policy.h"
 #include <string.h>
 /* 初始化已编译CubeAI网络并检查观测/action尺寸；不在这里开启电机出力。 */
@@ -55,6 +56,7 @@ void ctrl_task_body(void)
         memcpy(observation.last_action, rl_control.observation.last_action, sizeof(observation.last_action));
         memcpy(observation.history, rl_control.observation.history, sizeof(observation.history));
         observation.history_initialized = rl_control.observation.history_initialized;
+        observation.history_seeded = rl_control.observation.history_seeded;
         observation.warmup_steps = rl_control.observation.warmup_steps;
     }
     else
@@ -105,6 +107,7 @@ void ctrl_task_body(void)
     memcpy(rl_control.observation.obs, observation.obs, sizeof(observation.obs));
     memcpy(rl_control.observation.history, observation.history, sizeof(observation.history));
     rl_control.observation.history_initialized = built ? observation.history_initialized : 0u;
+    rl_control.observation.history_seeded = built ? observation.history_seeded : 0u;
     rl_control.observation.valid = built;
     taskEXIT_CRITICAL();
     if (!built || !rl_control.policy.ready || (!warmup && !RL_Policy_Run(&rl_control.policy, &observation, action)))
@@ -125,7 +128,7 @@ void ctrl_task_body(void)
 #if MACHINE_LATENCY_CAPTURE_ENABLE
     trace.value[3]=warmup ? UINT32_MAX : rl_control.policy.run_us;
 #endif
-    /* 动作保持左右两组的网络顺序；首帧为零动作热步，500Hz PD仍正常求解。
+    /* 动作保持左右两组的网络顺序；零动作热步仍按RL内环周期求解PD。
      * 推理期间可能退出RL，发布前重查模式，防止新动作覆盖退出时的清零。 */
     taskENTER_CRITICAL();
     if (reset_count == action_state.reset_count && rc_command.online && rc_command.mode.strategy == CTRL_STRATEGY_RL && rc_command.mode.engage && rl_control.recovery.phase == RL_RECOVERY_NORMAL)
@@ -135,6 +138,9 @@ void ctrl_task_body(void)
         action_state.last_ok_tick = HAL_GetTick();
         action_state.updated = 1u;
         action_state.rl_ready = 1u;
+#if !MACHINE_LATENCY_CAPTURE_ENABLE
+        Jetson_Usb_Record_Action_Observation(observation.obs, warmup);
+#endif
 #if MACHINE_LATENCY_CAPTURE_ENABLE
         trace_policy_published_ns=Mono_Ns_Get();
         trace.correlation=++trace_policy_sequence;trace.flags=4u;
