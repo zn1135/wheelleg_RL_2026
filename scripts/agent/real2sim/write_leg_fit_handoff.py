@@ -9,7 +9,7 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 ROOT=Path(__file__).resolve().parents[3]
-OUT=ROOT/'docs/diagnostics/20261109-双腿负载拟合流程与训练仿真接入.docx'
+OUT=ROOT/'docs/word/20261109-双腿负载拟合流程与训练仿真接入.docx'
 RUN=ROOT/'artifacts/length-response-fit/20261109-formal-integration-01'
 
 

@@ -1,0 +1,71 @@
+{
+  "date": "2026-11-15",
+  "files": [
+    {
+      "original_path": "docs/diagnostics/20261103-轮腿机器人零速漂移发现总结.docx",
+      "current_path": "docs/word/20261103-轮腿机器人零速漂移发现总结.docx",
+      "kind": "正式文档",
+      "sha256": "9292d8f7c9edbbdd29b70a262d632283b86e54dc8b4556e21422299888fd826d"
+    },
+    {
+      "original_path": "docs/diagnostics/20261109-双腿负载拟合流程与训练仿真接入.docx",
+      "current_path": "docs/word/20261109-双腿负载拟合流程与训练仿真接入.docx",
+      "kind": "正式文档",
+      "sha256": "01ca57e74f063833fc434471af4b97fee9dbf188e99334d5f04e9a763d3e1a68"
+    },
+    {
+      "original_path": "artifacts/real2sim/model3000-pd200-logs-20261115-01/summary-word-20261115/轮腿机器人实机最佳版本问题总结_20261115.docx",
+      "current_path": "docs/word/20261115-轮腿机器人实机最佳版本问题总结.docx",
+      "kind": "正式文档",
+      "sha256": "41cc5314cee1b6ac0631508048eb292e5d4ac6a2bec8e37360e57af10f5593a4"
+    }
+  ],
+  "history_cleanup": {
+    "date": "2026-11-15",
+    "reason": "用户要求删除history目录",
+    "deleted_files": [
+      {
+        "original_path": "artifacts/fudan_ppo_walk/zero-speed-findings-20261103/轮腿机器人零速漂移发现总结.docx",
+        "kind": "历史稿",
+        "sha256": "9e5528a694c72307b90d49b05f2e66f731320003f8df2965afc11d8e47b51ac0",
+        "deleted_path": "docs/word/history/20261103/零速漂移最初交付稿.docx"
+      },
+      {
+        "original_path": "artifacts/fudan_ppo_walk/zero-speed-findings-20261103/reason-analysis/before-edit.docx",
+        "kind": "历史稿",
+        "sha256": "9e5528a694c72307b90d49b05f2e66f731320003f8df2965afc11d8e47b51ac0",
+        "deleted_path": "docs/word/history/20261103/补充原因分析前.docx"
+      },
+      {
+        "original_path": "artifacts/fudan_ppo_walk/zero-speed-findings-20261103/structure-options/before-edit.docx",
+        "kind": "历史稿",
+        "sha256": "9555b30bd9031fe019cd71b8cb247d66dea757c272a4522c3ad3ce966fc54369",
+        "deleted_path": "docs/word/history/20261103/补充结构方案前.docx"
+      },
+      {
+        "original_path": "artifacts/fudan_ppo_walk/zero-speed-solution-word-20261103/before-edit.docx",
+        "kind": "历史稿",
+        "sha256": "35129c891b487c1028a3d61690af66c05b54d30b4e13cb73d988a69d7ed2113c",
+        "deleted_path": "docs/word/history/20261103/更新解决方案前.docx"
+      },
+      {
+        "original_path": "artifacts/fudan_ppo_walk/zero-speed-solution-word-20261103/remove-validation/before-edit.docx",
+        "kind": "历史稿",
+        "sha256": "2b96212b4fd1f49e195a08ca13009786467a40d3afbdf8f6aa06504a388495c4",
+        "deleted_path": "docs/word/history/20261103/精简验收内容前.docx"
+      },
+      {
+        "original_path": "artifacts/real2sim/model3000-pd200-logs-20261115-01/summary-word-20261115/history/首版仅当前问题摘要.docx",
+        "kind": "历史稿",
+        "sha256": "7ff4eabe0cfc57c00fe69c3cb9c49b9649518e6f5ca66eb9867d6e5e03a2f8ca",
+        "deleted_path": "docs/word/history/20261115/首版仅当前问题摘要.docx"
+      },
+      {
+        "original_path": "artifacts/real2sim/model3000-pd200-logs-20261115-01/summary-word-20261115/history/版本对照稿.docx",
+        "kind": "历史稿",
+        "sha256": "b06d600a6befd07f5706c974d3923676956ad144c959b808bfd3a9e146f67f65",
+        "deleted_path": "docs/word/history/20261115/版本对照稿.docx"
+      }
+    ]
+  }
+}
