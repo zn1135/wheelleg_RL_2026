@@ -86,9 +86,7 @@ uint8_t RL_Observation_Read_Sample(const rl_observation_state_t *state, rl_obser
     *sample = state->sample;
     return 1u;
 }
-/* 8000 v2：先缩放拼帧，历史保存未裁剪帧，当前输入最后整体裁剪。
- * 首帧重复填5次；任务先执行一个零动作周期，下一帧FIFO形成4份复位帧+1份新帧。
- * 不在硬件添加仿真噪声，也不把后续帧覆写进旧历史。 */
+/* v3：热步后的首个推理帧限幅后填满历史，之后逐拍追加限幅帧。 */
 uint8_t RL_Observation_Build(rl_observation_state_t *state, const machine_rl_cfg_t *config, const rl_observation_sample_t *sample, const rc_command_t *command, const rl_recovery_state_t *recovery, uint8_t source_valid)
 {
     float raw[RL_OBS_SIZE] = {0.0f};
@@ -121,17 +119,21 @@ uint8_t RL_Observation_Build(rl_observation_state_t *state, const machine_rl_cfg
         raw[RL_OBS_LAST_ACTION + i] = state->last_action[i];
     }
     if (!Float_Array_Finite(raw, RL_OBS_SIZE)) { return 0u; }
-    if (!state->history_initialized)
+    for (uint8_t i = 0u; i < RL_OBS_SIZE; i++) { state->obs[i] = clip(raw[i], obs->obs_clip); }
+    if (!state->history_seeded)
     {
-        for (uint8_t i = 0u; i < RL_HISTORY_FRAMES; i++) { memcpy(&state->history[i * RL_OBS_SIZE], raw, sizeof(raw)); }
+        for (uint8_t i = 0u; i < RL_HISTORY_FRAMES; i++)
+        {
+            memcpy(&state->history[i * RL_OBS_SIZE], state->obs, sizeof(state->obs));
+        }
+        state->history_seeded = state->history_initialized;
         state->history_initialized = 1u;
     }
     else
     {
         memmove(state->history, &state->history[RL_OBS_SIZE], (RL_HISTORY_SIZE - RL_OBS_SIZE) * sizeof(float));
-        memcpy(&state->history[RL_HISTORY_SIZE - RL_OBS_SIZE], raw, sizeof(raw));
+        memcpy(&state->history[RL_HISTORY_SIZE - RL_OBS_SIZE], state->obs, sizeof(state->obs));
     }
-    for (uint8_t i = 0u; i < RL_OBS_SIZE; i++) { state->obs[i] = clip(raw[i], config->observation.obs_clip); }
     state->valid = Float_Array_Finite(state->history, RL_HISTORY_SIZE);
     return state->valid;
 }
