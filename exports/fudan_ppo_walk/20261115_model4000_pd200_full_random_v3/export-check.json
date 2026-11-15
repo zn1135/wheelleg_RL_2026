@@ -1,0 +1,12 @@
+{
+  "samples": 256,
+  "seed": 4000,
+  "max_abs_error": 9.5367431640625e-06,
+  "tolerance": 0.0001,
+  "checkpoint_sha256": "1513279bcc519814af3f1aea266967a937f845244002c7c03e83037fa16878b6",
+  "onnx_sha256": "3be34e5244eb729df25ad51ea570ed03c86fa3691d02e3051f506d371311aefa",
+  "source_commit": "cf5accb82f54a8607f58207a649ba11c2288077d",
+  "torch": "2.15.0+cpu",
+  "onnx": "1.23.2",
+  "export_environment": "Windows project venv, simulator imports isolated"
+}
