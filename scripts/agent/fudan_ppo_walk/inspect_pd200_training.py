@@ -34,30 +34,34 @@ def items(*_):
     return chosen
 
 
-def run(out):
+def run(out,checkpoint_audit=None,conditions_override=None):
     out.mkdir(parents=True,exist_ok=False);torch.set_num_threads(1)
     metadata=torch.load(MODEL,map_location='cpu',weights_only=False)
     iteration=metadata['iterations']
     assert iteration>0 and not metadata['partial_update']
     resume=metadata.get('resume_from')
     log_start=0 if resume is None else resume['iterations']
-    if resume is not None:
+    if checkpoint_audit is None and resume is not None:
         restored=json.loads((EXPERIMENT/'initialization-audit.json').read_text())
         assert restored['passed'] and restored['source_checkpoint_sha256']==resume['sha256']
         assert restored['learner_parameters_exact'] and restored['both_optimizers_exact']
-    assert metadata['transitions']==iteration*4096*48
-    assert metadata['primary_updates']==metadata['encoder_updates']==iteration*20
-    if MODEL.name=='model_final.pt':
-        assert json.loads((EXPERIMENT/'training-audit.json').read_text())['passed']
-        assert sha(MODEL)==json.loads((EXPERIMENT/'status.json').read_text())['checkpoint_sha256']
+    if checkpoint_audit is not None:
+        source_check=checkpoint_audit(metadata)
     else:
-        assert MODEL.name==f'model_{iteration}.pt'
-        assert json.loads((EXPERIMENT/'initialization-audit.json').read_text())['passed']
-    source=json.loads((RUN/'source_sha256.json').read_text())
-    source_check={name:sha(ROOT/name)==digest for name,digest in source.items()
-        if name.startswith('mjlab_training/src/ct_mjlab/') or name.startswith('resources/')}
-    assert all(source_check.values()),[name for name,passed in source_check.items() if not passed]
-    conditions=from_record(metadata['disturbances']);assert not conditions.pushes
+        assert metadata['transitions']==iteration*4096*48
+        assert metadata['primary_updates']==metadata['encoder_updates']==iteration*20
+        if MODEL.name=='model_final.pt':
+            assert json.loads((EXPERIMENT/'training-audit.json').read_text())['passed']
+            assert sha(MODEL)==json.loads((EXPERIMENT/'status.json').read_text())['checkpoint_sha256']
+        else:
+            assert MODEL.name==f'model_{iteration}.pt'
+            assert json.loads((EXPERIMENT/'initialization-audit.json').read_text())['passed']
+        source=json.loads((RUN/'source_sha256.json').read_text())
+        source_check={name:sha(ROOT/name)==digest for name,digest in source.items()
+            if name.startswith('mjlab_training/src/ct_mjlab/') or name.startswith('resources/')}
+        assert all(source_check.values()),[name for name,passed in source_check.items() if not passed]
+    conditions=from_record(metadata['disturbances']) if conditions_override is None else conditions_override
+    assert not conditions.pushes
     assert conditions.external_force_range==conditions.external_torque_range==(0.,0.)
     plan=dict(checkpoint=str(MODEL),sha256=sha(MODEL),iteration=iteration,is_final_checkpoint=MODEL.name=='model_final.pt',samples=items(),
         resume_from=resume,log_start_iteration=log_start,

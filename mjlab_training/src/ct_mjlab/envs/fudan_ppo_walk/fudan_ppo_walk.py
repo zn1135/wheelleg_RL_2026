@@ -185,7 +185,9 @@ def randomize(env, env_ids):
     mass[:, local] += add
     scale = torch.empty_like(mass).uniform_(*domain.mass_scale_range)
     com = torch.empty(n, 3, device=device).uniform_(*domain.com_range)
-    buckets = torch.empty(domain.friction_buckets, device=device).uniform_(*domain.friction_range)
+    ground_friction = getattr(domain, 'ground_friction_range', None)
+    buckets = torch.empty(domain.friction_buckets, device=device).uniform_(
+        *(domain.friction_range if ground_friction is None else ground_friction))
     friction = buckets[torch.randint(domain.friction_buckets, (n,), device=device)]
     restitution = torch.empty(n, device=device).uniform_(*domain.restitution_range)
     env.sim.model.body_mass[:, ids] = mass * scale
@@ -195,7 +197,13 @@ def randomize(env, env_ids):
         [i for i in range(model.ngeom) if int(model.geom_bodyid[i]) in set(ids.tolist())],
         device=device
     )
-    env.sim.model.geom_friction[:, geoms, 0] = ((friction + 0.5) * 0.5)[:, None]
+    if ground_friction is None:
+        env.sim.model.geom_friction[:, geoms, 0] = ((friction + 0.5) * 0.5)[:, None]
+    else:
+        # 机器人priority=1：两侧使用同一系数，避免只改地面却被机器人覆盖。
+        terrain = model.geom('terrain').id
+        env.sim.model.geom_friction[:, geoms, 0] = friction[:, None]
+        env.sim.model.geom_friction[:, terrain, 0] = friction
     effective = (restitution + 0.5) * 0.5
     log_e = effective.log()
     zeta = -log_e / (math.pi ** 2 + log_e.square()).sqrt()

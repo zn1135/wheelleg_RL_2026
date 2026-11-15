@@ -54,6 +54,7 @@ class FudanWalkCfg:
         mass_scale_range = [.85, 1.15]
         com_range = [-.03, .03]
         friction_range = [.4, 1.6]
+        ground_friction_range = None  # 显式范围直接作为轮地摩擦系数；None保留历史混合公式。
         restitution_range = [.4, 1.]
         friction_buckets = 64
         # 下一阶段围绕10ms扩大范围；每环境初始化抽取，非逐拍抖动。

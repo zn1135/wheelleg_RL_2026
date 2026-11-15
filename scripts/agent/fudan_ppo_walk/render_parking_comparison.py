@@ -54,7 +54,8 @@ def main():
                     for col,((folder,run,protocol,model,data,renderer,cam,option),trace) in enumerate(zip(sides,traces)):
                         data.qpos[:]=trace['qpos'][i];mujoco.mj_forward(model,data);cam.lookat[:]=data.qpos[:3]
                         renderer.update_scene(data,camera=cam,scene_option=option)
-                        panel=Image.fromarray(renderer.render().copy());draw=ImageDraw.Draw(panel);tick=i*5
+                        panel=Image.fromarray(renderer.render().copy());draw=ImageDraw.Draw(panel)
+                        tick=int(np.searchsorted(trace['time'],i*.01-1e-9))
                         command=cases[0]['segments'][0]['command']
                         for segment in cases[0]['segments']:
                             if i*.01>=segment['start']:command=segment['command']

@@ -1,5 +1,11 @@
 # 构建与验证
 
+全幅随机化4000效果：`inspect_randomization_4000 audit/run/report/stress/compare/videos --output <新目录>`分别核原982轮预算及继承弃用采样、执行已校验训练快照、采集47标称/两模型各27摩擦外扰例、核1128项初态及正常速度对照视频。统一`accept`使用对应3000基线；当前47→40丢7例判退化，外扰2/27→2/27。原工作区源码门禁失败与快照复核通过分开记录，不跳过源校验或覆写旧成绩。[结果、视频及范围](../../artifacts/fudan_ppo_walk/20261115-random4000-effect-01/RESULTS.md)。
+
+3018中断恢复：`resume_pd200_remaining prepare/run --output <新目录>`只补原预算982轮到4000。prepare核下一轮采样中断位置、两Adam均60360、18条完整奖励及训练物理源码无漂移，保留184320条弃用采样的原计数；复用同配方GPU预检，初始化逐张量恢复。结束分别审计完整更新转移与含弃用采样的累计计数，不能把partial_update=false当作完整采样边界。[来源、预算和命令](../../artifacts/fudan_ppo_walk/20261115-pd200-resume3018-4000-01/README.md)。
+
+3000基线全幅随机化续训：`resume_pd200_random_from3000 prepare/run --output <新目录>`固定新增1000轮到4000，恢复源半幅参数/噪声至全幅，直接轮地摩擦0.4～1.2、持续机身各轴±3N/矩0、7秒/0.3m/s短推扰开。新增`check_ground_friction --output <新目录>/friction-check`核历史映射/端点/实际GPU接触；`run`前检查该报告及本次20环境真实参数预检，初始化逐张量恢复，结束自动预算审计。均以`PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_walk.<模块>`运行；预检不代表行为验收。[配方与命令](../../artifacts/fudan_ppo_walk/20261115-pd200-full-random-force3-push-resume3000-4000-01/README.md)。
+
 扩大延迟续训：`resume_pd200_delay_from1000 prepare --action-delay-ms 10 20 --sensor-delay-ms 10 20 --output <新目录>`冻结源1000有效配置，仅改两个延迟范围，`run`按2000新增轮到总3000。使用新范围20环境真实参数预检，保存初始检查点时逐张量核模型/双Adam/RNG与源相同，4096实际范围再次核对；旧中断final不作恢复源。[本次记录](../../artifacts/fudan_ppo_walk/20261114-pd200-delay-resume1000-3000-01/README.md)。
 
 阶段效果查看：`inspect_pd200_training run/report/render --checkpoint <已完整保存的model_N.pt> --experiment <原训练协调目录> --output <新目录>`支持训练中冻结阶段；核轮数/转移/双Adam与源一致，按PT自带动作/传感延迟回放，奖励曲线截到该阶段，不误称3000完成。GPU与原训练可并行，原配方和预算不改。[半幅1000阶段结果](../../artifacts/fudan_ppo_walk/20261114-pd200-half-random-height1-scratch3000-01/interim-1000-01/RESULTS.md)。
