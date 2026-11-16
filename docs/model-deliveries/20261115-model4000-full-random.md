@@ -54,3 +54,11 @@ mjlab_training/.venv/bin/python -m tensorboard.main --logdir logs/mjlab/fudan_pp
 | Isaac | 不适用，独立mjlab任务 |
 
 [完整效果报告及视频](../../artifacts/fudan_ppo_walk/20261115-random4000-effect-01/RESULTS.md)。旧模型与原有证据保留。允许用途为实验复现与离线对照；下一步优先保留3000，从仅扩大摩擦的单项对照开始，要求47原成功全部保留及停车不恶化，再逐项增加外扰。本次未启动该新训练。
+
+## 2026-11-15 后续 ONNX 导出与实机记录
+
+交付对象为闭链轮腿复旦 PPO 行走策略的 4000 轮实验模型。训练基线为 `26_wheelleg` 的 `cf5accb82f54a8607f58207a649ba11c2288077d`，checkpoint、配置快照与训练验收见上文。H7 独立部署仓维护分支为 `main`，本次整理时工作区基于 `fb64e2ca4367eaeb90151dd9fde26af3b46b29f6` 并含 Jetson 实控和限幅改动。实测时烧录二进制身份与部署负责人独立复查待确认。
+
+- 导出使用 Windows 项目环境的 PyTorch 2.15.0+cpu 和 ONNX 1.23.2。ONNX 输入为 float32 `obs[1,25]` 和 `obs_history[1,125]`，输出为 `actions[1,6]`。外部 Jetson 走 JRL2 契约 `3000201`，策略 100 Hz、H7 PD 200 Hz。ONNX SHA256 为 `3be34e5244eb729df25ad51ea570ed03c86fa3691d02e3051f506d371311aefa`，与现场引擎元数据一致。[导出包](../../exports/fudan_ppo_walk/20261115_model4000_pd200_full_random_v3/) · [256 组导出检查](../../exports/fudan_ppo_walk/20261115_model4000_pd200_full_random_v3/export-check.json)
+- H7 实测策略前后命令达到 ±2.5 m/s，连续直行稳态轮速折算中位数分别为 +2.21 和 −1.84 m/s。32,443 次动作首次用于 PD 的延迟 P99 为 4.961 ms。末段零指令期出现明显姿态异常并退出 RL，整机稳定性仍待验证。原始日志归独立部署仓 `rl_model_logs/25obs-6action-pd2000-4000rounds`。
+- 交付范围为实验复现和部署对照。GPU 平地行为退化结论见上文，导出数值、实机采样和时序数据各自记录。
