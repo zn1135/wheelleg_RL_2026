@@ -26,7 +26,7 @@ REVISION = 'ffd1eb7d1d1a2d1654125d8f316fdb0fdac6d001'
 ARENA = ROOT / f'artifacts/rmuc2027/upstream-{REVISION}/rmuc2027_mjarena/arena_mjcf/model.xml'
 COARSE_ARENA = ROOT / 'artifacts/rmuc2027/continuous50-v8/arena.xml'
 CHECKPOINT = ROOT / 'logs/mjlab/fudan_ppo_walk/20261114_pd200_p20d1_half_random_delay_wide_resume1000_to3000_01/model_final.pt'
-REGIONAL_CHECKPOINT = ROOT / 'logs/mjlab/fudan_ppo_walk/20261116_scan_slope5to20_mu08_resume5838_to6838_01/model_final.pt'
+REGIONAL_CHECKPOINT = ROOT / 'artifacts/fudan_ppo_walk/models/20261116_model6838_regions_scan_slope5to20_mu08/model_final.pt'
 WHEELS = (2, 5)
 
 
