@@ -12,6 +12,8 @@
 | 检查与行为验收 | [构建与验证](docs/ai/build-test.md)、[统一运动标准](docs/interfaces/chuanliantui-motion-acceptance-v1.md) |
 | 示范采集／传统控制对照 | `scripts/mjlab.sh teacher`、`scripts/mjlab.sh collect`，见[教师说明](docs/mjlab-lqr-vmc-teacher.md) |
 | 实采／标定 | [实采命令](docs/commands/real2sim.md) |
+| RMUC2027完整场地交互 | `scripts/rmuc2027.sh`；浏览器用`--viewer viser --port 8790`，见[场地接入](docs/interfaces/20261115-rmuc2027-playground.md)；原生MuJoCo体验，不作正式验收 |
+| 分区地形MuJoCo交互 | `scripts/rmuc2027.sh --terrain regions`；前后±3m/s、G原地10rad/s小陀螺、X停车；数字1平地/2～5坡/6崎岖，V全图；[交互说明](docs/interfaces/20261115-rmuc2027-playground.md#分区地形交互) |
 | 最终sim2sim验证 | 各task使用自己的GPU采集入口，再用统一accept评分；原生CPU入口只作历史复现，见[统一标准](docs/interfaces/20261102-unified-gpu-acceptance.md) |
 | Isaac历史环境 | [Isaac说明](docs/commands/isaac.md)，不混用mjlab Python |
 

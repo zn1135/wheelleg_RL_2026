@@ -2,6 +2,19 @@
 
 
 class FudanWalkCfg:
+    class observations:
+        critic_height_scan = False  # 显式启用真实77点地形；旧模型继续使用重复高度。
+
+    class terrain:
+        mode = 'plane'  # 新分区用--terrain regions显式启用，保留历史平地入口。
+        size = 32.
+        resolution = .2  # 崎岖路面20cm采样间隔；坡面使用精确凸体，避免高度场接触溢出。
+        slope_degrees = [5., 20.]
+        pyramid_platform = 1.
+        rough_amplitude = .01
+        rough_spacing = .2
+        seed = 30001
+
     class inference:
         # GPU评估未指定checkpoint时，使用用户选定的模型和图外停车参考。
         checkpoint = 'logs/mjlab/fudan_ppo_walk/20261102_parking_resume7000_to8000/model_final.pt'
