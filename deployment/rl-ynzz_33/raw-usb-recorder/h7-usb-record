@@ -1,0 +1,14 @@
+#!/bin/bash
+set -eu
+port=/dev/serial/by-id/usb-STMicroelectronics_STM32_Virtual_ComPort_386F33613134-if00
+root=/home/imca/jetson_rl/logs/joint-sysid
+mkdir -p "$root"
+while true; do
+    if [[ ! -e "$port" ]] || (( $(df -Pk "$root" | awk 'NR == 2 {print $4}') < 5242880 )); then
+        sleep 2
+        continue
+    fi
+    segment=$(mktemp -d "$root/segment-$(date +%Y%m%d-%H%M%S)-XXXXXX")
+    exec /home/imca/jetson_rl/20261113-17679/build/jetson_rl/jetson_rl record --port "$port" --log-dir "$segment/run" --seconds 300
+done
+

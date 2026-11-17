@@ -16,6 +16,7 @@
 | `scripts/agent/real2sim/`、`sim2sim/` | 实采／标定及独立MuJoCo仿真；仿真实现与必要接口保持 |
 | `wheel_legged_gym/` | Isaac历史环境，独立Python3.8；不在本次mjlab清理范围 |
 | `resources/`、`deployment/` | 机器人资产与部署控制；本次不改物理参数或H7 |
+| `deployment/rl-ynzz_33/` | Jetson现场6838/4000/3000部署源码、模型、启动与录制脚本及服务配置；当前入口和来源SHA见该目录README，不包含运行日志/编译缓存 |
 
 ## 共用依赖
 

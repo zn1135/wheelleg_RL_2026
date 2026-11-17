@@ -1,0 +1,314 @@
+{
+  "captured_at": "2026-11-17T23:24:18.020453+08:00",
+  "source": "Jetson live deployment",
+  "source_root": "/home/imca/rl-ynzz_33",
+  "copied_files": 68,
+  "excluded": [
+    "logs/",
+    "build/",
+    "__pycache__/",
+    "*.before-*",
+    "*.log",
+    "*.zip",
+    "temporary hidden build directories"
+  ],
+  "device_services_modified": false,
+  "files": {
+    "policy6838-stage/deployment/H7_RL_ros/imcalib/common/jetson_protocol.h": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/deployment/H7_RL_ros/imcalib/common/jetson_protocol.h",
+      "sha256": "ebe98fc99b8967f432ad677b7af932144aa820fb39ffff82f98c547b14f71990"
+    },
+    "policy6838-stage/deployment/H7_RL_ros/imcalib/common/jetson_session.h": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/deployment/H7_RL_ros/imcalib/common/jetson_session.h",
+      "sha256": "24fda501e98395f8a37894ad8acd72f1604ed0e789e8c51356a619511d3d9e18"
+    },
+    "policy6838-stage/deployment/H7_RL_ros/imcalib/common/jetson_shadow_protocol.h": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/deployment/H7_RL_ros/imcalib/common/jetson_shadow_protocol.h",
+      "sha256": "cca3815ca782fd8c47c8e2e74bbe107aa84c270ae1d2e0b8ed9210ae441ea2e1"
+    },
+    "policy6838-stage/deployment/jetson_rl/CMakeLists.txt": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/deployment/jetson_rl/CMakeLists.txt",
+      "sha256": "e0b0877907ba765a36f5794e93064430f93d87732ef0d9e7ad9dab12f51553e6"
+    },
+    "policy6838-stage/deployment/jetson_rl/src/inference.cpp": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/deployment/jetson_rl/src/inference.cpp",
+      "sha256": "593c932ff6cee590fc8e077b897a07a3292c37acf1c8cccb1257eeb0b978f46e"
+    },
+    "policy6838-stage/deployment/jetson_rl/src/inference.hpp": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/deployment/jetson_rl/src/inference.hpp",
+      "sha256": "2368a77f58749f72206bce6cb1644ca51aae69aa6863f54514cd9d976df11a89"
+    },
+    "policy6838-stage/deployment/jetson_rl/src/logger.hpp": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/deployment/jetson_rl/src/logger.hpp",
+      "sha256": "4a01bbf3757628c510ccbce0244d5d4fbac856e42164e391770e060553cd6786"
+    },
+    "policy6838-stage/deployment/jetson_rl/src/main.cpp": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/deployment/jetson_rl/src/main.cpp",
+      "sha256": "d5c3c2ccdd2fb4efc4851a4f330fb162793f657c48e4910925ce1ce96fcd98ea"
+    },
+    "policy6838-stage/deployment/jetson_rl/src/model.hpp": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/deployment/jetson_rl/src/model.hpp",
+      "sha256": "4d7816423723affdb00114a9368d66f99a8e937194e4f301e962080b9d467927"
+    },
+    "policy6838-stage/deployment/jetson_rl/src/policy.hpp": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/deployment/jetson_rl/src/policy.hpp",
+      "sha256": "3ec2c93a77c794600395bd9a810ec4150ea28d436bec9d2435b330998821031f"
+    },
+    "policy6838-stage/deployment/jetson_rl/tools/report.py": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/deployment/jetson_rl/tools/report.py",
+      "sha256": "204939879d80bdd6ad075b1799b19ae58b0f318d8c7f7d959bbbd97284b473e1"
+    },
+    "policy6838-stage/engine-actions.bin": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/engine-actions.bin",
+      "sha256": "4acba75235d47a963137a857a6d46129ab7846626a107d6564bed3c78ccec5c4"
+    },
+    "policy6838-stage/policy.onnx": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/policy.onnx",
+      "sha256": "50a9be5289e45d113057ccb46cfb4f1c98217572071c1ac09290fb32e914c856"
+    },
+    "policy6838-stage/policy6838PD200.engine": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/policy6838PD200.engine",
+      "sha256": "c04c2b2b308bda9c50a2bfe664d06ee565f26eb1b4319fff0b311466c8af2b83"
+    },
+    "policy6838-stage/policy6838PD200.engine.meta": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/policy6838PD200.engine.meta",
+      "sha256": "1e2adfc4aceb04812a6e971a5c136e4f39c5b4d66f83a2be853dffc87cf8619c"
+    },
+    "policy6838-stage/reference-actions.bin": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/reference-actions.bin",
+      "sha256": "20e0c593d87ee075dd61f95e27ab4778a68c8efe209cfeea63becde446bb1084"
+    },
+    "policy6838-stage/reference-inputs.bin": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/reference-inputs.bin",
+      "sha256": "bbb05ce64b730e78ab2a1e6c41684b598d2490d093935b0544b16dbb7b6c329a"
+    },
+    "policy6838-stage/run-policy6838.sh": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/run-policy6838.sh",
+      "sha256": "c4831c7ca6c28f082ffcf4ce1b4f7b0ac8e23a151aa48dd6dd1378cf2c72579d"
+    },
+    "policy6838-stage/scripts/agent/jetson_rl/check_core.cpp": {
+      "source": "/home/imca/rl-ynzz_33/policy6838-stage/scripts/agent/jetson_rl/check_core.cpp",
+      "sha256": "6bff1aaf7f7e9ac5ace404fa53b61ce8956797247db78f71d1cade5ea61c025f"
+    },
+    "raw-usb-recorder/h7-usb-record": {
+      "source": "/usr/local/bin/h7-usb-record",
+      "sha256": "83419b363b51cbf9b8cf40c72be6fd1df9932bd4f42aade70dbf6eb667b884cd"
+    },
+    "rl-usb-recorder/install.sh": {
+      "source": "/home/imca/rl-ynzz_33/rl-usb-recorder/install.sh",
+      "sha256": "d53c7bcd30212c5d06fddeb7ed2826358b5dea1dc724d75a7d1680bddadf7e09"
+    },
+    "rl-usb-recorder/jetson-rl-usb-record@.service": {
+      "source": "/home/imca/rl-ynzz_33/rl-usb-recorder/jetson-rl-usb-record@.service",
+      "sha256": "20f5c59666ba22c9e6db721b7263ddbf32379699b1cbff2e011983c6c7b8f013"
+    },
+    "rl-usb-recorder/record_rl_usb.py": {
+      "source": "/home/imca/rl-ynzz_33/rl-usb-recorder/record_rl_usb.py",
+      "sha256": "5d62192215eaadd00f6e6ed300e1e276f1668814a37674e26fb81c783289332a"
+    },
+    "shadow-policy3000PD200/SHADOW.md": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/SHADOW.md",
+      "sha256": "3101fccc3d918350c1e7115c56eea54be5e397413459a02143d74c81d70a299b"
+    },
+    "shadow-policy3000PD200/analyze_external.py": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/analyze_external.py",
+      "sha256": "fa08940e11ccca028d7725b8f3f2ecc1d902fa4a6e5407bb94e186ddb96ca648"
+    },
+    "shadow-policy3000PD200/analyze_shadow.py": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/analyze_shadow.py",
+      "sha256": "5623053427edfa0c1b6ded99b83da012c85ad42b6c59c81dd8e3872221d69e57"
+    },
+    "shadow-policy3000PD200/deployment/H7_RL_ros/imcalib/common/jetson_protocol.h": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/deployment/H7_RL_ros/imcalib/common/jetson_protocol.h",
+      "sha256": "ebe98fc99b8967f432ad677b7af932144aa820fb39ffff82f98c547b14f71990"
+    },
+    "shadow-policy3000PD200/deployment/H7_RL_ros/imcalib/common/jetson_session.h": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/deployment/H7_RL_ros/imcalib/common/jetson_session.h",
+      "sha256": "24fda501e98395f8a37894ad8acd72f1604ed0e789e8c51356a619511d3d9e18"
+    },
+    "shadow-policy3000PD200/deployment/H7_RL_ros/imcalib/common/jetson_shadow_protocol.h": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/deployment/H7_RL_ros/imcalib/common/jetson_shadow_protocol.h",
+      "sha256": "cca3815ca782fd8c47c8e2e74bbe107aa84c270ae1d2e0b8ed9210ae441ea2e1"
+    },
+    "shadow-policy3000PD200/deployment/jetson_rl/CMakeLists.txt": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/deployment/jetson_rl/CMakeLists.txt",
+      "sha256": "e0b0877907ba765a36f5794e93064430f93d87732ef0d9e7ad9dab12f51553e6"
+    },
+    "shadow-policy3000PD200/deployment/jetson_rl/src/inference.cpp": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/deployment/jetson_rl/src/inference.cpp",
+      "sha256": "3e19e4ea6f3101014991cd9cab53f119cd5efce6264f1a3a79fe8463937acb08"
+    },
+    "shadow-policy3000PD200/deployment/jetson_rl/src/inference.hpp": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/deployment/jetson_rl/src/inference.hpp",
+      "sha256": "2368a77f58749f72206bce6cb1644ca51aae69aa6863f54514cd9d976df11a89"
+    },
+    "shadow-policy3000PD200/deployment/jetson_rl/src/logger.hpp": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/deployment/jetson_rl/src/logger.hpp",
+      "sha256": "406b233c51e7a16a5a9a28357863a8e529204ce3e0243aa5da361fc6c170a107"
+    },
+    "shadow-policy3000PD200/deployment/jetson_rl/src/main.cpp": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/deployment/jetson_rl/src/main.cpp",
+      "sha256": "69d2f4809f2b2b63f49116637a635eb810f8abf9586755e7a09c4289f382908e"
+    },
+    "shadow-policy3000PD200/deployment/jetson_rl/src/model.hpp": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/deployment/jetson_rl/src/model.hpp",
+      "sha256": "90a1c5ff285598063ffe6194a3a1199f375aec943afc8bd4b218aa9b92044f3f"
+    },
+    "shadow-policy3000PD200/deployment/jetson_rl/src/policy.hpp": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/deployment/jetson_rl/src/policy.hpp",
+      "sha256": "3ec2c93a77c794600395bd9a810ec4150ea28d436bec9d2435b330998821031f"
+    },
+    "shadow-policy3000PD200/deployment/jetson_rl/tools/report.py": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/deployment/jetson_rl/tools/report.py",
+      "sha256": "204939879d80bdd6ad075b1799b19ae58b0f318d8c7f7d959bbbd97284b473e1"
+    },
+    "shadow-policy3000PD200/models/policy3000PD200.onnx": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/models/policy3000PD200.onnx",
+      "sha256": "212b7e9829d97efe36046fb59ac8022bcd0ed6ac7af1e508641ce571f32d75d1"
+    },
+    "shadow-policy3000PD200/policy3000PD200.engine": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/policy3000PD200.engine",
+      "sha256": "8597a7c779981ddbec514857313afc3860d6d4d760618a903a77f1866959e8b2"
+    },
+    "shadow-policy3000PD200/policy3000PD200.engine.meta": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/policy3000PD200.engine.meta",
+      "sha256": "eef085d40813bc31ed4497ba74d7d81ccd117a1e50b644e8391c4a2ac0450e4f"
+    },
+    "shadow-policy3000PD200/run-shadow-watch.sh": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/run-shadow-watch.sh",
+      "sha256": "c86bb57d0acf1cbe1f395dbdcf3936ab533e75d8e17e7ee56dedd810f87f7587"
+    },
+    "shadow-policy3000PD200/run-shadow.sh": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/run-shadow.sh",
+      "sha256": "21a96caa9c48366dcc5083d0be6108672a8631847d023adce63bba72da23a536"
+    },
+    "shadow-policy3000PD200/scripts/agent/jetson_rl/check_core.cpp": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy3000PD200/scripts/agent/jetson_rl/check_core.cpp",
+      "sha256": "6bff1aaf7f7e9ac5ace404fa53b61ce8956797247db78f71d1cade5ea61c025f"
+    },
+    "shadow-policy4000PD200/analyze_external.py": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/analyze_external.py",
+      "sha256": "fa08940e11ccca028d7725b8f3f2ecc1d902fa4a6e5407bb94e186ddb96ca648"
+    },
+    "shadow-policy4000PD200/analyze_shadow.py": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/analyze_shadow.py",
+      "sha256": "5623053427edfa0c1b6ded99b83da012c85ad42b6c59c81dd8e3872221d69e57"
+    },
+    "shadow-policy4000PD200/deployment/H7_RL_ros/imcalib/common/jetson_protocol.h": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/deployment/H7_RL_ros/imcalib/common/jetson_protocol.h",
+      "sha256": "ebe98fc99b8967f432ad677b7af932144aa820fb39ffff82f98c547b14f71990"
+    },
+    "shadow-policy4000PD200/deployment/H7_RL_ros/imcalib/common/jetson_session.h": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/deployment/H7_RL_ros/imcalib/common/jetson_session.h",
+      "sha256": "24fda501e98395f8a37894ad8acd72f1604ed0e789e8c51356a619511d3d9e18"
+    },
+    "shadow-policy4000PD200/deployment/H7_RL_ros/imcalib/common/jetson_shadow_protocol.h": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/deployment/H7_RL_ros/imcalib/common/jetson_shadow_protocol.h",
+      "sha256": "cca3815ca782fd8c47c8e2e74bbe107aa84c270ae1d2e0b8ed9210ae441ea2e1"
+    },
+    "shadow-policy4000PD200/deployment/jetson_rl/CMakeLists.txt": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/deployment/jetson_rl/CMakeLists.txt",
+      "sha256": "e0b0877907ba765a36f5794e93064430f93d87732ef0d9e7ad9dab12f51553e6"
+    },
+    "shadow-policy4000PD200/deployment/jetson_rl/src/inference.cpp": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/deployment/jetson_rl/src/inference.cpp",
+      "sha256": "593c932ff6cee590fc8e077b897a07a3292c37acf1c8cccb1257eeb0b978f46e"
+    },
+    "shadow-policy4000PD200/deployment/jetson_rl/src/inference.hpp": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/deployment/jetson_rl/src/inference.hpp",
+      "sha256": "2368a77f58749f72206bce6cb1644ca51aae69aa6863f54514cd9d976df11a89"
+    },
+    "shadow-policy4000PD200/deployment/jetson_rl/src/logger.hpp": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/deployment/jetson_rl/src/logger.hpp",
+      "sha256": "4a01bbf3757628c510ccbce0244d5d4fbac856e42164e391770e060553cd6786"
+    },
+    "shadow-policy4000PD200/deployment/jetson_rl/src/main.cpp": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/deployment/jetson_rl/src/main.cpp",
+      "sha256": "d5c3c2ccdd2fb4efc4851a4f330fb162793f657c48e4910925ce1ce96fcd98ea"
+    },
+    "shadow-policy4000PD200/deployment/jetson_rl/src/model.hpp": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/deployment/jetson_rl/src/model.hpp",
+      "sha256": "87277c8ee76450417712ebe707fb4c5e763131d08356f069f72dfec9763ac163"
+    },
+    "shadow-policy4000PD200/deployment/jetson_rl/src/policy.hpp": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/deployment/jetson_rl/src/policy.hpp",
+      "sha256": "3ec2c93a77c794600395bd9a810ec4150ea28d436bec9d2435b330998821031f"
+    },
+    "shadow-policy4000PD200/deployment/jetson_rl/tools/report.py": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/deployment/jetson_rl/tools/report.py",
+      "sha256": "204939879d80bdd6ad075b1799b19ae58b0f318d8c7f7d959bbbd97284b473e1"
+    },
+    "shadow-policy4000PD200/export_stair_usb.py": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/export_stair_usb.py",
+      "sha256": "d59d99675299f99c3aa978a65d85608d14293dfd35441e8cc9a38c1bb02e546e"
+    },
+    "shadow-policy4000PD200/models/interface.json": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/models/interface.json",
+      "sha256": "a794afbdf47a758af4fe6d41d92b04e948ad4fde54b0bc75389a1b4dc0b57051"
+    },
+    "shadow-policy4000PD200/models/policy.onnx": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/models/policy.onnx",
+      "sha256": "3be34e5244eb729df25ad51ea570ed03c86fa3691d02e3051f506d371311aefa"
+    },
+    "shadow-policy4000PD200/policy4000PD200.engine": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/policy4000PD200.engine",
+      "sha256": "d2ac0e34f033f49dae64551924a7a867834260a91a5e0e6fab1dd020353f5215"
+    },
+    "shadow-policy4000PD200/policy4000PD200.engine.meta": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/policy4000PD200.engine.meta",
+      "sha256": "4f970bce7e2ce1d44e64a6cbb57b9c613dc9133eae6e0d5b1b3e8d7a4e3da506"
+    },
+    "shadow-policy4000PD200/reference-actions-tensorrt.bin": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/reference-actions-tensorrt.bin",
+      "sha256": "c8bbf6122d779a4010418e5baeb1bb01fe0db75a0eff55d3bece7cd55881781e"
+    },
+    "shadow-policy4000PD200/reference-inputs.bin": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/reference-inputs.bin",
+      "sha256": "11e345303f89de83021d04f6d7ddc94776cfb510a8e5a90d59f79a3d764244a6"
+    },
+    "shadow-policy4000PD200/run-shadow-watch.sh": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/run-shadow-watch.sh",
+      "sha256": "f47377d49a08cf0ee6f45b24b8e96ed0ee843ba5c79337d8a6a2ec1e1001c254"
+    },
+    "shadow-policy4000PD200/scripts/agent/jetson_rl/check_core.cpp": {
+      "source": "/home/imca/rl-ynzz_33/shadow-policy4000PD200/scripts/agent/jetson_rl/check_core.cpp",
+      "sha256": "6bff1aaf7f7e9ac5ace404fa53b61ce8956797247db78f71d1cade5ea61c025f"
+    },
+    "systemd/h7-usb-record.service": {
+      "source": "/etc/systemd/system/h7-usb-record.service",
+      "sha256": "23f6a1e511ebfd12256897cd87b5a11c24e549a9819e6de92085667c90f8623d"
+    },
+    "systemd/jetson-rl-external-4000.service": {
+      "source": "/etc/systemd/system/jetson-rl-external-4000.service",
+      "sha256": "6e732ddf7eb6f40e205ef7f148d8e2c20aabf0eb414c1f436c786364c55105fc"
+    },
+    "systemd/jetson-rl-external-4000.service.d/6838-model.conf": {
+      "source": "/etc/systemd/system/jetson-rl-external-4000.service.d/6838-model.conf",
+      "sha256": "150dfb824ef8344d9574ea761a2f260ff12c5cc52efbeda8b31952f62e8ee690"
+    }
+  },
+  "model_hash_checks": [
+    {
+      "engine": "shadow-policy3000PD200/policy3000PD200.engine",
+      "matched_onnx": [
+        "shadow-policy3000PD200/models/policy3000PD200.onnx"
+      ]
+    },
+    {
+      "engine": "shadow-policy4000PD200/policy4000PD200.engine",
+      "matched_onnx": [
+        "shadow-policy4000PD200/models/policy.onnx"
+      ]
+    },
+    {
+      "engine": "policy6838-stage/policy6838PD200.engine",
+      "matched_onnx": [
+        "policy6838-stage/policy.onnx"
+      ]
+    }
+  ],
+  "syntax_checks": {
+    "python": 9,
+    "shell": 6
+  }
+}

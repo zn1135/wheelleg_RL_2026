@@ -1,0 +1,16 @@
+[Unit]
+Description=H7 USB raw telemetry recorder
+After=local-fs.target
+Conflicts=jetson-rl-external-4000.service
+
+[Service]
+Type=simple
+User=imca
+ExecStart=/usr/local/bin/h7-usb-record
+Restart=always
+RestartSec=200ms
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target
+
