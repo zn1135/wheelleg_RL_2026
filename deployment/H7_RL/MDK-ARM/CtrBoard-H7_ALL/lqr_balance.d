@@ -1,0 +1,12 @@
+ctrboard-h7_all\lqr_balance.o: ../imcalib/Algorithm/lqr_balance.c
+ctrboard-h7_all\lqr_balance.o: ../imcalib/Algorithm/lqr_balance.h
+ctrboard-h7_all\lqr_balance.o: D:\keil\keil_core\ARM\armcc_5\Bin\..\include\stdint.h
+ctrboard-h7_all\lqr_balance.o: ../imcalib/common/rc_types.h
+ctrboard-h7_all\lqr_balance.o: D:\keil\keil_core\ARM\armcc_5\Bin\..\include\stdbool.h
+ctrboard-h7_all\lqr_balance.o: ../imcalib/Algorithm/imu_state.h
+ctrboard-h7_all\lqr_balance.o: ../imcalib/Algorithm/leg_solver.h
+ctrboard-h7_all\lqr_balance.o: ../imcalib/common/simple-function.h
+ctrboard-h7_all\lqr_balance.o: ../imcalib/Algorithm/lqr_gain_table.h
+ctrboard-h7_all\lqr_balance.o: ../imcalib/config/machine_config.h
+ctrboard-h7_all\lqr_balance.o: D:\keil\keil_core\ARM\armcc_5\Bin\..\include\math.h
+ctrboard-h7_all\lqr_balance.o: D:\keil\keil_core\ARM\armcc_5\Bin\..\include\string.h

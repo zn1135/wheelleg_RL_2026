@@ -5,8 +5,8 @@
 #include "machine_config.h"
 fallen_process_param_t fallen_process_param = {
     /* 普通起立腿长 */
-    .length_rate             = 0.5f,                            /* 腿长 m/s */
-    .angle_rate              = 15.0f,                            /* 普通自起准备位及摆正 rad/s */
+    .length_rate             = 0.4f,                            /* 腿长 m/s */
+    .angle_rate              = 10.0f,                            /* 普通自起准备位及摆正 rad/s */
     .recovery_angle_rate     = 2.0f,                            /* 倒置前点对齐及翻身 rad/s */
     .length_tol              = 0.02f,                           /* 伸/收腿到位容差 m */
     .angle_tol               = 0.2f,                            /* 准备位/摆正及倒置前点共用容差 rad */
@@ -192,7 +192,7 @@ static const machine_cfg_t machine_big = {
             .gyro_scale = 0.25f, .height_scale = 5.0f, .joint_vel_scale = 0.05f,
             .obs_clip = 100.0f, .velocity_command_scale = 2.0f,
             .pitch_target_deg = -2.0f,
-            .velocity_command_limit = 2.5f,
+            .velocity_command_limit = 3.0f,
             .yaw_rate_command_limit = 2.0f,
             .height_command_min = 0.22f,
             .height_command_max = 0.30f,
