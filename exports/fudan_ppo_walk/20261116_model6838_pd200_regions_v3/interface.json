@@ -1,0 +1,31 @@
+{
+  "contract": "fudan-ppo-walk-physical25-history125-critic144-v1",
+  "reset_contract": "fudan-physical-pd-centred-warmup-noisy5-clipped-history-v3",
+  "checkpoint_sha256": "8a42776d8acb0bfdbbc922375d19b594964432f4fb065b23fef3a1384c3d96ad",
+  "onnx_sha256": "50a9be5289e45d113057ccb46cfb4f1c98217572071c1ac09290fb32e914c856",
+  "input": {
+    "obs": [
+      1,
+      25
+    ],
+    "obs_history": [
+      1,
+      125
+    ]
+  },
+  "output": {
+    "actions": [
+      1,
+      6
+    ]
+  },
+  "policy_dt_s": 0.01,
+  "pd_dt_s": 0.005,
+  "training_control": {
+    "leg_stiffness": 20,
+    "leg_damping": 1,
+    "wheel_stiffness": 0.1,
+    "wheel_damping": 0
+  },
+  "source_commit": "d33154027b3f4add4a11cce46a6313328dd2cc42"
+}
