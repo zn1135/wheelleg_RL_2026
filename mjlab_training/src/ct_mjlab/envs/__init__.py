@@ -15,4 +15,10 @@ task_registry.register('fudan_ppo_walk', env_cfg=lambda play=False: FudanWalkCfg
     train_cfg=FudanWalkCfgPPO,
     task_class='ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',
     runner_class='ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner')
+from .fudan_ppo_step.config import FudanStepCfg, FudanStepCfgPPO
+
+task_registry.register('fudan_ppo_step', env_cfg=lambda play=False: FudanStepCfg(),
+    train_cfg=FudanStepCfgPPO,
+    task_class='ct_mjlab.envs.fudan_ppo_step.env.StepEnv',
+    runner_class='ct_mjlab.envs.fudan_ppo_step.runner.StepRunner')
 __all__ = ['task_registry']

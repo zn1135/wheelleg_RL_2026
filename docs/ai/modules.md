@@ -10,7 +10,7 @@
 | `ct_mjlab/bc.py`、`bc_preservation.py`、`scripts/train_bc.py` | 行为克隆、纠偏、技能保留与模型初始化 |
 | `ct_mjlab/smp/`、`scripts/train_prior.py` | 示范特征、运动先验、SMP辅助PPO及BC初始化PPO |
 | `ct_mjlab/teacher/`、`scripts/teacher.py`、`scripts/collect.py` | LQR／VMC对照与示范数据采集，服务BC和SMP |
-| `ct_mjlab/envs/` | 注册`smp`、`supermimic`、`fudan_ppo_walk`；旧目录保留必要控制／物理／模型接口依赖，不提供五个旧task |
+| `ct_mjlab/envs/` | 注册`smp`、`supermimic`、`fudan_ppo_walk`、`fudan_ppo_step`；旧目录保留必要控制／物理／模型接口依赖，不提供五个旧task |
 | `scripts/agent/supermimic/`、`imitation/`、`motion/` | 保留线检查、测量、评分与渲染 |
 | `scripts/agent/shared/` | 原样提取的渲染、物理采集和静态几何助手，无旧训练CLI |
 | `scripts/agent/real2sim/`、`sim2sim/` | 实采／标定及独立MuJoCo仿真；仿真实现与必要接口保持 |
@@ -18,6 +18,12 @@
 | `resources/`、`deployment/` | 机器人资产与部署控制；本次不改物理参数或H7 |
 
 ## 共用依赖
+
+`scripts/agent/fudan_ppo_step/profile_speed.py`及`check_speed_optimization.py/check_speed_tensors.py/review_speed_optimization.py`只用于隔离性能/同输入正确性检查，禁止Adam更新。性能候选仅存`artifacts`快照/补丁，未接入生产环境或正在执行的远程冻结目录；完整训练速度、行为和模型迁移仍须按原正式入口验证。[范围与结果](../../artifacts/fudan_ppo_step/20261117-speed-optimization-01/README.md)。
+
+`envs/fudan_ppo_step/reference_motion.py`只计算训练期弱运动状态奖励；本任务`StepRunner`的平地模仿回调使用固定3000教师，不修改共享PPO或行走实现。接触许可、目标支撑与最终解除接触停车属于独立台阶配方，Actor输入/物理接口不扩展。[v7范围与检查](../../artifacts/fudan_ppo_step/20261116-contact-exploration-v7-01/README.md)。
+
+`envs/fudan_ppo_step/`维护无视觉单级平台配置、盒体地形、逐物理步接触、课程和独立迁移/恢复约束；复用平地实体动作与PPO。`scripts/agent/fudan_ppo_step/`提供只读场地量测、零学习检查/吞吐以及GPU矩阵与离线评分。Actor接口保持25/125/6，任务配方另存，不互换两任务的`--resume`。见[任务与命令](../mjlab-fudan-ppo-step.md)。
 
 SuperMimic使用原walk环境结构，其split实现仍复用stand_v2及stand的控制和接口；BC／SMP仍使用multimode的基础观测、动作和runner。MuJoCo双策略仿真直接导入split的配置／模型验证／切换模块，所以这些原路径保持。停止独立训练线不等于删除这些共用物理实现。
 

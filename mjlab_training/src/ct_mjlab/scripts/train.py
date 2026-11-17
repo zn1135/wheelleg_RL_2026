@@ -45,6 +45,13 @@ def training_viewer(env, port):
 
 
 def train(args):
+    if getattr(args, 'critic_height_scan', False) and args.task != 'fudan_ppo_walk':
+        raise ValueError('--critic-height-scan applies only to fudan_ppo_walk')
+    if getattr(args, 'terrain', None) is not None and args.task != 'fudan_ppo_walk':
+        raise ValueError('--terrain applies only to fudan_ppo_walk')
+    if args.task == 'fudan_ppo_step':
+        from ct_mjlab.envs.fudan_ppo_step.train import train as train_step
+        return train_step(args)
     if args.task == "fudan_ppo_walk":
         return train_fudan(args)
     if args.task != "smp" or args.smp_prior is None:
@@ -132,8 +139,18 @@ def train_fudan(args):
     if args.seed is not None:
         train_cfg.seed = args.seed
     env_cfg.reset_contract = target_reset
+    from ct_mjlab.envs.fudan_ppo_walk.terrain import record as terrain_record, PLANE
+    if getattr(args, 'terrain', None) is not None:
+        env_cfg.terrain.mode = args.terrain
+    from ct_mjlab.envs.fudan_ppo_walk.terrain import critic_record, LEGACY_CRITIC
+    if getattr(args, 'critic_height_scan', False):
+        env_cfg.observations.critic_height_scan = True
     disturbances = from_task_config(env_cfg)
     proof = json.loads(args.precheck.read_text())
+    if proof.get('terrain', PLANE) != terrain_record(env_cfg):
+        raise ValueError('Physical precheck terrain differs from training')
+    if proof.get('critic_observation', LEGACY_CRITIC) != critic_record(env_cfg):
+        raise ValueError('Physical precheck critic observation differs from training')
     if not proof['passed'] or proof.get('reset_contract') != target_reset or proof.get('kind') != 'physical-visible-precheck' or (proof.get('num_envs') != 20) or (proof.get('physics_steps', 0) <= 0):
         raise ValueError('A passed current reset/history physical precheck is required; older prechecks cannot approve this recipe')
     if from_record(proof.get('disturbances')) != disturbances:
@@ -180,6 +197,10 @@ def train_fudan(args):
             options['migrate_history_v2'] = True
         if from_record(source.get('disturbances')) != disturbances:
             options['allow_disturbance_change'] = True
+        if getattr(args, 'terrain', None) is not None:
+            options['allow_terrain_change'] = True
+        if getattr(args, 'critic_height_scan', False):
+            options['allow_critic_observation_change'] = True
         runner, train_cfg = task_registry.make_alg_runner(
             env,
             args.task,
@@ -211,6 +232,10 @@ def main(argv=None):
         (('--log-dir',), dict(type=Path, default=None)),
         (('--deadline',), dict(type=float, default=None)),
         (('--precheck',), dict(type=Path, default=None)),
+        (('--terrain',), dict(choices=('plane', 'regions'), default=None,
+                             help='Fudan walk: explicit flat or continuous pyramid/rough regions')),
+        (('--critic-height-scan',), dict(action='store_true',
+                                      help='Fudan walk: replace77 repeated heights with privileged terrain rays')),
         (('--preserve-history-v2',), dict(action='store_true')),
         (('--migrate-history-v2',), dict(action='store_true')),
         (('--iterations',), dict(type=int, default=None, help='Override max_iterations')),
@@ -230,7 +255,7 @@ def main(argv=None):
         (('--bc-finetune',), dict(nargs='?', const='v1', default=False, choices=('v1', 'v2', 'isaac-standup', 'isaac-standup-v2', 'isaac-standup-v3'),
                                 help='Nominal BC refinement; isaac-standup uses Isaac pre-unlock task rewards')),
     ))
-    if args.task == 'fudan_ppo_walk':
+    if args.task in ('fudan_ppo_walk', 'fudan_ppo_step'):
         if args.preserve_history_v2 and args.migrate_history_v2:
             raise SystemExit(2)
         return train(args)

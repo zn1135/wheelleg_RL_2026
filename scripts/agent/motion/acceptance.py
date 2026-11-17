@@ -196,12 +196,30 @@ def isaac(path):
 
 def main():
     parser=argparse.ArgumentParser(__doc__)
-    parser.add_argument('--task',choices=('fudan_ppo_walk','supermimic','bc','smp','isaac'),required=True)
+    parser.add_argument('--task',choices=('fudan_ppo_walk','fudan_ppo_step','supermimic','bc','smp','isaac'),required=True)
     parser.add_argument('--recording',type=Path,required=True);parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--baseline',type=Path,help='Prior acceptance.json using the same standard and initial conditions')
+    parser.add_argument('--flat-recording',type=Path,help='Step task: candidate frozen walking GPU recording')
+    parser.add_argument('--flat-baseline',type=Path,help='Step task: reference walking GPU recording with identical fixtures')
     args=parser.parse_args()
+    if bool(args.flat_recording)!=bool(args.flat_baseline):parser.error('Supply both flat recording and flat baseline')
+    if args.flat_recording and args.task!='fudan_ppo_step':parser.error('Flat regression attachments apply to the step task')
     if args.output.exists():raise FileExistsError(args.output)
-    if (args.recording/'protocol.json').exists():result=canonical(args.recording,args.task)
+    if args.task=='fudan_ppo_step':
+        from scripts.agent.fudan_ppo_step.evaluate import assess_recording
+        result=assess_recording(args.recording)
+        if args.flat_recording:
+            receipt=json.loads((args.flat_recording/'step-policy-receipt.json').read_text())
+            if receipt['checkpoint_sha256']!=result['details']['checkpoint_sha256']:
+                raise ValueError('Walking regression and platform recordings use different checkpoints')
+            flat=compare_baseline(canonical(args.flat_recording,'fudan_ppo_walk'),
+                                  canonical(args.flat_baseline,'fudan_ppo_walk'))
+            result['flat_regression']=flat
+            if flat['technical_thresholds_met']:
+                result['missing_capabilities']=[name for name in result['missing_capabilities'] if name!='flat_walk_regression']
+                result['coverage']=sorted(set(result['coverage'])|set(flat['coverage']))
+            result['technical_thresholds_met']=bool(result['step_thresholds_met'] and flat['technical_thresholds_met'])
+    elif (args.recording/'protocol.json').exists():result=canonical(args.recording,args.task)
     else:
         if args.task=='fudan_ppo_walk':raise ValueError('Fudan recording requires protocol.json and traces/')
         result={'supermimic':supermimic,'bc':bc,'smp':smp,'isaac':isaac}[args.task](args.recording)

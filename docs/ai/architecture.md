@@ -18,7 +18,7 @@ SuperMimic当前世界模型使用129维输入：47维航向无关运动特征�
 - BC：传统控制器经学生动作／PD链路生成示范 → 观测与动作同拍配对 → BC actor监督学习 → 独立闭环评估；可再初始化⑦⑧中的PPO。
 - SMP：合格运动示范 → 先验模型训练 → 冻结先验给运动评分 → SMP辅助PPO训练 → 独立行为验收。
 
-共用真实XML、控制时序、观测和模型接口按各自合同核对；不同接口不能互套。注册环境为`smp`、`supermimic`和`fudan_ppo_walk`；五个旧独立训练task退出。
+共用真实XML、控制时序、观测和模型接口按各自合同核对；不同接口不能互套。注册环境为`smp`、`supermimic`、`fudan_ppo_walk`和`fudan_ppo_step`；五个旧独立训练task退出。
 
 ## 仿真与真机
 
@@ -35,5 +35,7 @@ SuperMimic当前世界模型使用129维输入：47维航向无关运动特征�
 复旦PPO独立线：真实10ms采样48步→PPO更新actor/critic/std→另一个Adam监督encoder估速；实体闭链机器人/PD沿用本机，命令、奖励、历史和域随机化独立配置，不经过旧起立/停车外环。Critic环境141维＋encoder3维；Actor不读真值线速度。[规格与差异](../mjlab-fudan-ppo-walk.md)。
 
 ## 复旦注册训练链路
+
+单级平台使用同一注册器分发到`envs/fudan_ppo_step`，复用实体控制、PPO与保存循环；独立处理真实地形采样、接触、课程及模型迁移。训练配方身份与物理Actor接口身份分开，详见[单级平台任务](../mjlab-fudan-ppo-step.md)。
 
 复旦已按原wheel_legged_gym职责整理：`mjlab.sh train --task fudan_ppo_walk → scripts/train.py → utils/task_registry.py → envs/fudan_ppo_walk的环境/配置 → rsl_rl/runners → rsl_rl/algorithms`。注册器实际创建环境和runner；旧独立入口仅兼容转入这条链路。其他训练线沿原流程。默认值、RNG、v2/v3、模型接口与物理保持，验证只做无物理等价，见[迁移与日常位置](../maintenance/20261103-fudan-structure-alignment.md)。

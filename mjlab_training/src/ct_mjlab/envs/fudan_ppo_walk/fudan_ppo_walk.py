@@ -201,9 +201,12 @@ def randomize(env, env_ids):
         env.sim.model.geom_friction[:, geoms, 0] = ((friction + 0.5) * 0.5)[:, None]
     else:
         # 机器人priority=1：两侧使用同一系数，避免只改地面却被机器人覆盖。
-        terrain = model.geom('terrain').id
+        # 生成地形任务可提供完整碰撞集合；旧平地仍走原单geom路径。
+        terrain = getattr(env, '_terrain_friction_ids', None)
+        if terrain is None:
+            terrain = model.geom('terrain').id
         env.sim.model.geom_friction[:, geoms, 0] = friction[:, None]
-        env.sim.model.geom_friction[:, terrain, 0] = friction
+        env.sim.model.geom_friction[:, terrain, 0] = friction if isinstance(terrain, int) else friction[:, None]
     effective = (restitution + 0.5) * 0.5
     log_e = effective.log()
     zeta = -log_e / (math.pi ** 2 + log_e.square()).sqrt()
@@ -266,6 +269,8 @@ def make_env_cfg(*, play=False, disturbances=None, task_cfg=None):
     initial = cfg.scene.entities['robot'].init_state
     initial.pos = (0.0, 0.0, pose['height'])
     initial.joint_pos = {f'^{re.escape(name)}$': value for name, value in pose['joint_positions'].items()}
+    from .terrain import configure
+    configure(cfg, task)
     return cfg
 
 class FudanEnv:
@@ -338,6 +343,11 @@ class FudanEnv:
         self.commands[ids, 0] = torch.empty(len(ids), device=self.device).uniform_(-self.speed_limit, self.speed_limit)
         self.commands[ids, 1] = torch.empty(len(ids), device=self.device).uniform_(*self.cfg.commands.yaw_range)
         self.commands[ids, 2] = torch.empty(len(ids), device=self.device).uniform_(*self.cfg.commands.height_range)
+        threshold = self.command_sampling.get('zero_vx_above_yaw')
+        if threshold is not None:
+            # 高速转向取消前后速度，低速行驶转弯及停车计划保持。
+            high_yaw = ids[self.commands[ids, 1].abs() > threshold]
+            self.commands[high_yaw, 0] = 0.
         command_sampling.apply_parking_commands(self, ids)
 
     def reset_idx(self, ids):
@@ -396,6 +406,17 @@ class FudanEnv:
                 setattr(self, name, value.clone())
             else:
                 getattr(self, name)[ids] = value[ids]
+        if self.cfg.terrain.mode == 'regions':
+            from .terrain import ground_state
+            height, self.terrain_invalid = ground_state(self)
+            if ids is None:
+                self.height.copy_(height)
+            else:
+                self.height[ids] = height[ids]
+            if self.cfg.observations.critic_height_scan:
+                from .terrain import scan_state
+                self.terrain_samples, missed = scan_state(self)
+                self.terrain_invalid |= missed
 
     def frame(self):
         q = self.env.sim.data.qpos[:, self.action._motor_q_adr]
@@ -413,6 +434,11 @@ class FudanEnv:
 
     def observations(self):
         clean = self.frame()
+        heights = self.height[:, None].expand(-1, 77)
+        if self.cfg.observations.critic_height_scan:
+            heights = self.position[:, 2, None] - self.terrain_samples
+        heights = ((heights - self.cfg.normalization.height_center).clamp(-1., 1.)
+                   * self.cfg.normalization.height_scale)
         p = getattr(self.env, '_fudan_parameters', None)
         if p is None:
             mass = torch.zeros(self.num_envs, 1, device=self.device)
@@ -431,7 +457,7 @@ class FudanEnv:
                 self.previous[:, :, 0],
                 self.previous[:, :, 1],
                 self.acceleration * self.cfg.normalization.acceleration,
-                ((self.height - self.cfg.normalization.height_center).clamp(-1.0, 1.0) * self.cfg.normalization.height_scale)[:, None].expand(-1, 77),
+                heights,
                 self.action.torques * self.cfg.normalization.torques,
                 mass,
                 com,
@@ -493,6 +519,8 @@ class FudanEnv:
         if not torch.isfinite(actions).all():
             raise FloatingPointError('Non-finite policy action')
         self.env.step(actions)
+        if self.cfg.terrain.mode == 'regions' and self.env.sim.wp_data.overflow.numpy().any():
+            raise RuntimeError('Regional terrain GPU contact/constraint capacity overflow')
         self.total_steps += 1
         self.episode_steps += 1
         self.command_elapsed += 1
@@ -507,6 +535,13 @@ class FudanEnv:
         timeout = self.episode_steps > self.max_episode_length
         done = (self.fail_ticks > self.cfg.env.fail_ticks) | timeout
         reward, terms = self.reward()
+        if self.cfg.terrain.mode == 'regions':
+            done |= self.terrain_invalid
+            timeout &= ~self.terrain_invalid
+            self.sums[self.terrain_invalid, 0] -= terms['tracking_lin_vel'][self.terrain_invalid]
+            self.sums[self.terrain_invalid, 1] -= terms['tracking_ang_vel'][self.terrain_invalid]
+            terms = {k: v.masked_fill(self.terrain_invalid, 0.) for k, v in terms.items()}
+            reward = torch.stack(list(terms.values())).sum(0)
         if auto_reset and done.any():
             self.reset_idx(done.nonzero().flatten())
         obs, critic = self.observations()

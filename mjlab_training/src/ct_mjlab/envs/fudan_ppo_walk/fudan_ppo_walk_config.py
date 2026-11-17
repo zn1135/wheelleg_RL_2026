@@ -44,9 +44,9 @@ class FudanWalkCfg:
 
     class commands:
         velocity_initial = 2.
-        velocity_max = 2.5
+        velocity_max = 3.
         velocity_increment = .1
-        yaw_range = [-2., 2.]
+        yaw_range = [-10., 10.]
         height_range = [.22, .30]
         resampling_steps = 500
         curriculum_threshold = .7
@@ -67,7 +67,7 @@ class FudanWalkCfg:
         mass_scale_range = [.85, 1.15]
         com_range = [-.03, .03]
         friction_range = [.4, 1.6]
-        ground_friction_range = None  # 显式范围直接作为轮地摩擦系数；None保留历史混合公式。
+        ground_friction_range = [.8, .8]  # 相同上下限固定实际轮地滑动摩擦；None保留历史混合公式。
         restitution_range = [.4, 1.]
         friction_buckets = 64
         # 下一阶段围绕10ms扩大范围；每环境初始化抽取，非逐拍抖动。

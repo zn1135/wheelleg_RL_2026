@@ -4,6 +4,7 @@ import torch
 from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
 from .fudan_ppo_walk_config import policy_dt
 LEGACY_COMMAND_SAMPLING = dict(version='fudan-uniform-commands-v1', standstill_env_ratio=0.0, stop_env_ratio=0.0)
+HIGH_YAW_ZERO_VX_ABOVE = 2.  # 超过原转向范围时只给原地转向指令。
 
 def command_config(task_cfg=None):
     task = FudanWalkCfg() if task_cfg is None else task_cfg
@@ -21,7 +22,7 @@ def command_config(task_cfg=None):
         raise ValueError('Stopping speed must fit the initial2m/s curriculum')
     if not cfg.parking_heights or not all((math.isfinite(x) and task.commands.height_range[0] <= x <= task.commands.height_range[1] for x in cfg.parking_heights)):
         raise ValueError('Parking heights must stay in the existing0.22-0.30m range')
-    return dict(
+    result = dict(
         version='fudan-parking-commands-v1',
         standstill_env_ratio=a,
         stop_env_ratio=b,
@@ -29,6 +30,10 @@ def command_config(task_cfg=None):
         stop_speed_range=list(cfg.stop_speed_range),
         parking_heights=list(cfg.parking_heights)
     )
+    if max(abs(value) for value in cfg.yaw_range) > HIGH_YAW_ZERO_VX_ABOVE:
+        result.update(version='fudan-high-yaw-parking-commands-v2',
+            yaw_range=list(cfg.yaw_range), zero_vx_above_yaw=HIGH_YAW_ZERO_VX_ABOVE)
+    return result
 
 def initialize(env, cfg=None):
     env.command_sampling = command_config(getattr(env, 'cfg', None)) if cfg is None else cfg

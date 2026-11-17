@@ -1,5 +1,69 @@
 # 构建与验证
 
+3200台阶效果：`fudan_ppo_step.evaluate_final3200.py run`显式冻结源码复用90/39例GPU回放/原始审计及原47例控制审计，禁止Adam；`review_final3200.py`离线核验并调用统一accept输出高速子集及平地附件，保留完整矩阵缺测、初态超差，完整解码视频。采集用新目录，不把名义子集当987随机或场地通过。[3200结果、脚本范围及证据](../../artifacts/fudan_ppo_step/20261117-v7-effect3200-01/README.md)。
+
+远程训练收尾：`completion_shutdown.py selfcheck`检查活worker/错误预算或PT门禁、异常退出标识、归档逐文件SHA及解压往返、本地收据和离线回退；所有实际关机调用mock、0训练更新。`arm`仅用于用户明确授权的本轮3200预算，独立artifact脚本等待目标退出及GPU空闲，备份验证后平台关机；不写冻结源码，不测试性关闭活实例。本聊天heartbeat负责备份取回/原正式audit及取回确认。[已部署状态与取消入口](../../artifacts/fudan_ppo_step/20261117-auto-shutdown-01/README.md)。
+
+台阶固定阶段回放：在对应训练冻结源码中执行`diagnose_reverse run/audit/render`，`report_step_replay --recording <阶段目录> --output <新JSON>`核固定PT哈希、既有GPU审计、视频/轨迹哈希和全帧解码，汇总短暂双轮支撑/完整停车及末态。0学习，单摩擦/名义子集与3个辅助平地不替代完整台阶/原47例；本机回放不占用远程训练GPU。[1300阶段39例及四段完整视频](../../artifacts/fudan_ppo_step/20261117-v7-replay1300-01/README.md)。
+
+台阶性能隔离检查：`profile_speed`在冻结源码中分段计时采样/物理/接触和完整PPO反向，`--whole-only`做无分段插桩对照，Adam始终禁止；`check_speed_optimization`核旧/新监视器同一真实GPU输入和回合记录，`check_speed_tensors`补阈值/复位/缺测等低内存同输入回放，`review_speed_optimization`重算源SHA、A/B和未切换证据。当前候选仅归档，生产源码已恢复，不能用本机局部微基准替代L40整轮提速。[本轮1.6%局部整体观察及不切换决定](../../artifacts/fudan_ppo_step/20261117-speed-optimization-01/README.md)。
+
+左右腿单向摆动辨识：`scripts.agent.real2sim.identify_bilateral_swing --input <原CSV/BIN目录> --output <新种子目录>`校验Jetson分块/JRL2 CRC、CSV逐值一致、试次门控/序号/侧别/几何，1/3/5等权积分拟合、2/4留出；`fit_bilateral_swing_output --input <同目录> --seed <种子目录> --output <新候选目录>`只用1/3/5整段角度/速度拟合，有本机C编译器要求。`replay_bilateral_swing_reduced_gpu --input <同目录> --fit <候选目录> --output <新GPU目录>`用MuJoCo Warp做1/.5ms近恒腿长连续同输入预测，0后续实测状态注入；`report_bilateral_swing --input <同目录> --fit <候选目录> --replay <GPU目录> --output <新报告目录>`核冻结源SHA并反算运动方程，生成HTML/曲线/CSV。全部用`PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m`执行；降阶模型/CPU拟合种子不替代完整并联腿或统一整机GPU验收。两种候选本次均失败，不写默认参数。[实测条件、失败指标和补采边界](../../artifacts/real2sim/20261117-bilateral-swing-id-01/delivery/report.html)。
+
+远程台阶冻结运行：`remote_training pack/verify/capacity/start`显式打包当前代码/必要资源/源模型/参考并核SHA，复用匹配运行时；capacity只执行完整PPO缓存/首次反向并在Adam处拦截，0更新。`capacity/start --resume <PT>`核同配方完整网络/std/双Adam/RNG/课程/计数恢复，继承非空Adam动量和步数；反向探针允许原算法在Adam前调lr，其余参数组与动量/步数不变。start必须有同指纹20环境预检及目标环境数容量证明、明确新增轮数和新日志目录，借用原预算worker自动停止/审计，无远程Git修改。[L40上200轮／4096环境](../../artifacts/fudan_ppo_step/20261116-v7-remote200-01/README.md)、[本次新增3000轮到总3200的恢复与启动证据](../../artifacts/fudan_ppo_step/20261117-v7-resume200-to3200-01/README.md)。
+
+台阶v7搭沿探索：正式`fudan_ppo_step.check`按新配方分发到`check_contact_exploration`，核160帧弱参考、接触许可与无接触停车、旧评分兼容、仅平地Actor模仿及继承六路std；20环境2500GPU步/48步PPO缓存、真实反向和平地回调在Adam边界拦截，0更新、教师RNG与模型保存加载一致。预检不代表学会上台阶或平地不退化，未开训。[当前配方与最终预检](../../artifacts/fudan_ppo_step/20261116-contact-exploration-v7-01/README.md)。
+
+传统台阶支撑假设：`replay_traditional_tracks trigger`只读核检测来源；`run --window active --support-sweep`测5条原限位内实录的15个棱边/台面初态，追加`--observe-contacts`为20个接触失败后延长观察，失败标记与原无撑沿评分保留。棱边10个中8个出现短暂双轮台面支撑，但全部机身接触失败；下层5个仍0，抬高/已在台面初态无完整登台资格。audit保留这一计分边界，未训练。[结果、源码归档与正常1倍视频](../../artifacts/fudan_ppo_step/20261116-traditional-support-hypotheses-01/README.md)。
+
+传统200mm台阶实录回放：`scripts.agent.fudan_ppo_step.replay_traditional_tracks prepare/run/audit/render/plot`只读核四髋映射/闭链，使用原1/5/10ms与限矩执行实测角/轮速及力矩请求前馈两种GPU跟踪；未知触发位移须显式列假设。已执行80台阶＋10平地对照，0登台，15ms FIFO/PD/限矩/零外载审计通过不代表动作通过；CPU只做几何和渲染。脚本拒绝覆盖产物，run必须给墙钟截止秒。[结果、原始数据、早停视频与缺测支撑条件](../../artifacts/fudan_ppo_step/20261116-traditional-replay-02/README.md)。
+
+10°停车估速诊断：`diagnose_ten_degree_parking run --output <新目录>`冻结6838和训练源码，三高度×两速度，在零指令边界把积分/求解热启动/闭链状态、PD、双FIFO及历史复制到原估速对照/xyz真值/vx真值分支；6组444状态数组逐值核对，原估速对照量化数值分歧。24世界11000GPU步、0更新，仅判复制后第1～3秒停车，不能把状态复制轨迹当作整条通行验收；report仅离线核验/作图。[仅vx未解决、xyz减峰增下滑及原始数据](../../artifacts/fudan_ppo_walk/20261116-ten-degree-parking-truth6838-05/README.md)。
+
+坡5～20°／μ.8效果：`inspect_slope5to20_mu08 run --output <新目录>`冻结5838/6838各自训练快照，共270条GPU轨迹；同新四坡/摩擦条件，机器人与地形两侧显式.8、实际接触抽样，平地47/18高速/6速度/64地形，3246初态数组逐值配对。report/plot/render仅离线评分/作图/正常速度回放，平地和额外场景另用统一accept输出同初态基线报告；0学习。不同μ的历史总数不直接混比，原成功丢失仍判退化。[6838混合收益及高速/停车/腿摆退化](../../artifacts/fudan_ppo_walk/20261116-slope5to20-mu08-6838-effect-01/README.md)。
+
+坡5～20°／固定.8续训：`resume_slope5to20_mu08_1000 prepare/run --output <新目录>`核最新完整5838与源实现，仅改两项配方；20环境运行检查、4096真实48步PPO缓冲/小批次反向（0更新）后新增1000轮到6838，初始化全学习状态逐值恢复，预算结束自动审计。复用分区容量检查的更新计数改为读取源检查点，原5000行为不变。固定日志目录拒绝重复运行，失败不自动重试。[本次预算、实际检查与训练/TB命令](../../artifacts/fudan_ppo_walk/20261116-scan-slope5to20-mu08-resume5838-6838-01/README.md)。
+
+斜坡摩擦单因素：`compare_slope_friction run --output <新目录>`复用冻结5700逐1ms记录，各独立进程运行32路线，机器人/地形滑动系数统一.5/.8/1.2，实际GPU接触系数抽样核对；739项非摩擦初态逐值配对、96份原始记录有限及实际力矩/ctrl核验，0更新。`report`仅离线复算；机身材料也随摩擦变化，不能把高摩擦擦坡退化单独归因车轮。[结果、曲线、CSV与复现](../../artifacts/fudan_ppo_walk/20261116-slope-friction-compare5700-01/README.md)。
+
+斜坡驱动记录：`record_slope_drive run --source <触地放行5700目录> --output <新目录>`在冻结训练源码下追加只读车轮接触点/法向/力探针，每1ms记录真实ctrl/actuator力矩、PD目标/轮速、编码器输出与真实速度；全32路线/11000批量GPU步、0更新。`report`仅复算已有NPZ，核771初始数组、实际力矩路径和CPU接触运动学（无CPU积分），输出7000行重点CSV/曲线；不把网络动作当电机力矩。[快速20°打滑/估速偏高、收尾审计修复与原始数据](../../artifacts/fudan_ppo_walk/20261116-slope-drive-record5700-01/README.md)。
+
+斜坡允许触地：`check_slope_contact_allowed --source <旧5700采集目录> --output <新目录>`核原19例真实触地不再单独终止上下坡、崎岖接触和倾倒仍拒绝，再用冻结5700采64条GPU路线。新协议`regional-route-diagnostic-slope-contact-allowed-v2`同时取消斜坡提前触地截断和最终接触否决，真实力记录/运动/停车/承重保留，不改47平地标准；1542初始数组/网络不变与有限性检查通过，0更新。不同规则数量不当作学习改善。[本次结果和命令](../../artifacts/fudan_ppo_walk/20261116-slope-contact-allowed-01/README.md)。
+
+扫描阶段失败离线定位：`analyze_critic_scan_failures --recording <5700同轮数采集目录> --output <新目录>`逐SHA读取既有GPU记录，区分机身接触/角度倾倒/未到目标/停车，核真实训练快照collision占位和零奖励事件；CPU仅在保存姿态做接触几何回放，0新增积分/网络/学习，不改原判据。[19触地非19翻倒、训练碰撞反馈缺口及机制图](../../artifacts/fudan_ppo_walk/20261116-critic-scan5700-failure-analysis-01/README.md)。
+
+Critic扫描同轮数效果：`inspect_critic_scan_stage run --iteration 5700 --output <新目录>`分别执行两组已校验训练快照，禁止Adam更新，核实际网络不变；每组47平地/18高速/6速度/64地形，统一`mjlab.sh accept`评分。`report_critic_scan_stage recipe/host/plot/render/details`复核同源初始学习状态/仅扫描配置变化、外部中断可恢复PT、生成正常速度视频和证据索引；主机重启后的32例补采仅用`height-sweep --recovery --arm scan`新目录，不覆盖部分产物。形状、单seed阶段及到目标率不替代完整验收。[5700结果及训练中断](../../artifacts/fudan_ppo_walk/20261116-critic-scan5700-effect-01/RESULTS.md)。
+
+Critic真实地形：`resume_critic_scan1000 prepare/run --output <本次新目录>`显式5000→6000；底层`check_region_terrain --recipe <扫描有效配置JSON> --viewer viser --output <新目录>`调用`check_critic_scan.check`，真实77点GPU射线与独立几何复算、旋转/平移、Actor及其他Critic槽逐值不变、缺测零奖励结束和预检/迁移拒绝检查；再做4096实际PPO容量/反向0更新与完整恢复审计。默认关闭扫描保留旧配方，新语义写入PT；形状不变不表示输入兼容。旧5000→8000任务已按本次要求中止，产物保留。[本次启动、证据与TB命令](../../artifacts/fudan_ppo_walk/20261116-critic-scan-resume5000-6000-01/README.md)；[语义](../interfaces/20261116-fudan-critic-terrain-scan.md)。
+
+分区阶段效果：`inspect_regions_stage audit/nominal/extras/terrain/height-sweep/plot/render/finalize --iteration 7600 --output <新目录>`冻结完整阶段并执行校验后的训练源码。47平地／18高速沿原统一标准；新增64地形路线/模型预声明速度0.5／1m/s和停车窗口，5000／候选同初态配对，坡道补三高度，崎岖单列到目标与完整运动＋停车。失败世界后段不计轨迹／成功，正常1倍回放停帧明示。0学习、原训练预算不变。[7600结果与限制](../../artifacts/fudan_ppo_walk/20261116-regions7600-effect-01/RESULTS.md)。
+
+分区5000→8000：`resume_regions3000 prepare/run --output <新目录>`固定新增3000轮，继承5000全学习状态，启用10～20°金字塔／崎岖，并将vx课程最高值改3m/s。先按本次有效配置做20环境可视GPU预检，再4096环境真实48步PPO缓存／49152条小批次反向显存检查（0更新）；正式到8000停止，初始化／结束分别审计。缓冲64接触／256约束不改物理，溢出必须停机。[本次预算、训练与TensorBoard命令](../../artifacts/fudan_ppo_walk/20261116-regions-resume5000-8000-01/README.md)。
+
+平地3m/s能力：`check_speed3 --output <新目录>`执行5000哈希验证的冻结训练源码，GPU采集±2.5／±3m/s×三高度12例；`--report-only`只复算已有轨迹。2～7秒均值与误差、yaw／俯仰／摔倒按原标准记录；严格初态配对失败单列，不能悄悄放宽成相同初态。[六个±3速度均达标、完整5/6及配对边界](../../artifacts/fudan_ppo_walk/20261116-model5000-speed3-01/README.md)。
+
+分区金字塔／小崎岖：`scripts.agent.fudan_ppo_walk.check_region_terrain --recipe <有效训练配置JSON> --viewer viser --output <新目录>`执行真实碰撞表面坡角／出生净空、20环境局部地面高度／接触摩擦／局部复位／缺测越界终止及容量检查，0网络与学习更新；输出地形图和GPU预检，不能代替策略通行或原47回归。[命令与证据](../interfaces/20261116-fudan-regional-terrain.md)。
+
+yaw5000最终检查：`inspect_high_yaw_stage ... --iteration 5000 --output <新目录>`先核完整预算/模型与final一致，再采47标称及18高速，复用旧基线；`attitude`同时保存1ms四元数/角速度用于去偏航投影诊断，原评分不变。最终平地45/47、停车6/6、高速14/18（±10为2/6）；1ms分解不能替代原正式判据。[最终报告与视频](../../artifacts/fudan_ppo_walk/20261116-high-yaw5000-effect-01/RESULTS.md)。
+
+yaw阶段效果：`inspect_high_yaw_stage audit/nominal/high-yaw/report --iteration 4400 --output <新目录>`冻结训练中已保存完整阶段，执行训练源码快照；47标称复用3000/4000基线，另三模型各18例±3/5/10rad/s纯转向，统一`accept`同初态配对。当前4400高速18/18、平地33/47（4000为8/18、40/47），不改原5000预算；视频只从GPU轨迹按正常速度渲染。[阶段结果与限制](../../artifacts/fudan_ppo_walk/20261116-high-yaw4400-effect-01/RESULTS.md)。
+
+20mm参考动作：`scripts.agent.fudan_ppo_step.keyframe_probe plan/run/audit/render`分别做静态闭链目标表、冻结3000＋脚本引导GPU有限执行、逐1ms真实力矩/接触/限位/射线与哈希复算、保存状态离线侧视录像。默认最长8s/≤48环境、0优化器更新，阶段输入含真值，不是盲策略或统一任务通过；t=0后不强设活跃根状态，不改XML/PD/限矩。[首轮未通过结果和复查命令](../../artifacts/fudan_ppo_step/20261116-20mm-keyframe-probe-01/README.md)。
+
+yaw±10续训：`resume_high_yaw1000 prepare --source-iteration 4000 --output <新目录>`冻结源4000配方，仅扩大yaw范围并启用`|yaw|>2⇒vx=0`；`run`用同配方20环境GPU预检后，4096环境新增1000轮到5000，逐张量恢复学习状态并自动预算审计。源码快照校验与运行后工作区漂移分开记录，不把训练完成等同行为改善。[本次来源/预算/训练和TB6025命令](../../artifacts/fudan_ppo_walk/20261116-high-yaw10-resume4000-5000-01/README.md)。
+
+单级平台v6低随机化：现有`check --gpu --num-envs 20`增加真实GPU质量/COM/增益/零位/电机/摩擦范围检查，直接执行速度奖励验证慢行改善得分，真实复位路径核速度课程不合格不升/合格加速/封顶，以及台阶失败和最高级回练不退0mm；0优化器更新。`benchmark --num-envs 4096 --ppo-memory-check --all-levels`验证实际PPO缓存/小批次显存和几何/接触容量；吞吐只代表采样。旧预检不能放行新配方。[本次预检、预算与命令](../../artifacts/fudan_ppo_step/20261115-clearlab-low-random-200-01/README.md)。
+
+高速原地转指令：`PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_walk.check_high_yaw_commands --output artifacts/fudan_ppo_walk/<新实验>/command-check.json`以CPU/CUDA实际重采样核±10覆盖及`|yaw|>2⇒vx=0`、严格边界/局部选择、静止停车/Actor命令、旧±2命令及RNG、台阶±.5不变。0真实物理/网络/学习，不表示10rad/s运动验收。[定义与证据](../interfaces/20261115-fudan-high-yaw10.md)。
+
+单级平台`fudan_ppo_step`：`scripts.agent.fudan_ppo_step.check`提供静态迁移/几何/接触逻辑及20环境GPU有限检查，v3另核正反向出生/命令、高度范围及通行课程；`benchmark`只采样、禁止Adam更新；`evaluate`生成v3正反向540项台阶矩阵及每1ms接触证据，统一`accept --task fudan_ppo_step`离线评分。台阶通过不代替平地回归，缺平地回归时完整任务仍不通过。当前检查与全部命令见[台阶任务](../mjlab-fudan-ppo-step.md)。
+
+台阶有限训练由`scripts.agent.fudan_ppo_step.launch_training start`核对当前20环境预检、独立日志目录和明确轮数，冻结启动器后后台运行；真实环境启动核对PD/随机化/双延迟，达到轮数后自动审计初始化、双Adam次数、训练日志和源码快照，异常不自动重启。v3.1预检另覆盖场边真实地面射线和512步随机动作；`diagnose_rays`保留128环境随机动作漏检复现/修复回归，0更新。训练预算审计不表示登台通过。[500轮预算与恢复命令](../../artifacts/fudan_ppo_step/20261115-fudan-upstairs-500-02/README.md)。
+
+台阶4096：默认4096，`benchmark --ppo-memory-check`额外分配真实PPO存储并检查49152条小批次反向显存，0优化更新；每物理步采集约束/接触峰值和溢出。`launch_training resize/repair-rays`只按显式迁移保存学习状态，不覆盖原PT。v3.3预检注入单条缺测射线，验证单世界失败、零奖励、无超时bootstrap、复位恢复；离线评分必须拒绝`terrain_valid=false`。冻结模型复查未复现第二次具体触发姿态，保留未核实结论。[当前4096预算、失败保留和命令](../../artifacts/fudan_ppo_step/20261115-upstairs-4096-ray-04/README.md)。
+
+本机倒车台阶诊断：`scripts.agent.fudan_ppo_step.diagnose_reverse geometry/stance/run/audit/render`分别进行静态闭链/碰撞、着地站姿、有限GPU采集、原始轨迹复算与离线录像，0学习；固定76例不能替代正式矩阵。原始运行脚本按哈希封存，逐1ms实体ctrl核限幅，在线停车与逐物理步双轮支撑口径分别记录。[结果与边界](../../artifacts/fudan_ppo_step/20261115-reverse-diagnostic-01/README.md)。
+
 全幅随机化4000效果：`inspect_randomization_4000 audit/run/report/stress/compare/videos --output <新目录>`分别核原982轮预算及继承弃用采样、执行已校验训练快照、采集47标称/两模型各27摩擦外扰例、核1128项初态及正常速度对照视频。统一`accept`使用对应3000基线；当前47→40丢7例判退化，外扰2/27→2/27。原工作区源码门禁失败与快照复核通过分开记录，不跳过源校验或覆写旧成绩。[结果、视频及范围](../../artifacts/fudan_ppo_walk/20261115-random4000-effect-01/RESULTS.md)。
 
 3018中断恢复：`resume_pd200_remaining prepare/run --output <新目录>`只补原预算982轮到4000。prepare核下一轮采样中断位置、两Adam均60360、18条完整奖励及训练物理源码无漂移，保留184320条弃用采样的原计数；复用同配方GPU预检，初始化逐张量恢复。结束分别审计完整更新转移与含弃用采样的累计计数，不能把partial_update=false当作完整采样边界。[来源、预算和命令](../../artifacts/fudan_ppo_walk/20261115-pd200-resume3018-4000-01/README.md)。

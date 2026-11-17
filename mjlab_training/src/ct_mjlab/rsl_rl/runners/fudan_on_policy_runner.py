@@ -61,9 +61,22 @@ class FudanRunner:
         setattr(self, counter, getattr(self, counter) + 1)
         return result
 
-    def load(self, path, *, migrate_history_v2=False, allow_disturbance_change=False):
+    def load(self, path, *, migrate_history_v2=False, allow_disturbance_change=False, allow_terrain_change=False,
+             allow_critic_observation_change=False):
         validate_network_contract(self.train_cfg)
         checkpoint = torch.load(path, map_location=self.device, weights_only=False)
+        from ct_mjlab.envs.fudan_ppo_walk.terrain import record as terrain_record, PLANE
+        source_terrain = checkpoint.get('terrain', PLANE)
+        target_terrain = terrain_record(self.env.cfg)
+        if source_terrain != target_terrain and not allow_terrain_change:
+            raise ValueError('Terrain differs; select --terrain explicitly with a matching regional precheck')
+        if checkpoint.get('task', 'fudan_ppo_walk') != getattr(self.env, 'task_name', 'fudan_ppo_walk'):
+            raise ValueError('Cross-task continuation requires explicit policy initialization, not --resume')
+        from ct_mjlab.envs.fudan_ppo_walk.terrain import critic_record, LEGACY_CRITIC
+        source_critic = checkpoint.get('critic_observation', LEGACY_CRITIC)
+        target_critic = critic_record(self.env.cfg)
+        if source_critic != target_critic and not allow_critic_observation_change:
+            raise ValueError('Critic observation differs; select --critic-height-scan with a matching precheck')
         source_posture = posture_reward.from_record(checkpoint.get('posture_reward'))
         source_disturbances = from_record(checkpoint.get('disturbances'))
         target_disturbances = getattr(self.env, 'disturbance_config', DisturbanceConfig())
@@ -143,6 +156,11 @@ class FudanRunner:
             source_disturbances=source_disturbances.record(),
             disturbances=target_disturbances.record(),
             source_command_sampling=checkpoint.get('command_sampling', LEGACY_COMMAND_SAMPLING),
+            source_terrain=source_terrain,
+            terrain=target_terrain,
+            source_critic_observation=source_critic,
+            critic_observation=target_critic,
+            critic_learning_state_reset=False,
             command_sampling=getattr(self.env, 'command_sampling', LEGACY_COMMAND_SAMPLING),
             source_posture_reward=source_posture,
             posture_reward=posture_reward.from_record(getattr(self.env, 'posture_reward_profile', None)),
@@ -154,6 +172,10 @@ class FudanRunner:
         )
         (self.log_dir / 'restore_report.json').write_text(json.dumps(restored, indent=2) + '\n')
         return restored
+
+    def checkpoint_metadata(self):
+        from ct_mjlab.envs.fudan_ppo_walk.terrain import record, critic_record
+        return dict(terrain=record(self.env.cfg), critic_observation=critic_record(self.env.cfg))
 
     def save(self, name):
         from ct_mjlab.envs.chuanliantui.fitted_leg_load import parameter_record
@@ -189,11 +211,18 @@ class FudanRunner:
                 num_envs=self.env.num_envs,
                 policy_steps=self.env.total_steps,
                 torch_rng=torch.get_rng_state(),
-                cuda_rng=torch.cuda.get_rng_state_all()
+                cuda_rng=torch.cuda.get_rng_state_all(),
+                **self.checkpoint_metadata()
             ),
             path
         )
         return path
+
+    def initialize_rollout(self):
+        return initialize_rollout(self.env)
+
+    def log_task_metrics(self):
+        pass
 
     def learn_until(self, deadline, max_iterations=None):
         initial_iteration = self.iteration
@@ -206,7 +235,7 @@ class FudanRunner:
         self.save('model_initial.pt')
         if time.time() >= deadline:
             raise BudgetStop()
-        obs, critic, history = initialize_rollout(self.env)
+        obs, critic, history = self.initialize_rollout()
         stage_next = start + self.train_cfg.runner.stage_interval_s
         reward_names = tuple(self.env.cfg.rewards.scales)
         try:
@@ -241,6 +270,7 @@ class FudanRunner:
                     self.writer.add_scalar(f'Rewards/{name}', value, self.iteration)
                 self.writer.add_scalar('Train/speed_limit', self.env.speed_limit, self.iteration)
                 self.writer.add_scalar('Train/learning_rate', self.alg.learning_rate, self.iteration)
+                self.log_task_metrics()
                 if self.iteration == initial_iteration + 1:
                     self.writer.flush()
                 if self.iteration == initial_iteration + 1 or self.iteration % self.train_cfg.runner.print_interval == 0:

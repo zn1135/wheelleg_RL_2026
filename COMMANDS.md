@@ -8,16 +8,17 @@
 | BC训练 | `scripts/mjlab.sh train-bc`，见[BC说明](docs/mjlab-behavior-cloning.md) |
 | SMP先验训练 | `scripts/mjlab.sh train-prior`，见[SMP说明](docs/mjlab-smp-prior.md) |
 | BC初始化／SMP辅助PPO | `scripts/mjlab.sh train --task smp --smp-prior <prior>`；须明确训练预算，见[保留线命令](docs/commands/mjlab.md) |
-| 统一GPU验收 | `scripts/mjlab.sh accept --task <fudan_ppo_walk/supermimic/bc/smp> --recording <GPU记录> --output <新目录>`，见[统一标准](docs/interfaces/20261102-unified-gpu-acceptance.md) |
+| 统一GPU验收 | `scripts/mjlab.sh accept --task <fudan_ppo_walk/fudan_ppo_step/supermimic/bc/smp> --recording <GPU记录> --output <新目录>`，见[统一标准](docs/interfaces/20261102-unified-gpu-acceptance.md) |
 | 检查与行为验收 | [构建与验证](docs/ai/build-test.md)、[统一运动标准](docs/interfaces/chuanliantui-motion-acceptance-v1.md) |
 | 示范采集／传统控制对照 | `scripts/mjlab.sh teacher`、`scripts/mjlab.sh collect`，见[教师说明](docs/mjlab-lqr-vmc-teacher.md) |
 | 实采／标定 | [实采命令](docs/commands/real2sim.md) |
 | RMUC2027完整场地交互 | `scripts/rmuc2027.sh`；浏览器用`--viewer viser --port 8790`，见[场地接入](docs/interfaces/20261115-rmuc2027-playground.md)；原生MuJoCo体验，不作正式验收 |
 | 分区地形MuJoCo交互 | `scripts/rmuc2027.sh --terrain regions`；前后±3m/s、G原地10rad/s小陀螺、X停车；数字1平地/2～5坡/6崎岖，V全图；[交互说明](docs/interfaces/20261115-rmuc2027-playground.md#分区地形交互) |
+| 独立单级平台任务 | `scripts/mjlab.sh train --task fudan_ppo_step`；需20环境GPU预检、预算和新日志目录，完整训练/TensorBoard配对命令见[台阶任务](docs/mjlab-fudan-ppo-step.md) |
 | 最终sim2sim验证 | 各task使用自己的GPU采集入口，再用统一accept评分；原生CPU入口只作历史复现，见[统一标准](docs/interfaces/20261102-unified-gpu-acceptance.md) |
 | Isaac历史环境 | [Isaac说明](docs/commands/isaac.md)，不混用mjlab Python |
 
-旧task `chuanliantui`、`chuanliantui_stand`、`chuanliantui_stand_v2`、`chuanliantui_getup`、`chuanliantui_walk`不再注册。当前注册名为`smp`、`supermimic`、`fudan_ppo_walk`；前两者分别承载⑦⑧及⑥，新增复旦PPO为独立配方；SuperMimic使用自己的算法入口，不通过普通PPO训练。
+旧task `chuanliantui`、`chuanliantui_stand`、`chuanliantui_stand_v2`、`chuanliantui_getup`、`chuanliantui_walk`不再注册。当前注册名为`smp`、`supermimic`、`fudan_ppo_walk`、`fudan_ppo_step`；前两者分别承载⑦⑧及⑥，两项复旦PPO分别维护平地与单级平台配方；SuperMimic使用自己的算法入口，不通过普通PPO训练。
 
 每次训练命令同时给出对应TensorBoard命令；仅改初态或复位分布时先做20环境可视预检。未给预算不启动训练。源码清理与资产例外见[清理记录](docs/maintenance/20261101-retain-678-review.md)。
 

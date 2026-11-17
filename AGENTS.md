@@ -4,7 +4,7 @@
 
 ## 项目与文档入口
 
-- **mjlab 当前主线**：`mjlab_training/`，入口 `scripts/mjlab.sh`；维护SuperMimic、BC、SMP及独立复旦PPO行走适配；注册环境为`supermimic`、`smp`和`fudan_ppo_walk`，五个旧独立task已撤销。任务配方、接口与日志分别核对，不互套模型。
+- **mjlab 当前主线**：`mjlab_training/`，入口 `scripts/mjlab.sh`；维护SuperMimic、BC、SMP及独立复旦PPO行走/单级平台适配；注册环境为`supermimic`、`smp`、`fudan_ppo_walk`和`fudan_ppo_step`，五个旧独立task已撤销。台阶配方见[单级平台任务](docs/mjlab-fudan-ppo-step.md)。任务配方、接口与日志分别核对，不互套模型。
 - **Isaac 旧任务**：`wheel_legged_gym/`，用于 imcawl、旧串联腿与历史模型；与 mjlab 环境隔离。
 - 当前最好模型、验收结论和逐日实验只记录在[项目实验记录](docs/ai/project-log.md)顶部；此文件不重复任务参数或实验状态。
 
