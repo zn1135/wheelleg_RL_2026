@@ -1,5 +1,9 @@
 # 构建与验证
 
+台阶4200噪声分组：`PYTHONPATH=mjlab_training/src:. MUJOCO_GL=egl mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_step.diagnose_noise_channels run --output <新目录> --deadline <Unix秒>`复用原高位GPU采集器，8条件/3噪声序列/132世界，0学习；`report/render/verify`均离线，render可选`--case hold_h0.35 --channel joint_velocity`。核同批完整初态/随机数、真实PD/历史、跨批差异及视频；不作为实机11Hz或完整台阶验收。[本次结果](../../artifacts/fudan_ppo_step/20261118-noise-channel4200-01/README.md)。
+
+台阶4200高位噪声诊断：`PYTHONPATH=mjlab_training/src:. MUJOCO_GL=egl mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_step.diagnose_high_stance_noise run --output <新目录> --deadline <Unix秒>`冻结实际训练源码；无/台阶原幅/6838原幅噪声，共42条名义GPU高位保持/正对200mm登台，0学习。`report/render/verify --output <已有目录>`仅离线数学/渲染/核验，render可选`--case hold_h0.35`或`up200_v0.30`；停车窗口缺测不补分，不代表完整行为验收。[结果与限制](../../artifacts/fudan_ppo_step/20261118-high-stance-noise4200-01/README.md)。
+
 3200台阶效果：`fudan_ppo_step.evaluate_final3200.py run`显式冻结源码复用90/39例GPU回放/原始审计及原47例控制审计，禁止Adam；`review_final3200.py`离线核验并调用统一accept输出高速子集及平地附件，保留完整矩阵缺测、初态超差，完整解码视频。采集用新目录，不把名义子集当987随机或场地通过。[3200结果、脚本范围及证据](../../artifacts/fudan_ppo_step/20261117-v7-effect3200-01/README.md)。
 
 远程训练收尾：`completion_shutdown.py selfcheck`检查活worker/错误预算或PT门禁、异常退出标识、归档逐文件SHA及解压往返、本地收据和离线回退；所有实际关机调用mock、0训练更新。`arm`仅用于用户明确授权的本轮3200预算，独立artifact脚本等待目标退出及GPU空闲，备份验证后平台关机；不写冻结源码，不测试性关闭活实例。本聊天heartbeat负责备份取回/原正式audit及取回确认。[已部署状态与取消入口](../../artifacts/fudan_ppo_step/20261117-auto-shutdown-01/README.md)。
