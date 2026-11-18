@@ -161,6 +161,12 @@ class StepEnv(FudanEnv):
             height_sampling='uniform_independent_of_terrain_level',
             flat_behavior_probabilities=dict(drive=.5,stand=.25,drive_then_stop=.25),
             legacy_mode_sampling=False)
+        if hasattr(cfg.step, 'flat_turn_probability'):
+            self.command_sampling.update(version='fudan-fixed200-turn-commands-v8',
+                flat_turn_probability_of_drive=cfg.step.flat_turn_probability,
+                flat_tall_height_probability=cfg.step.turn_height_probability,
+                flat_tall_height=cfg.step.turn_height,
+                flat_teacher_height_max=cfg.step.flat_teacher_height_max)
         self._step_ready = True
         self._update_state()
 
@@ -231,13 +237,22 @@ class StepEnv(FudanEnv):
             self.commands[flat, 0] = torch.empty(len(flat), device=self.device).uniform_(*self.cfg.commands.stop_speed_range)
             self.commands[flat, 0] *= torch.where(torch.rand(len(flat), device=self.device)<.5, -1., 1.)
             self.commands[flat, 1] = torch.empty(len(flat), device=self.device).uniform_(*self.cfg.commands.yaw_range)
-            self.commands[flat, 2] = torch.empty(len(flat), device=self.device).uniform_(*self.cfg.commands.height_range)
+            height_range = getattr(self.cfg.step, 'flat_regular_height_range', self.cfg.commands.height_range)
+            self.commands[flat, 2] = torch.empty(len(flat), device=self.device).uniform_(*height_range)
             # 平地一半普通行驶，四分之一站立，四分之一行驶后停车。
             draw = torch.rand(len(flat), device=self.device)
             stand, stop = flat[draw<.25], flat[(draw>=.25)&(draw<.5)]
             self.command_mode[stand], self.command_mode[stop] = 1, 2
             self.commands[stand, :2] = 0.
             self.stop_command_step[stop] = torch.randint(300, 501, (len(stop),), device=self.device)
+            if hasattr(self.cfg.step, 'flat_turn_probability'):
+                # 高站姿单独回练；普通行驶中一半专练原地转向，其余保留行驶转弯。
+                tall = flat[torch.rand(len(flat), device=self.device)<self.cfg.step.turn_height_probability]
+                self.commands[tall, 2] = self.cfg.step.turn_height
+                turn = flat[(draw>=.5)&(torch.rand(len(flat), device=self.device)<self.cfg.step.flat_turn_probability)]
+                self.commands[turn, 0] = 0.
+                magnitude = torch.empty(len(turn), device=self.device).uniform_(*self.cfg.step.turn_yaw_magnitude)
+                self.commands[turn, 1] = magnitude*torch.where(torch.rand(len(turn), device=self.device)<.5,-1.,1.)
         if hasattr(self, 'fixed_commands'):
             self.commands[ids] = self.fixed_commands[ids]
 

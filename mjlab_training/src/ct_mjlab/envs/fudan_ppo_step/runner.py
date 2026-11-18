@@ -54,6 +54,9 @@ class StepRunner(FudanRunner):
         self.flat_teacher=teacher.eval().requires_grad_(False)
 
     def flat_preservation_loss(self,obs,history,flat):
+        if hasattr(self.env.cfg.step,'flat_teacher_height_max'):
+            # 旧教师只见过0.22～0.30m，不约束新增0.35m转向探索。
+            flat=flat&(obs[:,8]<=self.env.cfg.step.flat_teacher_height_max*self.env.cfg.normalization.command[2]+1e-6)
         if self.flat_teacher is None or not flat.any():return None
         # 仅平地约束旧动作；台阶动作不受教师模仿限制。
         with torch.no_grad():
@@ -87,6 +90,7 @@ class StepRunner(FudanRunner):
 
     def checkpoint_metadata(self):
         return dict(task=TASK, training_recipe=recipe_record(self.env.cfg),
+            recipe_migration=getattr(self,'recipe_migration',None),
             transfer=getattr(self, 'transfer', None),
             terrain_levels=self.env.terrain.terrain_levels.cpu(),
             terrain_types=self.env.terrain.terrain_types.cpu())
@@ -97,6 +101,7 @@ class StepRunner(FudanRunner):
             raise ValueError('Step resume requires the identical saved training recipe')
         result = super().load(path, **kwargs)
         self.transfer = saved.get('transfer')
+        self.recipe_migration = saved.get('recipe_migration')
         if len(saved['terrain_levels']) != self.env.num_envs:
             raise ValueError('Step resume preserves per-environment curriculum; num_envs must match')
         self.env.terrain.terrain_levels.copy_(saved['terrain_levels'].to(self.device))

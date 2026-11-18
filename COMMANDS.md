@@ -15,6 +15,7 @@
 | RMUC2027完整场地交互 | `scripts/rmuc2027.sh`；浏览器用`--viewer viser --port 8790`，见[场地接入](docs/interfaces/20261115-rmuc2027-playground.md)；原生MuJoCo体验，不作正式验收 |
 | 分区地形MuJoCo交互 | `scripts/rmuc2027.sh --terrain regions`；前后±3m/s、G原地10rad/s小陀螺、X停车；数字1平地/2～5坡/6崎岖，V全图；[交互说明](docs/interfaces/20261115-rmuc2027-playground.md#分区地形交互) |
 | 独立单级平台任务 | `scripts/mjlab.sh train --task fudan_ppo_step`；需20环境GPU预检、预算和新日志目录，完整训练/TensorBoard配对命令见[台阶任务](docs/mjlab-fudan-ppo-step.md) |
+| 多高度台阶MuJoCo交互 | `scripts/rmuc2027.sh --terrain steps`；行走6838：方向键3m/s/2rad/s、G原地10rad/s；T切台阶3200：1m/s/0.5rad/s/机身0.35m，再T回行走；0平地、1～9切20～220mm平台；[按键与模型说明](docs/interfaces/20261115-rmuc2027-playground.md#独立多高度台阶场) |
 | 最终sim2sim验证 | 各task使用自己的GPU采集入口，再用统一accept评分；原生CPU入口只作历史复现，见[统一标准](docs/interfaces/20261102-unified-gpu-acceptance.md) |
 | Isaac历史环境 | [Isaac说明](docs/commands/isaac.md)，不混用mjlab Python |
 

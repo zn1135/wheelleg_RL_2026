@@ -4,6 +4,22 @@
 
 台阶4200高位噪声诊断：`PYTHONPATH=mjlab_training/src:. MUJOCO_GL=egl mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_step.diagnose_high_stance_noise run --output <新目录> --deadline <Unix秒>`冻结实际训练源码；无/台阶原幅/6838原幅噪声，共42条名义GPU高位保持/正对200mm登台，0学习。`report/render/verify --output <已有目录>`仅离线数学/渲染/核验，render可选`--case hold_h0.35`或`up200_v0.30`；停车窗口缺测不补分，不代表完整行为验收。[结果与限制](../../artifacts/fudan_ppo_step/20261118-high-stance-noise4200-01/README.md)。
 
+7500噪声效果：`scripts.agent.fudan_ppo_walk.evaluate_gyrox7500 run/report/render/verify --output <目录>`冻结6838/7500、同批复制77类状态，主371世界覆盖干净47/重复组/两幅噪声，补120世界覆盖停车高位另两噪声序列；0学习、两批各30000GPU步。噪声当前/五帧历史由同随机数配对，verify另重算注入、核协议/同态cohort/模型与双Adam有限性/视频全解码帧率及SHA，统一accept输出原47配对。render只读取保存GPU姿态；不把频段幅值下降当真实11Hz复现，不把含噪0通过当全倒地。[丢4增3及局部收益](../../artifacts/fudan_ppo_walk/20261118-gyrox7500-effect-01/README.md)。
+
+行走gyroX噪声续训：`PYTHONPATH=mjlab_training/src:. mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_walk.resume_gyrox6838_to7500 prepare/run --output <本次目录>`显式6838→7500（新增662轮），执行6838封存ct_mjlab，唯一配方差异为gyroX噪声±.3→±.6rad/s。20环境预检另核同RNG下仅gyroX加倍、其余观测/Critic不变且恢复RNG/历史；4096环境48步/49152小批次反向禁止更新，正式恢复完整双Adam/RNG/计数，预算到点自动审计。初态不改，未授权追加；运行目录与训练/TB命令见[本次记录](../../artifacts/fudan_ppo_walk/20261118-gyrox-resume6838-7500-02/README.md)。
+
+4200效果对照：`scripts.agent.fudan_ppo_step.evaluate_fixed200_turn_effect run --output <新目录> --deadline <秒>`固定3200/4200各22个高低站姿转向＋36个200mm/辅助平地GPU轨迹，禁用Adam；原47例另用`inspect_training flat`。`review_fixed200_turn_effect review --recording <目录>`核同初态、SHA、逐例得失并交统一入口，`video/media`生成并全帧核验1倍速视频。27例不冒充完整矩阵，47例不冒充987总体；主停车与1ms连续加载口径分列。[结果与范围](../../artifacts/fudan_ppo_step/20261118-v8-effect4200-01/README.md)。
+
+固定200mm/转向v8续训：`scripts.agent.fudan_ppo_step.prepare_fixed200_turn --output <新目录>`核原3200源SHA，保留全部学习状态并记录配方/地形等级迁移。正式`check --gpu --num-envs 20 --steps 250 --deadline <秒> --output <新目录>`新增高站姿双向原地/行驶转向采样、教师作用范围和失败复位后固定200mm检查；`remote_training capacity --resume <派生PT> --num-envs 4096 --deadline <秒> --output <新目录>`也可在本机运行，执行48步真实采样/反向，在Adam边界截停，核双优化器/RNG/全网络继承。检查不代表行为通过。[本轮证据](../../artifacts/fudan_ppo_step/20261117-fixed200-turn-resume3200-4200-01/README.md)。
+
+6838高位站姿/短时响应：`PYTHONPATH=mjlab_training/src:. MUJOCO_GL=egl mjlab_training/.venv/bin/python -m scripts.agent.real2sim.compare_high_length_response_6838 run --output <新目录>`用6实录时点、原/匹配姿态、回放/保持目标和17ms候选做36世界×.6秒GPU诊断；`run --support-probe`仅用一个稳定均值估算单个弹簧偏置候选，再做24世界对照，参数不写默认。`report`只离线处理保存数据/静态受力、0新积分。按腿长/关节/姿态超差截断有效前缀，不用倒地后或输入自带11Hz宣称闭环复现；0学习，不替代统一行为验收。[条件、均值改善与完整姿态失败](../../artifacts/real2sim/20261117-high-stance-response6838-01/README.md)。
+
+台阶场原行走指令：`PYTHONPATH=mjlab_training/src:. mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_step.check_native_commands --output <新目录>`实际跑六个原生CLI子进程，核±3m/s、高yaw时vx清零、G等价spin10、台阶默认及上限的逐拍真实命令/模型/有限状态；另拒绝台阶模式启动spin。只验证指令送达，不宣称实际跟踪达到目标速度或完成登台；模式切换时的滑条范围/退出小陀螺由浏览器实操另核。[原指令恢复证据](../../artifacts/fudan_ppo_step/20261117-native-original-commands-01/README.md)。
+
+台阶手动切模：`PYTHONPATH=mjlab_training/src:. mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_step.check_native_policy_switch --output <新目录>`核默认行走、22次切换的完整积分状态/PD/上一动作/FIFO/五帧历史逐值保持、两Actor路由输出一致、原行走高度恢复、异PD拒绝及600策略拍原生有限性。只做切换/数值检查，不代表完成登台；浏览器实际勾选/取消和原生窗口有限启动另留证据，未自动操作原生T键。[检查与模式说明](../../artifacts/fudan_ppo_step/20261117-native-policy-switch-01/README.md)。
+
+原生多高度平台：`MUJOCO_GL=egl PYTHONPATH=mjlab_training/src:. mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_step.check_native_steps --output <新目录>`核训练平台尺寸/5mm沿前后剖面/出生高度、机器人参数保持、10区各2秒停走停/实际摩擦/限矩及截图；`check_arena_native_interface --terrain steps --checkpoint <PT> --output <新目录>`另核100组GPU同状态控制/观测，0GPU积分/学习。原生窗口和浏览器有限启动/退出另查，不把这些检查当完整登台或手动按键验收。[场景和检查证据](../../artifacts/fudan_ppo_step/20261117-native-steps-01/README.md)。
+
 3200台阶效果：`fudan_ppo_step.evaluate_final3200.py run`显式冻结源码复用90/39例GPU回放/原始审计及原47例控制审计，禁止Adam；`review_final3200.py`离线核验并调用统一accept输出高速子集及平地附件，保留完整矩阵缺测、初态超差，完整解码视频。采集用新目录，不把名义子集当987随机或场地通过。[3200结果、脚本范围及证据](../../artifacts/fudan_ppo_step/20261117-v7-effect3200-01/README.md)。
 
 远程训练收尾：`completion_shutdown.py selfcheck`检查活worker/错误预算或PT门禁、异常退出标识、归档逐文件SHA及解压往返、本地收据和离线回退；所有实际关机调用mock、0训练更新。`arm`仅用于用户明确授权的本轮3200预算，独立artifact脚本等待目标退出及GPU空闲，备份验证后平台关机；不写冻结源码，不测试性关闭活实例。本聊天heartbeat负责备份取回/原正式audit及取回确认。[已部署状态与取消入口](../../artifacts/fudan_ppo_step/20261117-auto-shutdown-01/README.md)。

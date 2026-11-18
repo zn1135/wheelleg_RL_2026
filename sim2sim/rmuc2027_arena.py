@@ -254,7 +254,7 @@ def ground_height(model, x, y, regional=False):
     return 5. - distance
 
 
-def command_schedule(path, policy_dt, limits=(2., 2.)):
+def command_schedule(path, policy_dt, limits=(2., 2.), height_max=.30):
     """分段命令按策略拍对齐，避免浮点边界重复或漏掉停车命令。"""
     if path is None:
         return []
@@ -268,7 +268,7 @@ def command_schedule(path, policy_dt, limits=(2., 2.)):
         ticks = round(seconds/policy_dt)
         if (not np.isfinite(seconds) or ticks <= 0 or not np.isclose(ticks*policy_dt, seconds)
                 or command.shape != (3,) or not np.isfinite(command).all()
-                or not ((command >= [-limits[0], -limits[1], .22]) & (command <= [*limits, .30])).all()):
+                or not ((command >= [-limits[0], -limits[1], .22]) & (command <= [*limits, height_max])).all()):
             raise ValueError('Invalid command segment duration or command bounds')
         end += ticks
         result.append((end, command.tolist()))
@@ -285,36 +285,47 @@ def scheduled_command(schedule, tick):
 def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument('--checkpoint', type=Path)
-    parser.add_argument('--terrain', choices=('arena', 'regions'), default='arena')
+    parser.add_argument('--walk-checkpoint', type=Path, help='Steps mode: walking Actor before pressing T')
+    parser.add_argument('--step-mode', action='store_true', help='Steps mode: start with the stair Actor, equivalent to pressing T')
+    parser.add_argument('--terrain', choices=('arena', 'regions', 'steps'), default='arena')
     parser.add_argument('--arena', type=Path, default=ARENA)
     parser.add_argument('--viewer', choices=('native', 'viser', 'none'), default='native')
     parser.add_argument('--port', type=int, default=8790)
     parser.add_argument('--spawn', nargs=2, type=float, metavar=('X', 'Y'))
     parser.add_argument('--spawn-yaw-deg', type=float, default=0., help='World heading; red platform approach is -90')
     parser.add_argument('--command-sequence', type=Path, help='JSON duration_s/command list; requires --viewer none')
-    parser.add_argument('--keyboard-speed', type=float, default=None, help='Default0.5 for step policies;2 for historical walk policies')
-    parser.add_argument('--keyboard-yaw', type=float, default=2.)
-    parser.add_argument('--spin', action='store_true', help='Start regional spinning mode: vx=0, yaw=+10rad/s')
-    parser.add_argument('--command', nargs=3, type=float, default=(0., 0., .26), metavar=('VX', 'YAW', 'HEIGHT'))
+    parser.add_argument('--keyboard-speed', type=float, default=None, help='Walk3m/s, step1m/s; explicit override is capped by the active policy')
+    parser.add_argument('--keyboard-yaw', type=float, default=None)
+    parser.add_argument('--spin', action='store_true', help='Start walking spin mode: vx=0, yaw=+10rad/s')
+    parser.add_argument('--command', nargs=3, type=float, metavar=('VX', 'YAW', 'HEIGHT'))
     parser.add_argument('--seconds', type=float, help='Stop after this many simulated seconds')
     parser.add_argument('--output', type=Path, help='New directory for trace and run report')
     args = parser.parse_args()
     regional = args.terrain == 'regions'
-    limits = (3., 10.) if regional else (2., 2.)
-    args.checkpoint = args.checkpoint or (REGIONAL_CHECKPOINT if regional else CHECKPOINT)
-    args.spawn = args.spawn or ((8.25, 4.) if regional else (-5., -3.))
+    steps = args.terrain == 'steps'
+    generated = regional or steps
+    limits = (2.5, 2.) if steps and args.step_mode else (3., 10.) if generated else (2., 2.)
+    height_max = .35 if steps and args.step_mode else .30
+    from sim2sim.step_playground import (CHECKPOINT as STEP_CHECKPOINT, layout as step_layout,
+        build_model as build_step_model, ManualStepPolicies)
+    args.checkpoint = args.checkpoint or (STEP_CHECKPOINT if steps else REGIONAL_CHECKPOINT if regional else CHECKPOINT)
+    args.command = args.command or (0., 0., .35 if steps and args.step_mode else .26)
+    if not steps and (args.walk_checkpoint is not None or args.step_mode):
+        parser.error('--walk-checkpoint and --step-mode require --terrain steps')
+    if not steps:
+        args.spawn = args.spawn or ((8.25, 4.) if regional else (-5., -3.))
     if args.command_sequence is not None and args.viewer != 'none':
         parser.error('--command-sequence requires --viewer none')
-    if args.spin and (not regional or args.command_sequence is not None):
-        parser.error('--spin requires --terrain regions and no command sequence')
+    if args.spin and (not generated or steps and args.step_mode or args.command_sequence is not None):
+        parser.error('--spin requires regional or steps WALK mode and no command sequence')
     if not np.isfinite(args.spawn_yaw_deg):
         parser.error('Spawn heading must be finite')
     if args.keyboard_speed is not None and not 0 < args.keyboard_speed <= limits[0]:
         parser.error(f'Keyboard speed must be in(0,{limits[0]}]')
-    if not 0 < args.keyboard_yaw <= limits[1]:
+    if args.keyboard_yaw is not None and not 0 < args.keyboard_yaw <= limits[1]:
         parser.error(f'Keyboard yaw must be in(0,{limits[1]}]')
     if not np.isfinite(args.command).all() or not ((np.array(args.command) >= [-limits[0], -limits[1], .22])
-            & (np.array(args.command) <= [*limits, .30])).all():
+            & (np.array(args.command) <= [*limits, height_max])).all():
         parser.error('Command is outside the playback range')
     if args.viewer == 'none' and args.command_sequence is None and (args.seconds is None or args.seconds <= 0):
         parser.error('--viewer none requires --seconds > 0')
@@ -324,18 +335,33 @@ def main():
         args.output.mkdir(parents=True, exist_ok=False)
     torch.set_num_threads(1)
     policy, saved = load_policy(args.checkpoint)
+    policy_switch = None
+    if steps:
+        policy_switch = ManualStepPolicies(args.walk_checkpoint or REGIONAL_CHECKPOINT, args.checkpoint,
+            policy, saved, start_step=args.step_mode)
+        policy = policy_switch
     metadata = regional_metadata(saved) if regional else saved
-    schedule = command_schedule(args.command_sequence, metadata['control_timing']['policy_dt'], limits)
+    platforms = step_layout(metadata) if steps else []
+    selected_platform = next((p for p in platforms if np.isclose(p['height'], .20)), None)
+    if steps:
+        selected_platform = selected_platform or platforms[-1]
+        args.spawn = args.spawn or selected_platform['spawn']
+    terrain_record = (dict(mode='steps', platforms=platforms) if steps else
+                      saved.get('terrain') if regional else None)
+    schedule = command_schedule(args.command_sequence, metadata['control_timing']['policy_dt'], limits, height_max)
     if schedule:
         duration = schedule[-1][0]*metadata['control_timing']['policy_dt']
         if args.seconds is not None and not np.isclose(args.seconds, duration):
             parser.error('--seconds must equal the command sequence duration, or be omitted')
         args.seconds = duration
     keyboard_speed = args.keyboard_speed if args.keyboard_speed is not None else (
-        .5 if metadata.get('task') == 'fudan_ppo_step' else (3. if regional else 2.))
-    keyboard_yaw = .5 if metadata.get('task') == 'fudan_ppo_step' else args.keyboard_yaw
+        policy_switch.keyboard_commands[0] if steps else .5 if metadata.get('task') == 'fudan_ppo_step' else (3. if regional else 2.))
+    keyboard_yaw = args.keyboard_yaw if args.keyboard_yaw is not None else (
+        policy_switch.keyboard_commands[1] if steps else .5 if metadata.get('task') == 'fudan_ppo_step' else 2.)
     # 二进制缓存只加速下次启动；场地/机器人资产或编译配置变化会换缓存键。
-    if regional:
+    if steps:
+        model = build_step_model(metadata)
+    elif regional:
         model = build_regional_model(metadata)
     else:
         cache = model_cache(metadata, args.arena)
@@ -347,10 +373,12 @@ def main():
             mujoco.mj_saveModel(model, str(cache))
     env = ArenaPlayback(model, metadata)
     env.command[:] = args.command
+    if policy_switch is not None:
+        env.command[2] = np.clip(env.command[2], .22, policy_switch.height_max)
     spin = args.spin
     if spin:
         env.command[:2] = (0., 10.)
-    z = ground_height(model, *args.spawn, regional=regional)
+    z = ground_height(model, *args.spawn, regional=generated)
     spawn = (*args.spawn, z)
     env.reset(spawn, yaw=np.deg2rad(args.spawn_yaw_deg))
     events, rows, poses = deque(), [], []
@@ -358,6 +386,7 @@ def main():
     server = handle = scene = status = None
     native_window = None
     spin_toggle = None
+    step_toggle = None
     if args.viewer == 'native':
         from mujoco import viewer as native_viewer
         from mujoco.glfw import glfw
@@ -365,36 +394,50 @@ def main():
         def keypress(key):
             nonlocal native_window
             native_window = glfw.get_current_context()
-            if key not in direction_keys:
+            if key not in direction_keys and not (steps and key == glfw.KEY_T):
                 events.append(chr(key))
         handle = native_viewer.launch_passive(model, env.data, key_callback=keypress,
-            show_left_ui=not regional, show_right_ui=not regional)
+            show_left_ui=not generated, show_right_ui=not generated)
         handle.cam.lookat[:] = env.data.qpos[:3]
-        handle.cam.distance = 3.5 if regional else 4.
-        handle.cam.azimuth = 150. if regional else 90.
+        handle.cam.distance = 3.5 if generated else 4.
+        handle.cam.azimuth = 150. if generated else 90.
         handle.cam.elevation = -25.
         # 完整场地只显示动态状态；关闭重阴影/反射，碰撞与机器人控制保持。
         with handle.lock():
-            if regional:
+            if generated:
                 handle.opt.geomgroup[3] = 0
             handle.user_scn.flags[mujoco.mjtRndFlag.mjRND_SHADOW] = False
             handle.user_scn.flags[mujoco.mjtRndFlag.mjRND_REFLECTION] = False
         print(f'Hold Up/Down: +/-{keyboard_speed}m/s; Left/Right: +/-{keyboard_yaw}rad/s; release: 0; E/Q height; X stop; P pause; R reset', flush=True)
         if regional:
             print('G spin ON/OFF (vx=0,yaw=10); X stop; 1 flat; 2/3/4/5 slope 5/10/15/20deg; 6 rough; V overview/robot', flush=True)
+        if steps:
+            print('Platforms: ' + ' | '.join(p['label'] for p in platforms) + ' | V overview/robot', flush=True)
+            print(f'T walk{policy_switch.metadata["walk"]["iterations"]} / step{policy_switch.metadata["step"]["iterations"]}; '
+                  'enter step: height0.35m; X stops without changing policy', flush=True)
+            print('WALK: arrows +/-3m/s, +/-2rad/s; G spin10rad/s; STEP: arrows +/-1m/s, +/-0.5rad/s', flush=True)
     elif args.viewer == 'viser':
         import viser
         from mjlab.viewer.viser.scene import MjlabViserScene
         server = viser.ViserServer(host='127.0.0.1', port=args.port,
-            label=f'{args.terrain} / Fudan{metadata["iterations"]} native playground')
+            label='steps / WALK + STEP native playground' if steps else
+                  f'{args.terrain} / Fudan{metadata["iterations"]} native playground')
         scene = MjlabViserScene(server, model, 1)
         scene.create_scene_gui(camera_distance=4., show_debug_viz_control=False)
         vx = server.gui.add_slider('前后速度 m/s', min=-limits[0], max=limits[0], step=.1, initial_value=float(env.command[0]))
         yaw = server.gui.add_slider('转向 rad/s', min=-limits[1], max=limits[1], step=.1, initial_value=float(env.command[1]))
-        height = server.gui.add_slider('高度 m', min=.22, max=.30, step=.01, initial_value=float(env.command[2]))
+        height = server.gui.add_slider('机身高度 m', min=.22,
+            max=policy_switch.height_max if steps else height_max, step=.01, initial_value=float(env.command[2]))
         pause = server.gui.add_checkbox('暂停', initial_value=False)
-        if regional:
-            spin_toggle = server.gui.add_checkbox('小陀螺：原地10rad/s', initial_value=spin)
+        if generated:
+            spin_toggle = server.gui.add_checkbox('小陀螺：原地10rad/s', initial_value=spin,
+                disabled=steps and policy_switch.mode == 'step')
+        if steps:
+            step_toggle = server.gui.add_checkbox('上台阶模型（T切换）', initial_value=policy_switch.mode == 'step')
+            step_toggle.on_update(lambda event: events.append('MODEL_STEP' if event.target.value else 'MODEL_WALK'))
+            selector = server.gui.add_dropdown('台阶高度', options=tuple(p['label'] for p in platforms),
+                initial_value=selected_platform['label'])
+            selector.on_update(lambda event: events.append(event.target.value.split(':')[0]))
         server.gui.add_button('停车').on_click(lambda _: events.append('X'))
         server.gui.add_button('回到出生点').on_click(lambda _: events.append('R'))
         status = server.gui.add_markdown('正在初始化场地与机器人…')
@@ -405,12 +448,18 @@ def main():
         print(f'Viewer: http://127.0.0.1:{server.get_port()}', flush=True)
     startup = dict(ngeom=model.ngeom, checkpoint=str(args.checkpoint.resolve()),
         checkpoint_sha256=hashlib.sha256(args.checkpoint.read_bytes()).hexdigest(),
-        iterations=metadata['iterations'], spawn=spawn, terrain=saved.get('terrain') if regional else str(args.arena),
-        friction=.8 if regional else None, training_disturbances=saved['disturbances'],
+        iterations=metadata['iterations'], spawn=spawn, terrain=terrain_record if generated else str(args.arena),
+        friction=.8 if generated else None, training_disturbances=saved['disturbances'],
         playback_disturbances=metadata['disturbances'], timing=metadata['control_timing'],
         action_delay_steps=int(env.delays.action_steps[0]), sensor_delay_steps=int(env.delays.sensor_steps[0]),
         keyboard_speed=keyboard_speed, keyboard_yaw=keyboard_yaw, spin_initial=spin,
         scope='interactive_native_playground_not_formal_acceptance')
+    if policy_switch is not None:
+        current = policy_switch.checkpoints[policy_switch.mode]
+        startup.update(checkpoint=current['checkpoint'], checkpoint_sha256=current['sha256'],
+                       iterations=current['iterations'], policy_switch=policy_switch.record(),
+                       training_disturbances=policy_switch.training_disturbances[policy_switch.mode],
+                       playback_disturbances=policy_switch.metadata[policy_switch.mode]['disturbances'])
     print(json.dumps(startup), flush=True)
     if args.output is not None:
         (args.output / 'startup.json').write_text(json.dumps(startup, indent=2) + '\n')
@@ -422,6 +471,8 @@ def main():
     overview = False
     contacts, contact_error = 0, 0.
     spin_steps = 0
+    policy_roles = []
+    step_key_down = False
     try:
         with torch.inference_mode():
             while args.seconds is None or total_steps < round(args.seconds / env.policy_dt):
@@ -431,13 +482,22 @@ def main():
                 if handle is not None:
                     # 回调只通知按下；逐拍读取真实按键状态，松开/失焦时该轴立即归零。
                     env.command[:2] = 0.
+                    t_held = False
+                    held_axes = np.zeros(2)
+                    native_stop = False
                     if native_window and glfw.get_window_attrib(native_window, glfw.FOCUSED):
                         held = lambda key: int(glfw.get_key(native_window, key) == glfw.PRESS)
-                        env.command[0] = keyboard_speed * (held(glfw.KEY_UP) - held(glfw.KEY_DOWN))
-                        env.command[1] = keyboard_yaw * (held(glfw.KEY_LEFT) - held(glfw.KEY_RIGHT))
-                        if held(glfw.KEY_X):
+                        held_axes[:] = (held(glfw.KEY_UP) - held(glfw.KEY_DOWN), held(glfw.KEY_LEFT) - held(glfw.KEY_RIGHT))
+                        env.command[:2] = held_axes * (keyboard_speed, keyboard_yaw)
+                        native_stop = bool(held(glfw.KEY_X))
+                        if native_stop:
                             env.command[:2] = 0.
                             spin = False
+                        if steps:
+                            t_held = bool(held(glfw.KEY_T))
+                    if steps and t_held and not step_key_down:
+                        events.append('T')
+                    step_key_down = t_held
                 if server is not None:
                     env.command[:] = (vx.value, yaw.value, height.value)
                     paused = pause.value
@@ -447,7 +507,7 @@ def main():
                     key = events.popleft()
                     if key == 'P': paused = not paused
                     elif key == 'R':
-                        if regional:
+                        if generated:
                             spin = False
                             env.command[:2] = 0.
                             if spin_toggle is not None: spin_toggle.value = False
@@ -458,11 +518,47 @@ def main():
                         env.command[:2] = 0.
                         if spin_toggle is not None: spin_toggle.value = False
                         if server is not None: vx.value = yaw.value = 0.
-                    elif regional and key == 'G':
+                    elif (regional or steps and policy_switch.mode == 'walk') and key == 'G':
                         spin = not spin
                         env.command[:2] = 0.
                     elif key == 'E': env.command[2] += .01
                     elif key == 'Q': env.command[2] -= .01
+                    elif steps and key in ('T', 'MODEL_STEP', 'MODEL_WALK'):
+                        mode = ('step' if policy_switch.mode == 'walk' else 'walk') if key == 'T' else (
+                            'step' if key == 'MODEL_STEP' else 'walk')
+                        if policy_switch.select(mode, env):
+                            was_spin = spin
+                            spin = False
+                            if was_spin:
+                                env.command[:2] = 0.
+                            limits = policy_switch.command_limits
+                            keyboard_speed = min(args.keyboard_speed if args.keyboard_speed is not None else
+                                policy_switch.keyboard_commands[0], limits[0])
+                            keyboard_yaw = min(args.keyboard_yaw if args.keyboard_yaw is not None else
+                                policy_switch.keyboard_commands[1], limits[1])
+                            env.command[:2] = env.command[:2].clip([-limits[0], -limits[1]], limits)
+                            if handle is not None:
+                                env.command[:2] = 0. if native_stop else held_axes * (keyboard_speed, keyboard_yaw)
+                            if server is not None:
+                                spin_toggle.value = False
+                                spin_toggle.disabled = mode == 'step'
+                                # 切回行走恢复完整滑条范围；台阶按自身范围限幅。
+                                vx.min, vx.max = -limits[0], limits[0]
+                                yaw.min, yaw.max = -limits[1], limits[1]
+                                vx.value, yaw.value = map(float, env.command[:2])
+                                height.max = policy_switch.height_max
+                                height.value = float(env.command[2])
+                                step_toggle.value = mode == 'step'
+                            print(json.dumps(dict(event='policy_switch', **policy_switch.transitions[-1])), flush=True)
+                    elif steps and key in {p['key'] for p in platforms}:
+                        spin = False
+                        if spin_toggle is not None: spin_toggle.value = False
+                        selected_platform = next(p for p in platforms if p['key'] == key)
+                        xy = selected_platform['spawn']
+                        spawn = (*xy, ground_height(model, *xy, regional=True))
+                        env.command[:2] = 0.
+                        if server is not None: vx.value = yaw.value = 0.
+                        env.reset(spawn, yaw=0.)
                     elif regional and key in '123456':
                         spin = False
                         spots = [(-4., 4.), (.25, 4.), (8.25, 4.), (.25, 12.), (8.25, 12.), (4., -4.)]
@@ -470,13 +566,14 @@ def main():
                         spawn = (*xy, ground_height(model, *xy, regional=True))
                         env.command[:2] = 0.
                         env.reset(spawn, yaw=0.)
-                    elif regional and key == 'V':
+                    elif generated and key == 'V':
                         overview = not overview
                         with handle.lock():
-                            handle.cam.distance = 37. if overview else 3.5
+                            handle.cam.distance = (47. if steps else 37.) if overview else 3.5
                             handle.cam.elevation = -65. if overview else -25.
                             handle.cam.azimuth = 90. if overview else 150.
-                env.command[:] = env.command.clip([-limits[0], -limits[1], .22], [*limits, .30])
+                active_height_max = policy_switch.height_max if steps else height_max
+                env.command[:] = env.command.clip([-limits[0], -limits[1], .22], [*limits, active_height_max])
                 if not paused:
                     if schedule:
                         env.command[:] = scheduled_command(schedule, total_steps)
@@ -484,7 +581,7 @@ def main():
                     if spin:
                         env.command[:2] = (0., 10.)
                         spin_steps += 1
-                    if regional and abs(env.command[1]) > 2.:
+                    if (regional or steps and policy_switch.mode == 'walk') and abs(env.command[1]) > 2.:
                         env.command[0] = 0.
                     # 指令变化同拍写入当前帧和最近一格历史，与GPU回放一致。
                     obs = env.observation()
@@ -492,7 +589,7 @@ def main():
                     action, _ = policy.act_inference(torch.from_numpy(obs[None]), torch.from_numpy(env.history[None]))
                     env.step(action[0].numpy())
                     total_steps += 1
-                    if regional:
+                    if generated:
                         for contact in env.data.contact:
                             if model.geom_bodyid[contact.geom1] == model.body('terrain').id or model.geom_bodyid[contact.geom2] == model.body('terrain').id:
                                 contacts += 1
@@ -500,11 +597,13 @@ def main():
                     if args.output is not None:
                         rows.append([total_steps * env.policy_dt, *env.command, *env.data.qpos[:3], *env.data.qvel[:6]])
                         poses.append(env.data.qpos.copy())
+                        if steps:
+                            policy_roles.append(policy_switch.mode)
                 # 按真实时间刷新，避免物理变慢后画面也只剩十几帧。
                 if time.monotonic() >= next_draw:
                     if handle is not None:
                         with handle.lock():
-                            handle.cam.lookat[:] = (0., 0., 0.) if overview else env.data.qpos[:3]
+                            handle.cam.lookat[:] = ((-5., 0., 0.) if steps else (0., 0., 0.)) if overview else env.data.qpos[:3]
                         handle.sync(state_only=True)
                         if regional:
                             handle.set_texts((mujoco.mjtFontScale.mjFONTSCALE_150, mujoco.mjtGridPos.mjGRID_TOPLEFT,
@@ -513,9 +612,25 @@ def main():
                                 f'Actual yaw: {env.data.qvel[5]:+.2f} rad/s',
                                 f'G spin ON/OFF | X stop\nArrows: +/-{keyboard_speed:g}m/s, +/-{keyboard_yaw:g}rad/s\n'
                                 '1 flat | 2-5 slopes | 6 rough\nR reset | P pause | V overview'))
+                        if steps:
+                            handle.set_texts((mujoco.mjtFontScale.mjFONTSCALE_150, mujoco.mjtGridPos.mjGRID_TOPLEFT,
+                                f'Mode: {policy_switch.mode.upper()} / {policy_switch.metadata[policy_switch.mode]["iterations"]}\n'
+                                f'Platform: {selected_platform["height"] * 1000:g} mm\n'
+                                f'Target vx/yaw: {env.command[0]:+.1f}/{env.command[1]:+.1f} | body: {env.command[2]:.2f} m\n'
+                                f'{"SPIN" if spin else "DRIVE"} | Actual yaw: {env.data.qvel[5]:+.2f} rad/s',
+                                '0 flat | 1:20 2:50 3:80 4:120 5:160\n6:180 7:200 8:210 9:220 mm\n'
+                                f'Arrows: +/-{keyboard_speed:g}m/s, +/-{keyboard_yaw:g}rad/s\n'
+                                'T walk/step | G spin (WALK) | X stop\nE/Q body | R reset | P pause | V overview'))
                     if scene is not None:
                         scene.update_from_mjdata(env.data)
                         status.content = f'模型 {metadata["iterations"]} · {"小陀螺" if spin else "普通行驶"} · 时间 {env.data.time:.2f}s · 指令 {env.command[0]:.1f}m/s，{env.command[1]:.1f}rad/s，{env.command[2]:.2f}m · 实际转速 {env.data.qvel[5]:.2f}rad/s\n\n原生MuJoCo场地体验；不作正式行为验收。'
+                        if steps:
+                            status.content = (f'当前模型：{"上台阶" if policy_switch.mode == "step" else "行走"} '
+                                f'{policy_switch.metadata[policy_switch.mode]["iterations"]}轮 · '
+                                f'台阶 {selected_platform["height"] * 1000:g}mm · '
+                                f'机身指令 {env.command[2]:.2f}m · 切模 {len(policy_switch.transitions)}次\n\n'
+                                f'{"小陀螺" if spin else "普通行驶"} · 速度/转向指令 '
+                                f'{env.command[0]:+.1f}m/s / {env.command[1]:+.1f}rad/s')
                     if handle is not None or scene is not None:
                         draw_count += 1
                     next_draw = time.monotonic() + 1. / (60. if handle is not None else 30.)
@@ -535,11 +650,13 @@ def main():
         if server is not None: server.stop()
         if args.output is not None:
             np.savez_compressed(args.output / 'trace.npz', state=np.asarray(rows), qpos=np.asarray(poses))
+            if steps:
+                np.save(args.output / 'policy-roles.npy', np.asarray(policy_roles))
             report = dict(scope='interactive_native_playground_not_formal_acceptance', arena_revision=REVISION,
-                arena=None if regional else str(args.arena.resolve()),
-                arena_sha256=None if regional else hashlib.sha256(args.arena.read_bytes()).hexdigest(),
-                terrain=saved.get('terrain') if regional else None,
-                friction=.8 if regional else None, ground_contacts=contacts,
+                arena=None if generated else str(args.arena.resolve()),
+                arena_sha256=None if generated else hashlib.sha256(args.arena.read_bytes()).hexdigest(),
+                terrain=terrain_record,
+                friction=.8 if generated else None, ground_contacts=contacts,
                 ground_contact_friction_max_error=contact_error,
                 training_disturbances=saved['disturbances'], playback_disturbances=metadata['disturbances'],
                 checkpoint=str(args.checkpoint.resolve()), checkpoint_sha256=hashlib.sha256(args.checkpoint.read_bytes()).hexdigest(),
@@ -553,6 +670,13 @@ def main():
                 policy_steps=total_steps, simulated_seconds=total_steps * env.policy_dt,
                 wall_seconds=time.monotonic() - start, viewer_state_updates=draw_count,
                 optimizer_updates=0, error=failure, formal_acceptance=False)
+            if steps:
+                current = policy_switch.checkpoints[policy_switch.mode]
+                report.update(checkpoint=current['checkpoint'], checkpoint_sha256=current['sha256'],
+                    iterations=current['iterations'], task=policy_switch.metadata[policy_switch.mode].get('task', 'fudan_ppo_walk'),
+                    policy_switch=policy_switch.record(),
+                    training_disturbances=policy_switch.training_disturbances[policy_switch.mode],
+                    playback_disturbances=policy_switch.metadata[policy_switch.mode]['disturbances'])
             (args.output / 'report.json').write_text(json.dumps(report, indent=2, ensure_ascii=False) + '\n')
 
 

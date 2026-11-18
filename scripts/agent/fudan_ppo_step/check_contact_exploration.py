@@ -65,7 +65,7 @@ def static_checks(output):
     assert fake._contact_failure().all()
     cfg.step.allow_temporary_support=True
     online=object.__new__(StepEnv);online.cfg=cfg;online.dt=.01
-    online.terrain=SimpleNamespace(terrain_types=torch.tensor([1]),terrain_levels=torch.tensor([7]))
+    online.terrain=SimpleNamespace(terrain_types=torch.tensor([1]),terrain_levels=torch.tensor([cfg.step.heights.index(.2)]))
     online.env=SimpleNamespace(scene=SimpleNamespace(env_origins=torch.zeros(1,3)),
         sim=SimpleNamespace(data=SimpleNamespace(xpos=torch.tensor([[[1.5,.21,.26],[1.5,-.21,.26]]]))))
     online.wheel_ids=torch.tensor([0,1]);online.support_height=torch.tensor([[.2,.2]])
@@ -100,6 +100,7 @@ def static_checks(output):
     runner.env=SimpleNamespace(cfg=cfg)
     generator=torch.Generator().manual_seed(716)
     obs=torch.randn(8,25,generator=generator);history=torch.randn(8,125,generator=generator)
+    obs[:,8]=.26*cfg.normalization.command[2]
     flat=torch.tensor([True]*4+[False]*4)
     assert runner.flat_preservation_loss(obs,history,flat).item()<1e-10
     saved={k:v.clone() for k,v in policy.state_dict().items()}
@@ -136,6 +137,9 @@ def gpu_checks(args,report):
         assert torch.equal(cpu_rng,torch.get_rng_state()) and torch.equal(cuda_rng,torch.cuda.get_rng_state())
         original={k:v.clone() for k,v in runner.policy.state_dict().items()}
         ids=torch.arange(20,device=env.device);flat=env.modes==0
+        if cfg.step.version=='fixed200-turn-rehearsal-v8':
+            from .prepare_fixed200_turn import check_commands
+            report['fixed200_turn']=check_commands(env,runner)
         flat_max_v=flat_max_yaw=0.
         for _ in range(16):
             env.resample(ids)

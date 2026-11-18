@@ -42,7 +42,7 @@ def start(args):
         initial_iterations=saved['iterations'];initial_transitions=saved['transitions'];initial_updates=saved['primary_updates']
         argv+=['--resume',str(args.resume.resolve())]
     target=initial_iterations+args.iterations
-    budget=dict(authorization=f'用户明确要求正向最高机身高度及最高速度台阶训练，本次{args.iterations}轮、目标总{target}轮；到预算停止，不自动追加。',
+    budget=dict(authorization=f'用户明确授权本次台阶训练{args.iterations}轮、目标总{target}轮；配方见recipe，到预算停止，不自动追加。',
         iterations=target,additional_iterations=args.iterations,initial_iterations=initial_iterations,
         initial_transitions=initial_transitions,initial_each_adam_updates=initial_updates,
         resume_checkpoint=str(args.resume.resolve()) if args.resume else None,

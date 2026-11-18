@@ -126,7 +126,8 @@ class FudanWalkCfg:
         torques = .05
         height_center = .5
         height_scale = 5.
-        noise_scales = [.075]*6 + [0.]*3 + [.03]*4 + [.1125]*6 + [0.]*6
+        # gyroX观测噪声±0.6rad/s；其余通道保持原幅度。
+        noise_scales = [.15] + [.075]*5 + [0.]*3 + [.03]*4 + [.1125]*6 + [0.]*6
 
     class rewards:
         pitch_soft_range_deg = [0., 5.]  # 仅前倾范围内弱惩罚。

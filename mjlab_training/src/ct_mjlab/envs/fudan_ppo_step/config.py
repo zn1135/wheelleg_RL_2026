@@ -3,7 +3,7 @@ from types import SimpleNamespace
 from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, FudanWalkCfgPPO
 
 TASK = 'fudan_ppo_step'
-RECIPE = 'contact-assisted-platform-exploration-v7'
+RECIPE = 'fixed200-turn-rehearsal-v8'
 SOURCE = 'logs/mjlab/fudan_ppo_walk/20261114_pd200_p20d1_half_random_delay_wide_resume1000_to3000_01/model_final.pt'
 SOURCE_SHA = 'dfb221c09648d278d5c5e5c7b78e4d729b7a7a5a56458762b7313dc50831c4f8'
 
@@ -38,6 +38,7 @@ def FudanStepCfg():
     cfg.commands.velocity_increment = .1
     cfg.commands.yaw_range = [-2., 2.]
     cfg.commands.stop_speed_range = [.2, 2.5]
+    cfg.commands.height_range = [.22, .35]
     cfg.commands.standstill_env_ratio = 0.
     cfg.commands.stop_env_ratio = 0.
     cfg.rewards.height_sigma = .001
@@ -49,16 +50,16 @@ def FudanStepCfg():
         action_rate=-.01, action_smooth=-.01, collision=-1., dof_pos_limits=-1.,
         reference_motion=.2, target_support=1.)
     cfg.step = SimpleNamespace(
-        version=RECIPE, heights=(0., .02, .05, .08, .12, .16, .18, .20, .21, .22),
+        version=RECIPE, heights=(0., .20),
         width=1.148, depth=2.09, patch_size=(10., 4.),
         border_width=2.,
         contact_capacity=64, constraint_capacity=256,
-        terrain_weights=(.2, .4, .4), start_level=1, minimum_stair_level=1, curriculum=True,
+        terrain_weights=(.2, .4, .4), start_level=1, minimum_stair_level=1, curriculum=False,
         terrain_assignment='fixed_types', reward_profile='clearlab-velocity-adapted-v1',
         reference_commit='c354431e5633eb98d9663fa3fbe444201d2de383',
         command_curriculum='fixed_full_range_v1',
         approach_distance=(0., 1.2, .6),
-        side_obstacle_level=7, side_obstacle_height=.55,
+        side_obstacle_level=1, side_obstacle_height=.55,
         approach_speed=(.3, 2.5), approach_angle_deg=20., max_approach_speed=3.,
         reverse_probability=0., height_range=(.35,.35), landing_s=.1,
         crossing_symmetry_factor=0.,
@@ -70,6 +71,8 @@ def FudanStepCfg():
         reference_motion_path='artifacts/fudan_ppo_step/20261116-contact-exploration-v7-01/reference/motion.npz',
         reference_motion_sha256='4ea3cc892b1a3035e106053d194371d4942a5b53a47a46a5f1f9feb0738183c3',
         flat_teacher_path=SOURCE, flat_teacher_sha256=SOURCE_SHA, flat_preservation_weight=.1,
+        flat_regular_height_range=(.22,.30), turn_height=.35, turn_height_probability=.5,
+        flat_turn_probability=.5, turn_yaw_magnitude=(.5,2.), flat_teacher_height_max=.30,
     )
     return cfg
 

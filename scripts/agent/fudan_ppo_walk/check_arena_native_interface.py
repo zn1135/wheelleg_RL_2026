@@ -12,6 +12,7 @@ import torch
 
 from sim2sim.rmuc2027_arena import (ArenaPlayback, build_model, CHECKPOINT,
     build_regional_model, regional_metadata)
+from sim2sim.step_playground import build_model as build_step_model
 from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
 from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record
@@ -22,14 +23,15 @@ def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--checkpoint', type=Path, default=CHECKPOINT)
-    parser.add_argument('--terrain', choices=('plane', 'regions'), default='plane')
+    parser.add_argument('--terrain', choices=('plane', 'regions', 'steps'), default='plane')
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     torch.set_num_threads(1)
     policy, saved = load_policy(args.checkpoint)
     if args.terrain == 'regions':
         saved = regional_metadata(saved)
-    model = build_regional_model(saved) if args.terrain == 'regions' else build_model(saved, arena=None)
+    model = (build_step_model(saved) if args.terrain == 'steps' else
+             build_regional_model(saved) if args.terrain == 'regions' else build_model(saved, arena=None))
     native = ArenaPlayback(model, saved)
     native.reset((0., 0., 0.))
     cfg = FudanWalkCfg()
@@ -60,7 +62,7 @@ def main():
                 native.data.qpos[:] = q; native.data.qvel[:] = v
                 native.velocity[:] = rng.uniform(-3., 3., 6)
                 native.last_action[:] = rng.uniform(-1., 1., 6)
-                native.command[:] = rng.uniform([-.5, -.5, .22], [.5, .5, .30])
+                native.command[:] = rng.uniform([-.5, -.5, .22], [.5, .5, .35 if args.terrain == 'steps' else .30])
                 gpu.env.sim.data.qpos[0] = torch.as_tensor(q, device=gpu.device)
                 gpu.env.sim.data.qvel[0] = torch.as_tensor(v, device=gpu.device)
                 action.sample_velocity[0] = torch.as_tensor(native.velocity, device=gpu.device)
