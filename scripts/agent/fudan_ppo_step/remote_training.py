@@ -79,7 +79,7 @@ def verify(args):
 def capacity(args):
     import copy
     import torch
-    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg,FudanStepCfgPPO,SOURCE
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg,FudanStepCfgPPO,RECIPE,SOURCE
     from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
     from ct_mjlab.envs.chuanliantui.fudan_ppo_step.runner import StepRunner
     from scripts.agent.fudan_ppo_step.check import source_fingerprint
@@ -89,10 +89,11 @@ def capacity(args):
     began=time.monotonic()
     try:
         with patch('torch.optim.Adam.step',side_effect=AssertionError('Remote capacity must not update')):
-            env=StepEnv(args.num_envs,cfg=FudanStepCfg(),randomized=True,seed=1)
+            saved=torch.load(args.resume,map_location='cpu',weights_only=False) if args.resume else None
+            version=saved['training_recipe']['step']['version'] if saved else RECIPE
+            env=StepEnv(args.num_envs,cfg=FudanStepCfg(version),randomized=True,seed=1)
             runner=StepRunner(env,train_cfg=FudanStepCfgPPO(),log_dir=args.output/'runner',device='cuda:0')
             if args.resume:
-                saved=torch.load(args.resume,map_location='cpu',weights_only=False)
                 runner.load(args.resume)
                 # 续训须同时恢复两套Adam、课程和随机数，不能只加载网络。
                 receipt=dict(networks=same_state(saved['model_state_dict'],runner.policy.state_dict()),
@@ -156,7 +157,8 @@ def start(args):
     from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg,recipe_record,SOURCE,SOURCE_SHA
     from scripts.agent.fudan_ppo_step.check import source_fingerprint
     from scripts.agent.fudan_ppo_step import launch_training
-    cfg=FudanStepCfg();proof=json.loads(args.precheck.read_text());sizing=json.loads(args.capacity.read_text())
+    proof=json.loads(args.precheck.read_text());sizing=json.loads(args.capacity.read_text())
+    cfg=FudanStepCfg(proof['recipe']['step']['version'])
     manifest=json.loads((ROOT/'remote-input-manifest.json').read_text())
     assert args.iterations>0 and args.num_envs>0 and args.num_envs%4==0
     assert proof['passed'] and proof['kind']=='step_gpu_precheck' and proof['num_envs']==20

@@ -529,6 +529,7 @@ def main():
     parser.add_argument('--deadline',type=float)
     parser.add_argument('--friction',type=float,choices=(.4,1.2))
     parser.add_argument('--viewer',action='store_true',help='Show the actual GPU states in Viser')
+    parser.add_argument('--timed-restart', action='store_true', help='Check the v12 timed-restart recipe')
     parser.add_argument('--port',type=int,default=8791)
     args=parser.parse_args()
     if args.gpu and args.deadline is None:parser.error('--gpu requires --deadline')

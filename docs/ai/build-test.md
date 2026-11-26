@@ -1,5 +1,48 @@
 # 构建与验证
 
+6838的11Hz机身力矩短扰：`PYTHONPATH=mjlab_training/src:. MUJOCO_GL=egl mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_walk.probe_roll_burst_6838 prepare/worker/report/render/verify --output <目录>`分步调用；prepare默认.25/.5/1N·m，可显式`--amplitudes 2 5 10`，后续读取plan。只有worker做GPU物理，逐1ms体轴力矩/积分后端口核验，撤后3秒真gyro/姿态/轮载/零速判据独立于共同尾窗评分；不训练、不访问硬件，不把外扰恢复当实机自激复现。原采集器物理回调默认None、零外载守卫保持。[结果与边界](../../artifacts/fudan_ppo_walk/20261125-roll-burst6838-02/README.md)。
+
+实机落地/力矩余量分析使用 `PYTHONPATH=mjlab_training/src:. mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_jump.analyze_real_landing_power --archive <完整阶段ZIP> --alignment <视频对齐result.json> --poses <已验证displayed-poses.npz> --output <新目录>`，核控制/反馈请求配对、恒矩部分窗口能量、轮底相对高差与落地支撑时序。高度换算仅使用视频较早离地边界前的同路径余量，质量为模型示例，上报扭矩未经独立标定；0动力学积分/0学习。[结果](../../artifacts/fudan_ppo_jump/20261125-real-landing-height-01/README.md)。
+
+实拍与腿长对齐使用 `PYTHONPATH=mjlab_training/src:. mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_jump.align_video_tuck --video <已确认对应的两跳视频> --archive <完整阶段ZIP> --height-estimate <已有height.npz> --output <新目录>`，本入口采用当前这两跳的人工帧标记，按各跳独立偏移对齐。核最高点/着地压缩、收腿最短点在偏移±2帧时仍处视频明确腾空窗口，报告离地附近全幅与首次清楚离地后的剩余收腿量，0积分/0学习，导出实拍＋曲线视频并完整解码。[本次证据](../../artifacts/fudan_ppo_jump/20261125-video-log-tuck-01/README.md)。
+
+6838慢升GPU对照：`PYTHONPATH=mjlab_training/src:. MUJOCO_GL=egl mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_walk.compare_slow_height_6838 prepare/worker/report/render/verify --output <目录>`分步调用；仅worker积分，原/.5/1秒及重复/无降高控制×3初态，最高指令.30m。核实际Actor/五帧高度、77类初态、PD/摩擦、权重、尾窗统一评分和1倍速视频；原快升未复现强11Hz时不称候选治好实机。旧gyro采集器新增默认None的命令回调，默认路径不变。[本轮名义GPU结果](../../artifacts/fudan_ppo_walk/20261125-slow-height6838-01/README.md)。
+
+6838原高腿长起振只读追踪：`PYTHONPATH=mjlab_training/src:. mjlab_training/.venv/bin/python -m scripts.agent.real2sim.trace_high_length_onset_6838 --output <新目录>`逐源核BIN/CSV、按H7时钟配对5会话及过去200ms增长统计，GPU重算冻结原6838；随后同入口加`--review`只读保存结果，核低/高位及目标/实际量的区别。两步均0物理/学习/硬件操作，不是新的闭环或行为验收；日志相位不当纯传输延迟。[本轮结果与复核口径](../../artifacts/real2sim/20261125-high-length-onset6838-04/README.md)。
+
+IMU日志回放可在`render_real_log --archive <ZIP> --height-estimate <height.npz> --output <新目录>`后增加`--ground`，按触发前较低轮底对齐固定0.4m网格地面，仅作渲染。积分穿地保留并淡化地面提示，逐帧核对仅增加固定Z偏移及参考轮底为0；不以视觉地面增加碰撞或改写高度估算。[带地面回放与实拍边界](../../artifacts/fudan_ppo_jump/20261125-ground-replay-01/README.md)。
+
+IMU高度估算使用 `PYTHONPATH=mjlab_training/src:. mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_jump.estimate_imu_height --archive <完整阶段ZIP> --output <新目录>`，沿现有H7大机投影去重力，按明确的起始零偏/零速度假设作双积分，输出初始化敏感性和原始漂移。`render_real_log --archive <同ZIP> --height-estimate <估算目录/height.npz> --output <新目录>`按输入SHA核对后添加估算竖直位移和参考线。静止/自由落体/恒加速数学检查及视频全帧解码通过；估算为IMU测点相对位移，安装偏移、末端漂移及真实轮底高度需外部参考验证。[结果与回放](../../artifacts/fudan_ppo_jump/20261125-imu-height-replay-01/README.md)。
+
+完整阶段CSV压缩包回放使用 `PYTHONPATH=mjlab_training/src:. MUJOCO_GL=egl mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_jump.render_real_log --archive <完整阶段试次ZIP> --output <新目录>`，识别编号式模型输入/H7反馈/H7控制字段，保留完整H7采样窗口，核四元数与欧拉角顺序、控制角映射和闭链腿长。反馈冻结支持四电机分别标注，机身位置固定；普通旧目录仍用`--recording`。本次修正旧pitch/roll导出标签的轴互换，横滚统一从四元数求值。[完整阶段视频与范围](../../artifacts/fudan_ppo_jump/20261125-full-trials-replay-02/README.md)。
+
+实机Jump姿态回放使用 `PYTHONPATH=mjlab_training/src:. MUJOCO_GL=egl mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_jump.render_real_log --recording <已解码080044目录> --output <新目录>`，读取三次实测姿态与关节角，复用现有闭链镜像求解器，核PD模型角及日志腿长对应，生成双视角正常/四分之一速度视频并全帧解码。机身平移缺测，显示位置固定；反馈冻结、推理记录缺口和模型限位外姿态均提示。只做运动学/渲染，0物理积分/0学习。[回放与验证](../../artifacts/fudan_ppo_jump/20261124-real-bin080044-01/replay-02/README.md)。
+
+原始Jetson Jump BIN及对应CSV核对使用 `PYTHONPATH=mjlab_training/src:. mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_jump.decode_real_jump_bin --binary <BIN> --model-csv <模型CSV> --pd-csv <PD_CSV> --sums <SHA256SUMS> --output <新目录>`，复用H7导出器的PD/姿态字段定义并核CRC，将CSV与BIN逐字段比对，再复用逐次Jump分析。附加时序分析使用 `scripts.agent.fudan_ppo_jump.diagnose_real022_timing --source-report <analysis/result.json> --output <新目录>`，定位停更先后并对照既有零速GPU准备姿态。全程离线，0物理积分/0学习。[080044日志结果](../../artifacts/fudan_ppo_jump/20261124-real-bin080044-01/README.md)。
+
+实机Jump022日志离线分析使用 `PYTHONPATH=mjlab_training/src:. mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_jump.analyze_real022 --archive <用户ZIP> --output <新目录>`，核原始BIN摘要/记录截尾、全部Jump输入动作与有效PD数值，按板端时间分8次触发并截取首次故障前的动作指标，输出逐次跟踪/力矩/腿长/IMU图。CSV采用包内导出，阶段和IMU参考阈值不作为独立离地/跳高证明；0仿真积分/0学习。[本次结果](../../artifacts/fudan_ppo_jump/20261123-real022-03/README.md)。
+
+Jump5200机高命令对照使用 `PYTHONPATH=mjlab_training/src:. MUJOCO_GL=egl mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_jump.compare_command_height --output <新目录>`，在0/2m/s指令下分别比较0.22/0.26m；每组20个相同物理初态，WALK和Jump全过程采用对应高度，2秒切模、触轮后80ms交接。核初态与仅高度槽不同的历史、网络参数冻结、真实GPU子步与接触，输出首跳高度/落地指标及0.22m正常速度回放，0学习。[结果](../../artifacts/fudan_ppo_jump/20261123-height022-01/README.md)。
+
+Jump5200 起跳做功诊断使用 `PYTHONPATH=mjlab_training/src:. mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_jump.probe_takeoff_work collect --output <新目录>`，固定20初态、2m/s助跑2秒、触轮后80ms交接，采集普通、探针和普通重复三批GPU回放。随后同入口 `report --recording <采集目录> --output-name <新报告子目录>` 离线计算质心、逐轴正负功、实际路径40N·m上界及能量残差。采集检查覆盖实际力矩/控制输出、1/5/10ms时序、初态及积分前后连续性；普通GPU重复存在数值散布，逐位一致和历史容差另行报告。零学习，诊断范围为一次平地跳跃的做功和时序。[本次结果与复现命令](../../artifacts/fudan_ppo_jump/20261123-takeoff-work5200-01/README.md)。
+
+完整 RMUC 赛场的四模型接口检查在仓库根目录运行，使用本机 GPU 核对当前帧、五帧历史、六路动作、延迟队列和实际电机力矩：
+
+```bash
+MUJOCO_GL=egl PYTHONPATH=mjlab_training/src:. mjlab_training/.venv/bin/python \
+  -m scripts.agent.fudan_ppo_walk.check_arena_four_policies --output artifacts/rmuc2027/<新实验>/interface
+```
+
+移除中央装置后的地图检查先分别启动一次默认赛场和显式上游 XML 生成编译缓存，再依次运行 `check_arena_power_rune source`、`edited`、`check`（模块同上目录，三次共用 `--output <新对照目录>`）。报告分别给出视觉及碰撞射线、装配区裸地高度、周边地面对照和同机位截图。使用同一目录运行 `check_arena_power_rune crossing`，由 WALK 6838 分别试驶两个补面，记录轮子实际承重时长及是否越过两侧孔沿。操作键、台阶出生点和回放方式见[赛场说明](../interfaces/20261115-rmuc2027-playground.md#rmuc比赛场地)。
+
+固定速度 6200 停车故障：`scripts.agent.fudan_ppo_step.diagnose_stop_regression offline/gpu/native --output <新目录>`。离线按首次零指令对齐 5200/6200，GPU 独立干预仅轮、仅腿及整套停车动作，原生 T 切模核起步及再起步；零学习。固定 2 m/s 九例另交统一 GPU 入口评分。[诊断报告](../../artifacts/fudan_ppo_step/20261119-stop-regression6200-01/README.md)。
+
+固定 2 m/s 起步专项：`scripts.agent.fudan_ppo_step.prepare_restart`核验固定速度版 5200 的学习状态，正式 `check --gpu` 检查等待、起步、停止和再起步门控。训练结束后 `review_restart --audit <本机审计> --output <新目录>` 使用同一 T 切模入口测原生起步和再起步时间，并用 GPU 逐例对照原 200 毫米登台停车工况。原生回放用于交互效果诊断。[命令及范围](../../artifacts/fudan_ppo_step/20261119-restart-v11-5200-to6200-01/README.md)。
+
+跳跃任务使用 `scripts.agent.fudan_ppo_jump.check --video --output <新目录>` 做 20 环境零学习 GPU 预检，`scripts.agent.fudan_ppo_jump.check_replay --precheck <precheck.json> --output <新目录>` 用随机初始策略验证 40 例切换、真实碰撞和缺测。训练后另用专项采集和统一 accept 评估。[命令与判据](../mjlab-fudan-ppo-jump.md)
+
+5200小转向续训：`scripts.agent.fudan_ppo_step.prepare_small_yaw`从完整4200显式派生并核全网络/双Adam/RNG/计数及地形分配保持；`check --gpu`核四档命令频率、只改专项偏航奖励和固定200mm复位，4096环境再做零更新容量验证。正式预算完成后`review_small_yaw`串行采集22转向、27上台及原47平地，对照4200原成功逐例核退化，不自动切换交互模型。[命令和证据](../../artifacts/fudan_ppo_step/20261118-v9-small-yaw4200-to5200-01/README.md)。
+
 台阶4200噪声分组：`PYTHONPATH=mjlab_training/src:. MUJOCO_GL=egl mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_step.diagnose_noise_channels run --output <新目录> --deadline <Unix秒>`复用原高位GPU采集器，8条件/3噪声序列/132世界，0学习；`report/render/verify`均离线，render可选`--case hold_h0.35 --channel joint_velocity`。核同批完整初态/随机数、真实PD/历史、跨批差异及视频；不作为实机11Hz或完整台阶验收。[本次结果](../../artifacts/fudan_ppo_step/20261118-noise-channel4200-01/README.md)。
 
 台阶4200高位噪声诊断：`PYTHONPATH=mjlab_training/src:. MUJOCO_GL=egl mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_step.diagnose_high_stance_noise run --output <新目录> --deadline <Unix秒>`冻结实际训练源码；无/台阶原幅/6838原幅噪声，共42条名义GPU高位保持/正对200mm登台，0学习。`report/render/verify --output <已有目录>`仅离线数学/渲染/核验，render可选`--case hold_h0.35`或`up200_v0.30`；停车窗口缺测不补分，不代表完整行为验收。[结果与限制](../../artifacts/fudan_ppo_step/20261118-high-stance-noise4200-01/README.md)。
@@ -329,6 +372,7 @@ mjlab_training/.venv/bin/python -m scripts.agent.maintenance.check_script_entrie
 
 复旦结构整理正式入口：`PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_walk.check_structure_suite --output <新检查目录>`。外层禁止真实物理环境构造、积分及Adam更新；覆盖注册链路、配置消费者、迁移前后逐值比较、冻结8000模型、PPO梯度/顺序、两优化器恢复、v2/v3/预算/日志、积分r2及GPU入口。源迁移用明确哈希链核对，不能关闭来源校验；[说明与证据](../maintenance/20261103-fudan-structure-alignment.md)。
 复旦当前选用8000-v2＋停车+2°：`scripts.agent.fudan_ppo_walk.check_selected_policy --output <新JSON>`核对47工况时序、与已执行探针逐值一致、默认/显式模型路由与哈希/积分条件拒绝，0物理/NN/更新。默认GPU评估省略`--checkpoint`才应用选用配方；[接口记录](../interfaces/20261103-fudan-selected-pitch2.md)。
+
 
 ## 2027 机器人移植检查
 

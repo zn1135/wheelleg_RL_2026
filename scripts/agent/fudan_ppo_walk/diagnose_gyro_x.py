@@ -56,7 +56,7 @@ def prepare(out, study_kind='gyro'):
         reproduction='If raw GPU does not show measured11Hz amplitude, do not claim real shaking cured', wall_limit_s=900))
 
 
-def worker(out, policy_factory=None, sample_filter=None):
+def worker(out, policy_factory=None, sample_filter=None, command_transform=None, physical_intervention=None):
     import torch
     frozen.RUN = study.RUN
     assert not any(n=='ct_mjlab' or n.startswith('ct_mjlab.') for n in sys.modules)
@@ -165,10 +165,14 @@ def worker(out, policy_factory=None, sample_filter=None):
     rows=[gpu_row(env.env).cpu().numpy()];poses=[sim.data.qpos.cpu().numpy().copy()]
     terms=[np.zeros(len(all_samples),dtype=bool)];records=[];pd_rows=[];gravity_rows=[]
     pd_error=[0.];steps=[0];wrench=[0.];contacts=[0];contact_error=[0.]
+    intervention_peak=[torch.zeros((),device=env.device)] if physical_intervention is not None else None
     max_nefc=[0];max_ncon=[0]
     old_apply=action.apply_actions
     def apply():
         update=action._pd_tick==0;old_apply()
+        if physical_intervention is not None:
+            physical_intervention(env,steps[0])
+            intervention_peak[0]=torch.maximum(intervention_peak[0],sim.data.xfrc_applied.abs().max())
         if update:
             q=sim.data.qpos[:,action._motor_q_adr];v=sim.data.qvel[:,action._motor_v_adr]
             target=action._nominal_pos+.5*action._control_actions
@@ -199,6 +203,8 @@ def worker(out, policy_factory=None, sample_filter=None):
             for tick in range(3000):
                 if time.time()-started>900:raise TimeoutError('Diagnostic wall limit reached')
                 t=tick*.01;commands=[command(s,t) for s in chosen]*len(ARMS)
+                if command_transform is not None:
+                    commands=command_transform(all_samples,t,commands)
                 obs=update_evaluation_commands(env,commands,obs)
                 raw=obs[:,0].clone();used=raw.clone()
                 if study_kind=='gyro':
@@ -248,7 +254,8 @@ def worker(out, policy_factory=None, sample_filter=None):
     finally:
         env.close()
     assert steps[0]==30000 and len(pd_rows)==6000
-    assert pd_error[0]<2e-5 and wrench[0]==0 and contacts[0]>0 and contact_error[0]<1e-7
+    if intervention_peak is not None:wrench[0]=float(intervention_peak[0])
+    assert pd_error[0]<2e-5 and (physical_intervention is not None or wrench[0]==0) and contacts[0]>0 and contact_error[0]<1e-7
     assert all(torch.equal(v.cpu(),before[k]) for k,v in policy.state_dict().items())
     assert frozen.sha(out/'model_6838.pt')==SHA
     data=np.asarray(rows);qpos=np.asarray(poses);terminated=np.asarray(terms);pd=np.asarray(pd_rows);feedback=np.asarray(records)

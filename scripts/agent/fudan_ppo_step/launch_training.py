@@ -23,7 +23,8 @@ def sha(path):
 def start(args):
     from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg,recipe_record,SOURCE,SOURCE_SHA
     from scripts.agent.fudan_ppo_step.check import source_fingerprint
-    cfg=FudanStepCfg();proof=json.loads(args.precheck.read_text())
+    proof=json.loads(args.precheck.read_text())
+    cfg=FudanStepCfg(proof['recipe']['step']['version'])
     assert args.iterations>0 and args.num_envs>=4 and args.num_envs%4==0
     assert not args.log_dir.exists() and not (args.output/'budget.json').exists()
     assert proof['passed'] and proof['kind']=='step_gpu_precheck' and proof['num_envs']==20

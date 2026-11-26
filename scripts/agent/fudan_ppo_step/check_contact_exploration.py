@@ -127,7 +127,9 @@ def gpu_checks(args,report):
     from ct_mjlab.envs.chuanliantui.fudan_ppo_step.runner import StepRunner
     from .check import contact_friction
     if args.num_envs!=20 or args.steps<200:raise ValueError('Use20 environments and at least200 policy steps')
-    cfg=FudanStepCfg();env=None;runner=None;torch.set_num_threads(1);torch.manual_seed(716)
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import RECIPE, TIMED_RECIPE
+    cfg=FudanStepCfg(TIMED_RECIPE if args.timed_restart else RECIPE)
+    env=None;runner=None;torch.set_num_threads(1);torch.manual_seed(716)
     try:
         env=StepEnv(20,cfg=cfg,randomized=True,seed=716)
         runner=StepRunner(env,train_cfg=FudanStepCfgPPO(),log_dir=args.output/'runner',device='cuda:0')
@@ -137,15 +139,30 @@ def gpu_checks(args,report):
         assert torch.equal(cpu_rng,torch.get_rng_state()) and torch.equal(cuda_rng,torch.cuda.get_rng_state())
         original={k:v.clone() for k,v in runner.policy.state_dict().items()}
         ids=torch.arange(20,device=env.device);flat=env.modes==0
-        if cfg.step.version=='fixed200-turn-rehearsal-v8':
+        if hasattr(cfg.step,'flat_turn_probability'):
             from .prepare_fixed200_turn import check_commands
             report['fixed200_turn']=check_commands(env,runner)
+        if hasattr(cfg.step,'focus_yaw_commands'):
+            from .prepare_small_yaw import check_focus
+            report['small_yaw']=check_focus(env)
         flat_max_v=flat_max_yaw=0.
         for _ in range(16):
             env.resample(ids)
             flat_max_v=max(flat_max_v,float(env.commands[flat,0].abs().max()))
             flat_max_yaw=max(flat_max_yaw,float(env.commands[flat,1].abs().max()))
-        assert flat_max_v>2 and flat_max_yaw>1
+        if hasattr(cfg.step, 'restart_pause_s'):
+            from .prepare_timed_restart import check_timed
+            report['timed_restart'] = check_timed(env, args)
+        elif hasattr(cfg.step,'restart_flat_probability'):
+            from .prepare_restart import check_restart
+            assert flat_max_v==2 and flat_max_yaw==0
+            report['restart']=check_restart(env)
+        elif hasattr(cfg.step,'flat_cruise_s'):
+            from .prepare_fixed_speed import check_commands
+            assert flat_max_v==2 and flat_max_yaw==0
+            report['fixed_speed']=check_commands(env)
+        else:
+            assert flat_max_v>2 and flat_max_yaw>1
         obs,critic,history=env.reset()
         env.contacts.failed.fill_(True)
         with patch.object(env.env,'step',return_value=None):
@@ -156,7 +173,7 @@ def gpu_checks(args,report):
         rewards=[];friction=[]
         with torch.inference_mode():
             for step in range(args.steps+runner.num_steps_per_env):
-                if time.time()>=args.deadline:raise TimeoutError('V7 no-learning precheck deadline')
+                if time.time()>=args.deadline:raise TimeoutError('Step no-learning precheck deadline')
                 if step<args.steps:
                     action,_=runner.policy.act_inference(obs,history)
                 else:action=runner.alg.act(obs,history,critic)
@@ -198,7 +215,7 @@ def gpu_checks(args,report):
             constraint_peak=int(env.contacts.constraint_peak),capacity_overflow=False,
             reward_mean_range=[min(rewards),max(rewards)],flat_teacher_frozen=True,
             teacher_reload_preserves_rng=True,ppo_backward_with_flat_anchor_checked=True,
-            scope='V7 contact/reward/migration/rollout checks only; no optimizer step or stair success claim')
+            scope='Contact/reward/migration/rollout checks only; no optimizer step or behavior success claim')
     finally:
         if runner is not None:runner.writer.close()
         if env is not None:env.close()

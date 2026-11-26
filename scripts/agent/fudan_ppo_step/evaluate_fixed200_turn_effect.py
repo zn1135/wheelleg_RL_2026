@@ -139,10 +139,16 @@ def main():
     p=argparse.ArgumentParser(__doc__)
     p.add_argument('mode',choices=('turns','stairs','run'))
     p.add_argument('--model',choices=MODELS)
+    p.add_argument('--checkpoint',type=Path,help='Explicit complete checkpoint for one diagnostic')
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--deadline',type=float,required=True)
     args=p.parse_args()
-    if args.mode!='run' and args.model is None:p.error('--model is required')
+    if args.checkpoint is not None:
+        if args.mode=='run' or args.model is not None:p.error('--checkpoint requires turns/stairs and replaces --model')
+        saved=torch.load(args.checkpoint,map_location='cpu',weights_only=False)
+        assert saved['task']=='fudan_ppo_step' and not saved['partial_update']
+        args.model=str(saved['iterations']);MODELS[args.model]=args.checkpoint.resolve()
+    if args.mode!='run' and args.model is None:p.error('--model or --checkpoint is required')
     {'turns':turns,'stairs':stairs,'run':run}[args.mode](args)
 
 

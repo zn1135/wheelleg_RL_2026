@@ -15,7 +15,9 @@ def main():
                 scope='Recorded heading/command delivery/finite states only; not climbing or GPU acceptance')
     try:
         assert meta['physics_engine']=='native_mujoco_cpu' and meta['error'] is None
-        assert meta['ngeom']==57187
+        expected_geoms = {'clear_centre_flat_fenced': 33747, 'clear_centre_flat': 33743,
+                          'clear_centre': 33752, 'no_power_rune': 44840}.get(meta.get('arena_variant'), 57187)
+        assert meta['ngeom'] == expected_geoms
         schedule=meta['command_sequence'];assert schedule
         with np.load(a.recording/'trace.npz',allow_pickle=False) as data:
             state,qpos=data['state'],data['qpos']

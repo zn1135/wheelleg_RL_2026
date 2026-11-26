@@ -10,7 +10,8 @@
 | `ct_mjlab/bc.py`、`bc_preservation.py`、`scripts/train_bc.py` | 行为克隆、纠偏、技能保留与模型初始化 |
 | `ct_mjlab/smp/`、`scripts/train_prior.py` | 示范特征、运动先验、SMP辅助PPO及BC初始化PPO |
 | `ct_mjlab/teacher/`、`scripts/teacher.py`、`scripts/collect.py` | LQR／VMC对照与示范数据采集，服务BC和SMP |
-| `ct_mjlab/envs/` | 注册`smp`、`supermimic`、`fudan_ppo_walk`、`fudan_ppo_step`；旧目录保留必要控制／物理／模型接口依赖，不提供五个旧task |
+| `ct_mjlab/envs/` | 注册`smp`、`supermimic`、`fudan_ppo_walk`、`fudan_ppo_step`、`fudan_ppo_jump`；旧目录保留必要控制／物理／模型接口依赖，不提供五个旧task |
+| `ct_mjlab/envs/chuanliantui/fudan_ppo_jump/`、`scripts/agent/fudan_ppo_jump/` | 独立跳跃配方、实际轮底与接触、双策略越条GPU采集和评分，见[跳跃任务](../mjlab-fudan-ppo-jump.md) |
 | `scripts/agent/supermimic/`、`imitation/`、`motion/` | 保留线检查、测量、评分与渲染 |
 | `scripts/agent/shared/` | 原样提取的渲染、物理采集和静态几何助手，无旧训练CLI |
 | `scripts/agent/real2sim/`、`sim2sim/` | 实采／标定及独立MuJoCo仿真；仿真实现与必要接口保持 |
@@ -23,6 +24,8 @@
 旧任务注册集中在 `envs/chuanliantui/tasks.py`，所有相关环境实现都在 `envs/chuanliantui/` 内，旧导入由 `envs/_legacy_imports.py` 转向实际模块。新 `envs/2027_wheelleg/` 注册独立 `2027_wheelleg_walk`，资源位于 `resources/robots/2027_wheelleg/`。质量疑点、物理接口、检查与命令见 [2027训练说明](../mjlab-2027-wheelleg.md)。
 
 ## 共用依赖
+
+`sim2sim/arena_policies.py` 在 RMUC 场地复用台阶模型切换，维护 Jump 独立五帧历史和落地交接；`sim2sim/rmuc2027_field.py` 从固定上游场地生成移除中央装置、补平安装孔的默认地图。[赛场入口与操作](../interfaces/20261115-rmuc2027-playground.md#rmuc比赛场地)。
 
 `sim2sim/step_playground.py`为`rmuc2027.sh --terrain steps`拼装多高度原生MuJoCo场景，复用训练盒体并提供数字键出生点；`ManualStepPolicies`预载兼容的行走/台阶Actor，只切推理模型和高度指令，保留同一物理/PD/延迟/历史。不注册新任务、不改变训练/机器人参数。`check_native_steps.py`核几何/出生点/有限控制，`check_native_policy_switch.py`核切模连续性；GPU同状态接口仍复用`check_arena_native_interface --terrain steps`。
 

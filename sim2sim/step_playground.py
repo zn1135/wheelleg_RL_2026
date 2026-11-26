@@ -9,10 +9,11 @@ CHECKPOINT = ROOT / 'artifacts/fudan_ppo_step/20261117-v7-final3200-01/training/
 
 
 class ManualStepPolicies:
-    """Select compatible walk/step Actors without resetting their shared controller."""
-    def __init__(self, walk_checkpoint, step_checkpoint, step_policy, step_metadata, *, start_step=False):
+    """Select compatible walk, step and optional parking Actors."""
+    def __init__(self, walk_checkpoint, step_checkpoint, step_policy, step_metadata, *,
+                 start_step=False, parking_checkpoint=None):
         from dataclasses import replace
-        from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_record
         from ct_mjlab.fudan_ppo_walk.policy import load_policy
         walk_policy, walk_metadata = load_policy(walk_checkpoint)
         self.training_disturbances = dict(walk=walk_metadata['disturbances'], step=step_metadata['disturbances'])
@@ -28,12 +29,38 @@ class ManualStepPolicies:
                 raise ValueError(f'Walk/step physical interface differs: {key}')
         self.policies = dict(walk=walk_policy, step=step_policy)
         self.metadata = dict(walk=walk_metadata, step=step_metadata)
+        paths = dict(walk=walk_checkpoint, step=step_checkpoint)
+        if parking_checkpoint is not None:
+            parking, parking_metadata = load_policy(parking_checkpoint)
+            for key in keys + ('physical_leg_load',):
+                if json.dumps(parking_metadata.get(key), sort_keys=True) != json.dumps(step_metadata.get(key), sort_keys=True):
+                    raise ValueError(f'Step/parking physical interface differs: {key}')
+            if (self.metadata['step']['training_recipe']['step'].get('command_curriculum') != 'fixed_forward_2mps'
+                    or parking_metadata['task'] != 'fudan_ppo_step'):
+                raise ValueError('Parking handoff requires a fixed-forward stair policy and a stair parking policy')
+            self.policies['parking'] = parking
+            self.metadata['parking'] = parking_metadata
+            self.training_disturbances['parking'] = parking_metadata['disturbances']
+            paths['parking'] = parking_checkpoint
         self.checkpoints = {role: dict(checkpoint=str(Path(path).resolve()),
             sha256=hashlib.sha256(Path(path).read_bytes()).hexdigest(), iterations=self.metadata[role]['iterations'])
-            for role, path in [('walk', walk_checkpoint), ('step', step_checkpoint)]}
+            for role, path in paths.items()}
         self.mode = self.initial_mode = 'step' if start_step else 'walk'
         self.walk_height = .26
         self.transitions = []
+        self.reset_parking()
+
+    @property
+    def parking_enabled(self):
+        return 'parking' in self.policies
+
+    def reset_parking(self):
+        self.has_driven = False
+        self.active_role = self.mode
+
+    def apply_step_command(self, command):
+        if self.parking_enabled and self.mode == 'step':
+            command[:2] = (self.step_keyboard_speed if command[0] > 0. else 0., 0.)
 
     @property
     def height_max(self):
@@ -44,13 +71,20 @@ class ManualStepPolicies:
         return (2.5, 2.) if self.mode == 'step' else (3., 10.)
 
     @property
+    def step_keyboard_speed(self):
+        step = self.metadata['step']['training_recipe']['step']
+        if step.get('command_curriculum') == 'fixed_forward_2mps':
+            return float(step['approach_speed'][0])
+        return 1.
+
+    @property
     def keyboard_commands(self):
-        return (1., .5) if self.mode == 'step' else (3., 2.)
+        return (self.step_keyboard_speed, 0. if self.parking_enabled else .5) if self.mode == 'step' else (3., 2.)
 
     def select(self, mode, env):
         if mode == self.mode:
             return False
-        if mode not in self.policies:
+        if mode not in ('walk', 'step'):
             raise ValueError('Expected walk or step policy')
         previous = self.mode
         if mode == 'step':
@@ -60,15 +94,22 @@ class ManualStepPolicies:
             env.command[2] = self.walk_height
         # 不复位物理、PD、上一动作、FIFO或125维历史；下一个策略拍直接选新Actor。
         self.mode = mode
+        self.reset_parking()
         self.transitions.append(dict(time_s=float(env.data.time), before=previous, after=mode,
                                      height_command_m=float(env.command[2])))
         return True
 
     def act_inference(self, observation, history):
-        return self.policies[self.mode].act_inference(observation, history)
+        self.active_role = self.mode
+        if self.parking_enabled and self.mode == 'step':
+            vx = float(observation[0, 6])
+            self.has_driven |= vx > 0.
+            if self.has_driven and vx == 0. and float(observation[0, 7]) == 0.:
+                self.active_role = 'parking'
+        return self.policies[self.active_role].act_inference(observation, history)
 
     def record(self):
-        return dict(initial_mode=self.initial_mode, active_mode=self.mode,
+        return dict(initial_mode=self.initial_mode, active_mode=self.mode, active_role=self.active_role,
                     checkpoints=self.checkpoints, transitions=self.transitions,
                     training_disturbances=self.training_disturbances,
                     playback_disturbances={role: value['disturbances'] for role, value in self.metadata.items()})
@@ -92,9 +133,9 @@ def layout(metadata):
 
 
 def build_model(metadata):
-    from ct_mjlab.envs.fudan_ppo_step.terrain import PlatformCfg
-    from ct_mjlab.envs.fudan_ppo_walk.wheel_physics import mechanical_spec
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import make_env_cfg
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.terrain import PlatformCfg
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.wheel_physics import mechanical_spec
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import make_env_cfg
     step = metadata['training_recipe']['step']
     spec = mechanical_spec()
     spec.worldbody.add_body(name='terrain')

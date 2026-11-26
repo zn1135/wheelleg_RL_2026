@@ -196,7 +196,7 @@ def isaac(path):
 
 def main():
     parser=argparse.ArgumentParser(__doc__)
-    parser.add_argument('--task',choices=('fudan_ppo_walk','fudan_ppo_step','supermimic','bc','smp','isaac'),required=True)
+    parser.add_argument('--task',choices=('fudan_ppo_walk','fudan_ppo_step','fudan_ppo_jump','supermimic','bc','smp','isaac'),required=True)
     parser.add_argument('--recording',type=Path,required=True);parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--baseline',type=Path,help='Prior acceptance.json using the same standard and initial conditions')
     parser.add_argument('--flat-recording',type=Path,help='Step task: candidate frozen walking GPU recording')
@@ -205,7 +205,10 @@ def main():
     if bool(args.flat_recording)!=bool(args.flat_baseline):parser.error('Supply both flat recording and flat baseline')
     if args.flat_recording and args.task!='fudan_ppo_step':parser.error('Flat regression attachments apply to the step task')
     if args.output.exists():raise FileExistsError(args.output)
-    if args.task=='fudan_ppo_step':
+    if args.task=='fudan_ppo_jump':
+        from scripts.agent.fudan_ppo_jump.evaluate import assess_recording
+        result=assess_recording(args.recording)
+    elif args.task=='fudan_ppo_step':
         from scripts.agent.fudan_ppo_step.evaluate import assess_recording
         result=assess_recording(args.recording)
         if args.flat_recording:
