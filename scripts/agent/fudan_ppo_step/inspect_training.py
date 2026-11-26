@@ -26,7 +26,7 @@ def training(args):
     import numpy as np
     import torch
     from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
-    from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg, recipe_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg, recipe_record
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt

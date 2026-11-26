@@ -10,9 +10,9 @@ import torch
 
 from ct_mjlab.envs.chuanliantui.fitted_leg_load import parameters, parameter_record
 from ct_mjlab.envs.chuanliantui.gas_spring import gas_spring_force
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, section_dict
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config, from_sim2sim_config
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, section_dict
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_task_config, from_sim2sim_config
 from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import snapshot
 
 

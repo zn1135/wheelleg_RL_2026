@@ -10,10 +10,10 @@ import signal
 from unittest.mock import patch
 import numpy as np
 import torch
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 from ct_mjlab.fudan_ppo_walk.policy import load_policy
 from ct_mjlab.fudan_ppo_walk.contract import RESET_V2_CONTRACT
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_task_config
 from ct_mjlab.fudan_ppo_walk.measurement import configure_samples,update_evaluation_commands,gpu_row,arrays
 from .evaluate import command
 
@@ -60,7 +60,7 @@ def run(args):
     cfg=from_task_config()
     assert not (cfg.action_delay or cfg.sensor_delay or cfg.pushes),'Freeze zero-added-disturbance baseline'
     files=[args.checkpoint,*Path('mjlab_training/src/ct_mjlab/fudan_ppo_walk').glob('*.py'),
-        *Path('mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk').glob('*.py'),
+        *Path('mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_walk').glob('*.py'),
         *Path('mjlab_training/src/ct_mjlab/rsl_rl').rglob('*.py'),
         Path('resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml'),Path(__file__)]
     protected={str(p):sha(p) for p in files}

@@ -43,7 +43,7 @@ def main():
     shared = [name for name in before if name.startswith('mjlab_training/src/ct_mjlab/envs/')
               and name != 'mjlab_training/src/ct_mjlab/envs/__init__.py']
     for name in shared:
-        if name == 'mjlab_training/src/ct_mjlab/envs/chuanliantui_split/env_cfg.py':
+        if name == 'mjlab_training/src/ct_mjlab/envs/chuanliantui/chuanliantui_split/env_cfg.py':
             with tarfile.open(OUT/'before-source.tar.gz') as archive:
                 old = ast.parse(archive.extractfile(name).read())
             old.body = [n for n in old.body if not (isinstance(n,ast.FunctionDef)
@@ -106,7 +106,7 @@ def main():
             raise AssertionError('Unapproved source change accepted')
     import torch
     from ct_mjlab.supermimic.learner import Learner
-    from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
+    from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
     learner = Learner('cpu')
     received_curriculum = []
     command = SimpleNamespace(cfg=command_cfg('walk'), load_checkpoint_state=received_curriculum.append)

@@ -10,8 +10,8 @@ from unittest.mock import patch
 
 import numpy as np
 import torch
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_sim2sim_config
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_sim2sim_config
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
 from ct_mjlab.fudan_ppo_walk.protocol import samples
 from mjlab.managers.event_manager import RecomputeLevel
 from scripts.agent.fudan_ppo_walk import evaluate

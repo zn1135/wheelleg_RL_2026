@@ -19,8 +19,8 @@ PREVIOUS = ROOT/'artifacts/fudan_ppo_walk/20261116-regions-resume5000-8000-01'
 
 def prepare(out):
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, section_dict
-    from ct_mjlab.envs.fudan_ppo_walk.terrain import critic_record, record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, section_dict
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.terrain import critic_record, record
     previous = json.loads((PREVIOUS/'budget.json').read_text())
     assert sha(regional.SOURCE) == regional.SOURCE_SHA == previous['checkpoint_sha256']
     source = torch.load(regional.SOURCE, map_location='cpu', weights_only=False)

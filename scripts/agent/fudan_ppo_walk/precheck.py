@@ -6,15 +6,15 @@ import time
 import numpy as np
 import torch
 import mujoco
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 from ct_mjlab.fudan_ppo_walk.contract import RESET_CONTRACT,RESET_V2_CONTRACT
 from ct_mjlab.fudan_ppo_walk.measurement import configure_samples,gpu_row,arrays
 from ct_mjlab.fudan_ppo_walk.protocol import samples
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config
-from ct_mjlab.envs.fudan_ppo_walk.commands import command_config
-from ct_mjlab.envs.fudan_ppo_walk import posture_reward, height_reward
-from ct_mjlab.envs.fudan_ppo_walk.wheel_motor import response_record
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import section_dict, timing_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_task_config
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands import command_config
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import posture_reward, height_reward
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.wheel_motor import response_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import section_dict, timing_record
 
 
 def initial_geometry(env,items):

@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 import torch
 from .check_structure_alignment import old_package,backend,tensors_equal,ARTIFACT,CHECKPOINT
-from ct_mjlab.envs.fudan_ppo_walk import fudan_ppo_walk as current
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import fudan_ppo_walk as current
 from ct_mjlab.fudan_ppo_walk import contract
 from ct_mjlab.rsl_rl.algorithms.fudan_ppo import PPO
 

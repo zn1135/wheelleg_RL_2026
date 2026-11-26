@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import torch
 from ct_mjlab.supermimic.learner import Learner,ALGORITHM_CONTRACT
-from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
 
 
 def sha(path):

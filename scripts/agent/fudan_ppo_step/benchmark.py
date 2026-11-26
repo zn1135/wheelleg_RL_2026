@@ -5,10 +5,10 @@ from pathlib import Path
 import time
 from unittest.mock import patch
 import torch
-from ct_mjlab.envs.fudan_ppo_step.config import SOURCE, FudanStepCfg, recipe_record
-from ct_mjlab.envs.fudan_ppo_step.env import StepEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import SOURCE, FudanStepCfg, recipe_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
 from ct_mjlab.fudan_ppo_walk.policy import load_policy
-from ct_mjlab.envs.fudan_ppo_step.runner import validate_source
+from ct_mjlab.envs.chuanliantui.fudan_ppo_step.runner import validate_source
 from .check import source_fingerprint
 
 
@@ -37,7 +37,7 @@ def main():
             policy,saved=load_policy(a.checkpoint,device='cuda:0')
             validate_source(saved,cfg)
             if a.ppo_memory_check:
-                from ct_mjlab.envs.fudan_ppo_step.runner import StepRunner
+                from ct_mjlab.envs.chuanliantui.fudan_ppo_step.runner import StepRunner
                 runner=StepRunner(env,log_dir=a.output/'memory-only')
                 runner.policy.load_state_dict(policy.state_dict())
                 size=a.num_envs*runner.num_steps_per_env//runner.ppo_config['num_mini_batches']

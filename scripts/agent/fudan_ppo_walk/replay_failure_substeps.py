@@ -7,7 +7,7 @@ from unittest.mock import patch
 import numpy as np
 import torch
 
-from ct_mjlab.envs.fudan_ppo_walk import fudan_ppo_walk as task
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import fudan_ppo_walk as task
 
 
 def main():

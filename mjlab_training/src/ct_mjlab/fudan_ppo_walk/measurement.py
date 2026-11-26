@@ -7,7 +7,7 @@ import torch
 from mjlab.utils.lab_api.math import quat_apply_inverse
 from mjlab.managers.event_manager import RecomputeLevel
 from .contract import MOTORS, LEGS, RESET_CONTRACT, RESET_V2_CONTRACT
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import DisturbanceConfig
 FIELDS = ('body_mass', 'body_inertia', 'body_ipos', 'geom_friction', 'geom_solref')
 COLUMNS = dict(position=slice(0, 3), linear_body=slice(3, 6), linear_world=slice(6, 9), angular_body=slice(9, 12), roll_pitch_deg=slice(12, 14), wheel_support=slice(14, 16), base_contact=16, weight=17)
 

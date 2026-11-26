@@ -7,7 +7,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import torch
-from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
 from ct_mjlab.supermimic.learner import Learner,ALGORITHM_CONTRACT
 from ct_mjlab.supermimic.networks import act,clip_action,ACTION_CLIP
 from ct_mjlab.supermimic.export import export

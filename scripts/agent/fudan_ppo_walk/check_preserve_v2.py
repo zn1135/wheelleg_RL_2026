@@ -15,9 +15,9 @@ import torch
 from ct_mjlab.scripts import train as cli
 from ct_mjlab.rsl_rl.runners import fudan_on_policy_runner as module
 from ct_mjlab.fudan_ppo_walk.contract import RESET_CONTRACT,RESET_V2_CONTRACT
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-from ct_mjlab.envs.fudan_ppo_walk.commands import command_config,LEGACY_COMMAND_SAMPLING
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands import command_config,LEGACY_COMMAND_SAMPLING
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import DisturbanceConfig
 from . import precheck
 from .check_resume import equal
 
@@ -50,7 +50,7 @@ def main():
         def fake_env(*a,**kw):record.update(reset_contract=kw['reset_contract'],num_envs=kw['num_envs']);return SimpleNamespace(close=lambda:None)
         argv=['--task','fudan_ppo_walk','--num-envs','4096','--iterations','1000','--resume',str(args.checkpoint),
               '--preserve-history-v2','--precheck',str(proof)]
-        with patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=fake_env),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner',FakeRunner),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.snapshot'),redirect_stdout(io.StringIO()):
+        with patch('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=fake_env),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner',FakeRunner),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.snapshot'),redirect_stdout(io.StringIO()):
             cli.main(argv+['--log-dir',str(directory/'cli')])
         verify('explicit_v2_to_v2_4096_exact1000',record==dict(load_options={},reset_contract=RESET_V2_CONTRACT,
             num_envs=4096,deadline=float('inf'),target=8000))
@@ -59,14 +59,14 @@ def main():
                ('wrong_disturbance',dict(disturbances=DisturbanceConfig(action_delay=True).record()))]
         for name,changes in cases:
             write_proof(**changes)
-            with patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=forbidden):
+            with patch('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=forbidden):
                 try:cli.main(argv+['--log-dir',str(directory/name)])
                 except ValueError:rejected=True
                 else:rejected=False
             verify('reject_'+name,rejected)
         write_proof()
         for source in [dict(parent,reset_contract=RESET_CONTRACT),dict(parent,reset_contract='unknown')]:
-            with patch('torch.load',return_value=source),patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=forbidden):
+            with patch('torch.load',return_value=source),patch('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=forbidden):
                 try:cli.main(argv+['--log-dir',str(directory/'source')])
                 except ValueError:rejected=True
                 else:rejected=False

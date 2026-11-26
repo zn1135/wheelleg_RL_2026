@@ -70,9 +70,9 @@ def run(out, support_probe=False):
     sys.meta_path.insert(0, frozen.FrozenTrainingSource())
     import torch
     from mjlab.managers.event_manager import RecomputeLevel
-    from ct_mjlab.envs.fudan_ppo_walk import fudan_ppo_walk as physical
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import fudan_ppo_walk as physical
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_record
     from ct_mjlab.fudan_ppo_walk.measurement import FIELDS
     from scripts.agent.real2sim.replay_usb_pd_targets import PoseSolver
 
@@ -244,7 +244,7 @@ def static_balance(out, solver, p, d):
     import mujoco
     from scipy.linalg import null_space
     from scipy.optimize import lsq_linear
-    from ct_mjlab.envs.fudan_ppo_walk.reset_geometry import mesh_vertices
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.reset_geometry import mesh_vertices
     model, data = solver.model, solver.data
     model.opt.jacobian = mujoco.mjtJacobian.mjJAC_DENSE
     motor_names = ('lf0', 'lf00', 'lfwheel', 'rf0', 'rf00', 'rfwheel')

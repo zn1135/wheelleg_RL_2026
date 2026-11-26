@@ -7,13 +7,13 @@ import time
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from ct_mjlab.fudan_ppo_walk.contract import CONTRACT, REFERENCE, PPO_CONFIG, make_network, RESET_CONTRACT, RESET_V2_CONTRACT, WEIGHTS, validate_network_contract
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfgPPO, section_dict, timing_record
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfgPPO, section_dict, timing_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 from ct_mjlab.rsl_rl.algorithms.fudan_ppo import PPO
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig, from_record
-from ct_mjlab.envs.fudan_ppo_walk.commands import LEGACY_COMMAND_SAMPLING
-from ct_mjlab.envs.fudan_ppo_walk import posture_reward, height_reward
-from ct_mjlab.envs.fudan_ppo_walk.wheel_motor import response_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import DisturbanceConfig, from_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands import LEGACY_COMMAND_SAMPLING
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import posture_reward, height_reward
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.wheel_motor import response_record
 
 class BudgetStop(Exception):
     pass
@@ -28,6 +28,7 @@ def initialize_rollout(env):
     return (obs, critic, history)
 
 class FudanRunner:
+    contract = CONTRACT
 
     def __init__(self, env, train_cfg=None, log_dir=None, device='cuda:0'):
         self.env = env if isinstance(env, FudanEnv) else FudanEnv(physics_env=env.unwrapped, device=device)
@@ -65,14 +66,14 @@ class FudanRunner:
              allow_critic_observation_change=False):
         validate_network_contract(self.train_cfg)
         checkpoint = torch.load(path, map_location=self.device, weights_only=False)
-        from ct_mjlab.envs.fudan_ppo_walk.terrain import record as terrain_record, PLANE
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.terrain import record as terrain_record, PLANE
         source_terrain = checkpoint.get('terrain', PLANE)
         target_terrain = terrain_record(self.env.cfg)
         if source_terrain != target_terrain and not allow_terrain_change:
             raise ValueError('Terrain differs; select --terrain explicitly with a matching regional precheck')
         if checkpoint.get('task', 'fudan_ppo_walk') != getattr(self.env, 'task_name', 'fudan_ppo_walk'):
             raise ValueError('Cross-task continuation requires explicit policy initialization, not --resume')
-        from ct_mjlab.envs.fudan_ppo_walk.terrain import critic_record, LEGACY_CRITIC
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.terrain import critic_record, LEGACY_CRITIC
         source_critic = checkpoint.get('critic_observation', LEGACY_CRITIC)
         target_critic = critic_record(self.env.cfg)
         if source_critic != target_critic and not allow_critic_observation_change:
@@ -88,7 +89,7 @@ class FudanRunner:
         if migrate_history_v2 and (not migration):
             raise ValueError('Explicit history migration only supports PD-centred v2 to noisy5/clipped v3')
         if (
-            checkpoint['contract'] != CONTRACT
+            checkpoint['contract'] != self.contract
             or (
                 source_contract != target_contract
                 and not migration
@@ -165,7 +166,7 @@ class FudanRunner:
             source_posture_reward=source_posture,
             posture_reward=posture_reward.from_record(getattr(self.env, 'posture_reward_profile', None)),
             source_height_reward=height_reward.from_record(checkpoint.get('height_reward')),
-            height_reward=height_reward.from_task_config(self.env.cfg),
+            height_reward=self.height_profile(),
             source_wheel_response=checkpoint.get('wheel_response'),
             wheel_response=response_record(self.env.cfg),
             restoration='Learning state and RNG restored; physics/history/episode state restarts'
@@ -173,8 +174,11 @@ class FudanRunner:
         (self.log_dir / 'restore_report.json').write_text(json.dumps(restored, indent=2) + '\n')
         return restored
 
+    def height_profile(self):
+        return height_reward.from_task_config(self.env.cfg)
+
     def checkpoint_metadata(self):
-        from ct_mjlab.envs.fudan_ppo_walk.terrain import record, critic_record
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.terrain import record, critic_record
         return dict(terrain=record(self.env.cfg), critic_observation=critic_record(self.env.cfg))
 
     def save(self, name):
@@ -182,7 +186,7 @@ class FudanRunner:
         path = self.log_dir / name
         torch.save(
             dict(
-                contract=CONTRACT,
+                contract=self.contract,
                 physical_leg_load=self.env.action.leg_load.record if self.env.action.leg_load is not None else parameter_record(False),
                 physical_wheel_model=self.env.wheel_physics_profile,
                 wheel_response=response_record(self.env.cfg),
@@ -206,7 +210,7 @@ class FudanRunner:
                 disturbances=getattr(self.env, 'disturbance_config', DisturbanceConfig()).record(),
                 command_sampling=getattr(self.env, 'command_sampling', LEGACY_COMMAND_SAMPLING),
                 posture_reward=posture_reward.from_record(getattr(self.env, 'posture_reward_profile', None)),
-                height_reward=height_reward.from_task_config(self.env.cfg),
+                height_reward=self.height_profile(),
                 reward_names=list(self.env.cfg.rewards.scales),
                 num_envs=self.env.num_envs,
                 policy_steps=self.env.total_steps,
@@ -323,7 +327,7 @@ class FudanRunner:
             disturbances=getattr(self.env, 'disturbance_config', DisturbanceConfig()).record(),
             command_sampling=getattr(self.env, 'command_sampling', LEGACY_COMMAND_SAMPLING),
             posture_reward=posture_reward.from_record(getattr(self.env, 'posture_reward_profile', None)),
-            height_reward=height_reward.from_task_config(self.env.cfg),
+            height_reward=self.height_profile(),
             reward_names=list(self.env.cfg.rewards.scales),
             wheel_response=response_record(self.env.cfg),
             control=section_dict(self.env.cfg.control),

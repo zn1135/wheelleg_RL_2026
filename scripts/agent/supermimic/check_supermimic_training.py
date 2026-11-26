@@ -216,9 +216,9 @@ def audit(args, report):
     xml_sha = sha256(MODEL_XML)
     check('xml_hashes_match', initial['asset_sha256'] == selected['asset_sha256'] == xml_sha)
     report['xml'] = dict(path=str(MODEL_XML), sha256=xml_sha)
-    from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
-    from ct_mjlab.envs.chuanliantui_split.runner import contracts
-    from ct_mjlab.envs.chuanliantui_split.mdp import validate_walk_speed_state
+    from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
+    from ct_mjlab.envs.chuanliantui.chuanliantui_split.runner import contracts
+    from ct_mjlab.envs.chuanliantui.chuanliantui_split.mdp import validate_walk_speed_state
     command = command_cfg('walk')  # Configuration only; no environment or model is constructed.
     expected_contracts = contracts(command)
     check('task_contracts_match', initial['infos'] == selected['infos'] == expected_contracts)

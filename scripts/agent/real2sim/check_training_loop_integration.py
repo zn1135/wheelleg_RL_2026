@@ -15,9 +15,9 @@ import numpy as np
 import torch
 
 from ct_mjlab.envs.chuanliantui import model as robot_model
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv, make_env_cfg
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv, make_env_cfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_task_config
 from ct_mjlab.fudan_ppo_walk.measurement import gpu_row
 
 

@@ -15,7 +15,7 @@ from mjlab.utils.lab_api.math import quat_apply,quat_mul,matrix_from_quat
 from ct_mjlab.supermimic.motion import WorldModel,invariant_features47,physical47_from_full64
 from ct_mjlab.supermimic.state import rotation_quat,unit_quat,NOISE,WRENCH
 from ct_mjlab.supermimic.learner import Learner,ALGORITHM_CONTRACT,WORLD_LOSS_RECIPE
-from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
 from scripts.agent.supermimic.check_supermimic_motion import fixture,equal
 
 ROOT=Path(__file__).resolve().parents[3]

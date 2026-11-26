@@ -19,7 +19,7 @@
 
 ## 配置与实际调用
 
-集中修改[任务配置](../../mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py)的`FudanWalkCfg.sim2sim`：
+集中修改[任务配置](../../mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_walk/fudan_ppo_walk_config.py)的`FudanWalkCfg.sim2sim`：
 
 ```python
 class sim2sim:

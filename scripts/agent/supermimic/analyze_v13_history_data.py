@@ -35,7 +35,7 @@ def main():
             zero_delay_ids=ids[lag==0].tolist(),zero_delay_fraction=float((lag==0).double().mean()),
             mean_previous_action_fraction_of_5_substeps=float((lag/5).double().mean()))
     sources=json.loads((RUN/'source_sha256.json').read_text())
-    for name in ['supermimic/buffer.py','supermimic/__main__.py','supermimic/learner.py','envs/chuanliantui_stand_v2/action.py']:
+    for name in ['supermimic/buffer.py','supermimic/__main__.py','supermimic/learner.py','envs/chuanliantui/chuanliantui_stand_v2/action.py']:
         assert sha(RUN/'snapshot/ct_mjlab'/name)==sources[name]
     recorded=[];hashes={str(initial_path):sha(initial_path)}
     for n,directory in [(4200,ROOT/'artifacts/supermimic/supermimic-v13-r3-a4200-seed43-20261101'),

@@ -131,7 +131,7 @@ def synthetic_buffer():
 
 
 def cpu_checks(parent):
-    from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
+    from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
     command=SimpleNamespace(cfg=command_cfg('walk'),checkpoint_state=lambda:{},load_checkpoint_state=lambda _:None)
     l=Learner('cpu',actor_lr=3e-5);provenance=l.init_actor(parent,command,task='chuanliantui_walk')
     saved=torch.load(parent,map_location='cpu',weights_only=False)
@@ -244,7 +244,7 @@ def audit(args):
     assert config.get('resume') is None and Path(config['init_actor']).resolve()==args.parent.resolve()
     assert initial['config']==config and initial['initialization']==config['initialization']
     assert config['initialization']['parent_sha256']==PARENT_SHA and config['initialization']['inherited']==['actor']
-    from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
+    from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
     target_infos=learner_module.contracts(command_cfg('walk'))
     provenance=transfer_proof(config['initialization']['reward_only_actor_transfer'],parent,target_infos)
     assert initial['infos']==target_infos and initial['asset_sha256']==parent['asset_sha256']==learner_module.asset_digest()

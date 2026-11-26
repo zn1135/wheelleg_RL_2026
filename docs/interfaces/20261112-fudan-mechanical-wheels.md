@@ -18,7 +18,7 @@
 
 ## 实现与历史复现
 
-- `envs/fudan_ppo_walk/wheel_physics.py`在复旦自己的MjSpec内设置机械轮参数和固定单位增益；共享XML保留历史轮曲线，其他任务不切换物理。
+- `envs/chuanliantui/fudan_ppo_walk/wheel_physics.py`在复旦自己的MjSpec内设置机械轮参数和固定单位增益；共享XML保留历史轮曲线，其他任务不切换物理。
 - `HuananhuPdAction`仅在模型包含非零速度曲线指数时计算原曲线；机械模型直接提交限矩后的请求。`WheelMotorResponse`在机械模式保持中性并拒绝追加缩放。
 - 初态夹具保存实际关节阻尼/摩擦和执行器增益，参数差异进入cohort；不能把新旧物理当成同条件的策略比较。新PT保存`physical_wheel_model`，训练快照包含参数JSON。
 - Actor25/历史125/Critic141+3/动作6、history v2/v3语义和2ms物理/PD、10ms策略不变，无ONNX/H7接口形状变更。本次只有旧17679冻结推理，没有新权重。

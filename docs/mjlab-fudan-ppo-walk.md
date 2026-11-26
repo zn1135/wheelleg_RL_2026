@@ -47,7 +47,7 @@
 
 2026-11-03用户选用**8000-v2＋停车+2°图外参考**，积分关闭。默认GPU评估省略`--checkpoint`即用该方案；显式指定检查点仍走原输入复现。配置见`FudanWalkCfg.inference`，[接口和未验证范围](interfaces/20261103-fudan-selected-pitch2.md)。九停车数值9/9，低高度平滑性有取舍，尚未完成45行走回归/987；不自动改训练或原ONNX。
 
-训练统一进入`mjlab.sh train --task fudan_ppo_walk → scripts/train.py → task_registry → 任务环境/配置 → runner → PPO`。环境与集中配置在`envs/fudan_ppo_walk/`，训练算法组件在`rsl_rl/`；旧命令只作兼容转入。下文历史命令及记录按原日期保留，实际日常位置见[迁移与验证说明](maintenance/20261103-fudan-structure-alignment.md)，最新模型状态以[实验记录顶部](ai/project-log.md)为准。
+训练统一进入`mjlab.sh train --task fudan_ppo_walk → scripts/train.py → task_registry → 任务环境/配置 → runner → PPO`。环境与集中配置在`envs/chuanliantui/fudan_ppo_walk/`，训练算法组件在`rsl_rl/`；旧命令只作兼容转入。下文历史命令及记录按原日期保留，实际日常位置见[迁移与验证说明](maintenance/20261103-fudan-structure-alignment.md)，最新模型状态以[实验记录顶部](ai/project-log.md)为准。
 
 2026-11-02新增[停车命令采样v1](interfaces/20261102-fudan-parking-commands.md)：`config.py/FudanWalkCfg.commands`默认10%原地保持、10%行驶3～5秒后停车至复位，停车回合覆盖0.22/0.26/0.30m；其余80%沿用原命令采样。两个比例设0可恢复原采样。只做代码准备与无物理检查，未训练新权重；16奖励、网络、PD与历史定义不变，固定评估命令不变。
 

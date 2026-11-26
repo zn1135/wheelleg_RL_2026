@@ -46,9 +46,9 @@ def main():
     native.reset();data.qpos[native.sq]+=.05;native.apply()
     reset_force=float(abs(native.force).max())
     # Explicitly opt in: the training default was rolled back to the legacy plant.
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, section_dict
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import DisturbanceConfig
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, section_dict
     cfg=FudanWalkCfg();cfg.sim=SimpleNamespace(**section_dict(cfg.sim));cfg.sim.fitted_leg_load=True
     wrapper=FudanEnv(20,randomized=True,disturbances=DisturbanceConfig(),cfg=cfg)
     env=wrapper.env

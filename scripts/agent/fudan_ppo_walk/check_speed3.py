@@ -32,7 +32,7 @@ def main():
     sys.meta_path.insert(0, frozen.FrozenTrainingSource())
     import numpy as np
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_record
     from scripts.agent.fudan_ppo_walk import evaluate
     from scripts.agent.motion.acceptance import canonical
     torch.set_num_threads(1)

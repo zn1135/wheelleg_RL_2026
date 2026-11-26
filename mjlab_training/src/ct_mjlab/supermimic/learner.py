@@ -16,7 +16,7 @@ from .motion import WorldModel, physical47_from_full64, delta46
 from .motion_adapter import MOTION_AUXILIARY_RECIPE, IMAGINATION_CLAMP_RECIPE
 from .analytic_reward import return_bounds
 from .state import PHYS_DIM, SUBSTEPS, PHYSICAL, SENSORS, NOISE, MEMORY, WRENCH
-from ct_mjlab.envs.chuanliantui_split.runner import contracts, validate as validate_task_checkpoint
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.runner import contracts, validate as validate_task_checkpoint
 
 V12_CONTRACT = 'chuanliantui-supermimic-motion-only-pd-reward-soft-termination-v12'
 V13_HISTORY_CONTRACT = 'chuanliantui-supermimic-motion-only-alternating-bptt-v13'

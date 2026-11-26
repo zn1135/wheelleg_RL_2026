@@ -52,9 +52,9 @@ def main():
         pairs=pairs,scores=scores,rows=rows,parameters=check['parameters'],control_check=check['max_force_error_nm'],
         pulse_diagnostic=json.loads((out/'pulse-check/report.json').read_text())['aggregate'],policy_updates=0)
     (out/'comparison.json').write_text(json.dumps(result,indent=2)+'\n')
-    paths=[ROOT/'mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/wheel_physics.py',ROOT/'resources/robots/chuanliantui_new_1/mjlab/wheel_mechanical.json',
-        ROOT/'mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk.py',ROOT/'mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/wheel_motor.py',
-        ROOT/'mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py',ROOT/'mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_action.py',
+    paths=[ROOT/'mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_walk/wheel_physics.py',ROOT/'resources/robots/chuanliantui_new_1/mjlab/wheel_mechanical.json',
+        ROOT/'mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_walk/fudan_ppo_walk.py',ROOT/'mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_walk/wheel_motor.py',
+        ROOT/'mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_walk/fudan_ppo_walk_config.py',ROOT/'mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_action.py',
         ROOT/'mjlab_training/src/ct_mjlab/fudan_ppo_walk/measurement.py',ROOT/'mjlab_training/src/ct_mjlab/rsl_rl/runners/fudan_on_policy_runner.py',Path(__file__)]
     import shutil
     hashes={}

@@ -27,10 +27,10 @@ def write(path,value):Path(path).write_text(json.dumps(value,indent=2)+'\n')
 
 def prepare(output):
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config
-    from ct_mjlab.envs.fudan_ppo_walk.commands import command_config
-    from ct_mjlab.envs.fudan_ppo_walk import posture_reward,wheel_physics
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_task_config
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands import command_config
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import posture_reward,wheel_physics
     assert not LOG.exists()
     with ExitStack() as stack:
         for section,key,value in OVERRIDES:stack.enter_context(patch.object(getattr(FudanWalkCfg,section),key,value))
@@ -51,9 +51,9 @@ def prepare(output):
 
 def worker(output,stage):
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-    from ct_mjlab.envs.fudan_ppo_walk import wheel_physics
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import wheel_physics
     budget=json.loads((output/'budget.json').read_text());torch.set_num_threads(1)
     assert sha(XML)==budget['xml_sha256']
     assert wheel_physics.record('mechanical')==budget['physical_wheel_model']

@@ -28,8 +28,8 @@ from ct_mjlab.supermimic.learner import ALGORITHM_CONTRACT, asset_digest
 from ct_mjlab.supermimic.networks import RunningNorm, WorldModel
 from ct_mjlab.supermimic.state import (MASSES, NOISE, PHYSICAL, STATE_DIM,
     PARAM_DIM, PHYS_DIM, SUBSTEPS, physical_delta)
-from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
-from ct_mjlab.envs.chuanliantui_split.runner import contracts
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.runner import contracts
 
 STARTS = (.5, 1., 1.5, 2., 2.1, 2.3, 6., 10., 14., 16., 16.1, 16.3, 20., 24., 28.)
 HORIZON, ENDPOINTS, DT = 24, (1, 8, 24), .01

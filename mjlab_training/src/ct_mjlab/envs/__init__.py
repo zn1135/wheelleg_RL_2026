@@ -1,24 +1,8 @@
-"""仅注册保留的算法环境；旧独立训练task已撤销。"""
-from ..utils.task_registry import task_registry
-from .chuanliantui.multimode_env_cfg import make_multimode_env_cfg, make_multimode_ppo_cfg
-from .chuanliantui.multimode_runner import MultimodeOnPolicyRunner
-from .chuanliantui_split.env_cfg import make_walk_env_cfg, make_walk_ppo_cfg
-from .chuanliantui_split.runner import SplitOnPolicyRunner
+"""Register robot-specific mjlab training tasks."""
+from . import _legacy_imports
+from .chuanliantui.tasks import task_registry
+from importlib import import_module
 
-task_registry.register('smp', env_cfg=make_multimode_env_cfg,
-    train_cfg=make_multimode_ppo_cfg, runner_class=MultimodeOnPolicyRunner)
-task_registry.register('supermimic', env_cfg=make_walk_env_cfg,
-    train_cfg=make_walk_ppo_cfg, runner_class=SplitOnPolicyRunner)
-from .fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, FudanWalkCfgPPO
+import_module(".2027_wheelleg", __name__)
 
-task_registry.register('fudan_ppo_walk', env_cfg=lambda play=False: FudanWalkCfg(),
-    train_cfg=FudanWalkCfgPPO,
-    task_class='ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',
-    runner_class='ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner')
-from .fudan_ppo_step.config import FudanStepCfg, FudanStepCfgPPO
-
-task_registry.register('fudan_ppo_step', env_cfg=lambda play=False: FudanStepCfg(),
-    train_cfg=FudanStepCfgPPO,
-    task_class='ct_mjlab.envs.fudan_ppo_step.env.StepEnv',
-    runner_class='ct_mjlab.envs.fudan_ppo_step.runner.StepRunner')
-__all__ = ['task_registry']
+__all__ = ["task_registry"]

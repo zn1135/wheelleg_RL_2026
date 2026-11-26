@@ -10,10 +10,10 @@ from types import SimpleNamespace
 import numpy as np
 import mujoco
 import torch
-from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg, SOURCE, SOURCE_SHA, recipe_record
-from ct_mjlab.envs.fudan_ppo_step.terrain import PlatformCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg, SOURCE, SOURCE_SHA, recipe_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_step.terrain import PlatformCfg
 from ct_mjlab.fudan_ppo_walk.contract import make_network
-from ct_mjlab.envs.fudan_ppo_step.runner import initialize_policy
+from ct_mjlab.envs.chuanliantui.fudan_ppo_step.runner import initialize_policy
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -34,7 +34,7 @@ def static_checks(output):
         from .check_contact_exploration import static_checks as check_exploration
         return check_exploration(output)
     from ct_mjlab.envs import task_registry
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
     from ct_mjlab.fudan_ppo_walk.policy import load_policy
     assert 'fudan_ppo_step' in task_registry.names()
     old = FudanWalkCfg()
@@ -67,7 +67,7 @@ def static_checks(output):
                                    dict(duration_s=.20,command=[.15,0.,.30])]))
     schedule=command_schedule(sequence,.01)
     assert scheduled_command(schedule,19)==[0.,0.,.30] and scheduled_command(schedule,20)==[.15,0.,.30]
-    from ct_mjlab.envs.fudan_ppo_step.train import train
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.train import train
     rejected=SimpleNamespace(resume=None,ppo_init=None,log_dir=output/'must_not_start',
         precheck=output/'missing.json',num_envs=20,iterations=None,deadline=None)
     with patch.object(task_registry,'make_env',side_effect=AssertionError('No GPU construction without budget')):
@@ -86,9 +86,9 @@ def static_checks(output):
 
 
 def independent_leg_reward_checks():
-    from ct_mjlab.envs.fudan_ppo_step.env import StepEnv
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-    from ct_mjlab.envs.fudan_ppo_walk import posture_reward
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import posture_reward
     n=8;env=object.__new__(StepEnv)
     env.cfg=FudanStepCfg();env.dt=.01
     env.terrain=SimpleNamespace(terrain_types=torch.tensor([0,1,1,1,2,2,1,1]))
@@ -139,9 +139,9 @@ def independent_leg_reward_checks():
 
 
 def reference_reward_checks():
-    from ct_mjlab.envs.fudan_ppo_step.env import StepEnv
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-    from ct_mjlab.envs.fudan_ppo_walk import posture_reward
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import posture_reward
     cfg=FudanStepCfg();n=4
     assert 'roll' not in cfg.rewards.scales and 'pitch' not in cfg.rewards.scales
     assert cfg.rewards.scales['orientation']==-10. and cfg.rewards.scales['tracking_ang_vel_enhance']==0.
@@ -171,7 +171,7 @@ def reference_reward_checks():
 
 
 def contact_logic_checks():
-    from ct_mjlab.envs.fudan_ppo_step.contacts import ContactMonitor
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.contacts import ContactMonitor
     def sensor(slots):
         return SimpleNamespace(data=SimpleNamespace(force=torch.zeros(2,slots,3),pos=torch.zeros(2,slots,3),
             normal=torch.zeros(2,slots,3),found=torch.zeros(2,slots)))
@@ -227,7 +227,7 @@ def scoring_checks():
 
 
 def online_success_check():
-    from ct_mjlab.envs.fudan_ppo_step.env import StepEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
     from math import sin,cos,radians
     theta=radians(4.)
     fake=SimpleNamespace(cfg=FudanStepCfg(),modes=torch.tensor([1]),dt=.01,
@@ -259,7 +259,7 @@ def online_success_check():
 
 
 def logging_checks(output):
-    from ct_mjlab.envs.fudan_ppo_step.runner import StepRunner
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.runner import StepRunner
     row=dict(env=0,mode=1,level=0,success=False,failure=True,reverse=True,crossed=False,max_approach_speed=.3,
         contact_rate=[.5,0.],peak_N=[20.,0.],longest_s=[.1,0.],peak_position_w=[[1.,2.,3.],[0.,0.,0.]])
     current=dict(contact_rate=torch.zeros(1,2),peak_N=torch.zeros(1,2),longest_s=torch.zeros(1,2),
@@ -296,8 +296,8 @@ def gpu_checks(args, report):
     if getattr(FudanStepCfg().step,'allow_temporary_support',False):
         from .check_contact_exploration import gpu_checks as check_exploration
         return check_exploration(args,report)
-    from ct_mjlab.envs.fudan_ppo_step.env import StepEnv
-    from ct_mjlab.envs.fudan_ppo_step.runner import StepRunner
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.runner import StepRunner
     cfg=FudanStepCfg();env=None;runner=None;viewer=None
     if args.friction is not None:
         cfg.domain_rand.ground_friction_range=[args.friction,args.friction]
@@ -352,7 +352,7 @@ def gpu_checks(args, report):
         del restored,probe,history_probe
         assert not runner.alg.optimizer.state and not runner.alg.extra_optimizer.state
         # 平地77槽与原重复高度逐值核对；网络迁移已在静态检查中核对。
-        from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
         ids=torch.arange(args.num_envs,device=env.device)
         env.randomized=False
         env.terrain.terrain_types.zero_();env.terrain.terrain_levels.zero_()

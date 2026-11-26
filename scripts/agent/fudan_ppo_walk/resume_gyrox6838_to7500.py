@@ -103,7 +103,7 @@ def worker(out, stage):
     assert not any(n == 'ct_mjlab' or n.startswith('ct_mjlab.') for n in sys.modules)
     frozen.RUN = SOURCE_RUN; sys.meta_path.insert(0, frozen.FrozenTrainingSource())
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk import fudan_ppo_walk as physical
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import fudan_ppo_walk as physical
     from ct_mjlab.rsl_rl.runners import fudan_on_policy_runner as runner
     b = json.loads((out / 'budget.json').read_text())
     old_init = physical.FudanEnv.__init__

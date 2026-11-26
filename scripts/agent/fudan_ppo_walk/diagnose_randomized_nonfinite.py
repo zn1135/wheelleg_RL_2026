@@ -10,9 +10,9 @@ import mujoco
 import numpy as np
 import torch
 
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-from ct_mjlab.envs.fudan_ppo_walk import fudan_ppo_walk as task
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, section_dict
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import fudan_ppo_walk as task
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, section_dict
 from ct_mjlab.fudan_ppo_walk.policy import load_policy
 from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import initialize_rollout
 from ct_mjlab.envs.chuanliantui.gas_spring import gas_spring_force

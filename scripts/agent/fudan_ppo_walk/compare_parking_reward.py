@@ -41,9 +41,9 @@ def guard(root, replay=False):
 
 def replay(root):
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_task_config
     from ct_mjlab.fudan_ppo_walk.policy import load_policy
     from ct_mjlab.fudan_ppo_walk.measurement import gpu_row, arrays, update_evaluation_commands
     from .diagnose_parking_integral import restore_initial

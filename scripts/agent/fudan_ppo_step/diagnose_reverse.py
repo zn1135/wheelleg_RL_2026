@@ -12,7 +12,7 @@ import numpy as np
 import torch
 from .evaluate import longest, score
 from .check import source_fingerprint
-from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg, SOURCE, SOURCE_SHA, recipe_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg, SOURCE, SOURCE_SHA, recipe_record
 
 ROOT=Path(__file__).resolve().parents[3]
 REFERENCE=ROOT/'artifacts/fudan_reference_step/20261115-reverse-01/runs/matched200'
@@ -213,8 +213,8 @@ def stance(args):
 
 
 def run(args):
-    from ct_mjlab.envs.fudan_ppo_step.env import StepEnv
-    from ct_mjlab.envs.fudan_ppo_step.runner import validate_source
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.runner import validate_source
     from ct_mjlab.fudan_ppo_walk.policy import load_policy
     cases=[]
     for height,speed,angle,direction in itertools.product(args.heights,args.speeds,args.angles,args.directions):

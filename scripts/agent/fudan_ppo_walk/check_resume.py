@@ -14,7 +14,7 @@ import torch
 
 from ct_mjlab.scripts import train as cli
 from ct_mjlab.rsl_rl.runners import fudan_on_policy_runner as module
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 
 
 def equal(a, b):
@@ -153,9 +153,9 @@ def main():
             def learn_until(self,deadline,max_iterations=None):
                 entered.update(deadline=deadline,target=max_iterations)
                 return {}
-        with patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',return_value=SimpleNamespace(close=lambda:None)),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner',EntryRunner),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.snapshot'),redirect_stdout(io.StringIO()):
+        with patch('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',return_value=SimpleNamespace(close=lambda:None)),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner',EntryRunner),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.snapshot'),redirect_stdout(io.StringIO()):
             proof=Path(temporary)/'fixture-proof.json'
-            proof.write_text(json.dumps(dict(passed=True,reset_contract=module.RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000,command_sampling=__import__('ct_mjlab.envs.fudan_ppo_walk.commands',fromlist=['command_config']).command_config())))
+            proof.write_text(json.dumps(dict(passed=True,reset_contract=module.RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000,command_sampling=__import__('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands',fromlist=['command_config']).command_config())))
             cli.main(['--task','fudan_ppo_walk','--num-envs','4096','--iterations','3000','--resume',str(args.checkpoint),
                 '--precheck',str(proof),
                 '--log-dir',str(Path(temporary)/'entry')])

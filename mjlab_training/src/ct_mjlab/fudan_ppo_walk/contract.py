@@ -9,7 +9,7 @@ TASK = 'fudan_ppo_walk'
 PHYSICS_DT, POLICY_DT = (0.002, 0.01)
 MOTORS = ('lf0', 'lf00', 'lfwheel', 'rf0', 'rf00', 'rfwheel')
 LEGS = (0, 1, 3, 4)
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, FudanWalkCfgPPO, section_dict
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, FudanWalkCfgPPO, section_dict
 WEIGHTS = FudanWalkCfg().rewards.scales
 PPO_CONFIG = dict(num_learning_epochs=5, num_mini_batches=4, clip_param=0.2, gamma=0.99, lam=0.95, value_loss_coef=1.0, entropy_coef=0.01, learning_rate=0.001, extra_learning_rate=0.001, max_grad_norm=1.0, use_clipped_value_loss=True, schedule='adaptive', desired_kl=0.005)
 

@@ -6,8 +6,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import torch
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
 from ct_mjlab.envs.chuanliantui.huananhu_action import HuananhuPdAction
 
 

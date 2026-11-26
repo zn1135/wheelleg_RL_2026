@@ -51,7 +51,7 @@ def main():
     p.add_argument('--candidate-source',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True)
     args=p.parse_args();args.output.mkdir(parents=True,exist_ok=False)
-    relative=Path('mjlab_training/src/ct_mjlab/envs/fudan_ppo_step')
+    relative=Path('mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_step')
     old_type=load_contacts(args.baseline_source/relative/'contacts.py','old_contact_inputs')
     new_type=load_contacts(args.candidate_source/relative/'contacts.py','new_contact_inputs')
     old_record=legacy_rows(args.baseline_source/relative/'env.py')

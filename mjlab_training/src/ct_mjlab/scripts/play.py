@@ -39,6 +39,9 @@ def periodic_knockdown_policy(env, policy, every_s, speed_range=KNOCKDOWN_ANGULA
 
 
 def play(args):
+    if args.task == "2027_wheelleg_walk":
+        from importlib import import_module
+        return import_module("ct_mjlab.envs.2027_wheelleg.play").play(args)
     require_gpu(args.device)
     env_cfg, train_cfg = task_registry.get_cfgs(args.task, play=True)
     if args.seed is not None:

@@ -23,6 +23,10 @@
 
 每次训练命令同时给出对应TensorBoard命令；仅改初态或复位分布时先做20环境可视预检。未给预算不启动训练。源码清理与资产例外见[清理记录](docs/maintenance/20261101-retain-678-review.md)。
 
+## 2027 轮腿机器人
+
+资产与独立行走任务入口、20环境GPU预检、限额训练和TensorBoard命令见 [2027训练说明](docs/mjlab-2027-wheelleg.md)。
+
 ## 复旦 PPO 行走适配
 
 双腿负载拟合已按用户要求回退（2026-11-10）：训练/原生MuJoCo默认关闭，GPU默认`--leg-load-profile legacy`。历史候选仅显式`--leg-load-profile fitted`启用；[回退范围与验证](docs/interfaces/20261110-leg-load-rollback.md)。未启动新训练。

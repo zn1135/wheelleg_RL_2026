@@ -181,7 +181,7 @@ def make_env(args, *, play=False):
         env.close()
         raise
     if not play:
-        from ct_mjlab.envs.chuanliantui_split.rewards import WalkRewardState
+        from ct_mjlab.envs.chuanliantui.chuanliantui_split.rewards import WalkRewardState
         from .analytic_reward import capture
         class ObservedWalkRewardState(WalkRewardState):
             def compute(self, raw):

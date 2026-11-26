@@ -11,8 +11,8 @@ from unittest.mock import patch
 
 import numpy as np
 import torch
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,timing_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,timing_record
 from ct_mjlab.fudan_ppo_walk.protocol import samples
 from scripts.agent.fudan_ppo_walk import evaluate
 

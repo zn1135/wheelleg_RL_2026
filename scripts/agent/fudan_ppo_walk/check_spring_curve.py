@@ -13,8 +13,8 @@ import torch
 
 from ct_mjlab.envs.chuanliantui import gas_spring as spring
 from ct_mjlab.envs.chuanliantui.model import apply_gas_spring_forces, gas_spring_actuator_ids
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import make_env_cfg, PhysicalAction
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config, from_sim2sim_config
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import make_env_cfg, PhysicalAction
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_task_config, from_sim2sim_config
 from .check_disturbances import control_fixture
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -86,7 +86,7 @@ def main():
                    np.allclose(force, target) and np.allclose(data.ctrl[actuators], target))
     sources = [Path(spring.__file__), Path(native.__file__),
                ROOT / 'mjlab_training/src/ct_mjlab/envs/chuanliantui/huananhu_action.py',
-               ROOT / 'mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk.py',
+               ROOT / 'mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_walk/fudan_ppo_walk.py',
                ROOT / 'mjlab_training/src/ct_mjlab/envs/chuanliantui/model.py']
     report = dict(passed=True, count=len(checks), checks=checks, stroke_mm=90.,
                   zero_pose_compression_mm=10., elastic_force_range_n=[0., 150.], damping_ns_m=50.,

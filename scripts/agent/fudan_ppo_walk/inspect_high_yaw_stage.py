@@ -67,7 +67,7 @@ def high_yaw(out,iteration,attitude=False):
     import torch
     import numpy as np
     from scripts.agent.fudan_ppo_walk import evaluate
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_record
     torch.set_num_threads(1)
     conditions=replace(from_record(json.loads((EXPERIMENT/'budget.json').read_text())['disturbances']),
         pushes=False,external_force_range=(0.,0.),external_torque_range=(0.,0.))
@@ -230,7 +230,7 @@ def main():
     elif args.mode=='report':report(out,iteration)
     else:
         from scripts.agent.fudan_ppo_walk import inspect_pd200_training as inspect
-        from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_record
         import torch
         model=out/'checkpoint'/f'model_{iteration}.pt';metadata=torch.load(model,map_location='cpu',weights_only=False)
         conditions=replace(from_record(metadata['disturbances']),pushes=False,external_force_range=(0.,0.),external_torque_range=(0.,0.))

@@ -81,7 +81,7 @@ def clean_physical(physical):
 class MotionStateAdapter(StateAdapter):
     def __init__(self):
         super().__init__()
-        from ct_mjlab.envs.chuanliantui_split.env_cfg import make_walk_env_cfg
+        from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import make_walk_env_cfg
         from ct_mjlab.envs.chuanliantui.model import ACTUATED_JOINTS, load_model
         validate_motion_pd_config(make_walk_env_cfg().actions['pd'])
         model = load_model()

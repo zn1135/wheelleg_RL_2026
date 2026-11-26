@@ -8,8 +8,8 @@ import torch
 from ct_mjlab.fudan_ppo_walk.contract import CONTRACT,make_network,PPO_CONFIG,WEIGHTS
 from ct_mjlab.rsl_rl.algorithms.fudan_ppo import PPO
 from ct_mjlab.fudan_ppo_walk.protocol import manifest
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import make_env_cfg
-from ct_mjlab.envs.chuanliantui_stand.mdp import standing_pose
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import make_env_cfg
+from ct_mjlab.envs.chuanliantui.chuanliantui_stand.mdp import standing_pose
 
 
 def main():

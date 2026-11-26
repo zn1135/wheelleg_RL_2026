@@ -58,8 +58,8 @@ def main():
                 recorded.update(deadline=deadline,max_iterations=max_iterations);return {}
         fake_env=SimpleNamespace(close=lambda:None)
         proof=Path(temporary)/'precheck.json'
-        proof.write_text(json.dumps(dict(passed=True,reset_contract=__import__('ct_mjlab.fudan_ppo_walk.contract',fromlist=['RESET_CONTRACT']).RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000,command_sampling=__import__('ct_mjlab.envs.fudan_ppo_walk.commands',fromlist=['command_config']).command_config())))
-        with patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',return_value=fake_env),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner',EntryRunner),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.snapshot'),redirect_stdout(io.StringIO()):
+        proof.write_text(json.dumps(dict(passed=True,reset_contract=__import__('ct_mjlab.fudan_ppo_walk.contract',fromlist=['RESET_CONTRACT']).RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000,command_sampling=__import__('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands',fromlist=['command_config']).command_config())))
+        with patch('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',return_value=fake_env),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner',EntryRunner),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.snapshot'),redirect_stdout(io.StringIO()):
             cli.main(['--task','fudan_ppo_walk','--num-envs','512','--log-dir',str(Path(temporary)/'cli'),
                 '--precheck',str(proof),'--iterations','3000'])
         assert recorded['deadline']==float('inf') and recorded['max_iterations']==3000

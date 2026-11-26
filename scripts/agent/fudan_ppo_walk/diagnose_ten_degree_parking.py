@@ -55,7 +55,7 @@ def worker(out):
     sys.meta_path.insert(0,frozen.FrozenTrainingSource())
     import mujoco
     from mjlab.managers.event_manager import RecomputeLevel
-    from ct_mjlab.envs.fudan_ppo_walk import fudan_ppo_walk as physical
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import fudan_ppo_walk as physical
     from ct_mjlab.fudan_ppo_walk import measurement,policy as loading
     old_configure=measurement.configure_samples;old_cfg=physical.make_env_cfg
     old_init=physical.FudanEnv.__init__;old_load=loading.load_policy;old_write=frozen.write

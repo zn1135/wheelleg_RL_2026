@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from contextlib import ExitStack,redirect_stdout
 from unittest.mock import patch
 from ct_mjlab.envs import task_registry
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, FudanWalkCfgPPO, section_dict
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, FudanWalkCfgPPO, section_dict
 from ct_mjlab.fudan_ppo_walk import __main__ as legacy,contract,export,policy
 from ct_mjlab.scripts import train
 from ct_mjlab.fudan_ppo_walk.source_migration import verify_migration,historical_path_matches
@@ -40,7 +40,7 @@ def main():
             evidence.append(('make_env',name,kw['env_cfg'].reset_contract,kw['train_cfg'].runner.num_steps_per_env));return SimpleNamespace(close=lambda:evidence.append(('close',))),kw['env_cfg']
         def make_runner(env,name,**kw):evidence.append(('make_runner',name,section_dict(kw['train_cfg'].algorithm)));return Runner(),kw['train_cfg']
         directory=Path(temporary);proof=directory/'proof.json'
-        from ct_mjlab.envs.fudan_ppo_walk.commands import command_config
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands import command_config
         proof.write_text(json.dumps(dict(passed=True,reset_contract=contract.RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000,command_sampling=command_config())))
         with patch.object(task_registry,'make_env',side_effect=make_env),patch.object(task_registry,'make_alg_runner',side_effect=make_runner),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.snapshot'),redirect_stdout(io.StringIO()):
             train.main(['--task','fudan_ppo_walk','--num-envs','4096','--iterations','1','--log-dir',str(directory/'run'),'--precheck',str(proof)])
@@ -65,8 +65,8 @@ def main():
             verify('integral_r2_'+name+'_ast_identical',ast.dump(function(code(before/script),name),include_attributes=False)==ast.dump(function(code(script),name),include_attributes=False))
         import scripts.agent.fudan_ppo_walk.precheck as precheck
         import scripts.agent.fudan_ppo_walk.evaluate as evaluate
-        from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-        verify('precheck_and_evaluation_use_production_environment',precheck.FudanEnv is FudanEnv and any(isinstance(n,ast.ImportFrom) and n.module=='ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk' for n in ast.walk(code(Path(evaluate.__file__)))))
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+        verify('precheck_and_evaluation_use_production_environment',precheck.FudanEnv is FudanEnv and any(isinstance(n,ast.ImportFrom) and n.module=='ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk' for n in ast.walk(code(Path(evaluate.__file__)))))
         verify('export_uses_same_policy_and_frozen_interface',export.load_policy is policy.load_policy and export.history_metadata(contract.RESET_V2_CONTRACT)['history_before_clip'])
         # Activation drift is rejected rather than silently changing inference for the v1 model.
         with patch.object(FudanWalkCfgPPO.policy,'activation','relu'):

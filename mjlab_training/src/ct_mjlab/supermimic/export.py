@@ -7,8 +7,8 @@ import numpy as np
 import torch
 from .networks import make_actor, act
 from .learner import ACTOR_TRANSFER_CONTRACTS, asset_digest, checkpoint_action_clip
-from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
-from ct_mjlab.envs.chuanliantui_split.runner import contracts
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.runner import contracts
 
 
 class ExportPolicy(torch.nn.Module):

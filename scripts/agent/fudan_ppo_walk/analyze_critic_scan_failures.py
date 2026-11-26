@@ -28,9 +28,9 @@ def evidence(source):
 def source_audit():
     from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
     run,experiment=ARMS['scan']
-    path=run/'source/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk.py'
+    path=run/'source/ct_mjlab/envs/chuanliantui/fudan_ppo_walk/fudan_ppo_walk.py'
     manifest=json.loads((run/'source_sha256.json').read_text())
-    key='mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk.py'
+    key='mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_walk/fudan_ppo_walk.py'
     assert sha(path)==manifest[key]
     tree=ast.parse(path.read_text())
     cls=next(n for n in tree.body if isinstance(n,ast.ClassDef) and n.name=='FudanEnv')

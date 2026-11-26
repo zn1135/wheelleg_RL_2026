@@ -10,8 +10,8 @@ from types import SimpleNamespace
 from unittest.mock import patch
 import torch
 from ct_mjlab.fudan_ppo_walk import commands as sampling
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import initialize_rollout,FudanRunner
 from ct_mjlab.fudan_ppo_walk.contract import RESET_CONTRACT
 from .reset_v2_fixture import fixture

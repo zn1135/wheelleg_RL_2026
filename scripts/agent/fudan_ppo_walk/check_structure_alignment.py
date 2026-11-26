@@ -15,8 +15,8 @@ from unittest.mock import patch
 import numpy as np
 import torch
 
-from ct_mjlab.envs.fudan_ppo_walk import fudan_ppo_walk as current
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, FudanWalkCfgPPO, section_dict
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import fudan_ppo_walk as current
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, FudanWalkCfgPPO, section_dict
 from ct_mjlab.fudan_ppo_walk import contract
 from ct_mjlab.rsl_rl.runners import fudan_on_policy_runner as runner
 from ct_mjlab.rsl_rl.algorithms.fudan_ppo import PPO
@@ -41,7 +41,7 @@ def backend(n=4):
     model=f.env.sim.mj_model
     model.joint=lambda name:model.model.joint(name.removeprefix('robot/') if isinstance(name,str) else name)
     f.robot.find_joints=lambda names, preserve_order=True:([f.robot.joint_names.index(name) for name in names],names)
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import DisturbanceConfig
     f.action.cfg=SimpleNamespace(disturbances=DisturbanceConfig(),task_cfg=f.cfg)
     return f
 

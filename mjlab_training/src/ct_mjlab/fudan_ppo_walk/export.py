@@ -5,9 +5,9 @@ import torch
 from .policy import load_policy
 from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import sha
 from .contract import CONTRACT, RESET_CONTRACT, RESET_V2_CONTRACT, LEGACY_RESET_CONTRACT
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record
-from ct_mjlab.envs.fudan_ppo_walk.commands import LEGACY_COMMAND_SAMPLING
-from ct_mjlab.envs.fudan_ppo_walk import posture_reward
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands import LEGACY_COMMAND_SAMPLING
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import posture_reward
 
 def history_metadata(reset_contract):
     if reset_contract not in (RESET_CONTRACT, RESET_V2_CONTRACT, LEGACY_RESET_CONTRACT):

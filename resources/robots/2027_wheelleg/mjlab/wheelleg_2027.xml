@@ -1,0 +1,232 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mujoco model="wheelleg_2027">
+
+  <compiler angle="radian" meshdir="../meshes" />
+  <asset>
+    <mesh name="base_link" file="base_link.STL" />
+    <mesh name="lf0" file="lf0.STL" />
+    <mesh name="lf1" file="lf1.STL" />
+    <mesh name="lfwheel" file="lfwheel.STL" />
+    <mesh name="rf0" file="rf0.STL" />
+    <mesh name="rf1" file="rf1.STL" />
+    <mesh name="rfwheel" file="rfwheel.STL" />
+    <mesh name="lf00" file="lf00.STL" />
+    <mesh name="lf01" file="lf01.STL" />
+    <mesh name="lf02" file="lf02.STL" />
+    <mesh name="lf03" file="lf03.STL" />
+    <mesh name="rf00" file="rf00.STL" />
+    <mesh name="rf01" file="rf01.STL" />
+    <mesh name="rf02" file="rf02.STL" />
+    <mesh name="rf03" file="rf03.STL" />
+    <mesh name="imu-link" file="imu-link.STL" />
+    <mesh name="lf001" file="lf001.STL" />
+    <mesh name="lf002" file="lf002.STL" />
+    <mesh name="rf001" file="rf001.STL" />
+    <mesh name="rf002" file="rf002.STL" />
+    <mesh name="lf04" file="lf04.STL" />
+    <mesh name="lf05" file="lf05.STL" />
+    <mesh name="rf04" file="rf04.STL" />
+    <mesh name="rf05" file="rf05.STL" />
+  </asset>
+  <worldbody>
+    <body name="base_link" pos="0 0 0" quat="1 0 0 0">
+      <freejoint name="floating_base" />
+      <inertial pos="0.015656 0.0084620000000000008 0.010609" mass="9.407" diaginertia="0.1159868100395737 0.13842731357604307 0.21201760938438305" quat="0.99986539778294492 2.8577857273197774e-05 0.016067559370402183 -0.0033194932652274131" />
+      <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.752941 0.752941 0.752941 1" mesh="base_link" pos="0 0 0" quat="1 0 0 0" />
+      <geom type="mesh" rgba="0.752941 0.752941 0.752941 1" mesh="base_link" pos="0 0 0" quat="1 0 0 0" contype="1" conaffinity="0" group="3" />
+      <body name="lf0" pos="0.0017287973653106201 0.17575356680748799 0.050355854604229998" quat="1 0 0 0">
+        <inertial pos="-0.12958943742781201 -0.0061946677211581697 0.00112710333275343" mass="0.50163685587592699" diaginertia="0.0020926034570198661 0.0019090183878293933 0.00022041465683712898" quat="0.49697690682551637 0.50342118336771402 0.50506331347546951 0.49446143995257308" />
+        <joint name="lf0" pos="0 0 0" axis="0 1 0" armature="0.03159" solreflimit="0.0004 1" solimplimit="0.999 0.9999 0.001 0.5 2" limited="false" />
+        <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="1 1 1 1" mesh="lf0" />
+        <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" rgba="1 1 1 1" mesh="lf0" contype="1" conaffinity="0" group="3" />
+        <body name="lf1" pos="-0.20999832682987199 7.2164496600635205e-16 -0.00083828912337698103" quat="1 0 0 0">
+          <inertial pos="0.0762389781608631 0.012087455970622701 -0.0549676898784364" mass="0.29493179113374501" diaginertia="0.0025496935606607023 0.0024677360048831407 8.8226836997023968e-05" quat="0.33703387537876373 0.62117234860877901 0.62056770412009721 0.33977758132951785" />
+          <joint name="lf1" pos="0 0 0" axis="0 1 0" range="0.033 0.96" armature="0.0001" damping="0.01" solreflimit="0.0004 1" solimplimit="0.999 0.9999 0.001 0.5 2" />
+          <geom pos="0 0 0" quat="0.50000000000000333 0.5 -0.5 0.49999999999999661" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="1 1 1 1" mesh="lf1" />
+          <geom pos="0 0 0" quat="0.50000000000000333 0.5 -0.5 0.49999999999999661" type="mesh" rgba="1 1 1 1" mesh="lf1" contype="1" conaffinity="0" group="3" />
+          <body name="lfwheel" pos="0.20999832682987299 0.017499999999998701 -0.13564918992989899" quat="1 0 0 0">
+            <inertial pos="0.000120556991891957 0.0148071549356497 -3.6588229560351301e-05" mass="0.59667787114471305" diaginertia="0.00072164158729137739 0.00037971106185347348 0.00037779959279843762" quat="0.6983861407523555 0.11549838970347309 0.11570466335228098 0.69679936226970751" />
+            <joint name="lfwheel" pos="0 0 0" axis="0 1 0" />
+            <geom quat="0.50000000000000333 0.5 -0.5 0.49999999999999661" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.752941 0.752941 0.752941 1" mesh="lfwheel" pos="0 0 0" />
+            <geom quat="0.50000000000000333 0.5 -0.5 0.49999999999999661" type="mesh" rgba="0.752941 0.752941 0.752941 1" mesh="lfwheel" pos="0 0 0" contype="1" conaffinity="0" group="3" />
+          </body>
+          <site name="left_front_pin2" pos="-0.044952769233051609 0.017499999999999294 0.049681470774141485" size="0.004" rgba="1 1 0 1" />
+          <body name="lf04" pos="0.11549907975642927 0.010599999999999277 0.00046105901785868653" quat="1 0 0 0">
+            <inertial pos="-0.077963151485779106 -0.0091000000000008192 -0.032693704684374797" mass="0.0022393272434788102" diaginertia="7.2778135413061194e-08 4.83321463384176e-08 4.83321463384176e-08" quat="0.70710678118654768 0 0 0.70710678118654746" />
+            <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 -0.49999999999999739 0.49999999999999922" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.866667 0.909804 1 1" mesh="lf04" />
+            <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 -0.49999999999999739 0.49999999999999922" type="mesh" rgba="0.866667 0.909804 1 1" mesh="lf04" contype="1" conaffinity="0" group="3" />
+          </body>
+          <site name="left_gas_spring_lower" pos="0.037535928270650359 0.017499999999999294 -0.032232645666500012" size="0.004" rgba="1 0 0 1" />
+        </body>
+        <site name="left_front_pin1" pos="-0.094499247073442719 0.010599999999999998 -0.00037723010551829472" size="0.004" rgba="1 1 0 1" />
+        <body name="lf001" pos="0.019061095945210781 -0.0079999999999999793 -0.047770114328205597" quat="1 0 0 0">
+          <inertial pos="-0.038037971132716203 0.00065986791765091399 -0.0017494643481419799" mass="0.00102435885458148" diaginertia="3.6162560967228388e-08 2.3643674423139685e-08 1.6158729907460108e-08" quat="0.62051937854387007 0.33905117733393758 0.33905117733393758 0.62051937854387007" />
+          <geom quat="0.50000000000000078 0.50000000000000255 -0.49999999999999739 0.49999999999999922" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="1 1 1 1" mesh="lf001" pos="0 0 0" />
+          <geom quat="0.50000000000000078 0.50000000000000255 -0.49999999999999739 0.49999999999999922" type="mesh" rgba="1 1 1 1" mesh="lf001" pos="0 0 0" contype="1" conaffinity="0" group="3" />
+        </body>
+        <site name="left_gas_spring_upper" pos="-0.017292493080472222 -0.0079999999999999793 -0.048438402994134828" size="0.004" rgba="1 0 0 1" />
+        <body name="left_spring1" pos="-0.017292493080472222 -0.0079999999999999793 -0.048438402994134828" quat="0.7411323279394344 0 -0.67135897438186876 0">
+          <joint name="left_spring1_joint" type="hinge" axis="0 1 0" limited="false" damping="0.01" armature="0.0001" />
+          <geom name="left_spring_barrel" type="cylinder" fromto="0 0.012749999999999997 0 0 0.012749999999999997 0.14999999999999999" size="0.008" mass="0.0305218" rgba="0.65 0.04 0.04 1" contype="0" conaffinity="0" group="2" />
+          <geom name="left_spring_upper_eye" type="capsule" fromto="0 0 0 0 0.012749999999999997 0" size="0.004" mass="0" rgba="0.6 0.6 0.6 1" contype="0" conaffinity="0" group="2" />
+          <body name="left_spring2" pos="0 0.025499999999999995 0.15592901797065514">
+            <joint name="left_spring2_joint" type="slide" axis="0 0 1" limited="false" armature="0.0001" />
+            <geom name="left_spring_rod" type="cylinder" fromto="0 -0.012749999999999997 -0.14999999999999999 0 -0.012749999999999997 0" size="0.004" mass="0.0923989" rgba="0.8 0.8 0.8 1" contype="0" conaffinity="0" group="2" />
+            <geom name="left_spring_lower_eye" type="capsule" fromto="0 -0.012749999999999997 0 0 0 0" size="0.004" mass="0" rgba="0.6 0.6 0.6 1" contype="0" conaffinity="0" group="2" />
+            <site name="left_spring_tip" pos="0 0 0" size="0.004" rgba="0.9 0.1 0.1 1" />
+          </body>
+        </body>
+      </body>
+      <body name="rf0" pos="0.0017287973653072801 -0.14364647219252299 0.050355854604227701" quat="1 0 0 0">
+        <inertial pos="-0.13165831589121699 -0.0090369023699347992 0.0010667941171635801" quat="0.49446143995257374 0.50506331347547029 0.50342118336771469 0.49697690682551704" mass="0.50163685587592699" diaginertia="0.0020926034570198661 0.0019090183878293933 0.00022041465683712898" />
+        <joint name="rf0" pos="0 0 0" axis="0 -1 0" armature="0.03159" solreflimit="0.0004 1" solimplimit="0.999 0.9999 0.001 0.5 2" limited="false" />
+        <geom quat="0.70710678118654624 0 0 -0.70710678118654879" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.866667 0.909804 1 1" mesh="rf0" pos="0 0 0" />
+        <geom quat="0.70710678118654624 0 0 -0.70710678118654879" type="mesh" rgba="0.866667 0.909804 1 1" mesh="rf0" pos="0 0 0" contype="1" conaffinity="0" group="3" />
+        <body name="rf1" pos="-0.20999832682986899 -0.018499999999999898 -0.00083828912337538498" quat="1 0 0 0">
+          <inertial pos="0.071653159767761904 -0.0079532028714293795 -0.051310858150812801" quat="0.3397775813295183 0.62056770412009798 0.62117234860878001 0.33703387537876417" mass="0.29493179113374501" diaginertia="0.0025496935606607023 0.0024677360048831407 8.8226836997023968e-05" />
+          <joint name="rf1" pos="0 0 0" axis="0 -1 0" range="-0.96 -0.033" armature="0.0001" damping="0.01" solreflimit="0.0004 1" solimplimit="0.999 0.9999 0.001 0.5 2" />
+          <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="1 1 1 1" mesh="rf1" />
+          <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" rgba="1 1 1 1" mesh="rf1" contype="1" conaffinity="0" group="3" />
+          <body name="rfwheel" pos="0.20999832711098501 -0.0139999957834312 -0.13564918992990799" quat="1 0 0 0">
+            <inertial pos="0.000124204755484008 -0.014797595027742401 -3.8909404760690103e-05" quat="0.69679936226970796 0.11570466335228108 0.11549838970347318 0.69838614075235594" mass="0.59667787114471305" diaginertia="0.00072164158729137739 0.00037971106185347348 0.00037779959279843762" />
+            <joint name="rfwheel" pos="0 0 0" axis="0 -1 0" />
+            <geom quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.298039 0.298039 0.298039 1" mesh="rfwheel" pos="0 0 0" />
+            <geom quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" rgba="0.298039 0.298039 0.298039 1" mesh="rfwheel" pos="0 0 0" contype="1" conaffinity="0" group="3" />
+          </body>
+          <site name="right_front_pin2" pos="-0.044952769233052275 -0.014000000000000096 0.04968147077415698" size="0.004" rgba="1 1 0 1" />
+          <body name="rf002" pos="0.037535928270650692 -0.014000000000000096 -0.032232645666499214" quat="1 0 0 0">
+            <inertial pos="0 0.0160000000000005 -1.58484336765241e-14" quat="0.70710678118654802 0 0 0.70710678118654802" mass="0.0022393272434788102" diaginertia="7.2778135413061194e-08 4.83321463384176e-08 4.83321463384176e-08" />
+            <geom quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.866667 0.909804 1 1" mesh="rf002" pos="0 0 0" />
+            <geom quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" rgba="0.866667 0.909804 1 1" mesh="rf002" pos="0 0 0" contype="1" conaffinity="0" group="3" />
+          </body>
+          <site name="right_gas_spring_lower" pos="0.037535928270650692 -0.014000000000000096 -0.032232645666499214" size="0.004" rgba="1 0 0 1" />
+        </body>
+        <site name="right_front_pin1" pos="-0.09449924707344047 -0.025600000000000012 -0.00037723010545420016" size="0.004" rgba="1 1 0 1" />
+        <body name="rf001" pos="-0.017292493080468881 -0.0070000000000000062 -0.048438402994132532" quat="1 0 0 0">
+          <inertial pos="-0.0016843821070334599 -0.00065986791765126299 -0.0010811756822126" quat="0.62051937854387096 0.33905117733393808 0.33905117733393808 0.62051937854387096" mass="0.00102435885458148" diaginertia="3.6162560967228388e-08 2.3643674423139685e-08 1.6158729907460108e-08" />
+          <geom quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="1 1 1 1" mesh="rf001" pos="0 0 0" />
+          <geom quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" rgba="1 1 1 1" mesh="rf001" pos="0 0 0" contype="1" conaffinity="0" group="3" />
+        </body>
+        <site name="right_gas_spring_upper" pos="-0.017292493080468881 -0.0070000000000000062 -0.048438402994132532" size="0.004" rgba="1 0 0 1" />
+        <body name="right_spring1" pos="-0.017292493080468881 -0.0070000000000000062 -0.048438402994132532" quat="0.74113232793943462 0 -0.67135897438186842 0">
+          <joint name="right_spring1_joint" type="hinge" axis="0 1 0" limited="false" damping="0.01" armature="0.0001" />
+          <geom name="right_spring_barrel" type="cylinder" fromto="0 -0.012749999999999997 0 0 -0.012749999999999997 0.14999999999999999" size="0.008" mass="0.0305218" rgba="0.65 0.04 0.04 1" contype="0" conaffinity="0" group="2" />
+          <geom name="right_spring_upper_eye" type="capsule" fromto="0 0 0 0 -0.012749999999999997 0" size="0.004" mass="0" rgba="0.6 0.6 0.6 1" contype="0" conaffinity="0" group="2" />
+          <body name="right_spring2" pos="0 -0.025499999999999995 0.1559290179706552">
+            <joint name="right_spring2_joint" type="slide" axis="0 0 1" limited="false" armature="0.0001" />
+            <geom name="right_spring_rod" type="cylinder" fromto="0 0.012749999999999997 -0.14999999999999999 0 0.012749999999999997 0" size="0.004" mass="0.0923989" rgba="0.8 0.8 0.8 1" contype="0" conaffinity="0" group="2" />
+            <geom name="right_spring_lower_eye" type="capsule" fromto="0 0.012749999999999997 0 0 0 0" size="0.004" mass="0" rgba="0.6 0.6 0.6 1" contype="0" conaffinity="0" group="2" />
+            <site name="right_spring_tip" pos="0 0 0" size="0.004" rgba="0.9 0.1 0.1 1" />
+          </body>
+        </body>
+      </body>
+      <body name="lf00" pos="0.0017287973653072801 0.18975356680748801 0.050355854604227701" quat="1 0 0 0">
+        <inertial pos="0.0060717709917799704 0.00048519587770170402 0.00029436190246481098" mass="0.41443254270797097" diaginertia="0.00032687331792469394 0.0002488455940556786 0.00015879862741378369" quat="0.52263173079813707 0.46594646616264829 0.48063331463897602 0.52795982943083308" />
+        <joint name="lf00" pos="0 0 0" axis="0 1 0" armature="0.03159" solreflimit="0.0004 1" solimplimit="0.999 0.9999 0.001 0.5 2" limited="false" />
+        <geom quat="0.50000000000000078 0.50000000000000255 -0.49999999999999739 0.49999999999999922" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="1 1 1 1" mesh="lf00" pos="0 0 0" />
+        <geom quat="0.50000000000000078 0.50000000000000255 -0.49999999999999739 0.49999999999999922" type="mesh" rgba="1 1 1 1" mesh="lf00" pos="0 0 0" contype="1" conaffinity="0" group="3" />
+        <body name="lf01" pos="0.094360713993902695 3.3306690738754701e-16 0.0051289038362575196" quat="1 0 0 0">
+          <inertial pos="-0.044524494683436999 -0.0168062465912477 -0.0346866027760881" mass="0.0218255279727325" diaginertia="4.2238827647261467e-05 4.1621278553419656e-05 7.5787846936766747e-07" quat="0.62152897320354972 0.33099963495755641 0.32622372578878978 0.63064971090058097" />
+          <joint name="lf01" pos="0 0 0" axis="0 1 0" armature="0.0001" damping="0.01" solreflimit="0.0004 1" solimplimit="0.999 0.9999 0.001 0.5 2" limited="false" />
+          <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 -0.49999999999999739 0.49999999999999922" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="1 1 1 1" mesh="lf01" />
+          <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 -0.49999999999999739 0.49999999999999922" type="mesh" rgba="1 1 1 1" mesh="lf01" contype="1" conaffinity="0" group="3" />
+          <body name="lf02" pos="-0.092649764131274306 -0.0034000000000001798 -0.063814349533709694" quat="1 0 0 0">
+            <inertial pos="-0.076588199760203493 -0.0039397515530597499 0.050810285527444099" mass="0.063218018338113705" diaginertia="0.00019916592853480285 0.00019251430322598132 7.2787750879965254e-06" quat="0.32190515081504867 0.6292508167457791 0.62934102943730841 0.32303305120420656" />
+            <joint name="lf02" pos="0 0 0" axis="0 1 0" armature="0.0001" damping="0.01" solreflimit="0.0004 1" solimplimit="0.999 0.9999 0.001 0.5 2" limited="false" />
+            <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 -0.49999999999999739 0.49999999999999922" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="1 1 1 1" mesh="lf02" />
+            <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 -0.49999999999999739 0.49999999999999922" type="mesh" rgba="1 1 1 1" mesh="lf02" contype="1" conaffinity="0" group="3" />
+            <body name="lf03" pos="-0.1411847873713 -4.9960036108132005e-16 0.10523673799764501" quat="1 0 0 0">
+              <inertial pos="-0.061372883219246298 -0.013952822796307499 0.00121807409723139" mass="0.028544290637595698" diaginertia="4.6646482827033197e-05 4.5969935504454108e-05 1.0068723569211358e-06" quat="0.49501434377185555 0.50493643110803488 0.50493643110803499 0.49501434377185555" />
+              <joint name="lf03" pos="0 0 0" axis="0 1 0" armature="0.0001" damping="0.01" solreflimit="0.0004 1" solimplimit="0.999 0.9999 0.001 0.5 2" limited="false" />
+              <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 -0.49999999999999739 0.49999999999999922" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="1 1 1 1" mesh="lf03" />
+              <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 -0.49999999999999739 0.49999999999999922" type="mesh" rgba="1 1 1 1" mesh="lf03" contype="1" conaffinity="0" group="3" />
+              <site name="left_rear_pin2" pos="-0.11547725855424865 0.0069000000000003503 0.002291889350573964" size="0.004" rgba="1 0 1 1" />
+              <body name="lf05" pos="-0.11547725855424865 0.0069000000000003503 0.002291889350573964" quat="1 0 0 0">
+                <inertial pos="0 -0.0165372140824285 0" mass="0.00074510723761516198" diaginertia="7.2323675950001401e-08 7.2323675950001401e-08 3.7852951708333298e-09" quat="0 0 0.70710678118654746 0.70710678118654768" />
+                <geom quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="1 1 1 1" mesh="lf05" pos="0 0 0" />
+                <geom quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" rgba="1 1 1 1" mesh="lf05" pos="0 0 0" contype="1" conaffinity="0" group="3" />
+              </body>
+            </body>
+            <site name="left_rear_pin1" pos="-0.096210196936067763 -1.6653345369377348e-16 0.058308215591936177" size="0.004" rgba="1 0 1 1" />
+            <body name="lf002" pos="-0.17417334842184667 0.0068999999999998507 0.025614510907577475" quat="1 0 0 0">
+              <inertial pos="0.077963151485778898 -0.020637214082428398 0.032693704684358997" mass="0.00074510723761516198" diaginertia="7.2323675950001401e-08 7.2323675950001401e-08 3.7852951708333397e-09" quat="0 0 0.70710678118654746 0.70710678118654768" />
+              <geom quat="0.50000000000000078 0.50000000000000255 -0.49999999999999739 0.49999999999999922" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="1 1 1 1" mesh="lf002" pos="0 0 0" />
+              <geom quat="0.50000000000000078 0.50000000000000255 -0.49999999999999739 0.49999999999999922" type="mesh" rgba="1 1 1 1" mesh="lf002" pos="0 0 0" contype="1" conaffinity="0" group="3" />
+            </body>
+          </body>
+        </body>
+      </body>
+      <body name="rf00" pos="0.00172879736530475 -0.172646472192934 0.050355854604225599" quat="1 0 0 0">
+        <inertial pos="0.0061316958199844097 -0.0039143291199919203 0.00029470823197011399" quat="0.52795982943083408 0.48063331463897674 0.46594646616264901 0.52263173079813785" mass="0.41443254270797097" diaginertia="0.00032687331792469394 0.0002488455940556786 0.00015879862741378369" />
+        <joint name="rf00" pos="0 0 0" axis="0 -1 0" armature="0.03159" solreflimit="0.0004 1" solimplimit="0.999 0.9999 0.001 0.5 2" limited="false" />
+        <geom quat="0.70710678118654624 0 0 -0.70710678118654879" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.866667 0.909804 1 1" mesh="rf00" pos="0 0 0" />
+        <geom quat="0.70710678118654624 0 0 -0.70710678118654879" type="mesh" rgba="0.866667 0.909804 1 1" mesh="rf00" pos="0 0 0" contype="1" conaffinity="0" group="3" />
+        <body name="rf01" pos="0.094360713993901807 -3.3306690738754701e-16 0.0051289038363799703" quat="1 0 0 0">
+          <inertial pos="-0.0445244946834338 0.0168062465912487 -0.0346866027761931" quat="0.63064971090058175 0.32622372578879016 0.3309996349575568 0.62152897320355038" mass="0.0218255279727325" diaginertia="4.2238827647261467e-05 4.1621278553419656e-05 7.5787846936766747e-07" />
+          <joint name="rf01" pos="0 0 0" axis="0 -1 0" armature="0.0001" damping="0.01" solreflimit="0.0004 1" solimplimit="0.999 0.9999 0.001 0.5 2" limited="false" />
+          <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.866667 0.909804 1 1" mesh="rf01" />
+          <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" rgba="0.866667 0.909804 1 1" mesh="rf01" contype="1" conaffinity="0" group="3" />
+          <body name="rf02" pos="-0.092649764131271101 0.0034000000000015099 -0.063814349533830098" quat="1 0 0 0">
+            <inertial pos="-0.075826844415944603 0.0038725994768960899 0.050168798475659401" quat="0.323033051204207 0.6293410294373093 0.62925081674577998 0.32190515081504911" mass="0.063218018338113705" diaginertia="0.00019916592853480285 0.00019251430322598132 7.2787750879965254e-06" />
+            <joint name="rf02" pos="0 0 0" axis="0 -1 0" armature="0.0001" damping="0.01" solreflimit="0.0004 1" solimplimit="0.999 0.9999 0.001 0.5 2" limited="false" />
+            <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.866667 0.909804 1 1" mesh="rf02" />
+            <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" rgba="0.866667 0.909804 1 1" mesh="rf02" contype="1" conaffinity="0" group="3" />
+            <body name="rf03" pos="-0.141184787371302 1.3877787807814501e-16 0.10523673799764099" quat="1 0 0 0">
+              <inertial pos="-0.057738629277121901 0.0143396954472072 0.0011459446752911601" quat="0.4950143437718561 0.50493643110803554 0.50493643110803554 0.4950143437718561" mass="0.028544290637595698" diaginertia="4.6646482827033197e-05 4.5969935504454108e-05 1.0068723569211358e-06" />
+              <joint name="rf03" pos="0 0 0" axis="0 -1 0" armature="0.0001" damping="0.01" solreflimit="0.0004 1" solimplimit="0.999 0.9999 0.001 0.5 2" limited="false" />
+              <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.866667 0.909804 1 1" mesh="rf03" />
+              <geom pos="0 0 0" quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" rgba="0.866667 0.909804 1 1" mesh="rf03" contype="1" conaffinity="0" group="3" />
+              <site name="right_rear_pin2" pos="-0.11547725855424745 -0.0068999999995903172 0.0022918893505928378" size="0.004" rgba="1 0 1 1" />
+              <body name="rf05" pos="-0.11547725855424745 -0.0068999999995903172 0.0022918893505928378" quat="1 0 0 0">
+                <inertial pos="0 0.0165372140824291 -1.4710455076283299e-14" quat="0.70710678118654802 0.70710678118654802 0 0" mass="0.00074510723761516198" diaginertia="7.2323675950001401e-08 7.2323675950001401e-08 3.7852951708333298e-09" />
+                <geom quat="0.50000000000000333 0.5 -0.5 0.49999999999999661" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="1 1 1 1" mesh="rf05" pos="0 0 0" />
+                <geom quat="0.50000000000000333 0.5 -0.5 0.49999999999999661" type="mesh" rgba="1 1 1 1" mesh="rf05" pos="0 0 0" contype="1" conaffinity="0" group="3" />
+              </body>
+            </body>
+            <site name="right_rear_pin1" pos="-0.096210196936068651 4.0981107396476091e-13 0.058308215591998031" size="0.004" rgba="1 0 1 1" />
+            <body name="rf04" pos="-0.096210196936068651 4.0981107396476091e-13 0.058308215591998031" quat="1 0 0 0">
+              <inertial pos="0 0.013737214082429 -6.17006445935431e-14" quat="0.70710678118654802 0.70710678118654802 0 0" mass="0.00074510723761516198" diaginertia="7.2323675950001401e-08 7.2323675950001401e-08 3.7852951708333397e-09" />
+              <geom quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="1 1 1 1" mesh="rf04" pos="0 0 0" />
+              <geom quat="0.50000000000000078 0.50000000000000255 0.49999999999999739 -0.49999999999999922" type="mesh" rgba="1 1 1 1" mesh="rf04" pos="0 0 0" contype="1" conaffinity="0" group="3" />
+            </body>
+          </body>
+        </body>
+      </body>
+      <body name="imu-link" pos="0.0052287973653041197 0.0085535278074815296 -0.081144145395770001" quat="1 0 0 0">
+        <inertial pos="0.00068301951548040097 -9.4010276255220999e-05 0.00497698966933806" quat="0.48473371461416481 0.53093012411876361 -0.46937356409062603 0.51267424994088928" mass="0.0030375164281864499" diaginertia="2.3153737225754049e-07 1.4547978451572328e-07 1.2169280919507595e-07" />
+        <geom quat="0.70710678118654624 0 0 -0.70710678118654879" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="1 1 1 1" mesh="imu-link" pos="0 0 0" />
+        <geom quat="0.70710678118654624 0 0 -0.70710678118654879" type="mesh" rgba="1 1 1 1" mesh="imu-link" pos="0 0 0" contype="1" conaffinity="0" group="3" />
+        <site name="imu" pos="0 0 0" size="0.002" rgba="0.2 0.8 1 0.55" group="4" />
+      </body>
+    </body>
+  </worldbody>
+  <equality>
+    <connect name="lf_loop1" body1="lf02" body2="lf0" anchor="-0.096210196936067763 -1.6653345369377348e-16 0.058308215591936177" solref="0.0004 1" solimp="0.999 0.9999 0.001 0.5 2" />
+    <connect name="lf_loop2" body1="lf03" body2="lf1" anchor="-0.11547725855424865 0.0069000000000003503 0.002291889350573964" solref="0.0004 1" solimp="0.999 0.9999 0.001 0.5 2" />
+    <connect name="rf_loop1" body1="rf02" body2="rf0" anchor="-0.096210196936068651 4.0981107396476091e-13 0.058308215591998031" solref="0.0004 1" solimp="0.999 0.9999 0.001 0.5 2" />
+    <connect name="rf_loop2" body1="rf03" body2="rf1" anchor="-0.11547725855424745 -0.0068999999995903172 0.0022918893505928378" solref="0.0004 1" solimp="0.999 0.9999 0.001 0.5 2" />
+    <connect name="left_spring_loop" site1="left_spring_tip" site2="left_gas_spring_lower" solref="0.0004 1" solimp="0.999 0.9999 0.001 0.5 2" />
+    <connect name="right_spring_loop" site1="right_spring_tip" site2="right_gas_spring_lower" solref="0.0004 1" solimp="0.999 0.9999 0.001 0.5 2" />
+  </equality>
+  <actuator>
+    <motor name="lf0_motor" joint="lf0" gear="1" ctrllimited="true" ctrlrange="-40 40" forcelimited="true" forcerange="-40 40" />
+    <motor name="lf00_motor" joint="lf00" gear="1" ctrllimited="true" ctrlrange="-40 40" forcelimited="true" forcerange="-40 40" />
+    <motor name="lfwheel_motor" joint="lfwheel" gear="1" ctrllimited="true" ctrlrange="-3.9 3.9" forcelimited="true" forcerange="-3.9 3.9" />
+    <motor name="rf0_motor" joint="rf0" gear="1" ctrllimited="true" ctrlrange="-40 40" forcelimited="true" forcerange="-40 40" />
+    <motor name="rf00_motor" joint="rf00" gear="1" ctrllimited="true" ctrlrange="-40 40" forcelimited="true" forcerange="-40 40" />
+    <motor name="rfwheel_motor" joint="rfwheel" gear="1" ctrllimited="true" ctrlrange="-3.9 3.9" forcelimited="true" forcerange="-3.9 3.9" />
+    <motor name="left_gas_spring_motor" joint="left_spring2_joint" gear="1" ctrllimited="true" ctrlrange="0 400" forcelimited="true" forcerange="0 400" />
+    <motor name="right_gas_spring_motor" joint="right_spring2_joint" gear="1" ctrllimited="true" ctrlrange="0 400" forcelimited="true" forcerange="0 400" />
+  </actuator>
+  <custom>
+    <numeric name="gas_spring_nominal_force" data="400 400" />
+    <numeric name="drive_output_torque_limit" data="40.0 40.0 3.9 40.0 40.0 3.9" />
+    <numeric name="drive_rated_output_speed" data="16.8 16.8 58.4 16.8 16.8 58.4" />
+    <numeric name="wheel_motor_reduction" data="15.7 15.7" />
+  </custom>
+  <sensor>
+    <gyro name="imu_gyro" site="imu" />
+    <accelerometer name="imu_accel" site="imu" />
+    <framequat name="imu_quat" objtype="site" objname="imu" />
+  </sensor>
+</mujoco>

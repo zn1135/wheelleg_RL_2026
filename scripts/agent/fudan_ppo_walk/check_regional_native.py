@@ -12,8 +12,8 @@ import torch
 
 from sim2sim.rmuc2027_arena import (ArenaPlayback, REGIONAL_CHECKPOINT,
     build_regional_model, ground_height, regional_metadata)
-from ct_mjlab.envs.fudan_ppo_walk.terrain import height_map
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, section_dict
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.terrain import height_map
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, section_dict
 from ct_mjlab.fudan_ppo_walk.policy import load_policy
 
 

@@ -4,7 +4,7 @@
 
 - 训练仓：`https://github.com/zn1135/wheelleg_RL_2026.git`，分支`26_wheelleg`，HEAD `39587f355207979c4e464892954b819b2b18bc42`；实际差异及新增启动器快照/hash见实验目录。
 - 机器人/任务：本机实体闭链轮腿`fudan_ppo_walk`，沿用`fudan-ppo-walk-physical-v1`、history v3及[双延迟合同](20261114-fudan-pd200-delay-continuation.md)。源PT SHA256 `dfb221c09648d278d5c5e5c7b78e4d729b7a7a5a56458762b7313dc50831c4f8`。
-- 权威实现：`envs/fudan_ppo_walk/fudan_ppo_walk.py::randomize`及配置`domain_rand.ground_friction_range`；本次启动器`scripts/agent/fudan_ppo_walk/resume_pd200_random_from3000.py`冻结源有效配置，仅覆盖用户所选范围。
+- 权威实现：`envs/chuanliantui/fudan_ppo_walk/fudan_ppo_walk.py::randomize`及配置`domain_rand.ground_friction_range`；本次启动器`scripts/agent/fudan_ppo_walk/resume_pd200_random_from3000.py`冻结源有效配置，仅覆盖用户所选范围。
 
 ## 定义与兼容
 

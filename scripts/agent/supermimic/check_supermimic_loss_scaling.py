@@ -15,7 +15,7 @@ from scripts.agent.supermimic.check_supermimic_bptt import fixture, synthetic_bu
 from ct_mjlab.supermimic.learner import Learner, ALGORITHM_CONTRACT, WORLD_LOSS_RECIPE
 from ct_mjlab.supermimic.networks import WorldModel
 from ct_mjlab.supermimic.state import PHYS_DIM, NOISE, physical_delta, integrate_physical
-from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
 
 V11='chuanliantui-supermimic-canonical-physics-fixed-support-scale-robust-wheel-angle-v11'
 

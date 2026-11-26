@@ -7,7 +7,7 @@ from pathlib import Path
 
 import torch
 
-from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg, recipe_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg, recipe_record
 from scripts.agent.fudan_ppo_step.remote_training import same_state
 
 ROOT = Path(__file__).resolve().parents[3]

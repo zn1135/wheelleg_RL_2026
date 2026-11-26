@@ -13,7 +13,7 @@ from scipy.spatial.transform import Rotation
 import torch
 
 from ct_mjlab.envs.chuanliantui.model import ACTUATED_JOINTS,_SIDES,closed_chain_residual
-from ct_mjlab.envs.fudan_ppo_walk.reset_geometry import ResetGeometry,mesh_vertices
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.reset_geometry import ResetGeometry,mesh_vertices
 
 ORDER=('lf','lr','lw','rf','rr','rw')
 
@@ -106,10 +106,10 @@ def prepare(experiment,out):
 
 
 def run(out):
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig
-    from ct_mjlab.envs.fudan_ppo_walk import height_reward
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import DisturbanceConfig
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import height_reward
     torch.set_num_threads(1)
     with np.load(out/'inputs.npz') as f:a={k:f[k].copy() for k in f.files}
     cfg=FudanWalkCfg();cfg.control.leg_stiffness=60.;cfg.control.leg_damping=2.;cfg.control.wheel_stiffness=.1

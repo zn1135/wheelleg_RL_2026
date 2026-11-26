@@ -1,8 +1,8 @@
 """Load the frozen physical policy for GPU evaluation and ONNX export."""
 import torch
 from .contract import CONTRACT, RESET_CONTRACT, RESET_V2_CONTRACT, LEGACY_RESET_CONTRACT, make_network, validate_network_contract
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record
-from ct_mjlab.envs.fudan_ppo_walk import posture_reward
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import posture_reward
 
 def load_policy(path, device='cpu'):
     checkpoint = torch.load(path, map_location=device, weights_only=False)

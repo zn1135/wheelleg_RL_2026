@@ -11,9 +11,9 @@ from unittest.mock import patch
 import numpy as np
 import mujoco
 import torch
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig,DisturbanceState,from_task_config,from_record
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import PhysicalAction,PhysicalActionCfg,sample_substep,make_env_cfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import DisturbanceConfig,DisturbanceState,from_task_config,from_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import PhysicalAction,PhysicalActionCfg,sample_substep,make_env_cfg
 from ct_mjlab.fudan_ppo_walk.contract import RESET_CONTRACT
 from ct_mjlab.fudan_ppo_walk.measurement import configure_samples
 from ct_mjlab.scripts import train as cli
@@ -146,10 +146,10 @@ def main():
 
         # 入口读取代码配置，并拒绝不同条件的预检；配置变更记录到恢复报告。
         proof=directory/'proof.json';parent=directory/'parent.pt'
-        proof.write_text(json.dumps(dict(passed=True,reset_contract=RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000,command_sampling=__import__('ct_mjlab.envs.fudan_ppo_walk.commands',fromlist=['command_config']).command_config())))
+        proof.write_text(json.dumps(dict(passed=True,reset_contract=RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000,command_sampling=__import__('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands',fromlist=['command_config']).command_config())))
         torch.save({},parent)
         argv=['--task','fudan_ppo_walk','--num-envs','4','--iterations','1','--precheck',str(proof),'--log-dir',str(directory/'run')]
-        with patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=forbidden),patch.object(domain,'randomize_action_delay',True):
+        with patch('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=forbidden),patch.object(domain,'randomize_action_delay',True):
             try:cli.main(argv)
             except ValueError as exc:rejected='precheck' in str(exc)
             else:rejected=False
@@ -161,7 +161,7 @@ def main():
             def __init__(self,env,**kw):pass
             def load(self,path,**kw):entered.update(kw);return {}
             def learn_until(self,*a,**kw):return {}
-        with patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',return_value=SimpleNamespace(close=lambda:None)),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner',EntryRunner),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.snapshot'),patch.object(domain,'randomize_action_delay',True),redirect_stdout(io.StringIO()):
+        with patch('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',return_value=SimpleNamespace(close=lambda:None)),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner',EntryRunner),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.snapshot'),patch.object(domain,'randomize_action_delay',True),redirect_stdout(io.StringIO()):
             cli.main(argv+['--resume',str(parent)])
         verify('code_config_resume_condition_change_recorded',entered=={'allow_disturbance_change':True})
 

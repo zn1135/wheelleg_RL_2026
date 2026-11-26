@@ -50,7 +50,7 @@ def worker(out, iteration, arm, stage, recovery=False):
     # 每组单独进程，严格执行各自已校验的训练源码，不混用旧/新模块缓存。
     assert not any(k == 'ct_mjlab' or k.startswith('ct_mjlab.') for k in sys.modules)
     sys.meta_path.insert(0, frozen.FrozenTrainingSource())
-    from ct_mjlab.envs.fudan_ppo_walk import fudan_ppo_walk as physical
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import fudan_ppo_walk as physical
     from ct_mjlab.fudan_ppo_walk import policy as loading
     original, load = physical.make_env_cfg, loading.load_policy
     networks = []

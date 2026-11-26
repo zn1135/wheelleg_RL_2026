@@ -2,10 +2,10 @@
 from types import SimpleNamespace, MethodType
 import numpy as np
 import torch
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv,PhysicalAction,reset_pose
-from ct_mjlab.envs.fudan_ppo_walk.reset_geometry import ResetGeometry
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv,PhysicalAction,reset_pose
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.reset_geometry import ResetGeometry
 from ct_mjlab.fudan_ppo_walk.contract import MOTORS,RESET_V2_CONTRACT
-from ct_mjlab.envs.fudan_ppo_walk.commands import initialize,LEGACY_COMMAND_SAMPLING
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands import initialize,LEGACY_COMMAND_SAMPLING
 
 
 class ModelFacade:
@@ -19,10 +19,10 @@ def fixture(n=4,reset_contract=RESET_V2_CONTRACT):
     solver=ResetGeometry();model=solver.model
     pose=solver.solve([solver.baseline[name] for name in MOTORS])
     env=object.__new__(FudanEnv)
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, policy_dt, episode_steps
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, policy_dt, episode_steps
     env.cfg=FudanWalkCfg()
     # 历史检查夹具继续使用原16项奖励；新奖励检查再显式启用拆分配方。
-    from ct_mjlab.envs.fudan_ppo_walk import posture_reward
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import posture_reward
     env.posture_reward_profile=posture_reward.configure(env.cfg,None)
     env.dt=policy_dt(env.cfg)
     env.max_episode_length=episode_steps(env.cfg)
@@ -63,7 +63,7 @@ def fixture(n=4,reset_contract=RESET_V2_CONTRACT):
     robot=SimpleNamespace(data=data,joint_names=names,body_names=[model.body(i).name for i in range(1,model.nbody)],
         indexing=SimpleNamespace(joint_q_adr=joint_q,body_ids=torch.arange(1,model.nbody)),
         write_root_state_to_sim=write_root,write_joint_state_to_sim=write_joints)
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import DisturbanceConfig
     action.cfg=SimpleNamespace(task_cfg=env.cfg,disturbances=DisturbanceConfig())
     action._entity=robot;action._raw_actions=action.raw_action
     action.rebuild_reset_poses=MethodType(PhysicalAction.rebuild_reset_poses,action)
@@ -104,7 +104,7 @@ class Scene(dict):
 
 def runner_configuration(runner):
     """给object.__new__构造的检查夹具补齐生产runner配置，不执行优化器。"""
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, FudanWalkCfgPPO, section_dict
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, FudanWalkCfgPPO, section_dict
     runner.train_cfg = FudanWalkCfgPPO()
     runner.ppo_config = section_dict(runner.train_cfg.algorithm)
     runner.num_steps_per_env = runner.train_cfg.runner.num_steps_per_env

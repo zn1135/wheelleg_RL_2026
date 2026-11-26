@@ -9,9 +9,9 @@ from unittest.mock import patch
 
 import torch
 
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config,from_sim2sim_config,from_record
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import make_env_cfg,sample_substep
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_task_config,from_sim2sim_config,from_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import make_env_cfg,sample_substep
 from ct_mjlab.fudan_ppo_walk.contract import RESET_V2_CONTRACT
 from ct_mjlab.fudan_ppo_walk.selected_policy import selection_record,policy_inputs
 from .check_disturbances import control_fixture
@@ -80,7 +80,7 @@ def main():
             arguments=SimpleNamespace(checkpoint=Path(selected['checkpoint']),selection=selected_recipe,diagnostic=True,
                 diagnostic_height=None,output=output,batch_size=512,deadline=float('inf'))
             metadata=dict(reset_contract=RESET_V2_CONTRACT,disturbances=training.record())
-            with patch.object(evaluate,'load_policy',return_value=(None,metadata)),patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=factory):
+            with patch.object(evaluate,'load_policy',return_value=(None,metadata)),patch('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=factory):
                 try:evaluate.gpu(arguments)
                 except BeforePhysics:pass
             mode='selected' if selected_recipe else 'explicit'

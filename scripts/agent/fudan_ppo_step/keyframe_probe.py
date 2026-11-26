@@ -12,9 +12,9 @@ import numpy as np
 import torch
 from scipy.optimize import least_squares
 
-from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg, SOURCE, SOURCE_SHA, recipe_record
-from ct_mjlab.envs.fudan_ppo_step.env import StepEnv
-from ct_mjlab.envs.fudan_ppo_step.runner import validate_source
+from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg, SOURCE, SOURCE_SHA, recipe_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_step.runner import validate_source
 from ct_mjlab.fudan_ppo_walk.policy import load_policy
 from ct_mjlab.envs.chuanliantui.model import load_model, solve_standing_joint_positions, closed_chain_residual
 from .diagnose_reverse import summarize, sha, write

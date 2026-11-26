@@ -45,12 +45,21 @@ def training_viewer(env, port):
 
 
 def train(args):
+    if args.task == "2027_wheelleg_walk":
+        from importlib import import_module
+        return import_module("ct_mjlab.envs.2027_wheelleg.train").train(args)
     if getattr(args, 'critic_height_scan', False) and args.task != 'fudan_ppo_walk':
         raise ValueError('--critic-height-scan applies only to fudan_ppo_walk')
     if getattr(args, 'terrain', None) is not None and args.task != 'fudan_ppo_walk':
         raise ValueError('--terrain applies only to fudan_ppo_walk')
+    jump_flags = ('jump_landing', 'jump_stop_sink', 'jump_preload', 'jump_peak', 'jump_peak_additive')
+    if any(getattr(args, name, False) for name in jump_flags) and args.task != 'fudan_ppo_jump':
+        raise ValueError('Jump reward flags require fudan_ppo_jump')
+    if args.task == 'fudan_ppo_jump':
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_jump.train import train as train_jump
+        return train_jump(args)
     if args.task == 'fudan_ppo_step':
-        from ct_mjlab.envs.fudan_ppo_step.train import train as train_step
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_step.train import train as train_step
         return train_step(args)
     if args.task == "fudan_ppo_walk":
         return train_fudan(args)
@@ -117,8 +126,8 @@ def train_fudan(args):
     import time
     import torch
     from ct_mjlab.fudan_ppo_walk.contract import RESET_CONTRACT, RESET_V2_CONTRACT
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config, from_record
-    from ct_mjlab.envs.fudan_ppo_walk.commands import command_config, LEGACY_COMMAND_SAMPLING
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_task_config, from_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands import command_config, LEGACY_COMMAND_SAMPLING
     from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import snapshot
     if args.smp_weight is not None or any(getattr(args, name, None) for name in ('smp_prior', 'bc_init', 'ppo_init', 'phase_mix', 'wheel_std', 'bc_finetune', 'viewer')):
         raise ValueError('SMP/BC options and the generic viewer do not apply to Fudan training')
@@ -139,10 +148,10 @@ def train_fudan(args):
     if args.seed is not None:
         train_cfg.seed = args.seed
     env_cfg.reset_contract = target_reset
-    from ct_mjlab.envs.fudan_ppo_walk.terrain import record as terrain_record, PLANE
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.terrain import record as terrain_record, PLANE
     if getattr(args, 'terrain', None) is not None:
         env_cfg.terrain.mode = args.terrain
-    from ct_mjlab.envs.fudan_ppo_walk.terrain import critic_record, LEGACY_CRITIC
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.terrain import critic_record, LEGACY_CRITIC
     if getattr(args, 'critic_height_scan', False):
         env_cfg.observations.critic_height_scan = True
     disturbances = from_task_config(env_cfg)
@@ -157,14 +166,14 @@ def train_fudan(args):
         raise ValueError('Physical precheck disturbance settings differ from the requested training settings')
     if proof.get('command_sampling', LEGACY_COMMAND_SAMPLING) != command_config(env_cfg):
         raise ValueError('Physical precheck command sampling differs from the requested training settings')
-    from ct_mjlab.envs.fudan_ppo_walk import posture_reward
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import posture_reward
     if posture_reward.from_record(proof.get('posture_reward')) != posture_reward.from_task_config(env_cfg):
         raise ValueError('Physical precheck posture reward differs from the requested training settings')
-    from ct_mjlab.envs.fudan_ppo_walk import height_reward
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import height_reward
     if height_reward.from_record(proof.get('height_reward')) != height_reward.from_task_config(env_cfg):
         raise ValueError('Physical precheck height reward differs from the requested training settings')
-    from ct_mjlab.envs.fudan_ppo_walk.wheel_motor import response_record,configure_response
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, timing_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.wheel_motor import response_record,configure_response
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, timing_record
     legacy_timing=dict(physics_dt=.002,pd_dt=.002,policy_dt=.01)
     if proof.get('control_timing',legacy_timing)!=timing_record(env_cfg):
         raise ValueError('Physical precheck PD/physics/policy timing differs from training')
@@ -238,6 +247,11 @@ def main(argv=None):
                                       help='Fudan walk: replace77 repeated heights with privileged terrain rays')),
         (('--preserve-history-v2',), dict(action='store_true')),
         (('--migrate-history-v2',), dict(action='store_true')),
+        (('--jump-peak',), dict(action='store_true', help='Train for maximum simultaneous wheel clearance')),
+        (('--jump-peak-additive',), dict(action='store_true', help='Add Jump wheel peak reward while retaining flight height')),
+        (('--jump-preload',), dict(action='store_true', help='Prepare support before Jump touchdown')),
+        (('--jump-stop-sink',), dict(action='store_true', help='Train Jump to stop sinking after both wheels load')),
+        (('--jump-landing',), dict(action='store_true', help='Use phase rewards for Jump landing')),
         (('--iterations',), dict(type=int, default=None, help='Override max_iterations')),
         (('--run-name',), dict(default='')),
         (('--viewer',), dict(choices=('viser',), default=None,
@@ -255,7 +269,7 @@ def main(argv=None):
         (('--bc-finetune',), dict(nargs='?', const='v1', default=False, choices=('v1', 'v2', 'isaac-standup', 'isaac-standup-v2', 'isaac-standup-v3'),
                                 help='Nominal BC refinement; isaac-standup uses Isaac pre-unlock task rewards')),
     ))
-    if args.task in ('fudan_ppo_walk', 'fudan_ppo_step'):
+    if args.task in ('fudan_ppo_walk', 'fudan_ppo_step', 'fudan_ppo_jump', '2027_wheelleg_walk'):
         if args.preserve_history_v2 and args.migrate_history_v2:
             raise SystemExit(2)
         return train(args)

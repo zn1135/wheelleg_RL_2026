@@ -10,8 +10,8 @@ from unittest.mock import patch
 
 import torch
 
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_sim2sim_config
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_sim2sim_config
 from scripts.agent.fudan_ppo_walk import evaluate
 from scripts.agent.real2sim.probe_video_leg_parameters import items,report
 

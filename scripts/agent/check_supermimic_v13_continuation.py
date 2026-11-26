@@ -14,8 +14,8 @@ os.environ['CUDA_VISIBLE_DEVICES'] = ''
 import torch
 from ct_mjlab.supermimic import learner as module
 from ct_mjlab.supermimic.learner import Learner
-from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
-from ct_mjlab.envs.chuanliantui_split.runner import contracts, validate
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.runner import contracts, validate
 
 ROOT = Path(__file__).resolve().parents[2]
 ART = ROOT/'artifacts/supermimic/supermimic-v13-continuation-20261101-r1'

@@ -11,8 +11,8 @@ from unittest.mock import patch
 
 import numpy as np
 import torch
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_sim2sim_config
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_sim2sim_config
 from scripts.agent.fudan_ppo_walk import evaluate
 from scripts.agent.fudan_ppo_walk.diagnose_parking_posture import parking_items
 from scripts.agent.real2sim.replay_usb_pd_targets import sha,write

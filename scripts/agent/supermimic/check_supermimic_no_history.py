@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import torch
-from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
 from ct_mjlab.supermimic.learner import Learner,ALGORITHM_CONTRACT,WORLD_LOSS_RECIPE,ALTERNATING_RECIPE
 from ct_mjlab.supermimic.motion import WORLD_INPUT_DIM
 from ct_mjlab.supermimic.state import NOISE,ACTION_LAGS

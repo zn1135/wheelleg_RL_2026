@@ -86,9 +86,9 @@ def main():
     assert not any(n=='ct_mjlab' or n.startswith('ct_mjlab.') for n in sys.modules)
     sys.meta_path.insert(0,frozen.FrozenTrainingSource())
     from mjlab.managers.event_manager import RecomputeLevel
-    from ct_mjlab.envs.fudan_ppo_walk import fudan_ppo_walk as physical
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record,SENSOR_SLOTS
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import fudan_ppo_walk as physical
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_record,SENSOR_SLOTS
     from ct_mjlab.fudan_ppo_walk.policy import load_policy
     from ct_mjlab.fudan_ppo_walk.measurement import configure_samples,update_evaluation_commands,gpu_row,FIELDS
     torch.set_num_threads(1);policy,meta=load_policy(study.RUN/'model_final.pt','cuda:0')

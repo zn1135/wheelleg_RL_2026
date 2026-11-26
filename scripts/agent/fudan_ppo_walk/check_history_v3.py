@@ -88,12 +88,12 @@ def main():
                 verify('gpu_selects_checkpoint_'+version,kw['reset_contract']==version)
                 raise ReachedVersionSelection()
             target=directory/('gpu_'+version[-2:])
-            with patch.object(evaluate,'load_policy',return_value=(None,{'reset_contract':version})),patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=selected):
+            with patch.object(evaluate,'load_policy',return_value=(None,{'reset_contract':version})),patch('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=selected):
                 try:evaluate.gpu(SimpleNamespace(checkpoint=Path('unused'),diagnostic=True,diagnostic_height=None,output=target,batch_size=20,deadline=time.time()+60))
                 except ReachedVersionSelection:pass
                 else:raise AssertionError('GPU contract routing did not run')
         for version in (LEGACY_RESET_CONTRACT,'unknown'):
-            with patch.object(evaluate,'load_policy',return_value=(None,{'reset_contract':version})),patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=forbidden):
+            with patch.object(evaluate,'load_policy',return_value=(None,{'reset_contract':version})),patch('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=forbidden):
                 try:evaluate.gpu(SimpleNamespace(checkpoint=Path('unused')))
                 except ValueError:rejected=True
                 else:rejected=False
@@ -101,14 +101,14 @@ def main():
 
         # proof仅存在于临时夹具，env/runner均替代，不能用作真实物理预检证据。
         proof=directory/'fixture-proof.json'
-        proof.write_text(json.dumps(dict(passed=True,reset_contract=RESET_V2_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000,command_sampling=__import__('ct_mjlab.envs.fudan_ppo_walk.commands',fromlist=['command_config']).command_config())))
-        with patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=forbidden):
+        proof.write_text(json.dumps(dict(passed=True,reset_contract=RESET_V2_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000,command_sampling=__import__('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands',fromlist=['command_config']).command_config())))
+        with patch('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=forbidden):
             try:cli.main(['--task','fudan_ppo_walk','--num-envs','4096','--iterations','1','--precheck',str(proof),'--log-dir',str(directory/'reject')])
             except ValueError:rejected=True
             else:rejected=False
         verify('old_precheck_cannot_approve_v3',rejected)
-        proof.write_text(json.dumps(dict(passed=True,reset_contract=RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000,command_sampling=__import__('ct_mjlab.envs.fudan_ppo_walk.commands',fromlist=['command_config']).command_config())))
-        with patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=forbidden):
+        proof.write_text(json.dumps(dict(passed=True,reset_contract=RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000,command_sampling=__import__('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands',fromlist=['command_config']).command_config())))
+        with patch('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=forbidden):
             try:cli.main(['--task','fudan_ppo_walk','--num-envs','4096','--iterations','1','--migrate-history-v2','--precheck',str(proof),'--log-dir',str(directory/'missing_resume')])
             except ValueError:rejected=True
             else:rejected=False
@@ -120,7 +120,7 @@ def main():
                 entered['migration']=migrate_history_v2;self.iteration=7000;return {}
             def learn_until(self,deadline,max_iterations=None):
                 entered.update(deadline=deadline,target=max_iterations);return {}
-        with patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',return_value=SimpleNamespace(close=lambda:None)),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner',EntryRunner),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.snapshot'),patch('torch.load',return_value={}),redirect_stdout(io.StringIO()):
+        with patch('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',return_value=SimpleNamespace(close=lambda:None)),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner',EntryRunner),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.snapshot'),patch('torch.load',return_value={}),redirect_stdout(io.StringIO()):
             cli.main(['--task','fudan_ppo_walk','--num-envs','4096','--iterations','1','--resume','fixture.pt','--migrate-history-v2','--precheck',str(proof),'--log-dir',str(directory/'mock_entry')])
         verify('cli_passes_explicit_migration_and_additional_budget',entered==dict(migration=True,deadline=float('inf'),target=7001))
     result=dict(passed=True,reset_contract=RESET_CONTRACT,checks=checks,count=len(checks),

@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 import torch
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 
 
 def main():

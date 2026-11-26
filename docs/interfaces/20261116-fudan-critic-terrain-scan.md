@@ -6,7 +6,7 @@
 | 机器人／任务 | 当前串联腿模型，`fudan_ppo_walk`，训练侧专有地形输入 |
 | 旧／新输入标识 | `fudan-critic-repeated-height-v1` → `fudan-critic-yaw-height-grid-v1` |
 | 训练仓／分支／基点 | zn1135/wheelleg_RL_2026；`26_wheelleg`；`cf5accb82f54a8607f58207a649ba11c2288077d`加当前工作区；实际Python源码SHA见本次budget与训练快照 |
-| 权威实现 | `envs/fudan_ppo_walk/terrain.py::critic_record/configure/scan_state`、`FudanEnv._update_state/observations`、`FudanRunner.load/checkpoint_metadata`、`scripts/train.py::train_fudan` |
+| 权威实现 | `envs/chuanliantui/fudan_ppo_walk/terrain.py::critic_record/configure/scan_state`、`FudanEnv._update_state/observations`、`FudanRunner.load/checkpoint_metadata`、`scripts/train.py::train_fudan` |
 | 部署端 | 本次不交付模型、不改H7；Actor部署输入保持，板端行为与负责人核对待确认 |
 
 ## 输入含义

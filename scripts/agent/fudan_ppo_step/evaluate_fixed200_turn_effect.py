@@ -45,8 +45,8 @@ def turn_items(*_):
 
 
 def turns(args):
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
     from scripts.agent.fudan_ppo_walk import evaluate
     from scripts.agent.motion.acceptance import canonical
     checkpoint=MODELS[args.model];digest=sha(checkpoint)

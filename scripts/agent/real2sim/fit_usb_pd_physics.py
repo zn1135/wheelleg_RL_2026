@@ -11,10 +11,10 @@ from scipy.spatial.transform import Rotation
 import torch
 from mjlab.managers.event_manager import RecomputeLevel
 
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig
-from ct_mjlab.envs.fudan_ppo_walk import height_reward
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import DisturbanceConfig
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import height_reward
 from ct_mjlab.envs.chuanliantui.model import ACTUATED_JOINTS
 from .replay_usb_pd_targets import sha,write
 

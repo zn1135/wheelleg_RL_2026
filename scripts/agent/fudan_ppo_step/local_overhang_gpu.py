@@ -10,9 +10,9 @@ import numpy as np
 import torch
 from .local_overhang import Hulls,MOTORS,CAPS,ROOT
 from .diagnose_reverse import write,sha
-from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg,SOURCE,SOURCE_SHA,recipe_record
-from ct_mjlab.envs.fudan_ppo_step.env import StepEnv
-from ct_mjlab.envs.fudan_ppo_step.runner import validate_source
+from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg,SOURCE,SOURCE_SHA,recipe_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_step.runner import validate_source
 from ct_mjlab.fudan_ppo_walk.policy import load_policy
 
 

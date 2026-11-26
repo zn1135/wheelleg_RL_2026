@@ -12,7 +12,7 @@ import numpy as np
 import torch
 from mjlab.managers.event_manager import RecomputeLevel
 
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
 from scripts.agent.fudan_ppo_walk import evaluate
 from scripts.agent.fudan_ppo_walk.diagnose_parking_posture import parking_items
 from .probe_video_leg_parameters import items as hold_items

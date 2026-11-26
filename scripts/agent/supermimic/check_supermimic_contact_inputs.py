@@ -17,7 +17,7 @@ from ct_mjlab.supermimic.learner import ALGORITHM_CONTRACT, Learner, asset_diges
 from ct_mjlab.supermimic.networks import (WorldModel, Critic, act, contact_parameters,
     normalize_contact_inputs)
 from ct_mjlab.supermimic.state import PHYS_DIM, STATE_DIM, PARAM_DIM, SOLREF, NOISE
-from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
 
 V9='chuanliantui-supermimic-canonical-physics-path-derived-observation-reward-termination-v9'
 V10='chuanliantui-supermimic-canonical-physics-contact-kb-fixed-scale-nominal-mix-v10'

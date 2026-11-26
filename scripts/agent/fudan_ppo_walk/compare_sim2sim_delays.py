@@ -20,7 +20,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 import torch
 
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_sim2sim_config
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_sim2sim_config
 from ct_mjlab.fudan_ppo_walk.selected_policy import selection_record,reference_starts,policy_inputs
 from .diagnose_parking_integral import restore_initial
 
@@ -108,7 +108,7 @@ def guard(root,replay=False):
 
 
 def replay(root):
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
     from ct_mjlab.fudan_ppo_walk.policy import load_policy
     from ct_mjlab.fudan_ppo_walk.measurement import gpu_row,arrays,update_evaluation_commands
     from .evaluate import command

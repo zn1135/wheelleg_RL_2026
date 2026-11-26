@@ -93,8 +93,8 @@ class RunningNorm(nn.Module):
 def make_actor(device):
     # Reuse the current deployable 125 -> estimator3 + actor25 -> action6 network.
     from tensordict import TensorDict
-    from ct_mjlab.envs.chuanliantui_split.env_cfg import make_ppo_cfg
-    from ct_mjlab.envs.chuanliantui_split.network import HistoryActor
+    from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import make_ppo_cfg
+    from ct_mjlab.envs.chuanliantui.chuanliantui_split.network import HistoryActor
     cfg = make_ppo_cfg('walk').actor
     dummy = TensorDict(dict(actor=torch.zeros(1,25), history=torch.zeros(1,125)), batch_size=[1])
     actor = HistoryActor(dummy, {'actor':['actor']}, 'actor', 6,

@@ -10,10 +10,10 @@ import mujoco
 import numpy as np
 import torch
 from mjlab.managers.event_manager import RecomputeLevel
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig
-from ct_mjlab.envs.fudan_ppo_walk import height_reward
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import DisturbanceConfig
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import height_reward
 from .replay_usb_pd_targets import PoseSolver,sha,write
 from .validate_usb_physics import FIELDS
 

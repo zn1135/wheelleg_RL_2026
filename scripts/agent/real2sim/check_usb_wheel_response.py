@@ -8,9 +8,9 @@ import time
 import numpy as np
 import torch
 from mjlab.managers.event_manager import RecomputeLevel
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import DisturbanceConfig
 from ct_mjlab.envs.chuanliantui.huananhu_action import HuananhuPdAction
 from .replay_usb_pd_targets import sha,write
 from .check_usb_pd_short_windows import gravity

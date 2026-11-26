@@ -62,7 +62,7 @@ def fixture(n=20, device='cpu'):
 
 
 def command_fixture():
-    from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
+    from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
     state = copy.deepcopy(torch.load(WORLD, map_location='cpu', weights_only=False, mmap=True)['curriculum'])
     return SimpleNamespace(cfg=command_cfg('walk'), checkpoint_state=lambda:copy.deepcopy(state),
         load_checkpoint_state=lambda value:state.update(value))

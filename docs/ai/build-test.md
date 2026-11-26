@@ -329,3 +329,9 @@ mjlab_training/.venv/bin/python -m scripts.agent.maintenance.check_script_entrie
 
 复旦结构整理正式入口：`PYTHONPATH=mjlab_training/src mjlab_training/.venv/bin/python -m scripts.agent.fudan_ppo_walk.check_structure_suite --output <新检查目录>`。外层禁止真实物理环境构造、积分及Adam更新；覆盖注册链路、配置消费者、迁移前后逐值比较、冻结8000模型、PPO梯度/顺序、两优化器恢复、v2/v3/预算/日志、积分r2及GPU入口。源迁移用明确哈希链核对，不能关闭来源校验；[说明与证据](../maintenance/20261103-fudan-structure-alignment.md)。
 复旦当前选用8000-v2＋停车+2°：`scripts.agent.fudan_ppo_walk.check_selected_policy --output <新JSON>`核对47工况时序、与已执行探针逐值一致、默认/显式模型路由与哈希/积分条件拒绝，0物理/NN/更新。默认GPU评估省略`--checkpoint`才应用选用配方；[接口记录](../interfaces/20261103-fudan-selected-pitch2.md)。
+
+## 2027 机器人移植检查
+
+`PYTHONPATH=mjlab_training/src:. mjlab_training/.venv/bin/python -m scripts.agent.wheelleg_2027.check_migration --output <新JSON>` 核对53个环境文件迁移、函数体等价、旧导入身份和旧行走模型加载。
+
+`PYTHONPATH=mjlab_training/src:. MUJOCO_GL=egl mjlab_training/.venv/bin/python -m scripts.agent.wheelleg_2027.check --output <新目录>` 用真实注册入口创建20个GPU环境，执行至少200策略步、检查闭链/气弹簧/有限状态和网络参数序列化，0优化器更新。`--viewer viser --steps 2000 --port 8097` 可视检查。参数和训练/TensorBoard命令见 [2027训练说明](../mjlab-2027-wheelleg.md)。

@@ -10,7 +10,7 @@ import numpy as np
 import torch
 
 from ct_mjlab.envs.chuanliantui.model import MODEL_XML,load_model
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 from ct_mjlab.fudan_ppo_walk.contract import RESET_V2_CONTRACT
 from ct_mjlab.fudan_ppo_walk.measurement import configure_samples
 from scripts.agent.fudan_ppo_walk.evaluate import evaluation_items

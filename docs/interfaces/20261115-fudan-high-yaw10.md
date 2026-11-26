@@ -4,9 +4,9 @@
 
 ## 实现与实际行为
 
-- `envs/fudan_ppo_walk/fudan_ppo_walk_config.py::FudanWalkCfg.commands.yaw_range`：原−2～2改为−10～10rad/s，仍均匀采样。
-- `envs/fudan_ppo_walk/commands.py::HIGH_YAW_ZERO_VX_ABOVE`：阈值2rad/s；`command_config`在yaw范围超出旧±2时记录`fudan-high-yaw-parking-commands-v2`、实际yaw范围及`zero_vx_above_yaw=2`。
-- `envs/fudan_ppo_walk/fudan_ppo_walk.py::FudanEnv.resample`：抽取vx/yaw/高度后，将绝对yaw严格大于2的环境vx指令置0，再执行原静止/停车计划。恰好±2仍允许vx；停车计划仍覆盖为原线速度行驶或零速。
+- `envs/chuanliantui/fudan_ppo_walk/fudan_ppo_walk_config.py::FudanWalkCfg.commands.yaw_range`：原−2～2改为−10～10rad/s，仍均匀采样。
+- `envs/chuanliantui/fudan_ppo_walk/commands.py::HIGH_YAW_ZERO_VX_ABOVE`：阈值2rad/s；`command_config`在yaw范围超出旧±2时记录`fudan-high-yaw-parking-commands-v2`、实际yaw范围及`zero_vx_above_yaw=2`。
+- `envs/chuanliantui/fudan_ppo_walk/fudan_ppo_walk.py::FudanEnv.resample`：抽取vx/yaw/高度后，将绝对yaw严格大于2的环境vx指令置0，再执行原静止/停车计划。恰好±2仍允许vx；停车计划仍覆盖为原线速度行驶或零速。
 
 普通行走80%、原地保持10%、行驶后停车10%保持。普通环境每5秒重抽指令；普通采样中80%的yaw落在绝对值大于2的区间，因此一次采样快照中理论约64%环境高速原地转、16%低速行驶转弯、其余20%执行原静止/停车计划，不是64%完整回合始终高速转。
 

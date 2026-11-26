@@ -26,10 +26,10 @@ def write(path,value):Path(path).write_text(json.dumps(value,indent=2)+'\n')
 
 def prepare(output):
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config
-    from ct_mjlab.envs.fudan_ppo_walk.commands import command_config
-    from ct_mjlab.envs.fudan_ppo_walk import posture_reward
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_task_config
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands import command_config
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import posture_reward
     assert sha(MODEL)==MODEL_SHA and sha(XML)==XML_SHA and not LOG.exists()
     parent=torch.load(MODEL,map_location='cpu',weights_only=False)
     assert parent['iterations']==13679 and parent['primary_updates']==parent['encoder_updates']==273580
@@ -55,8 +55,8 @@ def prepare(output):
 
 def worker(output,stage):
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
     assert sha(MODEL)==MODEL_SHA and sha(XML)==XML_SHA
     budget=json.loads((output/'budget.json').read_text());torch.set_num_threads(1)
     original_init=FudanEnv.__init__

@@ -6,8 +6,8 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig, DisturbanceState, from_record, from_task_config
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import DisturbanceConfig, DisturbanceState, from_record, from_task_config
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 from ct_mjlab.fudan_ppo_walk.measurement import configure_samples
 from ct_mjlab.fudan_ppo_walk.protocol import samples
 from .check_disturbances import control_fixture

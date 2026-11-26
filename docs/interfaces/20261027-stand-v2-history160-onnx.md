@@ -10,7 +10,7 @@
 | 新导出标识 | stand-v2-history160-single-input-v1 |
 | 训练仓及版本 | https://github.com/zn1135/wheelleg_RL_2026.git，26_wheelleg，952e4260aedf04e28fdbf366d5cb1c5562c75263＋本轮未提交改动 |
 | 部署侧 | 同仓deployment/H7_RL与deployment/H7_RL_ros；本轮未修改，负责人核对待确认 |
-| 权威实现 | mjlab_training/src/ct_mjlab/envs/chuanliantui_stand_v2/network.py的HistoryPolicy；同目录export.py |
+| 权威实现 | mjlab_training/src/ct_mjlab/envs/chuanliantui/chuanliantui_stand_v2/network.py的HistoryPolicy；同目录export.py |
 
 ## 接口差异
 

@@ -6,12 +6,12 @@ from unittest.mock import patch
 import numpy as np
 import torch
 from mjlab.managers.event_manager import RecomputeLevel
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 from ct_mjlab.fudan_ppo_walk.policy import load_policy
 from ct_mjlab.fudan_ppo_walk.contract import RESET_V2_CONTRACT
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_task_config
 from ct_mjlab.fudan_ppo_walk.measurement import FIELDS,update_evaluation_commands,gpu_row,arrays
-from ct_mjlab.envs.fudan_ppo_walk.parking_integral import ParkingIntegral,feedback_velocity,finite,REASONS
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.parking_integral import ParkingIntegral,feedback_velocity,finite,REASONS
 from .evaluate import command
 
 BRANCHES=('baseline','truth_integral','encoder_integral')

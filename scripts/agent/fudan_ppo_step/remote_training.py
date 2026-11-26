@@ -79,9 +79,9 @@ def verify(args):
 def capacity(args):
     import copy
     import torch
-    from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg,FudanStepCfgPPO,SOURCE
-    from ct_mjlab.envs.fudan_ppo_step.env import StepEnv
-    from ct_mjlab.envs.fudan_ppo_step.runner import StepRunner
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg,FudanStepCfgPPO,SOURCE
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.runner import StepRunner
     from scripts.agent.fudan_ppo_step.check import source_fingerprint
     args.output.mkdir(parents=True,exist_ok=False);env=runner=None
     result=dict(passed=False,optimizer_updates=0,num_envs=args.num_envs)
@@ -153,7 +153,7 @@ def capacity(args):
 
 
 def start(args):
-    from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg,recipe_record,SOURCE,SOURCE_SHA
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg,recipe_record,SOURCE,SOURCE_SHA
     from scripts.agent.fudan_ppo_step.check import source_fingerprint
     from scripts.agent.fudan_ppo_step import launch_training
     cfg=FudanStepCfg();proof=json.loads(args.precheck.read_text());sizing=json.loads(args.capacity.read_text())

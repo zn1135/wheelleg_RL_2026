@@ -23,8 +23,8 @@ LOG=ROOT/'logs/mjlab/fudan_ppo_walk/20261116_scan_slope5to20_mu08_resume5838_to6
 
 def prepare(out):
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-    from ct_mjlab.envs.fudan_ppo_walk.terrain import record,critic_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.terrain import record,critic_record
     assert not LOG.exists() and not out.exists()
     assert sha(SOURCE)==SOURCE_SHA
     source=torch.load(SOURCE,map_location='cpu',weights_only=False)
@@ -55,7 +55,7 @@ def prepare(out):
     changed=[]
     for name,digest in json.loads((SOURCE_RUN/'source_sha256.json').read_text()).items():
         if name.startswith('mjlab_training/src/ct_mjlab/') and sha(ROOT/name)!=digest:changed.append(name)
-    assert changed==['mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py'],changed
+    assert changed==['mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_walk/fudan_ppo_walk_config.py'],changed
     out.mkdir(parents=True)
     budget=dict(authorization='User requested1000 additional training iterations after selecting slopes5-20deg and fixed friction0.8',
         checkpoint=str(SOURCE),checkpoint_sha256=SOURCE_SHA,source_run=str(SOURCE_RUN),
@@ -88,7 +88,7 @@ def prepare(out):
 def worker(out,stage):
     import numpy as np
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk import fudan_ppo_walk as physical
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import fudan_ppo_walk as physical
     old_init=physical.FudanEnv.__init__
     def initialized(env,*args,**kwargs):
         old_init(env,*args,**kwargs)

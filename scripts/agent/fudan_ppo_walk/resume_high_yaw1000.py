@@ -24,8 +24,8 @@ SOURCES={
 
 def prepare(out,start):
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict,timing_record
-    from ct_mjlab.envs.fudan_ppo_walk.commands import command_config
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict,timing_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands import command_config
     run_name,model_name,digest=SOURCES[start]
     source_run=ROOT/'logs/mjlab/fudan_ppo_walk'/run_name
     model=ROOT/'artifacts/fudan_ppo_walk/models'/model_name;assert sha(model)==digest
@@ -67,9 +67,9 @@ def prepare(out,start):
 
 def worker(out,stage):
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict,timing_record
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-    from ct_mjlab.envs.fudan_ppo_walk.commands import command_config
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict,timing_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands import command_config
     from scripts.agent.fudan_ppo_walk.check_ground_friction import material_record
     budget=json.loads((out/'budget.json').read_text());model=Path(budget['checkpoint']);log=Path(budget['log_dir'])
     assert sha(model)==budget['checkpoint_sha256'] and sha(XML)==budget['xml_sha256'];torch.set_num_threads(1)

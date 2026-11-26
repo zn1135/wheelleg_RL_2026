@@ -54,9 +54,9 @@ def run(out, deadline):
     import torch
     import mujoco
     frozen, source_checks = setup_source()
-    from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg, recipe_record
-    from ct_mjlab.envs.fudan_ppo_step.env import StepEnv
-    from ct_mjlab.envs.fudan_ppo_step.runner import validate_source
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg, recipe_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.runner import validate_source
     from ct_mjlab.fudan_ppo_walk.policy import load_policy
     from mjlab.managers.event_manager import RecomputeLevel
     out.mkdir(parents=True, exist_ok=False)

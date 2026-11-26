@@ -104,7 +104,7 @@ def stress(out):
     import numpy as np
     import torch
     from scripts.agent.fudan_ppo_walk import inspect_pd200_training as inspect, evaluate
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_record
     from mjlab.managers.event_manager import RecomputeLevel
     torch.set_num_threads(1)
     chosen=[sample for sample in inspect.items() if sample['case']['category'] in ('zero','stop_forward','stop_backward')]
@@ -249,7 +249,7 @@ def main():
     if args.mode=='stress':
         stress(out);write(out/'stress-frozen-execution.json',dict(modules=LOADED,optimizer_updates=0));return
     from scripts.agent.fudan_ppo_walk import inspect_pd200_training as inspect
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_record
     import torch
     metadata=torch.load(model,map_location='cpu',weights_only=False)
     inspect.MODEL=model;inspect.RUN=RUN;inspect.EXPERIMENT=EXPERIMENT

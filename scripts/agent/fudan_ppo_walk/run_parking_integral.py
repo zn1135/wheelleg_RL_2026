@@ -2,8 +2,8 @@
 import argparse,json,time,subprocess,signal,os,shutil,hashlib
 from pathlib import Path
 from datetime import datetime
-from ct_mjlab.envs.fudan_ppo_walk.parking_integral import configuration
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.parking_integral import configuration
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
 
 CHECKPOINT=Path('logs/mjlab/fudan_ppo_walk/20261102_parking_resume7000_to8000/model_final.pt')
 RECORDING=Path('artifacts/fudan_ppo_walk/fudan-gpu-replay-8000-20261102')
@@ -25,7 +25,7 @@ def main():
         for s in protocol['samples']:
             assert(source/'fixtures'/(s['id']+'_initial.npz')).is_file() and (source/'traces'/(s['id']+'.npz')).is_file()
     files=[*Path('mjlab_training/src/ct_mjlab/fudan_ppo_walk').glob('*.py'),
-        *Path('mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk').glob('*.py'),
+        *Path('mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_walk').glob('*.py'),
         *Path('mjlab_training/src/ct_mjlab/rsl_rl').rglob('*.py'),*Path('scripts/agent/fudan_ppo_walk').glob('*.py'),
         *Path('scripts/agent/motion').glob('*.py'),Path('resources/robots/chuanliantui_new_1/mjlab/chuanliantui.xml'),
         *Path('mjlab_training/src/ct_mjlab/envs/chuanliantui').glob('*.py')]

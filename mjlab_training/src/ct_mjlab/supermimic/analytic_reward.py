@@ -1,6 +1,6 @@
 """Differentiable copy of the current chuanliantui walk reward, without physics edits.
 
-Source: ct_mjlab.envs.chuanliantui_split.rewards.WalkRewardState.compute,
+Source: ct_mjlab.envs.chuanliantui.chuanliantui_split.rewards.WalkRewardState.compute,
 recipe split-walk-relative-velocity-parking-noboost-tilt5-symmetry3cap10-no-vz-contact-rate-smooth-v7.
 This module does not instantiate a simulator or change the source reward.
 

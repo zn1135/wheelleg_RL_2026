@@ -15,7 +15,7 @@ import torch
 
 from ct_mjlab.rsl_rl.runners import fudan_on_policy_runner as module
 from ct_mjlab.fudan_ppo_walk.contract import RESET_CONTRACT,RESET_V2_CONTRACT,LEGACY_RESET_CONTRACT
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 from .check_resume import equal
 
 

@@ -10,11 +10,11 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import torch
-from ct_mjlab.envs.fudan_ppo_walk import posture_reward
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-from ct_mjlab.envs.fudan_ppo_walk.commands import command_config
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import posture_reward
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands import command_config
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_record
 from ct_mjlab.fudan_ppo_walk.contract import RESET_CONTRACT, RESET_V2_CONTRACT
 from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import FudanRunner
 from ct_mjlab.scripts import train

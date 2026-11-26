@@ -11,7 +11,7 @@ from unittest.mock import patch
 import numpy as np
 import torch
 
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 from ct_mjlab.fudan_ppo_walk.contract import RESET_V2_CONTRACT
 from ct_mjlab.rsl_rl.storage.fudan_rollout_storage import RolloutStorage
 

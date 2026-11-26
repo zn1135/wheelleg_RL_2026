@@ -4,7 +4,7 @@ from pathlib import Path
 
 import torch
 
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
 
 
 def selection_record():

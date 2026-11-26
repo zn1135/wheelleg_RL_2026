@@ -11,18 +11,18 @@ import mujoco
 import numpy as np
 import torch
 
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, section_dict, timing_record
-from ct_mjlab.envs.fudan_ppo_walk.terrain import height_map, record, critic_record, RegionalTerrainCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, section_dict, timing_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.terrain import height_map, record, critic_record, RegionalTerrainCfg
 
 
 def integration_checks(cfg, recipe, output):
-    from ct_mjlab.envs.fudan_ppo_walk.terrain import PLANE
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfgPPO
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.terrain import PLANE
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfgPPO
     from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import FudanRunner
     from ct_mjlab.scripts.train import main as train_main
     from ct_mjlab.envs import task_registry
     assert record(FudanWalkCfg()) == PLANE
-    from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg
     assert record(FudanStepCfg()) == PLANE
     stale = output/'plane-precheck-rejection-input.json'
     stale.write_text(json.dumps(dict(terrain=PLANE)))
@@ -170,10 +170,10 @@ def main():
     try:
         report['geometry'] = geometric_checks(cfg, a.output)
         report['integration'] = integration_checks(cfg, a.recipe, a.output)
-        from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-        from ct_mjlab.envs.fudan_ppo_walk.commands import command_config
-        from ct_mjlab.envs.fudan_ppo_walk import posture_reward, height_reward
-        from ct_mjlab.envs.fudan_ppo_walk.wheel_motor import response_record
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands import command_config
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import posture_reward, height_reward
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.wheel_motor import response_record
         from scripts.agent.fudan_ppo_walk.precheck import initial_geometry
         with patch('torch.optim.Adam.step', side_effect=AssertionError('No optimizer update')), \
              patch('torch.nn.Linear.forward', side_effect=AssertionError('No network forward')):
@@ -309,9 +309,9 @@ def main():
         raise
     finally:
         report['wall_s'] = time.time()-started
-        paths = [Path(__file__), Path('mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/terrain.py'),
-                 Path('mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk.py'),
-                 Path('mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py'),
+        paths = [Path(__file__), Path('mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_walk/terrain.py'),
+                 Path('mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_walk/fudan_ppo_walk.py'),
+                 Path('mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_walk/fudan_ppo_walk_config.py'),
                  Path('mjlab_training/src/ct_mjlab/scripts/train.py'),
                  Path('mjlab_training/src/ct_mjlab/rsl_rl/runners/fudan_on_policy_runner.py')]
         report['source_sha256'] = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}

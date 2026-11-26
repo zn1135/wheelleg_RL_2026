@@ -44,10 +44,10 @@ def prepare(args):
 
 def static_checks(output):
     import torch
-    from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg,SOURCE,SOURCE_SHA
-    from ct_mjlab.envs.fudan_ppo_step.env import StepEnv
-    from ct_mjlab.envs.fudan_ppo_step.runner import StepRunner,initialize_policy
-    from ct_mjlab.envs.fudan_ppo_step.reference_motion import MotionHint
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg,SOURCE,SOURCE_SHA
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.runner import StepRunner,initialize_policy
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.reference_motion import MotionHint
     from ct_mjlab.fudan_ppo_walk.contract import make_network
     from ct_mjlab.fudan_ppo_walk.policy import load_policy
     from .evaluate import score
@@ -122,9 +122,9 @@ def static_checks(output):
 
 def gpu_checks(args,report):
     import torch
-    from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg,FudanStepCfgPPO,SOURCE,recipe_record
-    from ct_mjlab.envs.fudan_ppo_step.env import StepEnv
-    from ct_mjlab.envs.fudan_ppo_step.runner import StepRunner
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg,FudanStepCfgPPO,SOURCE,recipe_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.runner import StepRunner
     from .check import contact_friction
     if args.num_envs!=20 or args.steps<200:raise ValueError('Use20 environments and at least200 policy steps')
     cfg=FudanStepCfg();env=None;runner=None;torch.set_num_threads(1);torch.manual_seed(716)

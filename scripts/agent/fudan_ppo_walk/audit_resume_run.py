@@ -9,7 +9,7 @@ import torch
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
 from .check_resume import equal
-from ct_mjlab.envs.fudan_ppo_walk import posture_reward
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import posture_reward
 
 
 def main():

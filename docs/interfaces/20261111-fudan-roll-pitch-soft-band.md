@@ -11,7 +11,7 @@
 
 区间内是角度平方的1/20，零度仍为最小惩罚，不强制学成2°或5°。后倾恢复完整角度平方惩罚，超过5°后增加越界距离平方，函数和一阶导数连续；“恢复强度”指越界后的二次增长强度，不是在5°处突然跳回整角度的完整罚值。
 
-配置位于`envs/fudan_ppo_walk/fudan_ppo_walk_config.py`的`rewards`：`pitch_soft_range_deg=[0.,5.]`、`pitch_inner_penalty_ratio=.05`，scales中的`roll=-100.`、`pitch=-100.`。计算位于同目录`posture_reward.py`，在环境真实reward函数内调用。
+配置位于`envs/chuanliantui/fudan_ppo_walk/fudan_ppo_walk_config.py`的`rewards`：`pitch_soft_range_deg=[0.,5.]`、`pitch_inner_penalty_ratio=.05`，scales中的`roll=-100.`、`pitch=-100.`。计算位于同目录`posture_reward.py`，在环境真实reward函数内调用。
 
 原`orientation`项拆成两项，16→17项；其余15项不变。每项仍独立按原范围裁剪并乘10ms，因此roll/pitch各自最大扣0.01，合计最多扣0.02；原合并姿态最多扣0.01。这一大倾角饱和差异已明确保留，不视为逐数值等价。roll由旧重力分量平方改为角度平方，小角度近似相同，大角度不严格相同。
 

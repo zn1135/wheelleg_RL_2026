@@ -28,7 +28,7 @@ from ct_mjlab.supermimic.buffer import ReplayBuffer
 from ct_mjlab.supermimic.learner import Learner, ALGORITHM_CONTRACT, asset_digest
 from ct_mjlab.supermimic.networks import RunningNorm
 from ct_mjlab.supermimic.state import capture_state, capture_parameters
-from ct_mjlab.envs.chuanliantui_split.rewards import WalkRewardState
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.rewards import WalkRewardState
 
 SECONDS, HEIGHT, NUM_ENVS, SEED = 30., .26, 24, 55
 STARTS = (.5, 1., 1.5, 2., 2.1, 2.3, 6., 10., 14., 16., 16.1, 16.3, 20., 24., 28.)

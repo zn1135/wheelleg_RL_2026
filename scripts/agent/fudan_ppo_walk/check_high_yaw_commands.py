@@ -8,9 +8,9 @@ from unittest.mock import patch
 
 import torch
 
-from ct_mjlab.envs.fudan_ppo_walk import commands as sampling
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import commands as sampling
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
 
 
 def main():
@@ -63,7 +63,7 @@ def main():
             torch.manual_seed(725);FudanEnv.resample(legacy,torch.arange(16,device=device))
             after=torch.get_rng_state() if device=='cpu' else torch.cuda.get_rng_state()
             verify(device+'_old_recipe_commands_and_rng_preserved',torch.equal(legacy.commands,expected) and torch.equal(after,state))
-        from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg
         step=FudanStepCfg();step_sampling=sampling.command_config(step)
         verify('step_yaw_and_sampling_unchanged',step.commands.yaw_range==[-.5,.5]
             and step_sampling['version']=='fudan-parking-commands-v1' and 'zero_vx_above_yaw' not in step_sampling)

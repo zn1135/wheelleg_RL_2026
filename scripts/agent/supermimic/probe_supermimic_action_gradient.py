@@ -184,7 +184,7 @@ def run_probe(args):
     from ct_mjlab.supermimic.__main__ import make_env
     from ct_mjlab.supermimic.learner import ALGORITHM_CONTRACT, asset_digest
     from ct_mjlab.supermimic.networks import WorldModel, make_actor, act
-    from ct_mjlab.envs.chuanliantui_split.runner import contracts
+    from ct_mjlab.envs.chuanliantui.chuanliantui_split.runner import contracts
 
     if args.output.exists():
         raise FileExistsError(args.output)
@@ -208,7 +208,7 @@ def run_probe(args):
             command.load_checkpoint_state(saved['curriculum'])
             command.speed_curriculum_frozen = True
             if uses_analytic:
-                from ct_mjlab.envs.chuanliantui_split.rewards import WalkRewardState
+                from ct_mjlab.envs.chuanliantui.chuanliantui_split.rewards import WalkRewardState
                 from ct_mjlab.supermimic.analytic_reward import capture
                 class ProbeRewardState(WalkRewardState):
                     def compute(self, raw):

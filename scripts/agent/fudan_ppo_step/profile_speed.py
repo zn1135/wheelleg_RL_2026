@@ -24,10 +24,10 @@ def main():
     parser.add_argument('--deadline', type=float, required=True)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
-    from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg, FudanStepCfgPPO
-    from ct_mjlab.envs.fudan_ppo_step.env import StepEnv
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-    from ct_mjlab.envs.fudan_ppo_step.runner import StepRunner
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg, FudanStepCfgPPO
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.runner import StepRunner
     from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import FudanRunner
 
     torch.set_num_threads(1)

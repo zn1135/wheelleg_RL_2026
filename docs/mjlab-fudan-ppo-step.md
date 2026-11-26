@@ -45,7 +45,7 @@ PYTHONPATH=mjlab_training/src:. mjlab_training/.venv/bin/python -m scripts.agent
 
 ## 配方与模型迁移
 
-入口为`mjlab.sh train → task_registry → StepEnv/StepRunner`。配置在`mjlab_training/src/ct_mjlab/envs/fudan_ppo_step/config.py`。物理控制复用原实体闭链；新增task不会改平地类的默认配置。
+入口为`mjlab.sh train → task_registry → StepEnv/StepRunner`。配置在`mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_step/config.py`。物理控制复用原实体闭链；新增task不会改平地类的默认配置。
 
 - Actor25维、五帧125历史、六动作、原观测缩放`[2,.25,5]`保持；Critic环境141维加估速3维。77个高度槽改成真实向下射线，平地输入等价；扫描排除机器人组，并从机身/轮轴上方发射。
 - 腿P20/D1、轮P.1/D0，1ms积分、5ms PD、10ms策略；动作和传感延迟各10～20ms；不启用推扰或持续外力。

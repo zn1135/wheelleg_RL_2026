@@ -143,7 +143,7 @@ def worker(out):
     assert frozen.sha(checkpoint)==proof['checkpoint_sha256']
     assert not any(n=='ct_mjlab' or n.startswith('ct_mjlab.') for n in sys.modules)
     sys.meta_path.insert(0,frozen.FrozenTrainingSource())
-    from ct_mjlab.envs.fudan_ppo_walk import fudan_ppo_walk as physical
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import fudan_ppo_walk as physical
     from ct_mjlab.fudan_ppo_walk import policy as loading
     from mjlab.sensor import ContactSensorCfg,ContactMatch
     old_cfg,old_init,old_sample,old_load=physical.make_env_cfg,physical.FudanEnv.__init__,physical.sample_substep,loading.load_policy

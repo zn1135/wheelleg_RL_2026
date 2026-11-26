@@ -3,7 +3,7 @@ import argparse,json
 from pathlib import Path
 import numpy as np
 from scripts.agent.motion.acceptance import canonical,compare_baseline
-from ct_mjlab.envs.fudan_ppo_walk.parking_integral import REASONS
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.parking_integral import REASONS
 BRANCHES=('baseline','truth_integral','encoder_integral')
 HEIGHTS=('h022','h026','h030')
 

@@ -31,9 +31,9 @@ def main():
     p.add_argument('--deadline', type=float, required=True)
     p.add_argument('--steps', type=int, default=250)
     args = p.parse_args(); args.output.mkdir(parents=True, exist_ok=False)
-    from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg
-    from ct_mjlab.envs.fudan_ppo_step.env import StepEnv
-    original = args.baseline_source/'mjlab_training/src/ct_mjlab/envs/fudan_ppo_step'
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
+    original = args.baseline_source/'mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_step'
     spec = importlib.util.spec_from_file_location('old_contacts', original/'contacts.py')
     old_module = importlib.util.module_from_spec(spec); spec.loader.exec_module(old_module)
     record_old = legacy_rows(original/'env.py')

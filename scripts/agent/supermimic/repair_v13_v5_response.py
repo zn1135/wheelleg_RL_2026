@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import torch
-from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
 from ct_mjlab.supermimic.learner import Learner,apply_gradient
 from ct_mjlab.supermimic.motion import physical47_from_full64,delta46,integrate47,expand_motion47_to_full64
 from ct_mjlab.supermimic.networks import RunningNorm,normalize_contact_inputs

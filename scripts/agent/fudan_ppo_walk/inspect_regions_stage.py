@@ -57,7 +57,7 @@ def audit(out, iteration):
 
 
 def conditions():
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_record
     b = json.loads((EXPERIMENT/'budget.json').read_text())
     return replace(from_record(b['disturbances']), pushes=False,
                    external_force_range=(0., 0.), external_torque_range=(0., 0.))
@@ -150,8 +150,8 @@ def terrain(out, iteration, height_sweep=False, models=None):
     import mujoco
     import numpy as np
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
     from ct_mjlab.fudan_ppo_walk.policy import load_policy
     from ct_mjlab.fudan_ppo_walk.measurement import configure_samples, update_evaluation_commands, gpu_row, arrays
     from scripts.agent.motion.assess import phase_verdict
@@ -534,7 +534,7 @@ def main():
     assert frozen.sha(out/'checkpoint'/f'model_{a.iteration}.pt') == proof['checkpoint_sha256']
     frozen.RUN = RUN
     sys.meta_path.insert(0, frozen.FrozenTrainingSource())
-    from ct_mjlab.envs.fudan_ppo_walk import fudan_ppo_walk as physical
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import fudan_ppo_walk as physical
     original = physical.make_env_cfg
     def configure(*args, **kwargs):
         cfg = original(*args, **kwargs)

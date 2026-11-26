@@ -36,6 +36,6 @@ SuperMimic当前世界模型使用129维输入：47维航向无关运动特征�
 
 ## 复旦注册训练链路
 
-单级平台使用同一注册器分发到`envs/fudan_ppo_step`，复用实体控制、PPO与保存循环；独立处理真实地形采样、接触、课程及模型迁移。训练配方身份与物理Actor接口身份分开，详见[单级平台任务](../mjlab-fudan-ppo-step.md)。
+单级平台使用同一注册器分发到`envs/chuanliantui/fudan_ppo_step`，复用实体控制、PPO与保存循环；独立处理真实地形采样、接触、课程及模型迁移。训练配方身份与物理Actor接口身份分开，详见[单级平台任务](../mjlab-fudan-ppo-step.md)。
 
 复旦已按原wheel_legged_gym职责整理：`mjlab.sh train --task fudan_ppo_walk → scripts/train.py → utils/task_registry.py → envs/fudan_ppo_walk的环境/配置 → rsl_rl/runners → rsl_rl/algorithms`。注册器实际创建环境和runner；旧独立入口仅兼容转入这条链路。其他训练线沿原流程。默认值、RNG、v2/v3、模型接口与物理保持，验证只做无物理等价，见[迁移与日常位置](../maintenance/20261103-fudan-structure-alignment.md)。

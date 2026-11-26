@@ -8,8 +8,8 @@ import mujoco
 import numpy as np
 import viser
 from mjlab.viewer.viser.scene import MjlabViserScene
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-from ct_mjlab.envs.fudan_ppo_walk.reset_geometry import ResetGeometry
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.reset_geometry import ResetGeometry
 from ct_mjlab.fudan_ppo_walk.contract import LEGS
 
 

@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 import numpy as np
 import torch
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import initialize_rollout,FudanRunner
 from ct_mjlab.fudan_ppo_walk.contract import RESET_V2_CONTRACT as RESET_CONTRACT,RESET_CONTRACT as CURRENT_RESET_CONTRACT,LEGACY_RESET_CONTRACT
 from ct_mjlab.fudan_ppo_walk.measurement import configure_samples,update_evaluation_commands
@@ -89,12 +89,12 @@ def main():
             def learn_until(self,deadline):
                 initialize_rollout(self.env);entered['env']=self.env;return {'fixture':True}
         with tempfile.TemporaryDirectory() as directory:
-            directory=Path(directory);proof=directory/'proof.json';proof.write_text(json.dumps(dict(passed=True,reset_contract=CURRENT_RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000,command_sampling=__import__('ct_mjlab.envs.fudan_ppo_walk.commands',fromlist=['command_config']).command_config())))
-            with patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=lambda *args,**kwargs:fixture(32,reset_contract=CURRENT_RESET_CONTRACT)),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner',EntryRunner),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.snapshot'),redirect_stdout(io.StringIO()):
+            directory=Path(directory);proof=directory/'proof.json';proof.write_text(json.dumps(dict(passed=True,reset_contract=CURRENT_RESET_CONTRACT,kind='physical-visible-precheck',num_envs=20,physics_steps=1000,command_sampling=__import__('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands',fromlist=['command_config']).command_config())))
+            with patch('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=lambda *args,**kwargs:fixture(32,reset_contract=CURRENT_RESET_CONTRACT)),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner',EntryRunner),patch('ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.snapshot'),redirect_stdout(io.StringIO()):
                 cli.main(['--task','fudan_ppo_walk','--num-envs','32','--log-dir',str(directory/'run'),'--precheck',str(proof),'--deadline',str(time.time()+60)])
             assert entered['env'].mock_physics_calls==1
             proof.write_text(json.dumps(dict(passed=True,reset_contract=RESET_CONTRACT,physics_steps=0)))
-            with patch('ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=AssertionError('Legacy proof must fail before environment construction')):
+            with patch('ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',side_effect=AssertionError('Legacy proof must fail before environment construction')):
                 try:cli.main(['--task','fudan_ppo_walk','--num-envs','32','--log-dir',str(directory/'legacy'),
                     '--precheck',str(proof),'--deadline',str(time.time()+60)])
                 except ValueError:pass

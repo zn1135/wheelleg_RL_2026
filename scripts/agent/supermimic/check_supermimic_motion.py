@@ -60,7 +60,7 @@ def synthetic_buffer():
 
 
 def cpu_checks(parent):
-    from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
+    from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
     command=SimpleNamespace(cfg=command_cfg('walk'),checkpoint_state=lambda:{},load_checkpoint_state=lambda _:None)
     l=Learner('cpu',actor_lr=3e-5);l.init_actor(parent,command,task='chuanliantui_walk')
     saved=torch.load(parent,map_location='cpu',weights_only=False)

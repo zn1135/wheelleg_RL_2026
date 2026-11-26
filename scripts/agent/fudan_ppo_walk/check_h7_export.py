@@ -21,7 +21,7 @@ import torch
 
 from ct_mjlab.fudan_ppo_walk.export import Policy
 from ct_mjlab.fudan_ppo_walk.policy import load_policy
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 
 
 HARNESS = r'''

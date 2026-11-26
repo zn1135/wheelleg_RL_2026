@@ -10,8 +10,8 @@ import torch
 
 
 def check(env, output):
-    from ct_mjlab.envs.fudan_ppo_walk.terrain import GroundRay, critic_record, LEGACY_CRITIC
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfgPPO
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.terrain import GroundRay, critic_record, LEGACY_CRITIC
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfgPPO
     from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import FudanRunner
     from ct_mjlab.envs import task_registry
     from ct_mjlab.scripts.train import main as train_main
@@ -81,7 +81,7 @@ def check(env, output):
 
     # 相同物理地形也不能用旧重复高度预检批准新输入语义。
     stale = output/'legacy-critic-precheck.json'
-    from ct_mjlab.envs.fudan_ppo_walk.terrain import record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.terrain import record
     stale.write_text(json.dumps(dict(terrain=record(env.cfg), critic_observation=LEGACY_CRITIC)))
     with patch.object(task_registry, 'make_env', side_effect=AssertionError('Reject before GPU construction')):
         try:

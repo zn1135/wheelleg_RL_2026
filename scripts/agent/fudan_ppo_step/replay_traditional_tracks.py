@@ -127,8 +127,8 @@ def prepare(args):
 def run(args):
     import torch
     from scipy.spatial.transform import Rotation
-    from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg,recipe_record
-    from ct_mjlab.envs.fudan_ppo_step.env import StepEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg,recipe_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
     from .evaluate import longest
     args.output.mkdir(parents=True,exist_ok=False);(args.output/'traces').mkdir()
     alignment=json.loads((args.alignment/'alignment.json').read_text())
@@ -180,7 +180,7 @@ def run(args):
             'No root forcing after initial placement; even successful elevated segments do not establish full ascent']
     runtime=args.output/'source-runtime';runtime.mkdir()
     sources=[]
-    for folder in ('envs/fudan_ppo_step','envs/fudan_ppo_walk','envs/chuanliantui','fudan_ppo_walk'):
+    for folder in ('envs/chuanliantui/fudan_ppo_step','envs/chuanliantui/fudan_ppo_walk','envs/chuanliantui','fudan_ppo_walk'):
         sources.extend((ROOT/'mjlab_training/src/ct_mjlab'/folder).glob('*.py'))
     manifest={}
     for source in sources:

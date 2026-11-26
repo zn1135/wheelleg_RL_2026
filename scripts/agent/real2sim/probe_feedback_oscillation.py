@@ -10,10 +10,10 @@ import mujoco
 import numpy as np
 import torch
 from scipy.signal import detrend,find_peaks,welch
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_sim2sim_config,SENSOR_SLOTS
-from ct_mjlab.envs.fudan_ppo_walk import height_reward,posture_reward
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_sim2sim_config,SENSOR_SLOTS
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import height_reward,posture_reward
 from ct_mjlab.fudan_ppo_walk.policy import load_policy
 from ct_mjlab.fudan_ppo_walk.measurement import gpu_row,arrays,update_evaluation_commands
 from .replay_usb_pd_targets import sha,write

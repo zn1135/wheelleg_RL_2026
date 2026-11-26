@@ -21,8 +21,8 @@ LOG = ROOT/'logs/mjlab/fudan_ppo_walk/20261116_regions10to20_resume5000_to8000_0
 
 def prepare(out):
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, section_dict
-    from ct_mjlab.envs.fudan_ppo_walk.terrain import record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, section_dict
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.terrain import record
     assert sha(SOURCE) == SOURCE_SHA
     source = torch.load(SOURCE, map_location='cpu', weights_only=False)
     assert source['iterations'] == 5000 and not source['partial_update']
@@ -75,9 +75,9 @@ def prepare(out):
 
 def worker(out, stage):
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, timing_record
-    from ct_mjlab.envs.fudan_ppo_walk import fudan_ppo_walk as physical
-    from ct_mjlab.envs.fudan_ppo_walk.terrain import record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, timing_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import fudan_ppo_walk as physical
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.terrain import record
     from ct_mjlab.rsl_rl.runners import fudan_on_policy_runner as runner
     b = json.loads((out/'budget.json').read_text())
     assert sha(SOURCE) == b['checkpoint_sha256'] and sha(XML) == b['xml_sha256']
@@ -101,7 +101,7 @@ def worker(out, stage):
         sim, action = env.env.sim, env.action
         assert record(env.cfg) == b['terrain'] and timing_record(env.cfg) == b['control_timing']
         if 'critic_observation' in b:
-            from ct_mjlab.envs.fudan_ppo_walk.terrain import critic_record
+            from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.terrain import critic_record
             assert critic_record(env.cfg) == b['critic_observation']
         assert env.disturbance_config.record() == b['disturbances']
         assert env.command_sampling == b['command_sampling'] and env.cfg.commands.velocity_max == 3.
@@ -213,8 +213,8 @@ def worker(out, stage):
 
 def capacity(out, b, source, stats):
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
     from ct_mjlab.rsl_rl.runners.fudan_on_policy_runner import FudanRunner
     cfg = FudanWalkCfg()
     cfg.terrain.mode = 'regions'

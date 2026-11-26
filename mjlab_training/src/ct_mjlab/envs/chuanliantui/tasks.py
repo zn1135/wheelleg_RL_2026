@@ -1,0 +1,29 @@
+"""仅注册保留的算法环境；旧独立训练task已撤销。"""
+from ct_mjlab.utils.task_registry import task_registry
+from .multimode_env_cfg import make_multimode_env_cfg, make_multimode_ppo_cfg
+from .multimode_runner import MultimodeOnPolicyRunner
+from .chuanliantui_split.env_cfg import make_walk_env_cfg, make_walk_ppo_cfg
+from .chuanliantui_split.runner import SplitOnPolicyRunner
+
+task_registry.register('smp', env_cfg=make_multimode_env_cfg,
+    train_cfg=make_multimode_ppo_cfg, runner_class=MultimodeOnPolicyRunner)
+task_registry.register('supermimic', env_cfg=make_walk_env_cfg,
+    train_cfg=make_walk_ppo_cfg, runner_class=SplitOnPolicyRunner)
+from .fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, FudanWalkCfgPPO
+
+task_registry.register('fudan_ppo_walk', env_cfg=lambda play=False: FudanWalkCfg(),
+    train_cfg=FudanWalkCfgPPO,
+    task_class='ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk.FudanEnv',
+    runner_class='ct_mjlab.rsl_rl.runners.fudan_on_policy_runner.FudanRunner')
+from .fudan_ppo_step.config import FudanStepCfg, FudanStepCfgPPO
+
+task_registry.register('fudan_ppo_step', env_cfg=lambda play=False: FudanStepCfg(),
+    train_cfg=FudanStepCfgPPO,
+    task_class='ct_mjlab.envs.chuanliantui.fudan_ppo_step.env.StepEnv',
+    runner_class='ct_mjlab.envs.chuanliantui.fudan_ppo_step.runner.StepRunner')
+from .fudan_ppo_jump.config import jump_config, jump_ppo
+
+task_registry.register('fudan_ppo_jump', env_cfg=jump_config, train_cfg=jump_ppo,
+    task_class='ct_mjlab.envs.chuanliantui.fudan_ppo_jump.env.JumpEnv',
+    runner_class='ct_mjlab.envs.chuanliantui.fudan_ppo_jump.train.JumpRunner')
+__all__ = ['task_registry']

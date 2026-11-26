@@ -6,11 +6,11 @@ from types import MethodType
 from contextlib import ExitStack
 from unittest.mock import patch
 import torch
-from ct_mjlab.envs.fudan_ppo_walk.parking_integral import ParkingIntegral,feedback_velocity,REASONS,configuration
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.parking_integral import ParkingIntegral,feedback_velocity,REASONS,configuration
 from ct_mjlab.fudan_ppo_walk.measurement import FIELDS,update_evaluation_commands
 from ct_mjlab.fudan_ppo_walk.contract import RESET_V2_CONTRACT
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import DisturbanceConfig,DisturbanceState
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import PhysicalAction
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import DisturbanceConfig,DisturbanceState
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import PhysicalAction
 from .reset_v2_fixture import fixture
 from .diagnose_parking_integral import restore_initial,compare_initial,policy_tick,BRANCHES,HEIGHTS
 
@@ -212,7 +212,7 @@ def main():
     paths=[Path(__file__),Path('scripts/agent/fudan_ppo_walk/diagnose_parking_integral.py'),Path('scripts/agent/fudan_ppo_walk/report_parking_integral.py'),
         Path('scripts/agent/fudan_ppo_walk/run_parking_integral.py'),
         Path('scripts/agent/fudan_ppo_walk/reset_v2_fixture.py'),Path('mjlab_training/src/ct_mjlab/fudan_ppo_walk/measurement.py'),
-        Path('mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/parking_integral.py'),Path('mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py')]
+        Path('mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_walk/parking_integral.py'),Path('mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_walk/fudan_ppo_walk_config.py')]
     a.output.write_text(json.dumps(dict(passed=True,source_sha256={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in paths},checks=checks,count=len(checks),
         restored_fixture_checks=135,physics_steps=0,model_forwards=0,optimizer_updates=0,cuda_initializations=0,
         action_probe='deterministic algebra; original policy code remains protected; fixture restore/endpoint feedback use nonphysical backend'),indent=2)+'\n')

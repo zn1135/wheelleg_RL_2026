@@ -14,7 +14,7 @@ from ct_mjlab.envs.chuanliantui.fitted_leg_load import PARAMETERS, parameter_rec
 from ct_mjlab.envs.chuanliantui.gas_spring import gas_spring_force
 from ct_mjlab.envs.chuanliantui.huananhu_env_cfg import make_huananhu_env_cfg
 from ct_mjlab.envs.chuanliantui.model import MODEL_XML
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
 
 
 def main():

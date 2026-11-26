@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import torch
 from ct_mjlab.envs.chuanliantui import huananhu_action as module
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, timing_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, timing_record
 from ct_mjlab.fudan_ppo_walk.measurement import arrays
 
 ROOT=Path(__file__).resolve().parents[3]

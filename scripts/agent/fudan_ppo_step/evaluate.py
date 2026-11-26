@@ -8,10 +8,10 @@ import time
 from unittest.mock import patch
 import numpy as np
 import torch
-from ct_mjlab.envs.fudan_ppo_step.config import TASK, FudanStepCfg, recipe_record
-from ct_mjlab.envs.fudan_ppo_step.env import StepEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import TASK, FudanStepCfg, recipe_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
 from ct_mjlab.fudan_ppo_walk.policy import load_policy
-from ct_mjlab.envs.fudan_ppo_step.runner import validate_source
+from ct_mjlab.envs.chuanliantui.fudan_ppo_step.runner import validate_source
 from scripts.agent.motion.assess import phase_verdict
 from .check import source_fingerprint
 

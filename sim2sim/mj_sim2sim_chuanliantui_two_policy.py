@@ -11,10 +11,10 @@ import numpy as np
 import torch
 from mj_sim2sim_chuanliantui_stand_v2 import StandV2Playback, POLICY_DT
 from mj_sim2sim_huananhu_multimode import sha256, DT, MODEL_ASSET
-from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
-from ct_mjlab.envs.chuanliantui_split.runner import validate
-from ct_mjlab.envs.chuanliantui_split.observations import OBSERVATION_CONTRACT
-from ct_mjlab.envs.chuanliantui_split.switch import PolicySwitch, conditions, SWITCH_CONTRACT
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.runner import validate
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.observations import OBSERVATION_CONTRACT
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.switch import PolicySwitch, conditions, SWITCH_CONTRACT
 
 CONTRACT = 'chuanliantui-two-policy-native-cpu-history125-episode-height-v2'
 

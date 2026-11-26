@@ -37,7 +37,7 @@ LOCKED_NEW={
     'supermimic/motion.py':'1ce8e3a6332f284b21d3db5f181fd502baa3359bc8048aad0b25a0c9f5e449b9',
     'supermimic/motion_adapter.py':'7b85cf54eef2268af61ce67911fd68b2bd8268b7bd02e1dea8ea76bbf652e1a0',
     'supermimic/analytic_reward.py':'eaeb060864a7b9637cbf9e287a6651df0560a7d513abfd62b80715e2ee3cf327',
-    'envs/chuanliantui_split/rewards.py':'0128333915b48dd9e808e9e96b864fb034a8ca5beab6e8a40176fa89804a3757'}
+    'envs/chuanliantui/chuanliantui_split/rewards.py':'0128333915b48dd9e808e9e96b864fb034a8ca5beab6e8a40176fa89804a3757'}
 METRICS=('root_linear_velocity_m_s','root_angular_velocity_rad_s','LINK_vx_m_s','orientation_geodesic_degrees',
     'nonwheel_hinge_q_rad','slider_q_m','hinge_velocity_including_wheels_rad_s','slider_velocity_m_s')
 

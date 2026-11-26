@@ -9,7 +9,7 @@ from ct_mjlab.fudan_ppo_walk.protocol import samples,manifest
 from ct_mjlab.fudan_ppo_walk.policy import load_policy
 from ct_mjlab.fudan_ppo_walk.measurement import configure_samples,gpu_row,arrays,update_evaluation_commands
 from ct_mjlab.fudan_ppo_walk.contract import RESET_CONTRACT,RESET_V2_CONTRACT
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_sim2sim_config,from_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_sim2sim_config,from_record
 from ct_mjlab.fudan_ppo_walk.selected_policy import selection_record,reference_starts,policy_inputs,reference_angles
 
 
@@ -42,11 +42,11 @@ def protocol_record(items,diagnostic):
 
 
 def gpu(args):
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
     from ct_mjlab.envs.chuanliantui.fitted_leg_load import parameter_record
-    from ct_mjlab.envs.fudan_ppo_walk import posture_reward, height_reward
-    from ct_mjlab.envs.fudan_ppo_walk.wheel_motor import configure_response,response_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import posture_reward, height_reward
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.wheel_motor import configure_response,response_record
     from types import SimpleNamespace
     policy,metadata=load_policy(args.checkpoint,'cuda:0')
     posture=posture_reward.from_record(metadata.get('posture_reward'))
@@ -60,7 +60,7 @@ def gpu(args):
     protocol.update(validation_engine='gpu',validation_backend='mujoco_warp_gpu',
         disturbances=disturbances.record(),training_disturbances=from_record(metadata.get('disturbances')).record(),
         posture_reward=posture,height_reward=height)
-    from ct_mjlab.envs.fudan_ppo_walk.wheel_physics import record as wheel_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.wheel_physics import record as wheel_record
     protocol['physical_wheel_model']=wheel_record(FudanWalkCfg.sim.wheel_model)
     response_cfg=FudanWalkCfg();configure_response(response_cfg,metadata.get('wheel_response'))
     protocol['wheel_response']=response_record(response_cfg)

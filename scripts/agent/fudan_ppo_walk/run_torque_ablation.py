@@ -28,8 +28,8 @@ def prepare(output):
     assert sha(MODEL)==MODEL_SHA
     output.mkdir(parents=True,exist_ok=False)
     manifest=json.loads((ROOT/'docs/model-deliveries/data/20261110-model10000-manifest.json').read_text())
-    relative='mjlab_training/src/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py'
-    source=ROOT/'logs/mjlab/fudan_ppo_walk/20261110_legacy_action10ms_resume9000_to10000_01/source/ct_mjlab/envs/fudan_ppo_walk/fudan_ppo_walk_config.py'
+    relative='mjlab_training/src/ct_mjlab/envs/chuanliantui/fudan_ppo_walk/fudan_ppo_walk_config.py'
+    source=ROOT/'logs/mjlab/fudan_ppo_walk/20261110_legacy_action10ms_resume9000_to10000_01/source/ct_mjlab/envs/chuanliantui/fudan_ppo_walk/fudan_ppo_walk_config.py'
     assert sha(source)==manifest['runtime_source_sha256'][relative]
     shutil.copy2(source,output/'baseline-config.py')
     saved=runpy.run_path(str(source))['FudanWalkCfg']
@@ -58,7 +58,7 @@ def prepare(output):
 
 
 def worker(output,arm,stage):
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
     folder=output/arm;spec=json.loads((folder/'spec.json').read_text())
     assert sha(spec['checkpoint'])==spec['checkpoint_sha256']
     with ExitStack() as stack:
@@ -79,9 +79,9 @@ def worker(output,arm,stage):
             return
         from ct_mjlab.scripts import train
         from ct_mjlab.rsl_rl.runners import fudan_on_policy_runner as runner
-        from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config
-        from ct_mjlab.envs.fudan_ppo_walk.commands import command_config
-        from ct_mjlab.envs.fudan_ppo_walk import posture_reward
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_task_config
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands import command_config
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import posture_reward
         from ct_mjlab.fudan_ppo_walk.contract import RESET_V2_CONTRACT
         cfg=FudanWalkCfg()
         write(folder/'budget.json',dict(resume_checkpoint=spec['checkpoint'],resume_checkpoint_sha256=spec['checkpoint_sha256'],

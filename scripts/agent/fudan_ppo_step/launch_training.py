@@ -21,7 +21,7 @@ def sha(path):
 
 
 def start(args):
-    from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg,recipe_record,SOURCE,SOURCE_SHA
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg,recipe_record,SOURCE,SOURCE_SHA
     from scripts.agent.fudan_ppo_step.check import source_fingerprint
     cfg=FudanStepCfg();proof=json.loads(args.precheck.read_text())
     assert args.iterations>0 and args.num_envs>=4 and args.num_envs%4==0
@@ -114,7 +114,7 @@ def worker(args):
     write(args.output/'status.json',dict(status='starting',pid=os.getpid(),budget=budget['iterations']))
     try:
         import torch
-        from ct_mjlab.envs.fudan_ppo_step.env import StepEnv
+        from ct_mjlab.envs.chuanliantui.fudan_ppo_step.env import StepEnv
         from ct_mjlab.scripts.train import main as train
         original=StepEnv.__init__
         def checked_init(env,*a,**kw):
@@ -156,7 +156,7 @@ def worker(args):
 def repair(args):
     import copy
     import torch
-    from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg,recipe_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg,recipe_record
     saved=torch.load(args.checkpoint,map_location='cpu',weights_only=False)
     before=saved['training_recipe'];after=recipe_record(FudanStepCfg())
     expected=copy.deepcopy(before);expected['step']['version']=after['step']['version']
@@ -177,7 +177,7 @@ def repair(args):
 def resize(args):
     import copy
     import torch
-    from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg,recipe_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg,recipe_record
     saved=torch.load(args.checkpoint,map_location='cpu',weights_only=False)
     assert saved['primary_updates']==saved['encoder_updates']==saved['iterations']*20
     assert saved['num_envs']==128 and args.num_envs==4096
@@ -214,7 +214,7 @@ def resize(args):
 def repair_rays(args):
     import copy
     import torch
-    from ct_mjlab.envs.fudan_ppo_step.config import FudanStepCfg,recipe_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_step.config import FudanStepCfg,recipe_record
     saved=torch.load(args.checkpoint,map_location='cpu',weights_only=False)
     before=saved['training_recipe'];after=recipe_record(FudanStepCfg())
     expected=copy.deepcopy(before);expected['step']['version']=after['step']['version']

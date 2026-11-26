@@ -35,10 +35,10 @@ def same(a,b):
 
 def prepare(output):
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict,timing_record
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config
-    from ct_mjlab.envs.fudan_ppo_walk.commands import command_config
-    from ct_mjlab.envs.fudan_ppo_walk import posture_reward,wheel_physics,height_reward
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict,timing_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_task_config
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.commands import command_config
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import posture_reward,wheel_physics,height_reward
     source=torch.load(MODEL,map_location='cpu',weights_only=False)
     assert source['iterations']==3000 and source['transitions']==3000*4096*48 and not source['partial_update']
     assert source['primary_updates']==source['encoder_updates']==60000
@@ -87,9 +87,9 @@ def prepare(output):
 
 def worker(output,stage):
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict,timing_record
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-    from ct_mjlab.envs.fudan_ppo_walk import wheel_physics,height_reward
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict,timing_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import wheel_physics,height_reward
     budget=json.loads((output/'budget.json').read_text());torch.set_num_threads(1)
     assert sha(MODEL)==budget['checkpoint_sha256']
     source=torch.load(MODEL,map_location='cpu',weights_only=False)

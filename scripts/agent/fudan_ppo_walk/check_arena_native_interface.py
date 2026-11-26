@@ -13,9 +13,9 @@ import torch
 from sim2sim.rmuc2027_arena import (ArenaPlayback, build_model, CHECKPOINT,
     build_regional_model, regional_metadata)
 from sim2sim.step_playground import build_model as build_step_model
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
-from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg
+from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_record
 from ct_mjlab.fudan_ppo_walk.policy import load_policy
 
 

@@ -22,8 +22,8 @@ import yaml
 
 from scripts.agent.supermimic import score_supermimic_v11_paired_prediction as bridge
 from ct_mjlab.envs.chuanliantui.model import ACTUATED_JOINTS, load_model
-from ct_mjlab.envs.chuanliantui_split.env_cfg import command_cfg
-from ct_mjlab.envs.chuanliantui_split.runner import contracts
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.env_cfg import command_cfg
+from ct_mjlab.envs.chuanliantui.chuanliantui_split.runner import contracts
 from ct_mjlab.supermimic.networks import RunningNorm
 from ct_mjlab.supermimic.state import NOISE
 

@@ -52,10 +52,10 @@ def prepare(out):
 
 def worker(out,stage):
     import torch
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
-    from ct_mjlab.envs.fudan_ppo_walk import height_reward,wheel_physics
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_task_config,from_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg,section_dict
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk import FudanEnv
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import height_reward,wheel_physics
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_task_config,from_record
     budget=json.loads((out/'budget.json').read_text());torch.set_num_threads(1);assert sha(MODEL)==budget['checkpoint_sha256']
     assert sha(XML)==budget['xml_sha256']
     source=torch.load(MODEL,map_location='cpu',weights_only=False)

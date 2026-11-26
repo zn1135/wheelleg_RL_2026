@@ -66,9 +66,9 @@ def worker(out, policy_factory=None, sample_filter=None):
     from ct_mjlab.fudan_ppo_walk.protocol import samples
     from ct_mjlab.fudan_ppo_walk.policy import load_policy
     from ct_mjlab.fudan_ppo_walk.measurement import configure_samples, update_evaluation_commands, gpu_row, arrays
-    from ct_mjlab.envs.fudan_ppo_walk import fudan_ppo_walk as physical
-    from ct_mjlab.envs.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, timing_record
-    from ct_mjlab.envs.fudan_ppo_walk.disturbances import from_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk import fudan_ppo_walk as physical
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.fudan_ppo_walk_config import FudanWalkCfg, timing_record
+    from ct_mjlab.envs.chuanliantui.fudan_ppo_walk.disturbances import from_record
     from scripts.agent.motion.acceptance import canonical
     torch.set_num_threads(1)
     chosen = deepcopy(samples()[::21])
